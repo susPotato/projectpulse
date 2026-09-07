@@ -10,10 +10,16 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "pydantic>=2.9",
+    # The dependency DAG and its forward pass.
+    "networkx>=3.4",
+    # The rule engine. `intelligence/rules/engine.py` is the only module that
+    # imports it and carries a built-in evaluator, so a failed wheel degrades
+    # rather than breaks - but the wheel is expected to be here.
+    "zen-engine>=2.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3"]
+dev = ["pytest>=8.3", "httpx"]  # httpx backs fastapi.testclient
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

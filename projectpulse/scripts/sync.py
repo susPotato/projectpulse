@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-import argparse
-import logging
-from datetime import datetime, timezone
+# Must run before any `app.*` import - see scripts/_bootstrap.py.
+from scripts._bootstrap import bootstrap
 
-from sqlalchemy import select
+bootstrap()
+
+import argparse  # noqa: E402
+import logging  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+
+from sqlalchemy import select  # noqa: E402
 
 from app.db import create_all, session_scope
 from app.ingest.runner import run_sync
@@ -182,6 +187,153 @@ def cmd_order(_args) -> None:
     )
 
 
+def cmd_insight(args) -> None:
+    """The whole intelligence layer, printed.
+
+    This is the command that shows what the product actually produces: what is at
+    risk, why, what it will impact, and what to do - each finding with the rule
+    that fired, the values it compared, and the source rows behind it.
+    """
+    from app.intelligence.pipeline import analyze_project
+
+    with session_scope() as session:
+        bundle = analyze_project(
+            session,
+            project_id=args.project,
+            also=args.also or [],
+        )
+
+        print(f"{bundle.project_id}  as of {bundle.as_of:%Y-%m-%d %H:%M}")
+        print(
+            f"{len(bundle.findings)} finding(s), "
+            f"highest severity: {bundle.top_severity}\n"
+        )
+
+        for finding in bundle.by_severity():
+            print(f"[{finding.severity.upper():8}] {finding.headline}")
+            if finding.recommendation:
+                print(f"           -> {finding.recommendation}")
+            if finding.rule_trace:
+                for condition in finding.rule_trace.conditions:
+                    print(f"           rule {finding.rule_trace.rule_id}: {condition}")
+            if finding.causal_link:
+                link = finding.causal_link
+                lag = (
+                    f"{link.lag_days_min:g} days"
+                    if link.lag_days_min == link.lag_days_max
+                    else f"{link.lag_days_min:g}-{link.lag_days_max:g} days"
+                )
+                print(
+                    f"           chain {link.template_id} "
+                    f"({link.evidence_basis}, {link.ordering_basis}, lag {lag})"
+                )
+            for ref in finding.evidence[:3]:
+                print(f"           evidence #{ref.raw_data_id} {ref.url}")
+            print()
+
+        quality = bundle.data_quality
+        print(
+            f"data quality: {quality.rows_rejected} row(s) rejected, "
+            f"{quality.changes_low_confidence} of {quality.changes_total} changes "
+            f"low-confidence, {quality.edges_stated} stated + "
+            f"{quality.edges_inferred} inferred edges"
+        )
+        if quality.depends_on_inferred_edges:
+            print(
+                "  the schedule conclusion changes without inferred edges - "
+                "it is a derived claim, not a stated one"
+            )
+
+        if args.narrative:
+            print("\n" + "=" * 72)
+            print(bundle.narrative)
+
+
+def cmd_explain(args) -> None:
+    """Show the arithmetic behind every number, so it can be checked by hand.
+
+    The product's claim is that every figure is arithmetic on dates a human typed.
+    That is only worth claiming if someone can verify it, which is what this is
+    for - it reads the same report the findings were built from and prints the
+    working.
+    """
+    from app.intelligence import explain
+    from app.intelligence.context import build_context
+    from app.intelligence.pipeline import load_edges, load_tasks
+    from app.intelligence.schedule.graph import build_graph
+    from app.intelligence.schedule.impact import project_schedule
+
+    project_ids = [args.project, *(args.also or [])]
+
+    with session_scope() as session:
+        tasks = load_tasks(session, project_ids)
+        edges = load_edges(session, project_ids)
+
+        if not tasks:
+            print(f"no tasks for {project_ids}. Run: python -m scripts.replay")
+            return
+
+        schedule = build_graph(tasks, edges)
+        impact = project_schedule(schedule)
+        stated = project_schedule(build_graph(tasks, edges, stated_only=True))
+
+        print("FORWARD PASS - every date below is arithmetic you can check\n")
+        print(explain.table(schedule, impact))
+
+        print("\n'hidden' is slip the dependency chain implies that the sheet")
+        print("does not show. It is the only column a PM cannot read off their")
+        print("own spreadsheet.\n")
+
+        targets = (
+            [t.entity_id for t in tasks if t.entity_id.endswith(args.task)]
+            if args.task
+            else [p.entity_id for p in impact.inconsistent()]
+        )
+
+        if targets:
+            print("WORKING\n")
+            for entity_id in targets:
+                print(explain.working(schedule, impact, entity_id))
+                print()
+
+        if schedule.dropped:
+            print(f"EDGES REFUSED ({len(schedule.dropped)})\n")
+            for edge, reason in schedule.dropped:
+                print(f"  {edge.predecessor_id} -> {edge.successor_id}: {reason}")
+            print()
+
+        print("DRIVING PATH")
+        print("  " + " -> ".join(
+            e.split(":")[-1] for e in impact.driving_path
+        ) or "  (none)")
+        print(
+            f"  project finish: planned {impact.project_end_planned}, "
+            f"projected {impact.project_end_projected} "
+            f"({impact.project_slip_days} day(s))"
+        )
+
+        if stated.project_end_projected != impact.project_end_projected:
+            print(
+                f"\n  Using ONLY human-stated dependencies the projection is "
+                f"{stated.project_end_projected} instead. The difference rests on "
+                "inferred edges."
+            )
+
+        if args.scalars:
+            qa = []
+            context = build_context(
+                project_id=args.project,
+                as_of=impact.project_end_projected or datetime.now(timezone.utc).date(),
+                schedule=schedule,
+                impact=impact,
+                edges=edges,
+                qa_items=qa,
+            )
+            print("\nCONTEXT SCALARS - what every rule compares against\n")
+            for key, value in sorted(context.as_record().items()):
+                print(f"  {key:32} {value}")
+
+
 def main() -> None:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
 
@@ -189,6 +341,32 @@ def main() -> None:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init").set_defaults(func=cmd_init)
+
+    insight = sub.add_parser("insight", help="run the intelligence layer")
+    insight.add_argument("--project", default="excel:Project:1:HRMS")
+    insight.add_argument(
+        "--also",
+        action="append",
+        help="the same delivery project as another source names it, e.g. "
+             "jira:Project:1:HRMS",
+    )
+    insight.add_argument(
+        "--narrative", action="store_true", help="print the narrative summary too"
+    )
+    insight.set_defaults(func=cmd_insight)
+
+    explain_cmd = sub.add_parser(
+        "explain", help="show the arithmetic behind every number"
+    )
+    explain_cmd.add_argument("--project", default="excel:Project:1:HRMS")
+    explain_cmd.add_argument("--also", action="append")
+    explain_cmd.add_argument(
+        "--task", help="long-hand working for one task, e.g. WBS-114"
+    )
+    explain_cmd.add_argument(
+        "--scalars", action="store_true", help="also print every rule input"
+    )
+    explain_cmd.set_defaults(func=cmd_explain)
 
     run_parser = sub.add_parser("run")
     run_parser.add_argument("--source", default="excel",
