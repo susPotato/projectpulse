@@ -19,16 +19,20 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.ids import domain_id
+from app.ingest.sources.excel.dependencies import (
+    SOURCE_STATED,
+    resolve_edges,
+)
 from app.ingest.sources.excel.identity import (
     MissingKeyColumn,
     resolve_identities,
 )
 from app.ingest.sources.excel.reader import SheetContract, read_sheet, sha256_file
 from app.ingest.sources.excel.snapshot_diff import diff_snapshot, normalized_payload
-from app.models.domain import PRECISION_BOUNDED, StateChange
+from app.models.domain import PRECISION_BOUNDED, Dependency, StateChange
 from app.models.raw import RawExcelRows
 from app.models.sync import RawReject, SheetScan
 from app.models.tool import ToolExcelRow
@@ -44,6 +48,13 @@ class IngestReport:
     rows_rejected: int = 0
     changes_emitted: int = 0
     low_confidence_changes: int = 0
+    #: Edges a human wrote in the Predecessor column.
+    deps_stated: int = 0
+    #: Edges we inferred from the sheet's own dates. Counted separately because
+    #: the two carry different authority - see `dependencies.py`.
+    deps_inferred: int = 0
+    #: Domain rows written by the convertor.
+    rows_converted: int = 0
     unknown_headers: list[str] = field(default_factory=list)
     error: str | None = None
 
@@ -79,6 +90,8 @@ def ingest_sheet(
     project_id: str,
     now: datetime,
     sync_run_id: int | None = None,
+    logical_name: str | None = None,
+    display_uri: str | None = None,
 ) -> IngestReport:
     """Ingest one sheet of one workbook.
 
@@ -86,16 +99,48 @@ def ingest_sheet(
     sync across the others. The exception is a sheet with no identity column,
     which is recorded as an error on the report and skipped entirely - guessing
     identity would be worse than ingesting nothing.
+
+    Args:
+        file_path: somewhere openpyxl can open. May be a temp file; nothing here
+            depends on where it is.
+        logical_name: the sheet's stable identity, from
+            :attr:`~app.ingest.sources.excel.transport.WatchedSheet.file_name`.
+            **Half of the scope key, so it must not vary with the transport** - if
+            it did, a downloaded copy would look like a sheet we had never seen,
+            losing the baseline and manufacturing a change for every row. Defaults
+            to the local file name, which is correct only when the two coincide.
+        display_uri: where a human can find this document, for the evidence panel.
+            Defaults to the local path.
     """
     file_path = Path(file_path)
-    scope = f"{file_path.name}#{sheet_name}"
+    scope = f"{logical_name or file_path.name}#{sheet_name}"
+    # Never the temp path: a PM clicking through to evidence has to land on a
+    # document they can actually open.
+    origin = display_uri or f"file://{file_path.as_posix()}"
     report = IngestReport(scope=scope)
     params = json.dumps({"connection_id": connection_id, "scope": scope})
 
     previous_scan = _last_scan(session, source, scope)
 
-    # Unchanged bytes: nothing to do. This is what makes frequent polling cheap.
+    # Unchanged bytes: skip the parse and the diff, which is what makes frequent
+    # polling cheap. Record the scan anyway - it costs one row and it is evidence
+    # that nothing had happened yet at this moment, which tightens the lower bound
+    # of whatever the *next* scan finds. Returning early here instead would leave
+    # consecutive changes sharing a boundary instant, and two events that share a
+    # boundary can never be ordered.
     if previous_scan is not None and previous_scan.sha256 == sha256_file(file_path):
+        session.add(
+            SheetScan(
+                source=source,
+                scope=scope,
+                file_path=origin,
+                sheet_name=sheet_name,
+                sha256=previous_scan.sha256,
+                scanned_at=now,
+                row_count=previous_scan.row_count,
+                changed=False,
+            )
+        )
         report.skipped_unchanged = True
         return report
 
@@ -119,7 +164,8 @@ def ingest_sheet(
         session.add(
             RawReject(
                 sync_run_id=sync_run_id,
-                file_path=str(file_path),
+                project_id=project_id,
+                file_path=origin,
                 sheet_name=sheet_name,
                 row_index=read.header_row,
                 raw_row={},
@@ -133,7 +179,8 @@ def ingest_sheet(
         session.add(
             RawReject(
                 sync_run_id=sync_run_id,
-                file_path=str(file_path),
+                project_id=project_id,
+                file_path=origin,
                 sheet_name=sheet_name,
                 row_index=rejection.row_index,
                 # Normalized so the quarantined row is JSON-storable; a rejected
@@ -147,7 +194,7 @@ def ingest_sheet(
     scan = SheetScan(
         source=source,
         scope=scope,
-        file_path=str(file_path),
+        file_path=origin,
         sheet_name=sheet_name,
         sha256=read.sha256,
         scanned_at=now,
@@ -164,7 +211,7 @@ def ingest_sheet(
         raw_row = RawExcelRows(
             params=params,
             data=json.dumps(row.payload, default=str).encode("utf-8"),
-            url=f"file://{file_path.as_posix()}#{sheet_name}!row{row.row_index}",
+            url=f"{origin}#{sheet_name}!row{row.row_index}",
             input=json.dumps({"row_key": row.row_key, "row_index": row.row_index}),
             fetched_at=now,
         )
@@ -221,6 +268,68 @@ def ingest_sheet(
             report.low_confidence_changes += 1
 
     report.changes_emitted = len(diff.changes)
+
+    # ----------------------------------------------------------------------
+    # Dependency edges. Only sheets whose contract declares a predecessor
+    # column can produce them; a worklog has no schedule sequence to state.
+    # ----------------------------------------------------------------------
+    if "predecessor" in contract.canonical_fields():
+        edges = resolve_edges(resolved)
+
+        for rejection in edges.rejects:
+            session.add(
+                RawReject(
+                    sync_run_id=sync_run_id,
+                    project_id=project_id,
+                    file_path=origin,
+                    sheet_name=sheet_name,
+                    row_index=rejection.row_index,
+                    raw_row=normalized_payload(rejection.raw_row),
+                    reason=rejection.reason,
+                )
+            )
+        report.rows_rejected += len(edges.rejects)
+
+        # Replace rather than merge. The sheet is the sole authority for its own
+        # edges, so an edge whose Predecessor cell was *cleared* has to disappear
+        # - a merge-only path would leave it behind forever and the schedule
+        # engine would keep traversing a dependency the PM already deleted.
+        session.execute(
+            delete(Dependency).where(Dependency.raw_data_params == params)
+        )
+
+        for edge in edges.edges:
+            dependency = Dependency(
+                id=domain_id(
+                    source,
+                    "Dependency",
+                    connection_id,
+                    edge.predecessor_key,
+                    edge.successor_key,
+                ),
+                project_id=project_id,
+                predecessor_id=domain_id(
+                    source, entity_name, connection_id, edge.predecessor_key
+                ),
+                successor_id=domain_id(
+                    source, entity_name, connection_id, edge.successor_key
+                ),
+                dep_type=edge.dep_type,
+                lag_days=edge.lag_days,
+                source=edge.source,
+            )
+            # Provenance points at the row that carried the edge, so clicking an
+            # edge in the evidence panel opens the cell it came from.
+            dependency.raw_data_table = RawExcelRows.__tablename__
+            dependency.raw_data_params = params
+            dependency.raw_data_id = raw_ids.get(edge.stated_by_key)
+            dependency.raw_data_remark = f"{sheet_name}!{edge.stated_by_key}"
+            session.merge(dependency)
+
+            if edge.source == SOURCE_STATED:
+                report.deps_stated += 1
+            else:
+                report.deps_inferred += 1
 
     # The tool layer becomes the baseline for next scan.
     for row in resolved:

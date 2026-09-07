@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     JSON,
     DateTime,
     ForeignKey,
@@ -84,6 +85,14 @@ class SheetScan(Base):
     lower bound for every change this scan detects - without this table there is no
     honest lower bound, and every Excel change would have to claim it happened at
     the instant we noticed.
+
+    **A scan that found nothing is still recorded**, with ``changed=False``. It
+    costs one row and it is evidence: it proves the change had not happened yet at
+    that moment, which tightens the lower bound of whatever is found next. Skipping
+    the row - the obvious optimisation - silently widens every subsequent interval
+    back to the last *changed* scan, and two bounded changes in adjacent windows can
+    then never be ordered, because they share a boundary instant. That would leave
+    the causal engine unable to prove anything from a spreadsheet-only project.
     """
 
     __tablename__ = "sheet_scans"
@@ -96,6 +105,9 @@ class SheetScan(Base):
     sha256: Mapped[str] = mapped_column(String(64))
     scanned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     row_count: Mapped[int] = mapped_column(Integer, default=0)
+    #: False when the bytes were identical to the last scan. Such a scan still
+    #: bounds the next change - see the class docstring.
+    changed: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class RawReject(Base):
@@ -112,6 +124,10 @@ class RawReject(Base):
     sync_run_id: Mapped[int | None] = mapped_column(
         ForeignKey("sync_runs.id"), default=None
     )
+    #: Which project's data this row belonged to. Without it a portfolio-wide
+    #: reject count gets attributed to whichever project is being analysed, and a
+    #: PM sees another team's data-quality problem reported as their own.
+    project_id: Mapped[str | None] = mapped_column(String(255), index=True, default=None)
     file_path: Mapped[str | None] = mapped_column(Text, default=None)
     sheet_name: Mapped[str | None] = mapped_column(Text, default=None)
     row_index: Mapped[int | None] = mapped_column(Integer, default=None)
