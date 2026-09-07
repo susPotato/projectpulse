@@ -1,0 +1,44 @@
+# Vendored reference repositories — read-only, never run, and each carries its own
+# .git. Cloned fresh when needed:
+#   git clone --depth 1 https://github.com/apache/devlake
+#   git clone --depth 1 https://github.com/awsm-research/gpt2sp
+devlake/
+gpt2sp/
+
+# Python
+.venv/
+.venv-broken-*/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Local database
+*.db
+pulse.db
+
+# Generated demo data — rebuild with:
+#   python -m scripts.gen_demo_data --step 0
+#   python -m scripts.gen_jira_data
+projectpulse/data/demo/*.xlsx
+projectpulse/data/demo/jira/*.json
+
+# Node / Cloudflare
+node_modules/
+.wrangler/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Office lock files
+~$*
+
+# Competition source material, deliberately not published.
+# These are inputs rather than deliverables, and the kickoff recording is an
+# auto-transcribed meeting naming ~10 colleagues - not ours to republish.
+Kickoff*.docx
+PiMSatho_Overview.xlsx
+ProjectPulseAI_PiMSathon.pptx

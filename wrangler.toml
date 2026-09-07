@@ -1,0 +1,10 @@
+# Cloudflare Pages project for the architecture page.
+#
+# With pages_build_output_dir set, a redeploy is just:
+#     npx wrangler pages deploy
+#
+# There is no build step: site/index.html is hand-authored and self-contained
+# apart from the Google Fonts stylesheet.
+name = "projectpulse-arch"
+pages_build_output_dir = "site"
+compatibility_date = "2026-09-06"

@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retriever console</title>
+<style>
+:root{
+  --navy:#0D2B5E; --blue:#1565C0; --orange:#C4550E; --orange-fill:#F47920;
+  --green:#157F4A; --red:#C0392B; --amber:#B4530C;
+  --ink:#101A2C; --ink-2:#5A6678; --ink-3:#8A94A6;
+  --bg:#F5F7FA; --surface:#fff; --rule:#DCE2EB; --rule-2:#EDF0F5;
+}
+@media (prefers-color-scheme:dark){:root{
+  --navy:#3E7BD1; --blue:#5E9BE8; --orange:#FF9E52; --orange-fill:#E8731C;
+  --green:#42C98A; --red:#E8705F; --amber:#E9903F;
+  --ink:#E8EDF4; --ink-2:#9DA9BA; --ink-3:#6F7C8F;
+  --bg:#0D1219; --surface:#151D28; --rule:#26313F; --rule-2:#1C2531;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 'Segoe UI',system-ui,sans-serif;padding:20px}
+.wrap{max-width:1180px;margin:auto}
+h1{font-size:20px;margin:0 0 2px}
+.sub{color:var(--ink-2);margin:0 0 18px;font-size:13px}
+.mono{font-family:'Cascadia Mono',Consolas,ui-monospace,monospace}
+
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);
+     border:1px solid var(--rule);border-radius:6px;padding:10px 12px;margin-bottom:10px}
+.bar label{color:var(--ink-2);font-size:12px}
+button{font:inherit;padding:6px 12px;border-radius:5px;border:1px solid var(--rule);
+       background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--blue)}
+button.primary{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600}
+button.ghost{color:var(--ink-2);font-size:13px}
+button:disabled{opacity:.5;cursor:default}
+input[type=text]{font:inherit;padding:6px 8px;border:1px solid var(--rule);border-radius:5px;
+                 background:var(--surface);color:var(--ink);width:190px}
+.spacer{flex:1}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:12px}
+.stat{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:10px 12px}
+.stat b{display:block;font-size:22px;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat span{color:var(--ink-3);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+@media (max-width:900px){.cols{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;margin-bottom:12px;overflow:hidden}
+.card h2{font-size:13px;margin:0;padding:9px 12px;border-bottom:1px solid var(--rule);
+         color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+.card .body{padding:10px 12px;max-height:360px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--ink-3);font-weight:600;font-size:11px;text-transform:uppercase;
+   letter-spacing:.05em;padding:4px 6px;border-bottom:1px solid var(--rule)}
+td{padding:4px 6px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+
+.pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;font-weight:600}
+.p-exact{background:var(--navy);color:#fff}
+.p-bounded{background:var(--rule-2);color:var(--ink-2);border:1px solid var(--rule)}
+.c-low{background:var(--amber);color:#fff}
+.tag-excel{color:var(--green)} .tag-jira{color:var(--blue)}
+.dirty{color:var(--orange);font-weight:600}
+.clean{color:var(--ink-3)}
+.empty{color:var(--ink-3);font-style:italic;padding:6px}
+.reason{color:var(--ink-2)}
+.win{color:var(--ink-3);font-size:11px;white-space:nowrap}
+#log{background:var(--rule-2);border-radius:5px;padding:8px 10px;font-size:12px;
+     white-space:pre-wrap;min-height:20px;color:var(--ink-2);margin-bottom:12px}
+.path{color:var(--ink-3);font-size:11px;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Retriever console</h1>
+  <p class="sub">Edit the workbooks in Excel or the Jira JSON in any editor, then press Sync and watch what comes out. Auto-refreshes every 2s.</p>
+
+  <div class="bar">
+    <button class="primary" onclick="sync('excel')">Sync Excel</button>
+    <button class="primary" onclick="sync('jira_replay')">Sync Jira</button>
+    <label for="now">scan time</label>
+    <input id="now" type="text" class="mono" placeholder="now" value="">
+    <span class="spacer"></span>
+    <button class="ghost" onclick="reset()">Reset database</button>
+  </div>
+
+  <div class="bar">
+    <label>guided tour</label>
+    <button onclick="step(0)">1 &middot; baseline sheets</button>
+    <button onclick="writeJira()">2 &middot; Jira payloads</button>
+    <button onclick="step(1)">3 &middot; environment slips</button>
+    <button onclick="step(2)">4 &middot; QA backlog grows</button>
+    <span class="spacer"></span>
+    <button class="ghost" onclick="tour()">Run whole tour</button>
+  </div>
+
+  <div id="log">ready</div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h2>Watched files</h2>
+        <div class="body" id="files"></div>
+      </div>
+      <div class="card">
+        <h2>Refused rows</h2>
+        <div class="body" id="rejects"></div>
+      </div>
+      <div class="card">
+        <h2>Sync runs</h2>
+        <div class="body" id="runs"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>State changes</h2>
+        <div class="body" id="changes"></div>
+      </div>
+      <div class="card">
+        <h2>Provable orderings &mdash; exact event before a bounded one</h2>
+        <div class="body" id="pairs"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = iso => iso ? new Date(iso).toLocaleString(undefined,
+  {month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
+
+let busy = false;
+
+function log(msg){ $('log').textContent = msg; }
+
+async function post(url, body){
+  busy = true;
+  try {
+    const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'},
+                               body: JSON.stringify(body || {})});
+    return await r.json();
+  } finally { busy = false; }
+}
+
+async function sync(source){
+  log(`syncing ${source}…`);
+  const res = await post('/api/sync', {source, now: $('now').value.trim() || null});
+  if (!res.ok) { log(`FAILED — ${res.error}`); return; }
+  const notes = (res.notes || []).map(n => '  • ' + n).join('\n');
+  log(`run #${res.run_id} ${res.status} at ${fmt(res.at)}\n`
+    + `  ${res.rows_ok} rows, ${res.changes_emitted} changes, ${res.rows_rejected} refused\n${notes}`);
+  refresh();
+}
+
+async function step(n){
+  const res = await post('/api/write-step', {step:n});
+  log(res.output);
+  refresh();
+}
+
+async function writeJira(){
+  const res = await post('/api/write-jira', {});
+  log(res.output);
+  refresh();
+}
+
+async function reset(){
+  await post('/api/reset', {});
+  log('database reset — schema recreated, all history cleared');
+  refresh();
+}
+
+// The scripted timeline. Scan times matter: a scan has to fall between the Jira
+// event and the QA backlog growth, or their intervals overlap and the ordering
+// cannot be proven.
+async function tour(){
+  await post('/api/reset', {});
+  await post('/api/write-jira', {});
+  await post('/api/write-step', {step:0});
+  await post('/api/sync', {source:'excel', now:'2026-03-02T09:00'});
+  await post('/api/sync', {source:'jira_replay', now:'2026-03-04T12:00'});
+  await post('/api/write-step', {step:1});
+  await post('/api/sync', {source:'excel', now:'2026-03-06T09:00'});
+  await post('/api/write-step', {step:2});
+  await post('/api/sync', {source:'excel', now:'2026-03-18T09:00'});
+  log('tour complete — 4 scans across March, two sources.\n'
+    + 'Look at "Provable orderings": those exist only because Jira supplied exact timestamps.');
+  refresh();
+}
+
+function renderStats(c){
+  const cells = [
+    ['changes', c.changes],
+    ['exact', c.exact],
+    ['bounded', c.bounded],
+    ['low confidence', c.low_confidence],
+    ['orderable pairs', `${c.orderable}<span style="color:var(--ink-3);font-size:13px"> / ${c.total_pairs}</span>`],
+    ['refused', c.rejects],
+  ];
+  $('stats').innerHTML = cells.map(([k,v]) =>
+    `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+}
+
+function renderFiles(state){
+  let html = '<table><tr><th>sheet</th><th>last scan</th><th>rows</th><th>status</th></tr>';
+  for (const f of state.files){
+    let status = '<span class="clean">up to date</span>';
+    if (!f.exists) status = '<span class="clean">file missing</span>';
+    else if (f.never_scanned) status = '<span class="dirty">never scanned</span>';
+    else if (f.dirty) status = '<span class="dirty">edited &mdash; sync to ingest</span>';
+    html += `<tr><td class="mono">${esc(f.scope)}<div class="path">${esc(f.path)}</div></td>`
+          + `<td class="win">${fmt(f.last_scan)}</td><td>${f.rows}</td><td>${status}</td></tr>`;
+  }
+  html += '</table>';
+  const j = state.jira;
+  html += `<table style="margin-top:10px"><tr><th>jira payloads</th><th>issues</th><th>field changes</th></tr>`
+        + `<tr><td class="mono">${j.files.length ? j.files.map(esc).join(', ') : '—'}`
+        + `<div class="path">${esc(j.dir)}</div></td>`
+        + `<td>${j.issues}</td><td>${j.field_changes}</td></tr></table>`;
+  $('files').innerHTML = html;
+}
+
+function renderChanges(rows){
+  if (!rows.length){ $('changes').innerHTML = '<div class="empty">no state changes yet</div>'; return; }
+  let html = '<table><tr><th>entity</th><th>field</th><th>change</th><th>when</th><th>precision</th></tr>';
+  for (const c of rows){
+    const conf = c.confidence === 'low' ? ' <span class="pill c-low">low id</span>' : '';
+    const win = c.precision === 'exact'
+      ? fmt(c.upper)
+      : `${fmt(c.lower)} → ${fmt(c.upper)}`;
+    html += `<tr><td class="mono tag-${esc(c.source)}">${esc(c.entity)}</td>`
+          + `<td class="mono">${esc(c.field)}</td>`
+          + `<td>${esc(c.old ?? '—')} <span style="color:var(--ink-3)">→</span> <b>${esc(c.new ?? '—')}</b></td>`
+          + `<td class="win">${win}</td>`
+          + `<td><span class="pill p-${esc(c.precision)}">${esc(c.precision)}</span>${conf}</td></tr>`;
+  }
+  $('changes').innerHTML = html + '</table>';
+}
+
+function renderPairs(pairs){
+  if (!pairs.length){
+    $('pairs').innerHTML = '<div class="empty">nothing is orderable yet — '
+      + 'with only bounded changes from one scan window, no causal chain can be built. '
+      + 'Sync Jira to add exact timestamps.</div>';
+    return;
+  }
+  let html = '<table><tr><th>earlier (exact)</th><th>later (bounded)</th><th>basis</th></tr>';
+  for (const p of pairs){
+    html += `<tr><td class="mono">${esc(p.earlier)}</td><td class="mono">${esc(p.later)}</td>`
+          + `<td class="mono" style="color:var(--green)">${esc(p.basis)}</td></tr>`;
+  }
+  $('pairs').innerHTML = html + '</table>';
+}
+
+function renderRejects(rows){
+  if (!rows.length){ $('rejects').innerHTML = '<div class="empty">nothing refused</div>'; return; }
+  $('rejects').innerHTML = '<table>' + rows.map(r =>
+    `<tr><td class="mono" style="white-space:nowrap">${esc(r.where)}</td>`
+    + `<td class="reason">${esc(r.reason)}</td></tr>`).join('') + '</table>';
+}
+
+function renderRuns(rows){
+  if (!rows.length){ $('runs').innerHTML = '<div class="empty">no syncs yet</div>'; return; }
+  let html = '<table><tr><th>#</th><th>source</th><th>at</th><th>rows</th><th>changes</th><th>status</th></tr>';
+  for (const r of rows){
+    html += `<tr><td>${r.id}</td><td class="mono tag-${r.source.startsWith('jira')?'jira':'excel'}">${esc(r.source)}</td>`
+          + `<td class="win">${fmt(r.at)}</td><td>${r.rows_ok}</td><td>${r.changes}</td>`
+          + `<td style="color:${r.status==='success'?'var(--green)':'var(--red)'}">${esc(r.status)}</td></tr>`;
+  }
+  $('runs').innerHTML = html + '</table>';
+}
+
+async function refresh(){
+  if (busy) return;
+  try {
+    const s = await (await fetch('/api/state')).json();
+    renderStats(s.counts);
+    renderFiles(s);
+    renderChanges(s.changes);
+    renderPairs(s.cross_pairs);
+    renderRejects(s.rejects);
+    renderRuns(s.runs);
+  } catch (e) { /* server restarting; next tick will pick it up */ }
+}
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

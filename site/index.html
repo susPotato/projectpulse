@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="How ProjectPulseAI turns fragmented project data into evidence-backed insight: a deterministic pipeline that computes every number, and a language model that only writes the sentences.">
+<meta property="og:title" content="Compute First, Narrate Second">
+<meta property="og:description" content="How ProjectPulseAI turns fragmented project data into evidence-backed insight: a deterministic pipeline that computes every number, and a language model that only writes the sentences.">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root{color-scheme:light dark}
+  body{margin:0}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+<title>Compute First, Narrate Second</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600;700&display=swap">
+
+<style>
+:root{
+  --ground:#F5F7FA;
+  --surface:#FFFFFF;
+  --ink:#101A2C;
+  --ink-2:#5A6678;
+  --ink-3:#8A94A6;
+  --rule:#DCE2EB;
+  --rule-2:#EDF0F5;
+
+  --compute:#0D2B5E;
+  --compute-ink:#FFFFFF;
+  --compute-soft:#E8EDF5;
+
+  --gen:#C4550E;
+  --gen-fill:#F47920;
+  --gen-ink:#FFFFFF;
+  --gen-soft:#FDEEE1;
+
+  --blue:#1565C0;
+  --blue-soft:#E4EDF9;
+  --ok:#157F4A;
+  --warn:#B4530C;
+  --warn-soft:#FBEADB;
+
+  --measure:41rem;
+  --wide:60rem;
+}
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1219;
+    --surface:#151D28;
+    --ink:#E8EDF4;
+    --ink-2:#9DA9BA;
+    --ink-3:#6F7C8F;
+    --rule:#26313F;
+    --rule-2:#1C2531;
+
+    --compute:#3E7BD1;
+    --compute-ink:#08101C;
+    --compute-soft:#18283F;
+
+    --gen:#FF9E52;
+    --gen-fill:#E8731C;
+    --gen-ink:#120A03;
+    --gen-soft:#2E1D0F;
+
+    --blue:#5E9BE8;
+    --blue-soft:#152438;
+    --ok:#42C98A;
+    --warn:#E9903F;
+    --warn-soft:#2E1E10;
+  }
+}
+
+:root[data-theme="dark"]{
+  --ground:#0D1219;
+  --surface:#151D28;
+  --ink:#E8EDF4;
+  --ink-2:#9DA9BA;
+  --ink-3:#6F7C8F;
+  --rule:#26313F;
+  --rule-2:#1C2531;
+
+  --compute:#3E7BD1;
+  --compute-ink:#08101C;
+  --compute-soft:#18283F;
+
+  --gen:#FF9E52;
+  --gen-fill:#E8731C;
+  --gen-ink:#120A03;
+  --gen-soft:#2E1D0F;
+
+  --blue:#5E9BE8;
+  --blue-soft:#152438;
+  --ok:#42C98A;
+  --warn:#E9903F;
+  --warn-soft:#2E1E10;
+}
+
+*{box-sizing:border-box}
+
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:17px;
+  line-height:1.65;
+  margin:0;
+  padding:clamp(2rem,6vw,5rem) clamp(1rem,4vw,2rem) 5rem;
+  -webkit-font-smoothing:antialiased;
+}
+
+.wrap{max-width:var(--wide);margin-inline:auto}
+.prose{max-width:var(--measure);margin-inline:auto}
+.prose > * + *{margin-top:1.1em}
+
+/* ---- masthead ---- */
+
+.eyebrow{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  margin:0 0 1.1rem;
+}
+
+h1{
+  font-family:'IBM Plex Serif',Georgia,serif;
+  font-weight:700;
+  font-size:clamp(2.1rem,5.4vw,3.1rem);
+  line-height:1.1;
+  letter-spacing:-.018em;
+  text-wrap:balance;
+  margin:0;
+}
+
+.standfirst{
+  font-size:1.12rem;
+  color:var(--ink-2);
+  text-wrap:pretty;
+  margin-top:1.1rem;
+}
+
+.masthead{
+  border-bottom:1px solid var(--rule);
+  padding-bottom:2.4rem;
+  margin-bottom:3rem;
+}
+
+h2{
+  font-family:'IBM Plex Serif',Georgia,serif;
+  font-weight:600;
+  font-size:1.42rem;
+  letter-spacing:-.012em;
+  line-height:1.25;
+  text-wrap:balance;
+  margin:0;
+}
+
+section{margin-top:3.6rem}
+section > .prose > h2:first-child{margin-bottom:.2em}
+
+strong{font-weight:600}
+
+code,.mono{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:.86em;
+}
+code{
+  background:var(--rule-2);
+  border-radius:3px;
+  padding:.1em .34em;
+}
+
+/* ---- figures ---- */
+
+figure{
+  margin:2.4rem 0 0;
+  max-width:var(--wide);
+}
+.figbox{
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-radius:6px;
+  padding:1.5rem 1.25rem 1.25rem;
+  overflow-x:auto;
+}
+figure svg{
+  display:block;
+  width:100%;
+  min-width:640px;
+  height:auto;
+  color:var(--ink-3);
+}
+figcaption{
+  max-width:var(--measure);
+  margin:1rem auto 0;
+  font-size:.94rem;
+  line-height:1.6;
+  color:var(--ink-2);
+}
+figcaption b{color:var(--ink);font-weight:600}
+
+/* svg primitives */
+.s-box{fill:var(--surface);stroke:var(--rule);stroke-width:1.2}
+.s-box-q{fill:var(--rule-2);stroke:var(--rule);stroke-width:1.2}
+.s-strong{fill:var(--compute);stroke:none}
+.s-gen{fill:var(--gen-fill);stroke:none}
+.s-gen-ring{fill:none;stroke:var(--gen);stroke-width:1.3;stroke-dasharray:5 4}
+.s-name{fill:var(--ink);font:600 11.5px 'IBM Plex Sans',sans-serif}
+.s-name-i{fill:var(--compute-ink);font:600 12.5px 'IBM Plex Sans',sans-serif}
+.s-name-g{fill:var(--gen-ink);font:600 12.5px 'IBM Plex Sans',sans-serif}
+.s-sub{fill:var(--ink-3);font:400 9px 'IBM Plex Mono',monospace}
+.s-sub-i{fill:var(--compute-ink);font:400 9px 'IBM Plex Mono',monospace;opacity:.82}
+.s-sub-g{fill:var(--gen-ink);font:400 9px 'IBM Plex Mono',monospace;opacity:.86}
+.s-cap{fill:var(--ink-3);font:400 9px 'IBM Plex Mono',monospace;letter-spacing:.1em}
+.s-edge{stroke:currentColor;stroke-width:1.1;fill:none;opacity:.55}
+.s-arrowlbl{fill:var(--ink-2);font:400 9px 'IBM Plex Mono',monospace}
+.s-band-c{stroke:var(--compute);stroke-width:2.5;fill:none}
+.s-band-g{stroke:var(--gen);stroke-width:2.5;fill:none}
+.s-bandlbl-c{fill:var(--compute);font:500 9.5px 'IBM Plex Mono',monospace}
+.s-bandlbl-g{fill:var(--gen);font:500 9.5px 'IBM Plex Mono',monospace}
+.s-genlbl{fill:var(--gen);font:500 9.5px 'IBM Plex Mono',monospace}
+
+.s-axis{stroke:var(--rule);stroke-width:1.2}
+.s-exact{stroke:var(--compute);stroke-width:1.6}
+.s-exact-d{fill:var(--compute)}
+.s-bar{fill:var(--blue-soft);stroke:var(--blue);stroke-width:1.2}
+.s-bar-e{stroke:var(--blue);stroke-width:1.1;opacity:.75}
+.s-ev{fill:var(--ink);font:600 11px 'IBM Plex Sans',sans-serif}
+.s-evsub{fill:var(--ink-3);font:400 9px 'IBM Plex Mono',monospace}
+.s-tiny{fill:var(--ink-3);font:400 8.5px 'IBM Plex Mono',monospace}
+.s-verdict{fill:var(--ink);font:400 10.5px 'IBM Plex Sans',sans-serif}
+.s-hd-ok{fill:var(--ok);font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.11em}
+.s-hd-warn{fill:var(--warn);font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.11em}
+.s-hd-rest{fill:var(--ink-2);font:400 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:0}
+.s-dot-ok{fill:var(--ok)}
+.s-dot-warn{fill:var(--warn)}
+.s-overlap{fill:var(--warn);opacity:.13}
+
+/* ---- producers table ---- */
+
+.producers{
+  max-width:var(--measure);
+  margin:1.6rem auto 0;
+  border-top:1px solid var(--rule);
+}
+.prow{
+  display:grid;
+  grid-template-columns:7.5rem 1fr;
+  gap:0 1.2rem;
+  padding:.85rem 0;
+  border-bottom:1px solid var(--rule);
+  align-items:baseline;
+}
+.prow dt{
+  font-weight:600;
+  font-size:.98rem;
+}
+.prow dd{margin:0}
+.prow .q{
+  font-family:'IBM Plex Serif',Georgia,serif;
+  font-style:italic;
+  color:var(--ink);
+}
+.prow .how{
+  display:block;
+  font-size:.88rem;
+  color:var(--ink-2);
+  margin-top:.15rem;
+}
+@media (max-width:34rem){
+  .prow{grid-template-columns:1fr;gap:.2rem}
+}
+
+/* ---- rules-out list ---- */
+
+.rules-out{
+  max-width:var(--measure);
+  margin:1.6rem auto 0;
+  padding:0;
+  list-style:none;
+}
+.rules-out li{
+  padding:.9rem 0 .9rem 1.4rem;
+  border-top:1px solid var(--rule);
+  position:relative;
+}
+.rules-out li:last-child{border-bottom:1px solid var(--rule)}
+.rules-out li::before{
+  content:"";
+  position:absolute;
+  left:0;top:1.42rem;
+  width:.42rem;height:.42rem;
+  background:var(--gen);
+  border-radius:50%;
+}
+.rules-out b{display:block;font-weight:600}
+.rules-out span{color:var(--ink-2);font-size:.95rem}
+
+/* ---- footer ---- */
+
+footer{
+  max-width:var(--measure);
+  margin:4.5rem auto 0;
+  padding-top:1.5rem;
+  border-top:1px solid var(--rule);
+  font-size:.88rem;
+  color:var(--ink-3);
+}
+footer p{margin:.4rem 0}
+footer .mono{color:var(--ink-2)}
+
+a{color:var(--blue)}
+a:focus-visible,:focus-visible{
+  outline:2px solid var(--blue);
+  outline-offset:2px;
+  border-radius:2px;
+}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+
+  <header class="masthead prose">
+    <p class="eyebrow">ProjectPulseAI &middot; delivery intelligence</p>
+    <h1>Compute first, narrate second.</h1>
+    <p class="standfirst">
+      A project manager asks four questions: what is at risk, why is it happening, what will it
+      impact, and what should I do next. This system answers all four with rules, graph traversal
+      and arithmetic &mdash; then hands the finished answer to a language model whose only job is
+      to put it into sentences it is not permitted to change.
+    </p>
+  </header>
+
+  <section>
+    <div class="prose">
+      <h2>The pipeline</h2>
+      <p>
+        Everything up to and including the assembler is deterministic. The model sits at the far
+        end, receives findings it did not produce, and returns prose &mdash; never a figure.
+      </p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 300" role="img"
+             aria-label="Data flows from Jira, Excel and documents into PostgreSQL, then to four parallel producers — rules, schedule, temporal and retrieval — which converge on an assembler where every number and date originates. The assembler passes findings and placeholder tokens to a language model, the only generative step, whose validated output has numbers substituted before reaching the insight card.">
+          <defs>
+            <marker id="arw" viewBox="0 0 8 8" refX="7.2" refY="4"
+                    markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 Z" fill="currentColor" opacity=".55"/>
+            </marker>
+          </defs>
+
+          <!-- sources -->
+          <text class="s-cap" x="54" y="85" text-anchor="middle">SOURCES</text>
+          <rect class="s-box" x="12" y="95"  width="84" height="28" rx="3"/>
+          <rect class="s-box" x="12" y="131" width="84" height="28" rx="3"/>
+          <rect class="s-box" x="12" y="167" width="84" height="28" rx="3"/>
+          <text class="s-name" x="54" y="113" text-anchor="middle">Jira</text>
+          <text class="s-name" x="54" y="149" text-anchor="middle">Excel</text>
+          <text class="s-name" x="54" y="185" text-anchor="middle">Docs</text>
+
+          <path class="s-edge" d="M98 109 L126 137"  marker-end="url(#arw)"/>
+          <path class="s-edge" d="M98 145 L126 143"  marker-end="url(#arw)"/>
+          <path class="s-edge" d="M98 181 L126 149"  marker-end="url(#arw)"/>
+
+          <!-- store -->
+          <rect class="s-box-q" x="132" y="95" width="100" height="96" rx="5"/>
+          <text class="s-name" x="182" y="137" text-anchor="middle">PostgreSQL</text>
+          <text class="s-sub"  x="182" y="154" text-anchor="middle">normalized</text>
+          <text class="s-sub"  x="182" y="167" text-anchor="middle">+ history</text>
+
+          <path class="s-edge" d="M234 143 L268 62"  marker-end="url(#arw)"/>
+          <path class="s-edge" d="M234 143 L268 116" marker-end="url(#arw)"/>
+          <path class="s-edge" d="M234 143 L268 170" marker-end="url(#arw)"/>
+          <path class="s-edge" d="M234 143 L268 224" marker-end="url(#arw)"/>
+
+          <!-- producers -->
+          <text class="s-cap" x="342" y="22" text-anchor="middle">FOUR PRODUCERS</text>
+          <rect class="s-box" x="272" y="36"  width="140" height="46" rx="4"/>
+          <rect class="s-box" x="272" y="92"  width="140" height="46" rx="4"/>
+          <rect class="s-box" x="272" y="148" width="140" height="46" rx="4"/>
+          <rect class="s-box" x="272" y="204" width="140" height="46" rx="4"/>
+
+          <text class="s-name" x="342" y="56"  text-anchor="middle">Rules</text>
+          <text class="s-sub"  x="342" y="71"  text-anchor="middle">what is at risk</text>
+          <text class="s-name" x="342" y="112" text-anchor="middle">Schedule</text>
+          <text class="s-sub"  x="342" y="127" text-anchor="middle">what it delays</text>
+          <text class="s-name" x="342" y="168" text-anchor="middle">Temporal</text>
+          <text class="s-sub"  x="342" y="183" text-anchor="middle">why it happened</text>
+          <text class="s-name" x="342" y="224" text-anchor="middle">Retrieval</text>
+          <text class="s-sub"  x="342" y="239" text-anchor="middle">seen this before?</text>
+
+          <path class="s-edge" d="M414 59  L448 137" marker-end="url(#arw)"/>
+          <path class="s-edge" d="M414 115 L448 141" marker-end="url(#arw)"/>
+          <path class="s-edge" d="M414 171 L448 145" marker-end="url(#arw)"/>
+          <path class="s-edge" d="M414 227 L448 149" marker-end="url(#arw)"/>
+
+          <!-- assembler -->
+          <rect class="s-strong" x="452" y="95" width="126" height="96" rx="5"/>
+          <text class="s-name-i" x="515" y="132" text-anchor="middle">Assembler</text>
+          <text class="s-sub-i"  x="515" y="151" text-anchor="middle">all numbers and</text>
+          <text class="s-sub-i"  x="515" y="164" text-anchor="middle">dates born here</text>
+
+          <text class="s-arrowlbl" x="607" y="124" text-anchor="middle">findings +</text>
+          <text class="s-arrowlbl" x="607" y="135" text-anchor="middle">{{tokens}}</text>
+          <path class="s-edge" d="M580 143 L632 143" marker-end="url(#arw)"/>
+
+          <!-- the generative step -->
+          <rect class="s-gen-ring" x="636" y="97" width="148" height="92" rx="8"/>
+          <text class="s-genlbl" x="710" y="88" text-anchor="middle">the only generative step</text>
+          <rect class="s-gen" x="648" y="113" width="124" height="60" rx="5"/>
+          <text class="s-name-g" x="710" y="138" text-anchor="middle">LLM</text>
+          <text class="s-sub-g"  x="710" y="156" text-anchor="middle">writes sentences</text>
+
+          <text class="s-arrowlbl" x="818" y="124" text-anchor="middle">validated,</text>
+          <text class="s-arrowlbl" x="818" y="135" text-anchor="middle">substituted</text>
+          <path class="s-edge" d="M788 143 L850 143" marker-end="url(#arw)"/>
+
+          <!-- terminus -->
+          <rect class="s-box" x="856" y="105" width="128" height="76" rx="5"/>
+          <text class="s-name" x="920" y="137" text-anchor="middle">Insight card</text>
+          <text class="s-sub"  x="920" y="155" text-anchor="middle">click &#8594; evidence</text>
+
+          <!-- bands -->
+          <path class="s-band-c" d="M12 262 L578 262"/>
+          <text class="s-bandlbl-c" x="295" y="280" text-anchor="middle">deterministic &mdash; produces every number and date</text>
+          <path class="s-band-g" d="M636 262 L784 262"/>
+          <text class="s-bandlbl-g" x="710" y="280" text-anchor="middle">generative</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>The orange box is the entire generative surface.</b> Figures reach the model as
+        placeholder tokens &mdash; <code>{{delay_days}}</code>, not <code>12</code> &mdash; and the
+        server fills them in after validation. A wrong number is not merely detectable; it has
+        nowhere to enter from.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>What each producer answers</h2>
+      <p>
+        They run in parallel and stay separately inspectable, so a PM who distrusts one finding can
+        open the rule that fired, the records it read, and the version of the table it read them
+        against.
+      </p>
+    </div>
+
+    <dl class="producers">
+      <div class="prow">
+        <dt>Rules</dt>
+        <dd>
+          <span class="q">What is at risk?</span>
+          <span class="how">Editable decision tables, with a replayable trace of what fired on which records.</span>
+        </dd>
+      </div>
+      <div class="prow">
+        <dt>Schedule</dt>
+        <dd>
+          <span class="q">What will it impact?</span>
+          <span class="how">Critical-path arithmetic over the task graph &mdash; delay days and the milestones they move.</span>
+        </dd>
+      </div>
+      <div class="prow">
+        <dt>Temporal</dt>
+        <dd>
+          <span class="q">Why is it happening?</span>
+          <span class="how">Ordered state changes, matched against named hypotheses, and only where the timestamps permit the claim.</span>
+        </dd>
+      </div>
+      <div class="prow">
+        <dt>Retrieval</dt>
+        <dd>
+          <span class="q">Has this happened before?</span>
+          <span class="how">Similar past cases and cited passages from meeting minutes and status reports.</span>
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>The rule that makes root-cause honest</h2>
+      <p>
+        Causality is a claim about ordering, and our two sources do not carry the same time
+        information. A Jira changelog timestamps every transition exactly. A hand-maintained
+        spreadsheet only shows what is true now &mdash; so a change found by diffing two scans
+        happened <em>somewhere between them</em>. Treating that interval as a point is how a system
+        starts asserting causes it cannot support.
+      </p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 880 340" role="img"
+             aria-label="Two timelines. In the first, an exact Jira event precedes a bounded Excel interval entirely, so the causal link is kept. In the second, two bounded Excel intervals observed in the same scan window overlap, so no ordering is provable and the link is dropped.">
+          <defs>
+            <marker id="arw2" viewBox="0 0 8 8" refX="7.2" refY="4"
+                    markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 Z" fill="currentColor" opacity=".55"/>
+            </marker>
+          </defs>
+
+          <!-- ============ panel A ============ -->
+          <text x="8" y="16">
+            <tspan class="s-hd-ok">PROVABLE</tspan><tspan class="s-hd-rest" dx="10">the ordering holds, the link is kept</tspan>
+          </text>
+
+          <line class="s-axis" x1="8" y1="110" x2="872" y2="110"/>
+          <text class="s-tiny" x="872" y="100" text-anchor="end">time &#8594;</text>
+
+          <!-- exact event -->
+          <text class="s-ev"    x="210" y="46" text-anchor="middle">Environment Setup slipped</text>
+          <text class="s-evsub" x="210" y="60" text-anchor="middle">Jira changelog &middot; exact</text>
+          <line class="s-exact" x1="210" y1="70" x2="210" y2="110"/>
+          <circle class="s-exact-d" cx="210" cy="110" r="4.5"/>
+
+          <!-- bounded event -->
+          <text class="s-tiny" x="430" y="90" text-anchor="middle">scan N&#8722;1</text>
+          <text class="s-tiny" x="630" y="90" text-anchor="middle">scan N</text>
+          <line class="s-bar-e" x1="430" y1="96" x2="430" y2="124"/>
+          <line class="s-bar-e" x1="630" y1="96" x2="630" y2="124"/>
+          <rect class="s-bar" x="430" y="102" width="200" height="16" rx="2"/>
+          <text class="s-ev"    x="530" y="142" text-anchor="middle">QA backlog grew 4 &#8594; 17</text>
+          <text class="s-evsub" x="530" y="156" text-anchor="middle">Excel diff &middot; bounded interval</text>
+
+          <circle class="s-dot-ok" cx="10" cy="184" r="4"/>
+          <text class="s-verdict" x="24" y="188">The exact point falls before the interval can even begin &mdash; the ordering is provable, so the chain is kept.</text>
+
+          <!-- ============ panel B ============ -->
+          <text x="8" y="228">
+            <tspan class="s-hd-warn">NOT PROVABLE</tspan><tspan class="s-hd-rest" dx="10">the link is dropped, not hedged</tspan>
+          </text>
+
+          <rect class="s-overlap" x="420" y="248" width="110" height="52" rx="2"/>
+
+          <line class="s-axis" x1="8" y1="274" x2="872" y2="274"/>
+
+          <text class="s-ev" x="430" y="244" text-anchor="middle">Allocation dropped to 40%</text>
+          <rect class="s-bar" x="330" y="256" width="200" height="14" rx="2"/>
+
+          <rect class="s-bar" x="420" y="278" width="200" height="14" rx="2"/>
+          <text class="s-ev" x="520" y="306" text-anchor="middle">QA backlog grew</text>
+
+          <text class="s-tiny" x="545" y="242" text-anchor="start">windows overlap</text>
+
+          <circle class="s-dot-warn" cx="10" cy="328" r="4"/>
+          <text class="s-verdict" x="24" y="332">Both observed in the same scan window &mdash; no ordering is provable, so the link never reaches the model.</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>The test is interval arithmetic:</b> one event precedes another only when its latest
+        possible time falls before the other&rsquo;s earliest. Anything that fails is discarded
+        before assembly &mdash; the model is never shown a link it could narrate into a cause.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>What this architecture rules out</h2>
+      <p>
+        Three things the design deliberately refuses, each because it would put a figure or a claim
+        beyond the reach of an audit trail.
+      </p>
+    </div>
+
+    <ul class="rules-out">
+      <li>
+        <b>No model-produced dates or counts.</b>
+        <span>
+          Prose arrives with placeholders and is rejected outright if it contains a digit. This also
+          rules out a temporal graph database: the leading option assigns edge validity intervals
+          with a language model, which is the same thing wearing a different hat.
+        </span>
+      </li>
+      <li>
+        <b>No causal claim the timestamps cannot carry.</b>
+        <span>
+          Unprovable orderings are dropped rather than shown with a caveat, because a caveat is
+          something a reader can skip.
+        </span>
+      </li>
+      <li>
+        <b>No finding without a source record.</b>
+        <span>
+          Every domain row keeps a pointer to the exact API response or spreadsheet cell it came
+          from, so the evidence panel is a property of the schema rather than a promise about
+          prompting.
+        </span>
+      </li>
+    </ul>
+  </section>
+
+  <footer class="prose">
+    <p>ProjectPulseAI &mdash; architecture of record, drawn 6 September 2026.</p>
+    <p class="mono">Full detail: ProjectPulseAI_Architecture.md &middot; product narrative: ProjectPulseAI_Product_Design_v2.md</p>
+  </footer>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FPT Project Hub – Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D2B5E;
+  --blue:#1565C0;
+  --blue-mid:#1976D2;
+  --orange:#F47920;
+  --purple:#6D28D9;
+  --bg:#F5F7FA;
+  --surface:#FFFFFF;
+  --border:#E3E8EF;
+  --text:#1A2B42;
+  --muted:#64748B;
+  --light:#94A3B8;
+  --green:#16A34A;
+  --canvas:#E8EDF4;
+}
+html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);background:var(--bg)}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:64px;background:var(--navy);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:2px;flex-shrink:0}
+.sidebar-logo{width:40px;height:22px;margin-bottom:14px}
+.nav-link{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.55);width:52px;transition:background .15s,color .15s;user-select:none;text-decoration:none}
+.nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
+.nav-link.active{background:var(--blue);color:#fff}
+.nav-link span{font-size:10px;font-weight:500}
+.sidebar-gap{flex:1}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--navy);height:52px;display:flex;align-items:center;gap:14px;padding:0 20px;flex-shrink:0}
+.topbar-ham{color:rgba(255,255,255,.6);cursor:pointer;padding:4px;display:flex;align-items:center}
+.topbar-crumb{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.9);font-size:13px;font-weight:500}
+.topbar-crumb svg{color:rgba(255,255,255,.4)}
+.topbar-gap{flex:1}
+.btn-help{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.22);border-radius:7px;padding:6px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px}
+.user-chip{display:flex;flex-direction:column;align-items:flex-end;margin-left:6px;gap:0}
+.user-avatar-small{display:flex;align-items:center;gap:6px;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.user-avatar-small .av{width:28px;height:28px;border-radius:50%;background:var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;border:1.5px solid rgba(255,255,255,.2)}
+.user-org{font-size:10px;color:rgba(255,255,255,.5);text-align:right}
+
+/* ── DASHBOARD TAB BAR ── */
+.tabbar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;flex-shrink:0;height:44px;overflow:hidden}
+.btn-new-dash{display:flex;align-items:center;gap:6px;padding:7px 14px;margin:6px 8px 6px 10px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;transition:background .15s}
+.btn-new-dash:hover{background:#0d47a1}
+.btn-new-dash.secondary{background:transparent;border:1.5px solid var(--blue);color:var(--blue)}
+.btn-new-dash.secondary:hover{background:#EFF6FF}
+.tabs-scroll{display:flex;align-items:center;gap:0;overflow-x:auto;flex:1;scrollbar-width:none}
+.tabs-scroll::-webkit-scrollbar{display:none}
+.dash-tab{padding:0 16px;height:44px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s;flex-shrink:0;position:relative}
+.dash-tab:hover{color:var(--text)}
+.dash-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.dash-tab .tab-close{margin-left:6px;color:var(--light);opacity:0;font-size:13px;line-height:1;transition:opacity .1s}
+.dash-tab:hover .tab-close{opacity:1}
+
+/* ── TOOLBAR ── */
+.toolbar{background:var(--surface);border-bottom:1px solid var(--border);height:46px;display:flex;align-items:center;gap:8px;padding:0 16px;flex-shrink:0}
+.toolbar-gap{flex:1}
+.btn-tile{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-tile:hover{background:#0d47a1}
+.btn-share{display:flex;align-items:center;gap:6px;padding:6px 13px;background:#fff;border:1px solid var(--border);border-radius:7px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--text)}
+.btn-share:hover{background:var(--bg)}
+.btn-icon{border:none;background:none;color:var(--muted);cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;transition:background .1s}
+.btn-icon:hover{background:var(--bg);color:var(--text)}
+.badge-complete{display:flex;align-items:center;gap:5px;padding:5px 10px;background:#DCFCE7;border-radius:6px;font-size:11.5px;font-weight:600;color:#15803D}
+.btn-drag{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;background:#fff;color:var(--text)}
+.btn-more{border:none;background:none;color:var(--muted);cursor:pointer;padding:5px 8px;font-size:18px;border-radius:6px;line-height:1}
+.btn-more:hover{background:var(--bg)}
+
+/* ── CANVAS ── */
+.canvas-area{flex:1;overflow:auto;padding:20px;display:flex;align-items:flex-start;justify-content:center;background:#EEF1F6}
+.canvas{width:100%;max-width:1160px;min-height:520px;background:var(--canvas);border:2px dashed #C5CFD9;border-radius:4px;position:relative}
+.canvas-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--light)}
+.canvas-empty svg{opacity:.4}
+.canvas-empty p{font-size:13px}
+
+/* ── CREATION VIEW ── */
+.creation-view{flex:1;overflow-y:auto;display:none;background:#fff}
+.creation-view.show{display:flex;flex-direction:column}
+.creation-inner{flex:1;display:flex;flex-direction:column;align-items:center;padding:48px 24px 40px}
+.mode-icon{width:52px;height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.creation-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+.creation-sub{font-size:13.5px;color:var(--muted);margin-bottom:24px;text-align:center;max-width:420px}
+
+/* MODE TOGGLE */
+.mode-toggle{display:flex;background:transparent;gap:2px;margin-bottom:28px;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.mode-btn{padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;font-family:inherit;color:var(--muted);display:flex;align-items:center;gap:7px;transition:background .15s,color .15s;white-space:nowrap}
+.mode-btn:hover{background:var(--bg)}
+.mode-btn.active{background:var(--blue);color:#fff;font-weight:600}
+
+/* AI MODE */
+.ai-prompt-box{width:100%;max-width:680px;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;font-size:14px;font-family:inherit;color:var(--text);min-height:110px;resize:none;outline:none;transition:border-color .15s;line-height:1.6}
+.ai-prompt-box:focus{border-color:var(--blue)}
+.ai-hint{font-size:12px;color:var(--light);margin-top:6px;margin-bottom:18px;width:100%;max-width:680px}
+.sample-label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;width:100%;max-width:680px}
+.sample-prompts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:680px;margin-bottom:22px}
+.sample-chip{padding:12px 14px;border:1px solid var(--border);border-radius:9px;font-size:12.5px;color:var(--text);cursor:pointer;position:relative;transition:border-color .15s,background .15s;line-height:1.4}
+.sample-chip:hover{border-color:var(--blue);background:#EFF6FF}
+.sample-chip .chip-arrow{position:absolute;bottom:8px;right:10px;color:var(--light);font-size:13px}
+.pages-row{display:flex;align-items:center;gap:10px;width:100%;max-width:680px;margin-bottom:22px;font-size:13px;color:var(--muted)}
+.pages-row input{width:70px;border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:13px;font-family:inherit;text-align:center;outline:none}
+.pages-row input:focus{border-color:var(--blue)}
+.btn-create-dash{width:100%;max-width:680px;background:#C5D3E8;color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:600;cursor:default;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s}
+.btn-create-dash.ready{background:var(--blue);cursor:pointer}
+.btn-create-dash.ready:hover{background:#0d47a1}
+
+/* TEMPLATE MODE */
+.tmpl-search-wrap{width:100%;max-width:740px;border:1.5px solid var(--border);border-radius:10px;display:flex;align-items:center;padding:10px 14px;gap:10px;margin-bottom:16px}
+.tmpl-search-wrap input{flex:1;border:none;font-size:13.5px;font-family:inherit;outline:none;color:var(--text)}
+.tmpl-search-wrap input::placeholder{color:var(--light)}
+.tmpl-search-wrap .search-icon-circle{width:32px;height:32px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.filter-pills{display:flex;gap:6px;margin-bottom:18px}
+.fpill{padding:6px 16px;border-radius:6px;font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted);transition:background .12s,color .12s,border-color .12s}
+.fpill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tmpl-grid{display:grid;grid-template-columns:repeat(3,200px);gap:18px;width:100%;max-width:740px}
+.tmpl-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.tmpl-card:hover{border-color:var(--blue);box-shadow:0 4px 18px rgba(21,101,192,.12)}
+.tmpl-thumb{height:122px;background:var(--canvas);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tmpl-name{padding:10px 12px;font-size:12.5px;font-weight:600;color:var(--text);border-top:1px solid var(--border)}
+
+/* PAGE SUB-TABS */
+.page-tabbar{background:var(--surface);border-bottom:1px solid var(--border);height:38px;display:flex;align-items:center;padding:0 6px;flex-shrink:0}
+.page-tabs-scroll{display:flex;align-items:center;gap:0;overflow-x:auto;scrollbar-width:none}
+.page-tabs-scroll::-webkit-scrollbar{display:none}
+.page-tab{padding:0 16px;height:38px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s;position:relative}
+.page-tab:hover{color:var(--text)}
+.page-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+
+
+/* ADD TILES MODAL */
+.at-back{display:none;position:fixed;inset:0;background:rgba(13,43,94,.45);z-index:700;align-items:flex-start;justify-content:center;padding-top:40px;backdrop-filter:blur(2px)}
+.at-back.open{display:flex}
+.at-modal{background:#fff;width:min(1200px,96vw);max-height:88vh;border-radius:14px;display:flex;flex-direction:column;box-shadow:0 24px 72px rgba(13,43,94,.22);overflow:hidden}
+.at-head{padding:18px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:10px;flex-shrink:0}
+.at-head-title{font-size:16px;font-weight:700;color:var(--text)}
+.at-head-sub{font-size:12.5px;color:var(--muted);flex:1}
+.at-close{border:none;background:none;font-size:18px;cursor:pointer;color:var(--muted);padding:2px 8px;border-radius:5px;line-height:1}
+.at-close:hover{background:var(--bg);color:var(--text)}
+.at-search-bar{display:flex;align-items:center;gap:10px;padding:10px 24px;border-bottom:1px solid var(--border);flex-shrink:0;background:#FAFBFC}
+.at-search-bar svg{color:var(--muted);flex-shrink:0}
+.at-search-bar input{flex:1;border:none;background:transparent;font-size:13.5px;font-family:inherit;outline:none;color:var(--text)}
+.at-search-bar input::placeholder{color:var(--light)}
+.at-body{display:flex;flex:1;overflow:hidden}
+.at-sidebar{width:210px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;padding:10px 0}
+.at-sidebar::-webkit-scrollbar{width:4px}
+.at-sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.at-cat-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 16px;border:none;background:transparent;text-align:left;font-family:inherit;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:background .12s,color .12s;border-left:3px solid transparent}
+.at-cat-btn:hover{background:var(--bg);color:var(--text)}
+.at-cat-btn.active{color:var(--blue);background:#EFF6FF;border-left-color:var(--blue);font-weight:600}
+.at-cat-btn .cat-count{font-size:11px;background:var(--bg);border-radius:10px;padding:1px 7px;color:var(--muted)}
+.at-cat-btn.active .cat-count{background:#DBEAFE;color:var(--blue)}
+.at-gallery{flex:1;overflow-y:auto;padding:20px 24px 40px}
+.at-gallery::-webkit-scrollbar{width:5px}
+.at-gallery::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.at-section-head{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.at-section{margin-bottom:32px}
+.at-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.at-tile{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;cursor:default;transition:border-color .15s,box-shadow .15s;position:relative;background:#fff}
+.at-tile-overlay{position:absolute;inset:0 0 auto 0;height:120px;background:rgba(21,101,192,.55);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s;pointer-events:none}
+.at-tile:hover .at-tile-overlay{opacity:1;pointer-events:auto}
+.at-tile.added .at-tile-overlay{background:rgba(22,163,74,.45)}
+.btn-add-tile{display:flex;align-items:center;gap:7px;background:#fff;color:#1565C0;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 10px rgba(0,0,0,.18);transition:transform .12s}
+.btn-add-tile:hover{transform:scale(1.05)}
+.at-tile.added .btn-add-tile{color:#16A34A}
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A2B42;color:#fff;border-radius:10px;padding:12px 22px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;z-index:900;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast-icon{width:20px;height:20px;border-radius:50%;background:#16A34A;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* CANVAS TILE GRID */
+.canvas-tiles{display:flex;flex-wrap:wrap;gap:16px;padding:20px;align-content:flex-start}
+.ctile{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;width:320px;box-shadow:0 1px 4px rgba(13,43,94,.07);position:relative;flex-shrink:0}
+.ctile-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 6px;border-bottom:1px solid var(--border)}
+.ctile-title{font-size:12px;font-weight:600;color:var(--text)}
+.ctile-badges{display:flex;gap:4px}
+.ctile-body{padding:8px 6px;display:flex;align-items:center;justify-content:center;background:var(--canvas);height:130px;overflow:hidden}
+.ctile-remove{border:none;background:none;color:var(--light);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .12s}
+.ctile-remove:hover{color:var(--red)}
+.ctile-menu-btn{border:none;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:5px;line-height:1;font-weight:700;transition:background .12s,color .12s}
+.ctile-menu-btn:hover{background:var(--bg);color:var(--text)}
+/* TILE CONTEXT MENU */
+.tile-ctx{position:fixed;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px rgba(13,43,94,.18);z-index:900;min-width:170px;padding:4px 0;display:none}
+.tile-ctx.open{display:block}
+.tile-ctx-item{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:13px;color:var(--text);cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.tile-ctx-item:hover{background:var(--bg)}
+.tile-ctx-item.disabled{color:var(--light);cursor:not-allowed;pointer-events:none}
+.tile-ctx-item.danger{color:#DC2626}
+.tile-ctx-item.danger:hover{background:#FEF2F2}
+.tile-ctx-sep{border:none;border-top:1px solid var(--border);margin:3px 0}
+/* SETTINGS MODAL */
+.stg-back{display:none;position:fixed;inset:0;background:rgba(13,43,94,.38);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.stg-back.open{display:flex}
+.stg-modal{background:#fff;width:min(520px,94vw);border-radius:12px;box-shadow:0 20px 60px rgba(13,43,94,.2);overflow:hidden}
+.stg-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border)}
+.stg-head-icon{color:var(--muted)}
+.stg-head-title{font-size:15px;font-weight:700;color:var(--text);flex:1}
+.stg-close{border:none;background:none;font-size:18px;cursor:pointer;color:var(--muted);padding:2px 8px;border-radius:5px}
+.stg-close:hover{background:var(--bg)}
+.stg-body{padding:20px}
+.stg-section-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;margin-top:4px}
+.stg-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #F3F4F6}
+.stg-row:last-child{border-bottom:none}
+.stg-label{font-size:13.5px;color:var(--text)}
+.stg-toggle{position:relative;width:38px;height:22px;cursor:pointer}
+.stg-toggle input{opacity:0;width:0;height:0}
+.stg-toggle .slider{position:absolute;inset:0;background:#D1D5DB;border-radius:11px;transition:.25s}
+.stg-toggle input:checked+.slider{background:var(--blue)}
+.stg-toggle .slider:before{position:absolute;content:'';width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.25s}
+.stg-toggle input:checked+.slider:before{transform:translateX(16px)}
+.stg-seg{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.stg-seg-btn{padding:4px 10px;font-size:12px;font-family:inherit;border:none;background:#fff;cursor:pointer;color:var(--muted);transition:background .12s,color .12s}
+.stg-seg-btn.active{background:var(--blue);color:#fff;font-weight:600}
+.stg-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
+.stg-done{background:var(--blue);color:#fff;border:none;border-radius:7px;padding:8px 22px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .12s}
+.stg-done:hover{opacity:.88}
+.at-tile:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(21,101,192,.12)}
+.at-tile.added{border-color:#16A34A;background:#F0FDF4}
+.at-tile-preview{height:120px;background:var(--canvas);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.at-tile-body{padding:10px 12px}
+.at-tile-name{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.3}
+.at-tile-desc{font-size:11px;color:var(--muted);line-height:1.45}
+.at-badges{position:absolute;top:7px;left:7px;display:flex;gap:4px;z-index:2}
+.badge-ai{background:#7C3AED;color:#fff;font-size:9.5px;font-weight:700;border-radius:4px;padding:2px 6px}
+.badge-new{background:#F47920;color:#fff;font-size:9.5px;font-weight:700;border-radius:4px;padding:2px 6px}
+.at-check{position:absolute;top:7px;right:7px;width:20px;height:20px;border-radius:50%;background:#16A34A;display:none;align-items:center;justify-content:center}
+.at-tile.added .at-check{display:flex}
+.at-check svg{stroke:#fff}
+.at-empty{padding:40px;text-align:center;color:var(--light);font-size:13px;grid-column:1/-1}
+
+/* SCROLLBAR */
+.canvas-area::-webkit-scrollbar,.creation-view::-webkit-scrollbar,.tabs-scroll::-webkit-scrollbar{width:5px;height:5px}
+.canvas-area::-webkit-scrollbar-thumb,.creation-view::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <svg width="42" height="22" viewBox="0 0 84 44" fill="none"><rect width="84" height="44" rx="6" fill="#fff"/><text x="8" y="32" font-family="Arial Black,Arial" font-weight="900" font-size="24" fill="#0066CC">FPT</text></svg>
+  </div>
+  <a class="nav-link" href="fpt-pm-home.html">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>Home</span>
+  </a>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+    <span>Projects</span>
+  </a>
+  <a class="nav-link" href="fpt-pm-programs.html">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v3M12 11l-5.5 5.5M12 11l5.5 5.5"/></svg>
+    <span>Programs</span>
+  </a>
+  <a class="nav-link active" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <span>Dashboard</span>
+  </a>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    <span>Cost</span>
+  </a>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+    <span>Risk</span>
+  </a>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>Schedule</span>
+  </a>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span>Reports</span>
+  </a>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+    <span>Snapshot</span>
+  </a>
+  <div class="sidebar-gap"></div>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06-.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span>Settings</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-ham">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </div>
+    <div class="topbar-crumb">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      Digital Transformation 2026
+    </div>
+    <div class="topbar-gap"></div>
+    <button class="btn-help">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Need Help?
+    </button>
+    <div class="user-chip">
+      <div class="user-avatar-small">
+        <div style="color:rgba(255,255,255,.7);font-size:12px;text-align:right"><span style="color:#fff;font-weight:600;display:block">Nguyen A</span>FPT Software</div>
+        <div class="av">NA</div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- DASHBOARD TAB BAR -->
+  <div class="tabbar">
+    <button class="btn-new-dash" id="btnNewDash" onclick="showCreation()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Dashboard
+    </button>
+    <div class="tabs-scroll" id="tabsScroll">
+      <!-- tabs injected by JS -->
+    </div>
+  </div>
+
+  <!-- PAGE SUB-TABS -->
+  <div class="page-tabbar" id="pageTabbar" style="display:none">
+    <div class="page-tabs-scroll" id="pageTabsScroll"></div>
+  </div>
+
+  <!-- TOOLBAR (shown when a dashboard is active) -->
+  <div class="toolbar" id="toolbar" style="display:none">
+    <button class="btn-tile" onclick="openAddTiles()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Tiles
+    </button>
+    <button class="btn-share">
+      Share
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <button class="btn-icon" title="History">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+    </button>
+    <div class="toolbar-gap"></div>
+    <button class="btn-icon" title="Zoom out">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <button class="btn-icon" title="Zoom in">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <button class="btn-icon" title="Fullscreen">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
+     <button class="btn-drag">Drag &amp; Resize <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+    <button class="btn-more">⋮</button>
+  </div>
+
+  <!-- CANVAS (blank dashboard) -->
+  <div class="canvas-area" id="canvasArea" style="display:none">
+    <div class="canvas" id="canvasBoard">
+      <div class="canvas-empty" id="canvasEmpty">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <p>Click <strong>Add Tiles</strong> to start building your dashboard</p>
+      </div>
+      <div class="canvas-tiles" id="canvasTiles" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- CREATION VIEW -->
+  <div class="creation-view" id="creationView">
+    <div class="creation-inner">
+
+      <!-- icon changes per mode -->
+      <div class="mode-icon" id="modeIcon">
+        <!-- injected -->
+      </div>
+      <div class="creation-title" id="modeTitle">AI Dashboard Creator</div>
+      <div class="creation-sub" id="modeSub">Describe the dashboard you want and AI will create it for you.</div>
+
+      <!-- MODE TOGGLE -->
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeAI" onclick="setMode('ai')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2z"/></svg>
+          Create with AI
+        </button>
+        <button class="mode-btn" id="modeTmpl" onclick="setMode('tmpl')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Browse Templates
+        </button>
+        <button class="mode-btn" id="modeBlank" onclick="setMode('blank')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="4 2"/></svg>
+          Blank Canvas
+        </button>
+      </div>
+
+      <!-- ── AI PANEL ── -->
+      <div id="panelAI" style="display:flex;flex-direction:column;align-items:center;width:100%">
+        <textarea class="ai-prompt-box" id="aiPrompt" placeholder="Describe your dashboard…" oninput="checkPrompt()" rows="4"></textarea>
+        <div class="ai-hint">Press Cmd+Enter (Mac) or Ctrl+Enter to create</div>
+        <div class="sample-label">Sample prompts</div>
+        <div class="sample-prompts">
+          <div class="sample-chip" onclick="fillPrompt(this)">Create a simple project cost/budget report<span class="chip-arrow">↗</span></div>
+          <div class="sample-chip" onclick="fillPrompt(this)">Give me a visual monthly dashboard with bullet summaries<span class="chip-arrow">↗</span></div>
+          <div class="sample-chip" onclick="fillPrompt(this)">Prepare a sprint delivery report with KPIs<span class="chip-arrow">↗</span></div>
+          <div class="sample-chip" onclick="fillPrompt(this)">Give me a board/executive 1-pager in FPT brand colours<span class="chip-arrow">↗</span></div>
+        </div>
+        <div class="pages-row">
+          <label for="pageCount">Number of pages</label>
+          <input id="pageCount" type="number" value="1" min="1" max="20"/>
+        </div>
+        <button class="btn-create-dash" id="btnCreate" onclick="createDash()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2z"/></svg>
+          Create Dashboard
+        </button>
+      </div>
+
+      <!-- ── TEMPLATE PANEL ── -->
+      <div id="panelTmpl" style="display:none;flex-direction:column;align-items:center;width:100%">
+        <div class="tmpl-search-wrap" style="max-width:640px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          <input type="text" placeholder="What template are you looking for?"/>
+          <div class="search-icon-circle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg></div>
+        </div>
+        <div class="filter-pills" id="filterPills">
+          <div class="fpill active" onclick="filterPill(this)">All</div>
+          <div class="fpill" onclick="filterPill(this)">My Workspace</div>
+          <div class="fpill" onclick="filterPill(this)">FPT</div>
+        </div>
+        <div class="tmpl-grid" id="tmplGrid"></div>
+      </div>
+
+      <!-- ── BLANK PANEL ── -->
+      <div id="panelBlank" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:480px">
+        <div style="width:100%;height:220px;border:2px dashed var(--border);border-radius:10px;background:var(--canvas);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--light)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <p style="font-size:13px">Empty canvas — add tiles after creation</p>
+        </div>
+        <button class="btn-create-dash ready" style="max-width:480px" onclick="createDash()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Open Blank Canvas
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+<!-- ADD TILES MODAL -->
+<div class="at-back" id="atBack" onclick="closeAddTiles(event)">
+  <div class="at-modal" onclick="event.stopPropagation()">
+    <div class="at-head">
+      <div class="at-head-title">Add Tiles</div>
+      <div class="at-head-sub">Search and click a tile to add it to your dashboard.</div>
+      <button class="at-close" onclick="closeAddTiles()">&#x2715;</button>
+    </div>
+    <div class="at-search-bar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      <input id="atSearch" type="text" placeholder="Search tiles by name or description..." oninput="renderTileGallery()"/>
+    </div>
+    <div class="at-body">
+      <nav class="at-sidebar" id="atSidebar"></nav>
+      <div class="at-gallery" id="atGallery"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// ── DATA ──
+
+var TABS=[];
+var activeTab=null;
+var currentMode='ai';
+
+// ── TABS ──
+function renderTabs(){
+  var el=document.getElementById('tabsScroll');
+  el.innerHTML=TABS.map(function(t){
+    return '<div class="dash-tab'+(activeTab===t.id?' active':'')+'" onclick="selectTab(\''+t.id+'\')">'
+      +t.name
+      +'<span class="tab-close" onclick="event.stopPropagation();removeTab(\''+t.id+'\')">✕</span>'
+      +'</div>';
+  }).join('');
+}
+function selectTab(id){
+  activeTab=id;
+  renderTabs();
+  hideCreation();
+}
+function removeTab(id){
+  TABS=TABS.filter(function(t){return t.id!==id;});
+  if(activeTab===id) activeTab=TABS.length?TABS[TABS.length-1].id:null;
+  renderTabs();
+  if(!activeTab) showCreation();
+  else hideCreation();
+}
+
+var TEMPLATES=[
+  {name:'IT Portfolio Dashboard',cat:'FPT'},
+  {name:'Sprint Delivery Report',cat:'FPT'},
+  {name:'Project Cost/Budget Report',cat:'FPT'},
+  {name:'PPM Report',cat:'FPT'},
+  {name:'Project Lifecycle',cat:'FPT'},
+  {name:'Risk Heatmap',cat:'My Workspace'},
+  {name:'Budget Tracker',cat:'My Workspace'},
+  {name:'Portfolio Cash Flow',cat:'All'},
+  {name:'Milestone Timeline',cat:'All'},
+];
+
+
+
+// ── PAGE TABS ──
+var activePageTab=0;
+function renderPageTabs(pages){
+  var el=document.getElementById('pageTabsScroll');
+  el.innerHTML=pages.map(function(name,i){
+    return '<div class="page-tab'+(i===activePageTab?' active':'')+'" onclick="selectPageTab('+i+')">'+name+'</div>';
+  }).join('');
+}
+function selectPageTab(i){activePageTab=i;var t=TABS.find(function(x){return x.id===activeTab;});if(t)renderPageTabs(t.pages||['Dashboard']);}
+
+// ── SHOW/HIDE ──
+function showCreation(){
+  document.getElementById('creationView').classList.add('show');
+  document.getElementById('canvasArea').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.getElementById('pageTabbar').style.display='none';
+  activeTab=null;
+  renderTabs();
+}
+function hideCreation(){
+  document.getElementById('creationView').classList.remove('show');
+  document.getElementById('canvasArea').style.display='flex';
+  document.getElementById('toolbar').style.display='flex';
+  document.getElementById('pageTabbar').style.display='flex';
+  var t=TABS.find(function(x){return x.id===activeTab;});
+  activePageTab=0;
+  renderPageTabs(t&&t.pages?t.pages:['Dashboard']);
+}
+
+// ── MODES ──
+var MODES={
+  ai:{
+    title:'AI Dashboard Creator',
+    sub:'Describe the dashboard you want and AI will create it for you.',
+    iconHTML:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#EDE9FE"/><path d="M12 5l1.8 5.5H19l-4.4 3.2 1.7 5.3L12 16l-4.3 3 1.7-5.3L5 10.5h5.2L12 5z" fill="#6D28D9"/></svg>',
+    badge:'BETA'
+  },
+  tmpl:{
+    title:'Template Library',
+    sub:'Browse pre-built dashboards and pick one to start from.',
+    iconHTML:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#EFF6FF"/><rect x="6" y="6" width="5" height="5" rx="1" fill="#1565C0"/><rect x="13" y="6" width="5" height="5" rx="1" fill="#90CAF9"/><rect x="6" y="13" width="5" height="5" rx="1" fill="#90CAF9"/><rect x="13" y="13" width="5" height="5" rx="1" fill="#1565C0"/></svg>',
+    badge:null
+  },
+  blank:{
+    title:'Blank Canvas',
+    sub:'Start from scratch and drag in the tiles you need.',
+    iconHTML:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#F5F7FA"/><rect x="6" y="6" width="12" height="12" rx="2" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3 2" fill="none"/></svg>',
+    badge:null
+  }
+};
+
+var BTN_IDS={ai:'modeAI',tmpl:'modeTmpl',blank:'modeBlank'};
+var PANEL_IDS={ai:'panelAI',tmpl:'panelTmpl',blank:'panelBlank'};
+function setMode(mode){
+  currentMode=mode;
+  ['ai','tmpl','blank'].forEach(function(m){
+    document.getElementById(BTN_IDS[m]).classList.toggle('active',m===mode);
+    document.getElementById(PANEL_IDS[m]).style.display=(m===mode?'flex':'none');
+  });
+  var cfg=MODES[mode];
+  document.getElementById('modeIcon').innerHTML=cfg.iconHTML+(cfg.badge?'<span style="margin-left:8px;background:#6D28D9;color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:1px 7px;vertical-align:middle">'+cfg.badge+'</span>':'');
+  document.getElementById('modeTitle').textContent=cfg.title;
+  document.getElementById('modeSub').textContent=cfg.sub;
+}
+
+// ── AI PROMPT ──
+function fillPrompt(el){
+  var txt=el.childNodes[0].textContent.trim();
+  document.getElementById('aiPrompt').value=txt;
+  checkPrompt();
+}
+function checkPrompt(){
+  var ready=document.getElementById('aiPrompt').value.trim().length>0;
+  var btn=document.getElementById('btnCreate');
+  btn.classList.toggle('ready',ready);
+}
+document.addEventListener('keydown',function(e){
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter') createDash();
+});
+
+// ── CREATE ──
+function createDash(){
+  var name='';
+  var pages=['Dashboard'];
+  if(currentMode==='ai'){
+    var p=document.getElementById('aiPrompt').value.trim();
+    if(!p) return;
+    name=p.length>32?p.slice(0,32)+'…':p;
+    var n=parseInt(document.getElementById('pageCount').value)||1;
+    pages=[];for(var i=0;i<n;i++) pages.push('Dashboard'+(n>1?' '+(i+1):''));
+  } else if(currentMode==='tmpl'){
+    name='New Dashboard from Template';
+  } else {
+    name='Dashboard';
+  }
+  var id='d'+Date.now();
+  TABS.push({id:id,name:name,pages:pages});
+  activeTab=id;
+  renderTabs();
+  hideCreation();
+}
+
+// ── TEMPLATES ──
+function buildTemplates(filter){
+  var grid=document.getElementById('tmplGrid');
+  var list=filter==='All'?TEMPLATES:TEMPLATES.filter(function(t){return t.cat===filter;});
+  var GRADIENTS=['linear-gradient(135deg,#1565C0,#42A5F5)','linear-gradient(135deg,#1B5E20,#66BB6A)','linear-gradient(135deg,#4A148C,#CE93D8)','linear-gradient(135deg,#B71C1C,#EF9A9A)','linear-gradient(135deg,#E65100,#FFCC02)','linear-gradient(135deg,#263238,#90A4AE)','linear-gradient(135deg,#880E4F,#F48FB1)','linear-gradient(135deg,#006064,#80DEEA)','linear-gradient(135deg,#37474F,#B0BEC5)'];
+  grid.innerHTML=list.map(function(t,i){
+    return '<div class="tmpl-card" onclick="selectTemplate(\''+t.name+'\')">'
+      +'<div class="tmpl-thumb" style="background:'+GRADIENTS[i%GRADIENTS.length]+';display:flex;align-items:center;justify-content:center">'
+      +'<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>'
+      +'</div>'
+      +'<div class="tmpl-name">'+t.name+'</div>'
+      +'</div>';
+  }).join('');
+}
+function filterPill(el){
+  document.querySelectorAll('.fpill').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  buildTemplates(el.textContent.trim());
+}
+function selectTemplate(name){
+  var id='d'+Date.now();
+  TABS.push({id:id,name:name});
+  activeTab=id;
+  renderTabs();
+  hideCreation();
+}
+
+// ── ADD TILES ──
+var addedTiles={};var currentCat='All Categories';
+var CATS=['All Categories','New','Program Information','Portfolio','Schedule','Requirement / QA','Quality','Risk','Resource','Effort','AI Intelligence'];
+function sdB(vals,colors){var h=75,bw=20,gap=8,x0=8,max=Math.max.apply(null,vals.map(function(v){return v.v;}));var s='<svg width="220" height="90" viewBox="0 0 220 90">';s+=vals.map(function(v,i){var bh=Math.max(4,Math.round((v.v/max)*(h-10)));var x=x0+i*(bw+gap);var y=h-bh;return'<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="3" fill="'+colors[i%colors.length]+'"/><text x="'+(x+bw/2)+'" y="86" text-anchor="middle" font-size="7.5" fill="#94A3B8">'+v.l+'</text><text x="'+(x+bw/2)+'" y="'+(y-3)+'" text-anchor="middle" font-size="8" fill="#1A2B42">'+v.v+'</text>';}).join('');return s+'</svg>';}
+function sdD(pct,color,lbl){var r=34,c=2*Math.PI*r,d=c*(1-pct/100);return'<svg width="85" height="85" viewBox="0 0 85 85"><circle cx="42" cy="42" r="'+r+'" fill="none" stroke="#E3E8EF" stroke-width="10"/><circle cx="42" cy="42" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="10" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+d.toFixed(1)+'" stroke-linecap="round" transform="rotate(-90 42 42)"/><text x="42" y="38" text-anchor="middle" font-size="13" font-weight="700" fill="#1A2B42">'+pct+'%</text><text x="42" y="50" text-anchor="middle" font-size="8" fill="#64748B">'+lbl+'</text></svg>';}
+function sdT(rows,cols){var cw=Math.floor(238/cols.length),y0=15;var h='<svg width="240" height="'+(y0+14+rows.length*17)+'" viewBox="0 0 240 '+(y0+14+rows.length*17)+'">';h+=cols.map(function(c,i){return'<text x="'+(3+i*cw)+'" y="'+y0+'" font-size="8" font-weight="700" fill="#94A3B8">'+c+'</text>';}).join('');h+=rows.map(function(r,ri){return'<line x1="3" y1="'+(y0+5+ri*17)+'" x2="237" y2="'+(y0+5+ri*17)+'" stroke="#E3E8EF" stroke-width="0.5"/>'+r.map(function(c,ci){var col=c==='High'||c==='Critical'?'#DC2626':c==='Medium'?'#D97706':c==='Low'||c==='Healthy'?'#16A34A':c==='Watch'?'#D97706':'#1A2B42';return'<text x="'+(3+ci*cw)+'" y="'+(y0+16+ri*17)+'" font-size="8.5" fill="'+col+'">'+c+'</text>';}).join('');}).join('');return h+'</svg>';}
+function sdL(pts,color){var w=210,h=56,n=pts.length,max=Math.max.apply(null,pts),min=Math.min.apply(null,pts),rng=max-min||1;var xs=pts.map(function(p,i){return 6+i*(w-12)/(n-1);});var ys=pts.map(function(p){return 6+(1-(p-min)/rng)*(h-12);});var poly=xs.map(function(x,i){return x+' '+ys[i];}).join(' ');return'<svg width="220" height="65" viewBox="0 0 220 65"><polyline points="'+poly+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/><polyline points="'+poly+' '+xs[n-1]+' '+(h+4)+' 6 '+(h+4)+'" fill="'+color+'" fill-opacity=".12"/></svg>';}
+function sdH(rows,cols,vals){var cw=38,rh=20,ox=38,oy=18;var s='<svg width="'+(ox+cols.length*cw+4)+'" height="'+(oy+rows.length*rh+4)+'" viewBox="0 0 '+(ox+cols.length*cw+4)+' '+(oy+rows.length*rh+4)+'">';s+=cols.map(function(c,i){return'<text x="'+(ox+i*cw+cw/2)+'" y="13" text-anchor="middle" font-size="8" fill="#94A3B8">'+c+'</text>';}).join('');s+=rows.map(function(r,i){return'<text x="2" y="'+(oy+i*rh+rh/2+3)+'" font-size="8" fill="#94A3B8">'+r+'</text>';}).join('');vals.forEach(function(row,ri){row.forEach(function(v,ci){var bg=v==='H'?'#FEE2E2':v==='M'?'#FEF3C7':'#DCFCE7';var fc=v==='H'?'#DC2626':v==='M'?'#D97706':'#16A34A';s+='<rect x="'+(ox+ci*cw+2)+'" y="'+(oy+ri*rh+2)+'" width="'+(cw-4)+'" height="'+(rh-4)+'" rx="3" fill="'+bg+'"/><text x="'+(ox+ci*cw+cw/2)+'" y="'+(oy+ri*rh+rh/2+4)+'" text-anchor="middle" font-size="8" font-weight="700" fill="'+fc+'">'+v+'</text>';});});return s+'</svg>';}
+function sdK(val,lbl,color,sub){return'<svg width="200" height="88" viewBox="0 0 200 88"><text x="100" y="44" text-anchor="middle" font-size="24" font-weight="700" fill="'+color+'">'+val+'</text><text x="100" y="61" text-anchor="middle" font-size="11" fill="#64748B">'+lbl+'</text>'+(sub?'<text x="100" y="77" text-anchor="middle" font-size="10" fill="#94A3B8">'+sub+'</text>':'')+'</svg>';}
+function sdMx(){var sz=22,cells=[['L','L','H'],['L','M','H'],['M','H','H']],bg={'H':'#FEE2E2','M':'#FEF3C7','L':'#DCFCE7'};var s='<svg width="120" height="95" viewBox="0 0 120 95"><text x="4" y="9" font-size="7" fill="#94A3B8">Impact</text>';['Low','Med','High'].forEach(function(c,i){s+='<text x="'+(32+i*sz+sz/2)+'" y="20" text-anchor="middle" font-size="7.5" fill="#94A3B8">'+c+'</text>';});['High','Med','Low'].forEach(function(r,i){s+='<text x="2" y="'+(28+i*sz+sz/2)+'" font-size="7.5" fill="#94A3B8">'+r+'</text>';});cells.forEach(function(row,ri){row.forEach(function(v,ci){s+='<rect x="'+(32+ci*sz)+'" y="'+(24+ri*sz)+'" width="'+(sz-2)+'" height="'+(sz-2)+'" rx="2" fill="'+bg[v]+'"/>';});});return s+'<text x="74" y="93" text-anchor="middle" font-size="7" fill="#94A3B8">Probability</text></svg>';}
+function sdA(lines){var s='<svg width="240" height="'+(8+lines.length*22)+'" viewBox="0 0 240 '+(8+lines.length*22)+'">';s+=lines.map(function(l,i){var col=l.s==='H'?'#DC2626':l.s==='M'?'#D97706':'#16A34A';return'<rect x="6" y="'+(6+i*22)+'" width="8" height="14" rx="2" fill="'+col+'"/><text x="20" y="'+(18+i*22)+'" font-size="9" fill="#1A2B42">'+l.t+'</text>';}).join('');return s+'</svg>';}
+function sdG(){var t=[{n:'Requirement',s:0,w:18},{n:'Design',s:16,w:14},{n:'Development',s:28,w:28},{n:'Testing',s:54,w:20},{n:'Release',s:72,w:8}],cols=['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6'];var s='<svg width="230" height="90" viewBox="0 0 230 90">';s+=t.map(function(t,i){return'<text x="2" y="'+(13+i*16)+'" font-size="7.5" fill="#64748B">'+t.n+'</text><rect x="'+(68+t.s*1.4)+'" y="'+(5+i*16)+'" width="'+(t.w*1.4)+'" height="10" rx="3" fill="'+cols[i]+'"/>';}).join('');return s+'</svg>';}
+function sdRCA(steps,colors){var s='<svg width="210" height="'+(8+steps.length*26)+'" viewBox="0 0 210 '+(8+steps.length*26)+'">';steps.forEach(function(st,i){s+='<rect x="30" y="'+(6+i*26)+'" width="148" height="18" rx="4" fill="'+colors[i]+'"/><text x="104" y="'+(18+i*26)+'" text-anchor="middle" font-size="9" fill="#1A2B42">'+st+'</text>';if(i<steps.length-1)s+='<line x1="104" y1="'+(24+i*26)+'" x2="104" y2="'+(32+i*26)+'" stroke="#94A3B8" stroke-width="1.5"/>';});return s+'</svg>';}
+
+var TILES={
+'New':[
+{id:'n1',name:'AI Management Brief',desc:'AI-generated summary of most important project issues.',ai:true,isNew:true,prev:sdA([{s:'H',t:'MMC – Integration Test at risk'},{s:'M',t:'SAIN – Resource conflict'},{s:'L',t:'ABC – QA aging normal'}])},
+{id:'n2',name:'AI Detected Risks',desc:'Automatically detected risks based on project data.',ai:true,isNew:true,prev:sdT([['Schedule Slip','High','0.82'],['Resource Overload','Medium','0.74'],['QA Aging','Medium','0.61']],['Risk','Severity','Score'])},
+{id:'n3',name:'AI Root Cause Analysis',desc:'Explain the likely root causes behind a project problem.',ai:true,isNew:true,prev:sdRCA(['Env Delay','Integration Blocked','IT Milestone Risk'],['#FEE2E2','#FEF3C7','#FECACA'])},
+{id:'n4',name:'AI Impact Analysis',desc:'Show downstream impact of an issue on schedule, quality, or release.',ai:true,isNew:true,prev:sdRCA(['Current Issue','Affected Task','Release Delay'],['#EDE9FE','#DDD6FE','#FEE2E2'])},
+{id:'n5',name:'AI Recommended Actions',desc:'Suggest prioritized actions to resolve or mitigate detected problems.',ai:true,isNew:true,prev:sdT([['P1','Fix env setup','Ops','Today'],['P2','Reallocate Java','PM','Fri']],['Pri','Action','Owner','Due'])},
+{id:'n6',name:'AI Cross-Project Risk',desc:'Detect risks that span multiple projects in the program.',ai:true,isNew:true,prev:sdA([{s:'H',t:'Infra Team shared by 4 projects'},{s:'M',t:'UAT env conflict – 3 projects'},{s:'L',t:'PO availability gap'}])},
+{id:'n7',name:'AI Resource Conflict',desc:'Detect resource overload or conflicts across projects.',ai:true,isNew:true,prev:'<svg width="230" height="75" viewBox="0 0 230 75"><text x="6" y="13" font-size="9" font-weight="600" fill="#64748B">Java Team</text><rect x="6" y="19" width="120" height="11" rx="3" fill="#DBEAFE"/><rect x="6" y="19" width="190" height="11" rx="3" fill="#FEE2E2" opacity=".65"/><text x="6" y="44" font-size="8" fill="#1565C0">Cap 160h</text><text x="130" y="44" font-size="8" fill="#DC2626">Demand 245h  Gap -85h</text><text x="6" y="60" font-size="9" font-weight="600" fill="#64748B">QA Team</text><rect x="6" y="65" width="100" height="9" rx="3" fill="#DBEAFE"/><rect x="6" y="65" width="143" height="9" rx="3" fill="#FEF3C7" opacity=".8"/></svg>'},
+{id:'n8',name:'AI Similar Cases',desc:'Find similar cases from historical projects for reference.',ai:true,isNew:true,prev:sdT([['MMC-2024','92%','QA Delay'],['SAIN-2023','88%','Resource Gap']],['Project','Similarity','Problem'])},
+],
+'Program Information':[
+{id:'pi1',name:'Program Health',desc:'Overall health of the program: Healthy / Watch / High Risk / Critical.',prev:sdD(72,'#16A34A','Health')},
+{id:'pi2',name:'Program Summary',desc:'Program-level summary: BU, PM, period, code.',prev:sdT([['Business Unit','FPT Software'],['PM','Nguyen Van A'],['Period','Jan–Dec 2026']],['Field','Value'])},
+{id:'pi3',name:'Active Projects',desc:'Number of currently active projects in the program.',prev:sdK('6','Active Projects','#1565C0','+2 vs last month')},
+{id:'pi4',name:'Program Progress',desc:'Overall delivery progress across all projects.',prev:sdD(58,'#1565C0','Progress')},
+{id:'pi5',name:'Program Status',desc:'Overall program status with trend indicator.',prev:sdK('Watch','Program Status','#D97706','Trending down')},
+{id:'pi6',name:'Program KPI',desc:'Key performance indicators at program level.',prev:sdB([{v:72,l:'Sched'},{v:88,l:'Quality'},{v:61,l:'Res'},{v:79,l:'Risk'}],['#1565C0','#16A34A','#D97706','#DC2626'])},
+{id:'pi7',name:'Project Phase Overview',desc:'Show which phase each project is currently in.',prev:sdT([['SAIN','Development','68%'],['HRMS','Testing','52%'],['ERP','Design','34%']],['Project','Phase','Progress'])},
+{id:'pi8',name:'Program Manager',desc:'Display responsible Delivery Manager and Program Manager.',prev:sdK('Nguyen Van A','Program Manager','#0D2B5E','FPT Software')},
+],
+'Portfolio':[
+{id:'pf1',name:'Project Portfolio',desc:'List all projects in the current program or account.',prev:sdT([['SAIN','On Track','68%'],['HRMS','Watch','52%'],['ERP','Delayed','34%']],['Project','Status','Progress'])},
+{id:'pf2',name:'Project Health Overview',desc:'Show health status of all projects at a glance.',prev:sdB([{v:3,l:'Healthy'},{v:2,l:'Watch'},{v:1,l:'At Risk'},{v:0,l:'Critical'}],['#16A34A','#D97706','#DC2626','#7F1D1D'])},
+{id:'pf3',name:'Project Health Heatmap',desc:'Heatmap: Schedule, Quality, Resource, Risk health by project.',prev:sdH(['SAIN','HRMS','ERP'],['Sched','Qlty','Res','Risk'],[['L','L','M','L'],['M','H','M','M'],['H','M','H','H']])},
+{id:'pf4',name:'Project Risk Ranking',desc:'Rank projects by overall risk level.',prev:sdB([{v:82,l:'ERP'},{v:65,l:'HRMS'},{v:38,l:'SAIN'},{v:24,l:'Cloud'}],['#DC2626','#D97706','#FCD34D','#86EFAC'])},
+{id:'pf5',name:'Top Delayed Projects',desc:'Rank projects by schedule delay in days.',prev:sdB([{v:14,l:'ERP'},{v:7,l:'HRMS'},{v:3,l:'Mobile'},{v:0,l:'SAIN'}],['#DC2626','#D97706','#FEF3C7','#DCFCE7'])},
+{id:'pf6',name:'Projects Needing Attention',desc:'Show projects that require management attention.',prev:sdA([{s:'H',t:'ERP – 14-day delay'},{s:'M',t:'HRMS – Resource gap'},{s:'L',t:'Mobile – QA aging'}])},
+],
+'Schedule':[
+{id:'sc1',name:'Schedule Progress',desc:'Overall schedule progress versus baseline plan.',prev:sdD(68,'#1565C0','On Schedule')},
+{id:'sc2',name:'Schedule Status',desc:'Status: On Track / Watch / Delayed with variance.',prev:sdK('Watch','Schedule','#D97706','-7 days variance')},
+{id:'sc3',name:'Gantt Chart',desc:'Project schedule displayed in Gantt chart format.',prev:sdG()},
+{id:'sc4',name:'Schedule Variance',desc:'Difference between planned and actual schedule by phase.',prev:sdB([{v:0,l:'Req'},{v:3,l:'Design'},{v:7,l:'Dev'},{v:2,l:'Test'}],['#16A34A','#D97706','#DC2626','#D97706'])},
+{id:'sc5',name:'Delayed Tasks',desc:'List of tasks currently behind schedule.',prev:sdT([['API Integration','7d late'],['DB Migration','3d late'],['UI Review','2d late']],['Task','Delay'])},
+{id:'sc6',name:'Upcoming Activities',desc:'Activities and milestones starting in the next 2 weeks.',prev:sdT([['UAT Kickoff','Sep 10'],['Release Gate','Sep 20'],['Client Demo','Sep 25']],['Activity','Date'])},
+{id:'sc7',name:'Schedule Trend',desc:'Schedule performance health trend over time.',prev:sdL([0,-1,-3,-5,-4,-7,-6],'#1565C0')},
+{id:'sc8',name:'Program Timeline',desc:'Timeline view across all projects in the program.',prev:sdG()},
+],
+'Requirement / QA':[
+{id:'rq1',name:'Requirement Status',desc:'Show requirement progress: Completed / In Progress / Pending.',prev:sdD(74,'#16A34A','Completed')},
+{id:'rq2',name:'Open QA',desc:'Number of open QA items requiring resolution.',prev:sdK('23','Open QA Items','#D97706','+8 this week')},
+{id:'rq3',name:'Blocking QA',desc:'QA items blocking development or testing.',prev:sdK('4','Blocking QA','#DC2626','Needs immediate action')},
+{id:'rq4',name:'QA Aging',desc:'Show how long QA items have remained open.',prev:sdB([{v:5,l:'>30d'},{v:8,l:'15-30'},{v:10,l:'7-15'},{v:6,l:'<7d'}],['#DC2626','#D97706','#FCD34D','#86EFAC'])},
+{id:'rq5',name:'QA Trend',desc:'Show open and close QA trend over time.',prev:sdL([12,15,18,14,20,23,19],'#D97706')},
+{id:'rq6',name:'Pending Customer QA',desc:'QA items waiting for customer response.',prev:sdT([['Auth Flow','12d','Customer'],['Payment','8d','Customer']],['QA Item','Age','Awaiting'])},
+],
+'Quality':[
+{id:'ql1',name:'Quality Health',desc:'Overall quality status of the project.',prev:sdD(81,'#16A34A','Pass Rate')},
+{id:'ql2',name:'Defect Summary',desc:'Overview of defects: Open / Resolved / Critical.',prev:sdB([{v:12,l:'Crit'},{v:28,l:'High'},{v:41,l:'Med'},{v:19,l:'Low'}],['#DC2626','#F87171','#FCD34D','#86EFAC'])},
+{id:'ql3',name:'Defect Trend',desc:'Defects opened vs closed over time.',prev:sdL([8,12,16,14,10,7,5],'#DC2626')},
+{id:'ql4',name:'Test Pass Rate',desc:'Test pass percentage across all test cases.',prev:sdD(86,'#16A34A','Pass Rate')},
+{id:'ql5',name:'Test Result Summary',desc:'Passed / Failed / Blocked / Not Run breakdown.',prev:sdB([{v:86,l:'Pass'},{v:7,l:'Fail'},{v:3,l:'Block'},{v:4,l:'N/R'}],['#16A34A','#DC2626','#D97706','#94A3B8'])},
+{id:'ql6',name:'Quality Heatmap',desc:'Heatmap of quality status by project and module.',prev:sdH(['SAIN','HRMS','ERP'],['Auth','Pay','Rpt','API'],[['L','L','M','L'],['M','H','L','M'],['H','M','H','L']])},
+],
+'Risk':[
+{id:'ri1',name:'Risk Overview',desc:'Overall risk summary across the project.',prev:sdB([{v:3,l:'Crit'},{v:7,l:'High'},{v:11,l:'Med'},{v:8,l:'Low'}],['#DC2626','#F87171','#FCD34D','#86EFAC'])},
+{id:'ri2',name:'Risk Matrix',desc:'Probability x Impact matrix for all risks.',prev:sdMx()},
+{id:'ri3',name:'Risk Register',desc:'Table of all active risks with owner and status.',prev:sdT([['Env Setup','High','Open'],['Resource Gap','Medium','Mitigate'],['Scope Creep','Low','Monitor']],['Risk','Level','Status'])},
+{id:'ri4',name:'Top Risks',desc:'Highest priority risks requiring immediate attention.',prev:sdA([{s:'H',t:'Env Setup Delay'},{s:'H',t:'Java Team Overload'},{s:'M',t:'Scope Change'}])},
+{id:'ri5',name:'Risk Trend',desc:'Risk count trend over time.',prev:sdL([5,7,9,8,11,10,8],'#DC2626')},
+{id:'ri6',name:'Risk Heatmap',desc:'Cross-project risk heatmap.',prev:sdH(['SAIN','HRMS','ERP'],['Sch','Ql','Res','Cust'],[['L','M','L','L'],['M','H','M','H'],['H','H','H','M']])},
+],
+'Resource':[
+{id:'re1',name:'Resource Capacity',desc:'Available resource capacity vs current demand.',prev:'<svg width="230" height="78" viewBox="0 0 230 78"><text x="6" y="13" font-size="9" font-weight="600" fill="#64748B">Capacity vs Demand</text><rect x="6" y="19" width="120" height="11" rx="3" fill="#DBEAFE"/><text x="130" y="28" font-size="8" fill="#1565C0">Cap 160h</text><rect x="6" y="37" width="192" height="11" rx="3" fill="#FEE2E2"/><text x="6" y="62" font-size="8" fill="#DC2626">Demand 245h   Overload +85h</text></svg>'},
+{id:'re2',name:'Resource Utilization',desc:'Resource usage percentage by team.',prev:sdD(92,'#D97706','Utilization')},
+{id:'re3',name:'Overallocated Resources',desc:'People or teams allocated over 100%.',prev:sdT([['Java Team','153%'],['QA Lead','128%'],['DevOps','118%']],['Resource','Load'])},
+{id:'re4',name:'Team Allocation',desc:'Allocation by team across projects.',prev:sdB([{v:153,l:'Java'},{v:128,l:'QA'},{v:118,l:'DevOps'},{v:85,l:'UI'}],['#DC2626','#D97706','#D97706','#16A34A'])},
+{id:'re5',name:'Skill Gap',desc:'Missing skills or capacity for current project phase.',prev:sdT([['Java Senior','-3 FTE'],['QA Automation','-2 FTE'],['BA','-1 FTE']],['Skill','Gap'])},
+],
+'Effort':[
+{id:'ef1',name:'Planned vs Actual Effort',desc:'Compare planned and actual effort consumption.',prev:sdB([{v:480,l:'Plan'},{v:530,l:'Actual'},{v:210,l:'Remain'}],['#1565C0','#DC2626','#94A3B8'])},
+{id:'ef2',name:'Burn Rate',desc:'Effort consumption rate per sprint or week.',prev:sdL([40,42,38,45,50,48,52],'#F47920')},
+{id:'ef3',name:'Effort Variance',desc:'Variance between planned and actual effort.',prev:sdK('+50h','Effort Over','#DC2626','+10.4% vs plan')},
+{id:'ef4',name:'Effort by Project',desc:'Compare effort consumption across projects.',prev:sdB([{v:320,l:'SAIN'},{v:280,l:'HRMS'},{v:180,l:'ERP'},{v:150,l:'Cloud'}],['#1565C0','#7C3AED','#10B981','#F59E0B'])},
+{id:'ef5',name:'Progress vs Effort',desc:'Compare delivery progress with effort consumed.',prev:'<svg width="220" height="78" viewBox="0 0 220 78"><text x="6" y="13" font-size="9" font-weight="600" fill="#64748B">Progress vs Effort</text><rect x="6" y="19" width="136" height="11" rx="3" fill="#DBEAFE"/><text x="146" y="28" font-size="8" fill="#1565C0">68% Progress</text><rect x="6" y="37" width="164" height="11" rx="3" fill="#FEE2E2"/><text x="174" y="46" font-size="8" fill="#DC2626">82% Effort</text><text x="6" y="68" font-size="8" fill="#D97706">Warning: effort ahead of progress</text></svg>'},
+],
+'AI Intelligence':[
+{id:'ai1',name:'AI Management Brief',desc:'Summarize the most important items requiring management attention.',ai:true,prev:sdA([{s:'H',t:'3 items need attention today'},{s:'H',t:'MMC – Integration at risk'},{s:'M',t:'SAIN – Resource conflict'}])},
+{id:'ai2',name:'AI Project Summary',desc:'Concise AI summary of current project health and trends.',ai:true,prev:sdA([{s:'L',t:'Health: Watch'},{s:'L',t:'Sprint velocity stable'},{s:'M',t:'QA aging increasing'}])},
+{id:'ai3',name:'AI Detected Risks',desc:'Automatically identify potential risks from project signals.',ai:true,prev:sdT([['Schedule Slip','High','0.82'],['Resource Overload','Medium','0.74']],['Risk','Severity','Score'])},
+{id:'ai4',name:'AI Top Attention',desc:'Rank the most important projects and issues needing attention.',ai:true,prev:sdT([['ERP','Schedule','High'],['HRMS','Resource','Medium'],['SAIN','QA','Low']],['Project','Topic','Severity'])},
+{id:'ai5',name:'AI Delivery Risk',desc:'Estimate delivery health: Schedule, Quality, Requirement, Resource, Customer.',ai:true,prev:sdB([{v:60,l:'Sched'},{v:80,l:'Qlty'},{v:75,l:'Req'},{v:55,l:'Res'},{v:85,l:'Cust'}],['#D97706','#16A34A','#16A34A','#DC2626','#16A34A'])},
+{id:'ai6',name:'AI Release Readiness',desc:'Assess whether the project is ready for release.',ai:true,prev:sdD(67,'#D97706','Readiness')},
+{id:'ai7',name:'AI Progress Credibility',desc:'Compare reported progress with supporting evidence.',ai:true,prev:'<svg width="220" height="78" viewBox="0 0 220 78"><text x="6" y="13" font-size="9" fill="#64748B">Reported: 82%</text><rect x="6" y="18" width="164" height="11" rx="3" fill="#DBEAFE"/><text x="6" y="44" font-size="9" fill="#64748B">AI Confidence: <tspan fill="#DC2626" font-weight="700">LOW</tspan></text><rect x="6" y="50" width="80" height="11" rx="3" fill="#FEE2E2"/><text x="6" y="73" font-size="8" fill="#DC2626">UT pass 54% - 16 critical defects open</text></svg>'},
+{id:'ai8',name:'AI Executive Brief',desc:'Executive-level AI summary: delivery, financial, customer, resource.',ai:true,prev:sdT([['Delivery','Watch'],['Financial','On Track'],['Customer','Escalation']],['Area','Status'])},
+],
+};
+
+function openAddTiles(){document.getElementById('atBack').classList.add('open');renderAtSidebar();renderTileGallery();}
+function closeAddTiles(e){if(!e||e.target===document.getElementById('atBack'))document.getElementById('atBack').classList.remove('open');}
+function getCounts(){
+  var q=document.getElementById('atSearch')?document.getElementById('atSearch').value.toLowerCase():'';
+  var out={'All Categories':0};
+  CATS.slice(1).forEach(function(cat){
+    var n=(TILES[cat]||[]).filter(function(t){return !q||(t.name.toLowerCase().indexOf(q)>=0||t.desc.toLowerCase().indexOf(q)>=0);}).length;
+    out[cat]=n;out['All Categories']+=n;
+  });
+  return out;
+}
+function renderAtSidebar(){
+  var counts=getCounts();
+  document.getElementById('atSidebar').innerHTML=CATS.map(function(cat){
+    return '<button class="at-cat-btn'+(cat===currentCat?' active':'')+'" onclick="filterAtCat(this,\''+cat.replace(/'/g,"\\'")+'\')">'
+      +cat+'<span class="cat-count">'+(counts[cat]||0)+'</span></button>';
+  }).join('');
+}
+function filterAtCat(btn,cat){
+  document.querySelectorAll('.at-cat-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');currentCat=cat;renderTileGallery();
+  if(cat!=='All Categories'){var el=document.getElementById('ats-'+cat.replace(/[^a-zA-Z0-9]/g,'_'));if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
+}
+function renderTileGallery(){
+  var q=(document.getElementById('atSearch').value||'').toLowerCase();
+  var cats=currentCat==='All Categories'?CATS.slice(1):[currentCat];
+  var html='';
+  cats.forEach(function(cat){
+    var tiles=(TILES[cat]||[]).filter(function(t){return !q||(t.name.toLowerCase().indexOf(q)>=0||t.desc.toLowerCase().indexOf(q)>=0);});
+    if(!tiles.length)return;
+    var sid='ats-'+cat.replace(/[^a-zA-Z0-9]/g,'_');
+    html+='<div class="at-section" id="'+sid+'"><div class="at-section-head">'+cat+'</div><div class="at-grid">';
+    html+=tiles.map(function(t){
+      var added=!!addedTiles[t.id];
+      return '<div class="at-tile'+(added?' added':'')+'" onclick="toggleAtTile(\''+t.id+'\')">'
+        +'<div class="at-tile-preview">'+t.prev+'</div>'
+        +'<div class="at-badges">'+(t.isNew?'<span class="badge-new">NEW</span>':'')+(t.ai?'<span class="badge-ai">AI</span>':'')+'</div>'
+        +'<div class="at-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>'
+        +'<div class="at-tile-body"><div class="at-tile-name">'+t.name+'</div><div class="at-tile-desc">'+t.desc+'</div></div>'
+        +'</div>';
+    }).join('');
+    html+='</div></div>';
+  });
+  if(!html)html='<div class="at-empty">No tiles match your search.</div>';
+  document.getElementById('atGallery').innerHTML=html;
+  renderAtSidebar();
+}
+// tile meta store
+var tileMeta={};
+var _toastTimer=null;
+function showToast(msg){
+  var t=document.getElementById('globalToast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(function(){t.classList.remove('show');},2800);
+}
+function findTileById(id){
+  var found=null;
+  (CATS||[]).slice(1).forEach(function(cat){(TILES[cat]||[]).forEach(function(t){if(t.id===id)found=t;});});
+  return found;
+}
+function toggleAtTile(id){
+  var t=findTileById(id);
+  if(!t)return;
+  var wasAdded=!!addedTiles[id];
+  addedTiles[id]=!wasAdded;
+  tileMeta[id]=t;
+  if(!wasAdded){
+    addCanvasTile(id);
+    showToast('"'+t.name+'" added to dashboard');
+  } else {
+    removeCanvasTile(id);
+    showToast('"'+t.name+'" removed from dashboard');
+  }
+  renderTileGallery();
+}
+function addCanvasTile(id){
+  var m=tileMeta[id];
+  if(!m)return;
+  var empty=document.getElementById('canvasEmpty');
+  var grid=document.getElementById('canvasTiles');
+  if(empty)empty.style.display='none';
+  grid.style.display='flex';
+  var div=document.createElement('div');
+  div.className='ctile';
+  div.id='ctile-'+id;
+  var badges=(m.isNew?'<span class="badge-new">NEW</span>':'')+(m.isAi?'<span class="badge-ai">AI</span>':'');
+  var head=document.createElement('div');
+  head.className='ctile-head';
+  head.innerHTML='<div class="ctile-title">'+m.name+'</div>'
+    +'<div style="display:flex;align-items:center;gap:6px"><div class="ctile-badges">'+badges+'</div></div>';
+  var menuBtn=document.createElement('button');
+  menuBtn.className='ctile-menu-btn';
+  menuBtn.innerHTML='&middot;&middot;&middot;';
+  menuBtn.title='More options';
+  menuBtn.addEventListener('click',function(e){e.stopPropagation();openTileCtx(e,id);});
+  head.querySelector('div > div').appendChild(menuBtn);
+  var body=document.createElement('div');
+  body.className='ctile-body';
+  body.innerHTML=m.prev;
+  div.appendChild(head);
+  div.appendChild(body);
+  grid.appendChild(div);
+}
+function removeCanvasTile(id){
+  var el=document.getElementById('ctile-'+id);
+  if(el)el.remove();
+  var grid=document.getElementById('canvasTiles');
+  if(grid&&grid.children.length===0){
+    grid.style.display='none';
+    var empty=document.getElementById('canvasEmpty');
+    if(empty)empty.style.display='flex';
+  }
+}
+function removeTileFromCanvas(id){
+  var m=tileMeta[id]||{};
+  addedTiles[id]=false;
+  removeCanvasTile(id);
+  showToast('"'+(m.name||'Tile')+'" removed from dashboard');
+  renderTileGallery();
+}
+
+// ── TILE CONTEXT MENU ──
+var _ctxTileId=null;
+function openTileCtx(e,id){
+  _ctxTileId=id;
+  var menu=document.getElementById('tileCtx');
+  menu.classList.add('open');
+  var x=e.clientX,y=e.clientY;
+  if(x+180>window.innerWidth)x=window.innerWidth-185;
+  if(y+220>window.innerHeight)y=window.innerHeight-225;
+  menu.style.left=x+'px';
+  menu.style.top=y+'px';
+}
+document.addEventListener('click',function(e){
+  var menu=document.getElementById('tileCtx');
+  if(menu&&!menu.contains(e.target))menu.classList.remove('open');
+});
+function ctxAction(action){
+  document.getElementById('tileCtx').classList.remove('open');
+  var id=_ctxTileId;
+  var m=tileMeta[id]||{};
+  if(action==='delete'){removeTileFromCanvas(id);return;}
+  if(action==='duplicate'){
+    var el=document.getElementById('ctile-'+id);
+    if(el){
+      var clone=el.cloneNode(true);
+      var newId=id+'_d'+Date.now();
+      clone.id='ctile-'+newId;
+      tileMeta[newId]=m;
+      // rebind menu button
+      var mb=clone.querySelector('.ctile-menu-btn');
+      if(mb){mb.onclick=null;mb.addEventListener('click',function(e){e.stopPropagation();openTileCtx(e,newId);});}
+      el.parentNode.insertBefore(clone,el.nextSibling);
+      showToast('"'+m.name+'" duplicated');
+    }
+    return;
+  }
+  if(action==='download'){showToast('Tile download is not available in demo.');return;}
+  if(action==='settings'){openSettings(id);}
+}
+// ── SETTINGS MODAL ──
+function openSettings(id){
+  var m=tileMeta[id]||{};
+  document.getElementById('stgTitle').textContent=(m.name||'Tile')+' — Settings';
+  var isCost=m.name&&(m.name.toLowerCase().indexOf('budget')>=0||m.name.toLowerCase().indexOf('cost')>=0||m.name.toLowerCase().indexOf('forecast')>=0);
+  var isChart=m.prev&&(m.prev.indexOf('<rect')>=0||m.prev.indexOf('polyline')>=0||m.prev.indexOf('circle')>=0);
+  var body='';
+  body+='<div class="stg-section-title">Display</div>';
+  body+='<div class="stg-row"><span class="stg-label">Custom title?</span><label class="stg-toggle"><input type="checkbox"><span class="slider"></span></label></div>';
+  body+='<div class="stg-row"><span class="stg-label">Show legend</span><label class="stg-toggle"><input type="checkbox"><span class="slider"></span></label></div>';
+  body+='<div class="stg-row"><span class="stg-label">Show X axis</span><label class="stg-toggle"><input type="checkbox"><span class="slider"></span></label></div>';
+  if(isCost){
+    body+='<div class="stg-section-title" style="margin-top:16px">Bars</div>';
+    body+='<div class="stg-row"><span class="stg-label">Budget</span><label class="stg-toggle"><input type="checkbox" checked><span class="slider"></span></label></div>';
+    body+='<div class="stg-row"><span class="stg-label">Variance</span><label class="stg-toggle"><input type="checkbox" checked><span class="slider"></span></label></div>';
+    body+='<div class="stg-row"><span class="stg-label">Forecast Final Cost</span><div class="stg-seg"><button class="stg-seg-btn" onclick="segSel(this,\'ffc\',\'off\')">Off</button><button class="stg-seg-btn active" onclick="segSel(this,\'ffc\',\'on\')">On</button><button class="stg-seg-btn" onclick="segSel(this,\'ffc\',\'bkd\')">Breakdown</button></div></div>';
+    body+='<div class="stg-row"><span class="stg-label">Payment Progress</span><div class="stg-seg"><button class="stg-seg-btn" onclick="segSel(this,\'pp\',\'off\')">Off</button><button class="stg-seg-btn active" onclick="segSel(this,\'pp\',\'on\')">On</button><button class="stg-seg-btn" onclick="segSel(this,\'pp\',\'bkd\')">Breakdown</button></div></div>';
+    body+='<div class="stg-section-title" style="margin-top:16px">Denomination</div>';
+    body+='<div class="stg-row"><span class="stg-label">Decimal Places</span><input type="number" value="2" min="0" max="4" style="width:50px;border:none;border-bottom:1px solid var(--border);text-align:right;font-family:inherit;font-size:13px;outline:none;color:var(--text)"></div>';
+    body+='<div class="stg-row"><span class="stg-label">Denomination</span><select style="border:none;border-bottom:1px solid var(--border);font-family:inherit;font-size:13px;outline:none;color:var(--text);background:transparent"><option>Auto</option><option>Thousands (K)</option><option>Millions (M)</option><option>Billions (B)</option></select></div>';
+  }
+  document.getElementById('stgBody').innerHTML=body;
+  document.getElementById('stgBack').classList.add('open');
+}
+function segSel(btn,group,val){
+  var parent=btn.closest('.stg-seg');
+  parent.querySelectorAll('.stg-seg-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+}
+function closeSettings(e){
+  if(e&&e.target!==document.getElementById('stgBack'))return;
+  document.getElementById('stgBack').classList.remove('open');
+}
+document.getElementById('stgBack').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+// ── INIT ──
+setMode('ai');
+showCreation();
+buildTemplates('All');
+</script>
+
+<!-- TILE CONTEXT MENU -->
+<div class="tile-ctx" id="tileCtx">
+  <button class="tile-ctx-item" onclick="ctxAction('settings')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+  <button class="tile-ctx-item disabled">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Edit Data
+  </button>
+  <hr class="tile-ctx-sep">
+  <button class="tile-ctx-item" onclick="ctxAction('duplicate')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    Duplicate Tile
+  </button>
+  <button class="tile-ctx-item" onclick="ctxAction('download')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Download Tile
+  </button>
+  <hr class="tile-ctx-sep">
+  <button class="tile-ctx-item danger" onclick="ctxAction('delete')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    Delete Tile
+  </button>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="stg-back" id="stgBack" onclick="closeSettings(event)">
+  <div class="stg-modal" onclick="event.stopPropagation()">
+    <div class="stg-head">
+      <span class="stg-head-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <div class="stg-head-title" id="stgTitle">Settings</div>
+      <button class="stg-close" onclick="closeSettings()">&#x2715;</button>
+    </div>
+    <div class="stg-body" id="stgBody"></div>
+    <div class="stg-footer"><button class="stg-done" onclick="closeSettings()">Done</button></div>
+  </div>
+</div>
+
+<div class="toast" id="globalToast">
+  <div class="toast-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+  <span id="toastMsg">Tile added to dashboard</span>
+</div>
+
+</body>
+</html>

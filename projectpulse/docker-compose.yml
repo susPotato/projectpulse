@@ -1,0 +1,23 @@
+# The judged artifact: `docker compose up -d` must be enough.
+#
+# Port 5433 on the host so a local Postgres, if there is one, stays untouched.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: projectpulse-db
+    environment:
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: pulse
+      POSTGRES_DB: projectpulse
+    ports:
+      - "5433:5432"
+    volumes:
+      - pulse-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse -d projectpulse"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pulse-pgdata:

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Schedule — Example Project | FPT Software</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D2B5E;--blue:#1565C0;--orange:#F47920;
+  --text:#1A1F36;--muted:#6B7280;--light:#9CA3AF;--border:#E5E7EB;--bg:#F3F5F7;
+  --green:#16A34A;--red:#EF4444;--teal:#0D9488;--amber:#D97706;
+  --sidebar:60px;--topbar:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--navy);display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:4px;flex-shrink:0;z-index:100}
+.sidebar-logo{width:36px;height:36px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;cursor:pointer}
+.nav-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;color:rgba(255,255,255,.55)}
+.nav-icon:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-icon.active{background:rgba(255,255,255,.15);color:#fff}
+.nav-icon svg{width:20px;height:20px}
+.nav-label{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;text-align:center;line-height:1.2}
+.nav-group{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.nav-group:hover .nav-icon{background:rgba(255,255,255,.1);color:#fff}
+.nav-group:hover .nav-label{color:rgba(255,255,255,.8)}
+.nav-group.active .nav-icon{background:rgba(255,255,255,.15);color:#fff}
+.nav-group.active .nav-label{color:#fff}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{height:var(--topbar);background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.topbar-breadcrumb{color:rgba(255,255,255,.6);font-size:12.5px;display:flex;align-items:center;gap:5px}
+.topbar-breadcrumb a{color:rgba(255,255,255,.6);text-decoration:none;cursor:pointer}
+.topbar-breadcrumb a:hover{color:#fff}
+.topbar-breadcrumb .sep{color:rgba(255,255,255,.3)}
+.topbar-breadcrumb .cur{color:#fff;font-weight:600}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-icon-btn{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;transition:background .15s}
+.topbar-icon-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* CONTENT */
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── EMPTY STATE ── */
+.empty-state{flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.empty-card{background:#fff;border:2px dashed #CBD5E1;border-radius:14px;padding:40px 48px;width:520px;text-align:center}
+.empty-preview{display:flex;justify-content:center;gap:10px;margin-bottom:24px}
+.ep-box{background:#F8F9FB;border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:8px}
+.ep-label{font-size:11px;font-weight:600;color:var(--text)}
+.ep-ext{font-size:10px;color:var(--blue);background:#EFF6FF;border-radius:4px;padding:1px 5px;font-weight:700}
+.empty-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}
+.empty-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:6px}
+.empty-link{font-size:13px;color:var(--muted)}.empty-link a{color:var(--blue);cursor:pointer}
+.empty-actions{display:flex;gap:10px;margin-top:22px}
+.ea-btn{flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
+.ea-primary{background:var(--blue);color:#fff;border:none}
+.ea-primary:hover{opacity:.9}
+.ea-secondary{background:#fff;color:var(--text);border:1px solid var(--border)}
+.ea-secondary:hover{background:var(--bg)}
+
+/* ── SCHEDULE VIEW ── */
+.sched-toolbar{background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:8px 16px;gap:8px;flex-shrink:0}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:12.5px;font-family:inherit;color:var(--text);cursor:pointer;font-weight:500;transition:background .12s}
+.tb-btn:hover{background:var(--bg)}
+.tb-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tb-btn.primary:hover{opacity:.9}
+.tb-btn.success{background:#16A34A;color:#fff;border-color:#16A34A}
+.tb-btn.success:hover{opacity:.9}
+.tb-spacer{flex:1}
+.mode-tabs{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden}
+.mode-tab{padding:5px 14px;font-size:12.5px;font-weight:500;font-family:inherit;border:none;background:#fff;cursor:pointer;color:var(--muted);transition:background .12s,color .12s;border-right:1px solid var(--border)}
+.mode-tab:last-child{border-right:none}
+.mode-tab.active{background:var(--blue);color:#fff;font-weight:600}
+.tb-dropdown{display:flex;align-items:center;gap:5px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:12.5px;font-family:inherit;color:var(--text);cursor:pointer;font-weight:500}
+.tb-dropdown:hover{background:var(--bg)}
+
+/* GANTT MINI TIMELINE */
+.timeline-wrap{background:#fff;border-bottom:1px solid var(--border);overflow:hidden;flex-shrink:0;position:relative}
+.timeline-header{display:flex;align-items:center;padding:0 0 0 420px;height:22px;background:#F9FAFB;border-bottom:1px solid var(--border);overflow:hidden}
+.tl-month{font-size:10px;color:var(--light);min-width:60px;padding-left:4px}
+.timeline-phases{height:28px;padding-left:420px;display:flex;align-items:center;overflow:hidden;position:relative}
+.phase-bar{height:22px;border-radius:3px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;flex-shrink:0}
+.today-marker{position:absolute;top:0;bottom:0;width:1.5px;background:var(--blue);z-index:2}
+.today-label{position:absolute;top:-22px;font-size:10px;font-weight:700;color:var(--blue);transform:translateX(-50%)}
+.completion-label{position:absolute;top:-22px;font-size:10px;font-weight:600;color:var(--muted);text-align:center;transform:translateX(-50%)}
+.completion-marker{position:absolute;top:0;bottom:0;width:1.5px;background:#9CA3AF;z-index:2;border-left:1.5px dashed #9CA3AF}
+
+/* ACTIVITY LIST */
+.act-list-wrap{flex:1;overflow-y:auto;background:var(--bg)}
+.act-list-wrap::-webkit-scrollbar{width:5px}
+.act-list-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.act-row{background:#fff;border-bottom:1px solid #F0F2F5;display:flex;align-items:stretch;transition:background .1s}
+.act-row:hover{background:#FAFBFF}
+.act-left{display:flex;align-items:center;padding:10px 12px;gap:10px;width:420px;flex-shrink:0;border-right:1px solid #F0F2F5}
+.act-drag{color:#D1D5DB;cursor:grab;font-size:12px;line-height:1;letter-spacing:-1px;flex-shrink:0}
+.act-check{width:16px;height:16px;border:1.5px solid #D1D5DB;border-radius:3px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.act-info{flex:1;min-width:0}
+.act-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-phase-tag{font-size:10.5px;font-weight:600;margin-top:2px;display:inline-block}
+.ph-planning{color:#1565C0}.ph-design{color:#0D9488}.ph-dev{color:#92400E}.ph-test{color:#7C3AED}.ph-deploy{color:#EA580C}.ph-close{color:#DC2626}
+.act-right{flex:1;display:flex;align-items:center;padding:0 12px;gap:4px;overflow:hidden}
+.date-block{flex:1;display:flex;flex-direction:column;gap:2px}
+.date-row{display:flex;align-items:center;gap:6px}
+.date-label{font-size:10.5px;color:var(--light);width:130px;flex-shrink:0}
+.date-val{font-size:11.5px;color:var(--muted)}
+.date-val.overdue{color:var(--red);font-weight:600}
+.act-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;padding-left:8px}
+.act-status-box{width:24px;height:24px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+.act-status-box:hover{border-color:var(--blue)}
+.act-status-box.done{background:var(--green);border-color:var(--green)}
+.act-play-btn{width:28px;height:28px;border-radius:50%;background:#16A34A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+.act-play-btn:hover{opacity:.85}
+.act-del-btn{background:none;border:none;cursor:pointer;color:#D1D5DB;padding:4px;border-radius:4px;display:flex;align-items:center;transition:color .12s}
+.act-del-btn:hover{color:var(--red)}
+.act-list-footer{padding:10px 14px;font-size:11.5px;color:var(--light);background:#F9FAFB;border-top:1px solid var(--border);text-align:right}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo" onclick="location.href='fpt-pm-home.html'" title="Home">
+    <svg width="28" height="20" viewBox="0 0 56 40" fill="none">
+      <rect width="18" height="40" rx="2" fill="#F47920"/>
+      <rect x="21" width="14" height="26" rx="2" fill="#fff"/>
+      <rect x="38" width="18" height="40" rx="2" fill="#1565C0"/>
+    </svg>
+  </div>
+  <div class="nav-group" onclick="location.href='fpt-pm-home.html'">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <div class="nav-label">Home</div>
+  </div>
+  <div class="nav-group" onclick="location.href='fpt-pm-dashboard.html'">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+    <div class="nav-label">Dashboard</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+    <div class="nav-label">Cost</div>
+  </div>
+  <div class="nav-group" onclick="location.href='fpt-pm-risk.html'">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+    <div class="nav-label">Risk</div>
+  </div>
+  <div class="nav-group active">
+    <div class="nav-icon active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+    <div class="nav-label">Schedule</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+    <div class="nav-label">Docs</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    <div class="nav-label">Audit Log</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+    <div class="nav-label">Snapshots</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+    <div class="nav-label">Tasks</div>
+  </div>
+  <div class="nav-group" style="margin-top:auto;margin-bottom:10px">
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div class="nav-label">Settings</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-breadcrumb">
+      <a onclick="location.href='fpt-pm-programs.html'">Programs</a>
+      <span class="sep">/</span>
+      <a onclick="location.href='fpt-pm-programs.html'">Example Program</a>
+      <span class="sep">/</span>
+      <a>Example Project</a>
+      <span class="sep">/</span>
+      <span class="cur">Schedule</span>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-icon-btn" title="Download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="topbar-icon-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" id="mainContent"></div>
+</div>
+
+<script>
+// ── STATE ──
+var hasSchedule = false; // toggle for demo
+
+// ── ACTIVITIES DATA ──
+var ACTIVITIES = [
+  {name:'Project Commencement',phase:'Planning',phaseClass:'ph-planning',start:'5 Sep 2024',baseline:'12 Sep 2024',planned:'12 Sep 2024',done:true,playing:false},
+  {name:'Business Case Approved',phase:'Planning',phaseClass:'ph-planning',start:'12 Sep 2024',baseline:'27 Sep 2024',planned:'27 Sep 2024',done:true,playing:false},
+  {name:'Project Planning',phase:'Planning',phaseClass:'ph-planning',start:'27 Sep 2024',baseline:'11 Nov 2024',planned:'11 Nov 2024',done:true,playing:false},
+  {name:'Solution Architecture',phase:'Design',phaseClass:'ph-design',start:'11 Nov 2024',baseline:'26 Dec 2024',planned:'26 Dec 2024',done:true,playing:true},
+  {name:'Technical Design',phase:'Design',phaseClass:'ph-design',start:'26 Dec 2024',baseline:'24 Feb 2025',planned:'24 Feb 2025',done:false,playing:false},
+  {name:'Security & Compliance Review',phase:'Design',phaseClass:'ph-design',start:'24 Feb 2025',baseline:'10 Apr 2025',planned:'10 Apr 2025',done:false,playing:false},
+  {name:'Environment Setup',phase:'Design',phaseClass:'ph-design',start:'10 Apr 2025',baseline:'10 May 2025',planned:'10 May 2025',done:false,playing:false},
+  {name:'Planning Approval',phase:'Design',phaseClass:'ph-design',start:'10 May 2025',baseline:'9 Jul 2025',planned:'9 Jul 2025',done:false,playing:false},
+  {name:'Sprint 1 — Core Modules',phase:'Development',phaseClass:'ph-dev',start:'9 Jul 2025',baseline:'29 Aug 2025',planned:'29 Aug 2025',done:false,playing:false},
+  {name:'Sprint 2 — Integration',phase:'Development',phaseClass:'ph-dev',start:'29 Aug 2025',baseline:'15 Oct 2025',planned:'15 Oct 2025',done:false,playing:false},
+  {name:'Sprint 3 — UI & Reporting',phase:'Development',phaseClass:'ph-dev',start:'15 Oct 2025',baseline:'10 Dec 2025',planned:'10 Dec 2025',done:false,playing:false},
+  {name:'Integration Testing',phase:'Testing',phaseClass:'ph-test',start:'10 Dec 2025',baseline:'31 Jan 2026',planned:'31 Jan 2026',done:false,playing:false},
+  {name:'User Acceptance Testing (UAT)',phase:'Testing',phaseClass:'ph-test',start:'31 Jan 2026',baseline:'14 Mar 2026',planned:'14 Mar 2026',done:false,playing:false},
+  {name:'Performance & Load Testing',phase:'Testing',phaseClass:'ph-test',start:'14 Mar 2026',baseline:'10 Apr 2026',planned:'10 Apr 2026',done:false,playing:false},
+  {name:'Go-Live Preparation',phase:'Deployment',phaseClass:'ph-deploy',start:'10 Apr 2026',baseline:'1 May 2026',planned:'1 May 2026',done:false,playing:false},
+  {name:'Production Deployment',phase:'Deployment',phaseClass:'ph-deploy',start:'1 May 2026',baseline:'15 May 2026',planned:'15 May 2026',done:false,playing:false},
+  {name:'Post Go-Live Support',phase:'Close Out',phaseClass:'ph-close',start:'15 May 2026',baseline:'30 Jun 2026',planned:'30 Jun 2026',done:false,playing:false},
+  {name:'Project Handover & Closure',phase:'Close Out',phaseClass:'ph-close',start:'1 Jul 2026',baseline:'23 Feb 2026',planned:'23 Feb 2026',done:false,playing:false}
+];
+
+var PHASE_BARS=[
+  {label:'Planning',color:'#1E40AF',w:80},
+  {label:'Design',color:'#0D9488',w:200},
+  {label:'Dev',color:'#D97706',w:50},
+  {label:'Development',color:'#D97706',w:230},
+  {label:'Testing',color:'#7C3AED',w:120},
+  {label:'Deploy',color:'#EA580C',w:70},
+  {label:'Close Out',color:'#EF4444',w:110}
+];
+
+// ── RENDER ──
+function render(){
+  if(!hasSchedule) renderEmpty(); else renderSchedule();
+}
+
+function renderEmpty(){
+  document.getElementById('mainContent').innerHTML =
+  '<div class="empty-state">'+
+  '<div class="empty-card">'+
+    '<div class="empty-preview">'+
+      '<div class="ep-box">'+
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#EFF6FF"/><rect x="7" y="8" width="10" height="1.5" rx=".75" fill="#1565C0"/><rect x="7" y="11" width="7" height="1.5" rx=".75" fill="#93C5FD"/><rect x="7" y="14" width="9" height="1.5" rx=".75" fill="#93C5FD"/></svg>'+
+        '<div><div class="ep-label">MS Project</div><div class="ep-ext">.XML</div></div>'+
+      '</div>'+
+      '<div class="ep-box">'+
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#FFF7ED"/><rect x="6" y="7" width="12" height="2" rx="1" fill="#EA580C"/><rect x="6" y="11" width="8" height="2" rx="1" fill="#FDBA74"/><rect x="6" y="15" width="10" height="2" rx="1" fill="#FDBA74"/></svg>'+
+        '<div><div class="ep-label">Primavera P6</div><div class="ep-ext">.XER</div></div>'+
+      '</div>'+
+      '<div class="ep-box">'+
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#F0FDF4"/><line x1="7" y1="8" x2="17" y2="8" stroke="#16A34A" stroke-width="1.5"/><line x1="7" y1="12" x2="17" y2="12" stroke="#86EFAC" stroke-width="1.5"/><line x1="7" y1="16" x2="13" y2="16" stroke="#86EFAC" stroke-width="1.5"/></svg>'+
+        '<div><div class="ep-label">CSV File</div><div class="ep-ext">.CSV</div></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="empty-title">Drag and drop your files to upload</div>'+
+    '<div class="empty-desc">Import your <strong>MS Project (.XML)</strong>, <strong>Primavera P6 (.XER)</strong>, or <strong>CSV file</strong>.<br>You can also use one of our templates or start from scratch!</div>'+
+    '<div class="empty-link">If you\'d like to import a CSV file, please use our <a>template</a>.</div>'+
+    '<div class="empty-actions">'+
+      '<button class="ea-btn ea-primary" onclick="loadSchedule()">'+
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+
+        'Import Your Schedule'+
+      '</button>'+
+    '</div>'+
+    '<div class="empty-actions" style="margin-top:8px">'+
+      '<button class="ea-btn ea-secondary">'+
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>'+
+        'Use Templates'+
+      '</button>'+
+      '<button class="ea-btn ea-secondary" onclick="loadSchedule()">'+
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'+
+        'Add Activity'+
+      '</button>'+
+    '</div>'+
+  '</div>'+
+  '</div>';
+}
+
+function loadSchedule(){hasSchedule=true;render();}
+
+var currentMode='Activities';
+function setMode(m){
+  currentMode=m;
+  document.querySelectorAll('.mode-tab').forEach(function(t){
+    t.className='mode-tab'+(t.dataset.m===m?' active':'');
+  });
+}
+
+function renderSchedule(){
+  var html='';
+
+  // TOOLBAR
+  html+='<div class="sched-toolbar">';
+  html+='<button class="tb-btn primary" onclick="addActivity()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Activity</button>';
+  html+='<button class="tb-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Create Report</button>';
+  html+='<button class="tb-btn success"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Save</button>';
+  html+='<div class="tb-spacer"></div>';
+  html+='<div class="mode-tabs">';
+  ['Activities','Gantt','Worm','Phases','None'].forEach(function(m){
+    html+='<button class="mode-tab'+(m===currentMode?' active':'')+'" data-m="'+m+'" onclick="setMode(\''+m+'\')">'+m+'</button>';
+  });
+  html+='</div>';
+  html+='<div class="tb-spacer"></div>';
+  html+='<button class="tb-dropdown"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg> Import <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>';
+  html+='<button class="tb-dropdown">Bulk Edit <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>';
+  html+='<button class="tb-dropdown">Sort <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>';
+  html+='</div>';
+
+  // MINI TIMELINE
+  html+='<div class="timeline-wrap">';
+  html+='<div style="position:relative;height:50px;overflow:hidden">';
+  // month labels
+  html+='<div style="position:absolute;top:0;left:420px;right:0;height:18px;background:#F9FAFB;border-bottom:1px solid #F0F2F5;display:flex;align-items:center">';
+  var months=['Jul \'24','Oct \'24','Jan \'25','Apr \'25','Jul \'25','Oct \'25','Jan \'26','Apr \'26','Jul \'26'];
+  months.forEach(function(m,i){html+='<span style="min-width:80px;font-size:10px;color:#9CA3AF;padding-left:4px">'+m+'</span>';});
+  html+='</div>';
+  // today & completion labels
+  html+='<div style="position:absolute;top:2px;left:600px;font-size:10px;font-weight:700;color:#1565C0">Today</div>';
+  html+='<div style="position:absolute;top:2px;left:780px;font-size:10px;color:#6B7280;text-align:center">Completion<br><span style="font-weight:600">23 Feb 2026</span></div>';
+  // phase bars row
+  html+='<div style="position:absolute;bottom:0;left:420px;right:0;height:28px;display:flex;align-items:center">';
+  PHASE_BARS.forEach(function(p){
+    html+='<div style="height:22px;width:'+p.w+'px;background:'+p.color+';display:flex;align-items:center;padding:0 6px;font-size:9.5px;font-weight:700;color:#fff;border-radius:2px;margin-right:2px;overflow:hidden;flex-shrink:0">'+p.label+'</div>';
+  });
+  html+='</div>';
+  // today line
+  html+='<div style="position:absolute;top:0;bottom:0;left:600px;width:1.5px;background:#1565C0;opacity:.7"></div>';
+  // completion line
+  html+='<div style="position:absolute;top:18px;bottom:0;left:780px;width:1.5px;background:#9CA3AF"></div>';
+  html+='</div></div>';
+
+  // ACTIVITY LIST
+  html+='<div class="act-list-wrap" id="actList">';
+  html+=renderActList();
+  html+='<div class="act-list-footer">Total Activities: '+ACTIVITIES.length+'</div>';
+  html+='</div>';
+
+  document.getElementById('mainContent').innerHTML=html;
+}
+
+function renderActList(){
+  var html='';
+  ACTIVITIES.forEach(function(a,i){
+    html+='<div class="act-row" id="arow-'+i+'">';
+    html+='<div class="act-left">';
+    html+='<span class="act-drag">⠿</span>';
+    html+='<div class="act-check'+(a.done?' done':'')+'" onclick="toggleDone('+i+')">';
+    if(a.done)html+='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    html+='</div>';
+    html+='<div class="act-info">';
+    html+='<div class="act-name">'+a.name+'</div>';
+    html+='<div class="act-phase-tag '+a.phaseClass+'">'+a.phase+'</div>';
+    html+='</div></div>';
+    html+='<div class="act-right">';
+    html+='<div class="date-block">';
+    html+='<div class="date-row"><span class="date-label">Start</span><span class="date-val">'+a.start+'</span></div>';
+    html+='<div class="date-row"><span class="date-label">Baseline Completion</span><span class="date-val">'+a.baseline+'</span></div>';
+    html+='<div class="date-row"><span class="date-label">Planned Completion</span><span class="date-val">'+a.planned+'</span></div>';
+    html+='</div>';
+    html+='<div class="act-actions">';
+    html+='<div class="act-status-box'+(a.done?' done':'')+'" onclick="toggleDone('+i+')">';
+    if(a.done)html+='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    html+='</div>';
+    if(a.playing){
+      html+='<button class="act-play-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>';
+    }
+    html+='<button class="act-del-btn" onclick="deleteActivity('+i+')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>';
+    html+='</div></div></div>';
+  });
+  return html;
+}
+
+function toggleDone(i){
+  ACTIVITIES[i].done=!ACTIVITIES[i].done;
+  var list=document.getElementById('actList');
+  if(list) list.innerHTML=renderActList()+'<div class="act-list-footer">Total Activities: '+ACTIVITIES.length+'</div>';
+}
+function deleteActivity(i){
+  if(confirm('Remove "'+ACTIVITIES[i].name+'" from schedule?')){
+    ACTIVITIES.splice(i,1);
+    var list=document.getElementById('actList');
+    if(list) list.innerHTML=renderActList()+'<div class="act-list-footer">Total Activities: '+ACTIVITIES.length+'</div>';
+  }
+}
+function addActivity(){
+  var name=prompt('Activity name:');
+  if(!name)return;
+  ACTIVITIES.push({name:name,phase:'Planning',phaseClass:'ph-planning',start:'—',baseline:'—',planned:'—',done:false,playing:false});
+  var list=document.getElementById('actList');
+  if(list) list.innerHTML=renderActList()+'<div class="act-list-footer">Total Activities: '+ACTIVITIES.length+'</div>';
+}
+
+// ── INIT ──
+// Demo toggle: click topbar title to switch state
+render();
+</script>
+</body>
+</html>

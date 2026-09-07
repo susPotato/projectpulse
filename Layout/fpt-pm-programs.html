@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FPT Project Hub – Programs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D2B5E;
+  --blue:#1565C0;
+  --blue-mid:#1976D2;
+  --orange:#F47920;
+  --bg:#F5F7FA;
+  --surface:#FFFFFF;
+  --border:#E3E8EF;
+  --text:#1A2B42;
+  --muted:#64748B;
+  --light:#94A3B8;
+  --green:#16A34A;
+  --amber:#D97706;
+  --red:#DC2626;
+  --purple:#7C3AED;
+  --sidebar-w:64px;
+}
+html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);background:var(--bg)}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--navy);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:2px;flex-shrink:0}
+.sidebar-logo{width:40px;height:22px;margin-bottom:14px}
+.nav-link{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.55);width:52px;transition:background .15s,color .15s;user-select:none;text-decoration:none}
+.nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
+.nav-link.active{background:var(--blue);color:#fff}
+.nav-link span{font-size:10px;font-weight:500}
+.sidebar-gap{flex:1}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{background:var(--navy);height:52px;display:flex;align-items:center;gap:12px;padding:0 20px;flex-shrink:0}
+.topbar-search{flex:1;max-width:380px;position:relative}
+.topbar-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.4)}
+.topbar-search input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:6px 12px 6px 34px;color:#fff;font-size:13px;font-family:inherit;outline:none}
+.topbar-search input::placeholder{color:rgba(255,255,255,.4)}
+.topbar-search input:focus{border-color:rgba(255,255,255,.35)}
+.topbar-gap{flex:1}
+.btn-upgrade{background:var(--orange);color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-help{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.22);border-radius:7px;padding:6px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px}
+.user-chip{display:flex;align-items:center;gap:8px;margin-left:6px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--blue-mid);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.2)}
+.user-meta{color:rgba(255,255,255,.7);font-size:11px;line-height:1.3;text-align:right}
+.user-meta strong{display:block;color:#fff;font-size:12px}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:28px 32px 40px}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-title{font-size:20px;font-weight:700;color:var(--text)}
+.page-sub{font-size:13px;color:var(--muted);margin-top:2px}
+.view-toggle{display:flex;gap:2px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}
+.view-btn{border:none;background:transparent;padding:6px 11px;cursor:pointer;color:var(--muted);display:flex;align-items:center;transition:background .15s,color .15s}
+.view-btn.active{background:var(--bg);color:var(--blue)}
+.btn-new{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px;transition:background .15s}
+.btn-new:hover{background:#0d47a1}
+
+/* CARDS GRID */
+.cards-grid{display:flex;flex-wrap:wrap;gap:18px}
+
+/* NEW PROGRAM CARD */
+.new-card{width:200px;height:256px;border:2px dashed var(--border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:border-color .18s,background .18s;color:var(--muted)}
+.new-card:hover{border-color:var(--purple);background:rgba(124,58,237,.03);color:var(--purple)}
+.new-card-icon{width:44px;height:44px;border-radius:50%;border:2px dashed currentColor;display:flex;align-items:center;justify-content:center;font-size:22px}
+.new-card-label{font-size:13px;font-weight:600}
+.new-card-sub{font-size:11px;text-align:center;padding:0 16px;line-height:1.5;opacity:.8}
+
+/* PROGRAM CARD */
+.pcard{width:200px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:box-shadow .18s,border-color .18s;position:relative;display:flex;flex-direction:column}
+.pcard:hover{box-shadow:0 4px 18px rgba(13,43,94,.1);border-color:#b6c6df}
+.pcard-cover{width:100%;height:130px;position:relative;flex-shrink:0;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px}
+.pcard-cover>div{overflow:hidden}
+.pcard-cover-single{display:flex!important;align-items:center;justify-content:center;grid-column:1/-1;grid-row:1/-1}
+.cover-badge{position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.45);color:#fff;font-size:10.5px;font-weight:600;border-radius:6px;padding:2px 8px;backdrop-filter:blur(4px);z-index:2}
+.pcard-dots{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.3);color:#fff;border:none;border-radius:5px;padding:2px 7px;font-size:15px;cursor:pointer;opacity:0;transition:opacity .15s;backdrop-filter:blur(4px);line-height:1.2;z-index:2}
+.pcard:hover .pcard-dots{opacity:1}
+.pcard-body{padding:10px 12px 0;flex:1}
+.pcard-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:2px}
+.pcard-sub{font-size:11px;color:var(--muted)}
+.pcard-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 10px;margin-top:6px}
+.pcard-type{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--purple);font-weight:500}
+.pcard-star{font-size:16px;cursor:pointer;background:none;border:none;padding:0;line-height:1;transition:transform .15s;color:var(--orange)}
+.pcard-star:hover{transform:scale(1.2)}
+.pcard-star.empty{color:var(--border)}
+
+/* COVER COLORS */
+.c1{background:linear-gradient(140deg,#263238 0%,#37474F 55%,#90A4AE 100%)}
+.c2{background:linear-gradient(140deg,#1A237E 0%,#1565C0 55%,#64B5F6 100%)}
+.c3{background:linear-gradient(140deg,#1B5E20 0%,#2E7D32 55%,#66BB6A 100%)}
+.c4{background:linear-gradient(140deg,#4A148C 0%,#7B1FA2 55%,#CE93D8 100%)}
+.c5{background:linear-gradient(140deg,#B71C1C 0%,#C62828 55%,#EF9A9A 100%)}
+.c6{background:linear-gradient(140deg,#E65100 0%,#F57C00 50%,#FFCC02 100%)}
+
+/* CTX MENU */
+.ctx{display:none;position:fixed;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(13,43,94,.14);z-index:600;min-width:180px;padding:5px 0;font-size:13px}
+.ctx.open{display:block}
+.ctx-item{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;color:var(--text);transition:background .1s}
+.ctx-item:hover{background:var(--bg)}
+.ctx-item svg{color:var(--muted);flex-shrink:0}
+
+/* MODAL OVERLAY */
+.modal-back{display:none;position:fixed;inset:0;background:rgba(13,43,94,.4);z-index:500;align-items:flex-start;justify-content:flex-end;backdrop-filter:blur(2px)}
+.modal-back.open{display:flex}
+
+/* MODAL PANEL (right-side drawer style like Mastt edit) */
+.modal{background:#fff;width:640px;max-width:95vw;height:100%;display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(13,43,94,.18)}
+.modal-head{padding:18px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.modal-head-icon{width:36px;height:36px;background:#EDE9FE;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-title{font-size:15px;font-weight:700;color:var(--text);flex:1}
+.modal-mode{font-size:11px;color:var(--muted);font-weight:500}
+.modal-close{border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 8px;border-radius:4px;line-height:1}
+.modal-close:hover{background:var(--bg);color:var(--text)}
+
+/* TAB NAV (left column) */
+.modal-inner{display:flex;flex:1;overflow:hidden}
+.tab-nav{width:180px;border-right:1px solid var(--border);padding:16px 0;flex-shrink:0;display:flex;flex-direction:column;gap:2px}
+.tab-btn{padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;text-align:left;font-family:inherit;color:var(--muted);border-left:3px solid transparent;transition:background .12s,color .12s,border-color .12s}
+.tab-btn:hover{background:var(--bg);color:var(--text)}
+.tab-btn.active{color:var(--blue);border-left-color:var(--blue);background:#EFF6FF;font-weight:600}
+
+/* TAB PANELS */
+.tab-panels{flex:1;overflow-y:auto;padding:24px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.field label{font-size:12px;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13.5px;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:80px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--light);margin-bottom:12px;margin-top:20px}
+.section-label:first-child{margin-top:0}
+
+/* USER TABLE */
+.invite-row{display:flex;gap:10px;margin-bottom:16px}
+.invite-row input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none}
+.invite-row input:focus{border-color:var(--blue)}
+.invite-row select{border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;background:#fff;min-width:110px}
+.btn-invite{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-size:11px;font-weight:700;color:var(--light);text-align:left;padding:0 10px 10px;border-bottom:1px solid var(--border)}
+.data-table td{padding:11px 10px;font-size:13px;border-bottom:1px solid var(--bg)}
+.data-table tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:#DCFCE7;color:#15803D}
+.badge-gray{background:#F1F5F9;color:#64748B}
+.dots-btn{border:none;background:none;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:4px;font-size:15px;line-height:1}
+.dots-btn:hover{background:var(--bg);color:var(--text)}
+
+/* PROJECT LIST */
+.add-proj-row{display:flex;gap:10px;margin-bottom:16px}
+.add-proj-row select{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;background:#fff}
+.btn-add-proj{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+
+/* MODAL FOOTER */
+.modal-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
+.btn-cancel{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--muted)}
+.btn-cancel:hover{background:var(--bg)}
+.btn-save{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-save:hover{background:#0d47a1}
+.btn-save:disabled{background:#93B4D9;cursor:default}
+
+/* SCROLLBAR */
+.content::-webkit-scrollbar,.tab-panels::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-track,.tab-panels::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb,.tab-panels::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <svg width="42" height="22" viewBox="0 0 84 44" fill="none"><rect width="84" height="44" rx="6" fill="#fff"/><text x="8" y="32" font-family="Arial Black,Arial" font-weight="900" font-size="24" fill="#0066CC">FPT</text></svg>
+  </div>
+  <a class="nav-link" href="fpt-pm-home.html">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>Home</span>
+  </a>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+    <span>Projects</span>
+  </a>
+  <a class="nav-link active" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v3M12 11l-5.5 5.5M12 11l5.5 5.5"/></svg>
+    <span>Programs</span>
+  </a>
+  <div class="sidebar-gap"></div>
+  <a class="nav-link" href="#">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06-.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span>Settings</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      <input type="text" placeholder="Search programs…"/>
+    </div>
+    <div class="topbar-gap"></div>
+    <div class="user-chip">
+      <div class="user-meta"><strong>Nguyen Teo</strong>FPT Software</div>
+      <div class="user-avatar">NT</div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Programs</div>
+        <div class="page-sub">Group related projects and track delivery at scale</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="view-toggle">
+          <button class="view-btn active" title="Grid view">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          </button>
+          <button class="view-btn" title="List view">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
+        </div>
+        <button class="btn-new" onclick="openModal('new',null)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Program
+        </button>
+      </div>
+    </div>
+
+    <div class="cards-grid" id="cardsGrid"></div>
+  </div>
+</div>
+</div>
+
+<!-- CTX MENU -->
+<div class="ctx" id="ctxMenu">
+  <div class="ctx-item" onclick="closeCtx()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </div>
+  <div class="ctx-item" onclick="closeCtx()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    Cost
+  </div>
+  <div class="ctx-item" onclick="closeCtx()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Risk
+  </div>
+  <div class="ctx-item" onclick="closeCtx()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Schedule
+  </div>
+  <div class="ctx-sep" style="height:1px;background:var(--border);margin:4px 0"></div>
+  <div class="ctx-item" onclick="ctxSettings()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06-.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Program Settings
+  </div>
+</div>
+
+<!-- MODAL DRAWER -->
+<div class="modal-back" id="modalBack" onclick="closeModalBack(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-head-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v4M12 12l-5 5M12 12l5 5"/></svg>
+      </div>
+      <div>
+        <div class="modal-title" id="modalTitle">New Program</div>
+        <div class="modal-mode" id="modalMode">Fill in the details below</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-inner">
+      <!-- LEFT TAB NAV -->
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab(this,'info')">Program Info</button>
+        <button class="tab-btn" onclick="switchTab(this,'users')">User Management</button>
+        <button class="tab-btn" onclick="switchTab(this,'projects')">Add / Remove Projects</button>
+      </div>
+      <!-- RIGHT PANELS -->
+      <div class="tab-panels">
+
+        <!-- TAB: INFO -->
+        <div class="tab-panel active" id="tabInfo">
+          <div class="section-label">Basic Details</div>
+          <div class="field">
+            <label>Program Name <span style="color:var(--red)">*</span></label>
+            <input id="fName" type="text" placeholder="e.g. Digital Transformation 2026" oninput="checkSave()"/>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Program Code</label>
+              <input id="fCode" type="text" placeholder="PRG-2026"/>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select id="fStatus">
+                <option>Active</option>
+                <option>Planning</option>
+                <option>On Hold</option>
+                <option>Completed</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <textarea id="fDesc" placeholder="Objectives, scope, key outcomes…"></textarea>
+          </div>
+          <div class="section-label">Ownership</div>
+          <div class="field-row">
+            <div class="field">
+              <label>Program Manager</label>
+              <input id="fPM" type="text" placeholder="e.g. Nguyen Van A"/>
+            </div>
+            <div class="field">
+              <label>Business Unit</label>
+              <input id="fBU" type="text" placeholder="e.g. FPT Software"/>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Start Date</label>
+              <input id="fStart" type="date" value="2026-01-01"/>
+            </div>
+            <div class="field">
+              <label>Target Completion</label>
+              <input id="fEnd" type="date" value="2026-12-31"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: USERS -->
+        <div class="tab-panel" id="tabUsers">
+          <div class="section-label">Invite Members</div>
+          <div class="invite-row">
+            <input id="inviteEmail" type="email" placeholder="Enter email to invite"/>
+            <select id="inviteRole">
+              <option>Standard</option>
+              <option>PM / Lead</option>
+              <option>Workspace Admin</option>
+              <option>Viewer</option>
+            </select>
+            <button class="btn-invite" onclick="inviteUser()">Invite</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+
+        <!-- TAB: PROJECTS -->
+        <div class="tab-panel" id="tabProjects">
+          <div class="section-label">Add Projects to Program</div>
+          <div class="add-proj-row">
+            <select id="projSelect">
+              <option value="">Select a project to add…</option>
+              <option>SAIN – Core Banking</option>
+              <option>HRMS Portal V2</option>
+              <option>E-Commerce Platform</option>
+              <option>ERP Integration Suite</option>
+              <option>Cloud Migration Wave 2</option>
+              <option>Security Hardening</option>
+              <option>Mobile Banking App</option>
+            </select>
+            <button class="btn-add-proj" onclick="addProject()">Add Project</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Project</th><th>Status</th><th></th></tr></thead>
+            <tbody id="projBody"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" id="btnSave" onclick="saveProgram()" disabled>
+        <span id="btnSaveLabel">Create Program</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var PROGRAMS=[
+  {id:'digt',name:'Digital Transformation 2026',bu:'FPT Group',pm:'Nguyen Van A',status:'Active',code:'PRG-001',start:'2026-01-01',end:'2026-12-31',desc:'Enterprise-wide digital transformation initiative covering cloud, data, and AI.',star:true,
+   projects:['SAIN – Core Banking','HRMS Portal V2','Cloud Migration Wave 2'],
+   users:[{name:'Nguyen Van A',email:'nva@fpt.com',role:'Workspace Admin',status:'Enabled'},{name:'Le Van C',email:'lvc@fpt.com',role:'PM / Lead',status:'Enabled'}]},
+  {id:'cloud',name:'Cloud-First Initiative',bu:'FPT Software',pm:'Tran Thi B',status:'Active',code:'PRG-002',start:'2026-03-01',end:'2026-09-30',desc:'Migrate core infrastructure to multi-cloud environment.',star:false,
+   projects:['Cloud Migration Wave 2','Security Hardening'],
+   users:[{name:'Tran Thi B',email:'ttb@fpt.com',role:'PM / Lead',status:'Enabled'}]},
+  {id:'retail',name:'Retail Modernization',bu:'FPT Retail',pm:'Pham Thi D',status:'Planning',code:'PRG-003',start:'2026-06-01',end:'2027-03-31',desc:'Revamp retail platform with omnichannel experience.',star:false,
+   projects:['E-Commerce Platform'],
+   users:[{name:'Pham Thi D',email:'ptd@fpt.com',role:'PM / Lead',status:'Enabled'}]},
+];
+var COVERS=['c1','c2','c3','c4','c5','c6'];
+var currentId=null;
+var modalMode='new';
+
+function buildCards(){
+  var g=document.getElementById('cardsGrid');
+  var html='<div class="new-card" onclick="openModal(\'new\',null)">'
+    +'<div class="new-card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>'
+    +'<span class="new-card-label">New Program</span>'
+    +'<span class="new-card-sub">Group projects under a shared delivery objective</span>'
+    +'</div>';
+  PROGRAMS.forEach(function(p,i){
+    var cov=COVERS[i%COVERS.length];
+    html+='<div class="pcard" ondblclick="openModal(\'edit\',\''+p.id+'\')">'
+      +'<div class="pcard-cover '+cov+'">'
+      +'<div class="pcard-cover-single" style="display:flex">'
+      +'<svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="10" r="5" fill="rgba(255,255,255,.35)"/><circle cx="8" cy="32" r="5" fill="rgba(255,255,255,.35)"/><circle cx="32" cy="32" r="5" fill="rgba(255,255,255,.35)"/><line x1="20" y1="15" x2="8" y2="27" stroke="rgba(255,255,255,.45)" stroke-width="1.5"/><line x1="20" y1="15" x2="32" y2="27" stroke="rgba(255,255,255,.45)" stroke-width="1.5"/></svg>'
+      +'</div>'
+      +'<div class="cover-badge">'+p.projects.length+' Projects</div>'
+      +'</div>'
+      +'<button class="pcard-dots" onclick="event.stopPropagation();openCtx(event,\''+p.id+'\')">···</button>'
+      +'<div class="pcard-body"><div class="pcard-name">'+p.name+'</div><div class="pcard-sub">'+p.bu+' · '+p.pm+'</div></div>'
+      +'<div class="pcard-foot">'
+      +'<div class="pcard-type"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v4M12 12l-5 5M12 12l5 5"/></svg>Program</div>'
+      +'<button class="pcard-star'+(p.star?'':' empty')+'" onclick="event.stopPropagation();toggleStar(\''+p.id+'\')">'+(p.star?'★':'☆')+'</button>'
+      +'</div></div>';
+  });
+  g.innerHTML=html;
+}
+
+function toggleStar(id){
+  var p=PROGRAMS.find(function(x){return x.id===id;});
+  if(p){p.star=!p.star;buildCards();}
+}
+
+// CTX MENU
+function openCtx(e,id){
+  e.preventDefault();e.stopPropagation();
+  currentId=id;
+  var m=document.getElementById('ctxMenu');
+  m.classList.add('open');
+  var x=Math.min(e.clientX,window.innerWidth-210);
+  var y=Math.min(e.clientY,window.innerHeight-220);
+  m.style.left=x+'px';m.style.top=y+'px';
+}
+function closeCtx(){document.getElementById('ctxMenu').classList.remove('open');}
+function ctxSettings(){
+  closeCtx();
+  openModal('edit',currentId,'info');
+}
+document.addEventListener('click',function(){document.getElementById('ctxMenu').classList.remove('open');});
+
+// MODAL
+function openModal(mode,id,tab){
+  modalMode=mode;
+  currentId=id;
+  var p=id?PROGRAMS.find(function(x){return x.id===id;}):null;
+  document.getElementById('modalTitle').textContent=p?'Edit – '+p.name:'New Program';
+  document.getElementById('modalMode').textContent=p?'Update program settings':'Fill in the details below';
+  document.getElementById('btnSaveLabel').textContent=p?'Save Changes':'Create Program';
+  // populate info
+  document.getElementById('fName').value=p?p.name:'';
+  document.getElementById('fCode').value=p?p.code:'';
+  document.getElementById('fDesc').value=p?p.desc:'';
+  document.getElementById('fPM').value=p?p.pm:'';
+  document.getElementById('fBU').value=p?p.bu:'';
+  document.getElementById('fStart').value=p?p.start:'2026-01-01';
+  document.getElementById('fEnd').value=p?p.end:'2026-12-31';
+  var sel=document.getElementById('fStatus');
+  if(p){for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===p.status){sel.selectedIndex=i;break;}}}
+  // users
+  renderUsers(p?p.users:[]);
+  // projects
+  renderProjects(p?p.projects:[]);
+  // tab
+  var tabs=document.querySelectorAll('.tab-btn');
+  tabs.forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.tab-panel').forEach(function(panel){panel.classList.remove('active');});
+  var goTab=tab||'info';
+  var tabMap={info:'tabInfo',users:'tabUsers',projects:'tabProjects'};
+  var btnMap={info:0,users:1,projects:2};
+  tabs[btnMap[goTab]].classList.add('active');
+  document.getElementById(tabMap[goTab]).classList.add('active');
+  checkSave();
+  document.getElementById('modalBack').classList.add('open');
+}
+function closeModal(){document.getElementById('modalBack').classList.remove('open');}
+function closeModalBack(e){if(e.target===document.getElementById('modalBack'))closeModal();}
+function switchTab(btn,key){
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  var map={info:'tabInfo',users:'tabUsers',projects:'tabProjects'};
+  document.getElementById(map[key]).classList.add('active');
+}
+function checkSave(){
+  document.getElementById('btnSave').disabled=!document.getElementById('fName').value.trim();
+}
+
+// USERS TABLE
+var editUsers=[];
+function renderUsers(list){
+  editUsers=list.slice();
+  var tb=document.getElementById('usersBody');
+  if(!editUsers.length){tb.innerHTML='<tr><td colspan="5" style="color:var(--light);padding:20px 10px;font-size:12px">No members yet. Invite someone above.</td></tr>';return;}
+  tb.innerHTML=editUsers.map(function(u,i){
+    return '<tr><td>'+u.name+'</td><td style="color:var(--muted)">'+u.email+'</td><td>'+u.role+'</td>'
+      +'<td><span class="badge '+(u.status==='Enabled'?'badge-green':'badge-gray')+'">'+u.status+'</span></td>'
+      +'<td><button class="dots-btn" onclick="removeUser('+i+')">···</button></td></tr>';
+  }).join('');
+}
+function inviteUser(){
+  var email=document.getElementById('inviteEmail').value.trim();
+  if(!email)return;
+  var role=document.getElementById('inviteRole').value;
+  editUsers.push({name:email.split('@')[0],email:email,role:role,status:'Enabled'});
+  document.getElementById('inviteEmail').value='';
+  renderUsers(editUsers);
+}
+function removeUser(i){editUsers.splice(i,1);renderUsers(editUsers);}
+
+// PROJECTS TABLE
+var editProjects=[];
+function renderProjects(list){
+  editProjects=list.slice();
+  var tb=document.getElementById('projBody');
+  if(!editProjects.length){tb.innerHTML='<tr><td colspan="3" style="color:var(--light);padding:20px 10px;font-size:12px">No projects added yet.</td></tr>';return;}
+  tb.innerHTML=editProjects.map(function(prj,i){
+    return '<tr><td>'+prj+'</td><td><span class="badge badge-green">Enabled</span></td>'
+      +'<td><button class="dots-btn" onclick="removeProject('+i+')">···</button></td></tr>';
+  }).join('');
+}
+function addProject(){
+  var sel=document.getElementById('projSelect');
+  var val=sel.value;
+  if(!val)return;
+  if(editProjects.indexOf(val)<0)editProjects.push(val);
+  sel.value='';
+  renderProjects(editProjects);
+}
+function removeProject(i){editProjects.splice(i,1);renderProjects(editProjects);}
+
+// SAVE
+function saveProgram(){
+  var name=document.getElementById('fName').value.trim();
+  if(!name)return;
+  if(modalMode==='new'){
+    PROGRAMS.push({
+      id:'p'+Date.now(),name:name,bu:document.getElementById('fBU').value||'FPT Software',
+      pm:document.getElementById('fPM').value||'TBD',status:document.getElementById('fStatus').value,
+      code:document.getElementById('fCode').value,start:document.getElementById('fStart').value,
+      end:document.getElementById('fEnd').value,desc:document.getElementById('fDesc').value,
+      star:false,projects:editProjects.slice(),users:editUsers.slice()
+    });
+  } else {
+    var p=PROGRAMS.find(function(x){return x.id===currentId;});
+    if(p){
+      p.name=name;p.bu=document.getElementById('fBU').value;
+      p.pm=document.getElementById('fPM').value;p.status=document.getElementById('fStatus').value;
+      p.code=document.getElementById('fCode').value;p.start=document.getElementById('fStart').value;
+      p.end=document.getElementById('fEnd').value;p.desc=document.getElementById('fDesc').value;
+      p.projects=editProjects.slice();p.users=editUsers.slice();
+    }
+  }
+  buildCards();
+  closeModal();
+}
+
+buildCards();
+</script>
+</body>
+</html>

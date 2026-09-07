@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Risk Register — Example Program | FPT Software</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D2B5E;--blue:#1565C0;--orange:#F47920;
+  --text:#1A1F36;--muted:#6B7280;--light:#9CA3AF;--border:#E5E7EB;--bg:#F8F9FB;--canvas:#F3F5F7;
+  --red:#DC2626;--green:#16A34A;
+  --sidebar:60px;--topbar:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);background:var(--navy);display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:4px;flex-shrink:0;z-index:100}
+.sidebar-logo{width:36px;height:36px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;cursor:pointer}
+.sidebar-logo img{width:28px}
+.nav-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;color:rgba(255,255,255,.55)}
+.nav-icon:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-icon.active{background:rgba(255,255,255,.15);color:#fff}
+.nav-icon svg{width:20px;height:20px}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{height:var(--topbar);background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0}
+.topbar-breadcrumb{color:rgba(255,255,255,.6);font-size:13px;display:flex;align-items:center;gap:6px}
+.topbar-breadcrumb a{color:rgba(255,255,255,.6);text-decoration:none;cursor:pointer}
+.topbar-breadcrumb a:hover{color:#fff}
+.topbar-breadcrumb .sep{color:rgba(255,255,255,.3)}
+.topbar-breadcrumb .cur{color:#fff;font-weight:600}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.topbar-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:7px;padding:6px 14px;font-size:12.5px;font-family:inherit;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.topbar-btn:hover{background:rgba(255,255,255,.2)}
+.topbar-btn.primary{background:var(--orange);border-color:var(--orange)}
+
+/* ── SUB-TABS ── */
+.subtabs{background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:2px;height:42px;flex-shrink:0}
+.stab{padding:0 14px;height:100%;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
+.stab:hover{color:var(--text)}
+.stab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+
+/* ── TOOLBAR ── */
+.toolbar{background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:8px 16px;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:12.5px;font-family:inherit;color:var(--text);cursor:pointer;font-weight:500;transition:background .12s,border-color .12s}
+.tb-btn:hover{background:var(--bg);border-color:#D1D5DB}
+.tb-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tb-btn.primary:hover{opacity:.9}
+.tb-sep{width:1px;height:22px;background:var(--border);margin:0 4px}
+.tb-spacer{flex:1}
+.tb-total{font-size:12.5px;color:var(--muted);white-space:nowrap}
+
+/* ── RISK MATRIX ── */
+.risk-content{flex:1;overflow-y:auto;padding:20px}
+.matrix-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.matrix-inner{padding:16px 20px}
+.matrix-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px}
+.matrix-table{border-collapse:collapse;width:100%}
+.matrix-table th,.matrix-table td{padding:0}
+.matrix-row-label{font-size:11.5px;font-weight:500;color:var(--muted);text-align:right;padding-right:10px;white-space:nowrap;width:110px}
+.matrix-col-label{font-size:11.5px;font-weight:500;color:var(--muted);text-align:center;padding-bottom:6px}
+.matrix-cell{width:120px;height:48px;text-align:center;cursor:default;position:relative;border:2px solid #fff}
+.mc-vl {background:#DCFCE7;color:#166534}
+.mc-l  {background:#BBF7D0;color:#15803D}
+.mc-m  {background:#FEF08A;color:#854D0E}
+.mc-h  {background:#FED7AA;color:#9A3412}
+.mc-vh {background:#FECACA;color:#991B1B}
+.matrix-cell span{font-size:11px;font-weight:700;display:inline-block;padding:3px 8px;border-radius:10px}
+.mc-vl span{background:#16A34A;color:#fff}
+.mc-l  span{background:#22C55E;color:#fff}
+.mc-m  span{background:#EAB308;color:#fff}
+.mc-h  span{background:#F97316;color:#fff}
+.mc-vh span{background:#EF4444;color:#fff}
+.matrix-cell.has-risk::after{content:'●';position:absolute;top:4px;right:5px;font-size:8px;color:rgba(0,0,0,.35)}
+
+/* ── RISK TABLE ── */
+.table-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.risk-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.risk-table thead th{background:#F9FAFB;padding:9px 10px;text-align:left;font-weight:600;font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2}
+.risk-table tbody tr{border-bottom:1px solid #F3F4F6;transition:background .1s}
+.risk-table tbody tr:hover{background:#FAFBFF}
+.risk-table tbody tr.child-row{background:#FAFAFA}
+.risk-table tbody tr.child-row:hover{background:#F3F4FF}
+.risk-table td{padding:8px 10px;vertical-align:middle;color:var(--text)}
+.td-expand{width:32px;text-align:center;cursor:pointer;color:var(--muted);user-select:none}
+.expand-arrow{display:inline-block;transition:transform .2s;font-size:11px}
+.expand-arrow.open{transform:rotate(90deg)}
+.td-title{font-weight:600;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.td-child-indent{padding-left:28px;color:var(--muted);font-size:12px}
+.td-project a{color:var(--blue);text-decoration:none;font-weight:500;white-space:nowrap}
+.td-project a:hover{text-decoration:underline}
+.td-key{text-align:center}
+.td-num{text-align:center;color:var(--muted)}
+.badge-status{display:inline-flex;align-items:center;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-active{background:#DCFCE7;color:#16A34A}
+.badge-closed{background:#F3F4F6;color:var(--muted)}
+.risk-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap}
+.rb-vl{background:#22C55E;color:#fff}
+.rb-l {background:#4ADE80;color:#166534}
+.rb-m {background:#EAB308;color:#fff}
+.rb-h {background:#F97316;color:#fff}
+.rb-vh{background:#EF4444;color:#fff}
+.td-num-right{text-align:right;color:var(--text);white-space:nowrap}
+.td-desc{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11.5px}
+.td-cat{white-space:nowrap;font-size:11.5px}
+.key-icon{color:#F59E0B;font-size:13px}
+.ctx-dots{background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:4px;font-size:15px;font-weight:700;line-height:1}
+.ctx-dots:hover{background:var(--bg);color:var(--text)}
+.table-footer{padding:10px 14px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);text-align:right}
+
+/* ── SCROLLBAR ── */
+.risk-content::-webkit-scrollbar{width:5px}
+.risk-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ── ROW CONTEXT MENU ── */
+.row-ctx{position:fixed;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px rgba(13,43,94,.18);z-index:900;min-width:130px;padding:4px 0;display:none}
+.row-ctx.open{display:block}
+.row-ctx-item{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:13px;color:var(--text);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .1s}
+.row-ctx-item:hover{background:var(--bg)}
+.row-ctx-item.danger{color:#DC2626}
+.row-ctx-item.danger:hover{background:#FEF2F2}
+
+/* ── RIGHT DRAWER ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(13,43,94,.25);z-index:800;display:none}
+.drawer-overlay.open{display:block}
+.drawer{position:fixed;top:0;right:0;width:520px;height:100vh;background:#fff;box-shadow:-8px 0 40px rgba(13,43,94,.15);z-index:801;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+.drawer.open{transform:translateX(0)}
+.drawer-head{padding:14px 20px 0;border-bottom:1px solid var(--border);flex-shrink:0}
+.drawer-tabs{display:flex;gap:0}
+.drawer-tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
+.drawer-tab:hover{color:var(--text)}
+.drawer-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.drawer-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:2px 8px;border-radius:5px;line-height:1}
+.drawer-close:hover{background:var(--bg)}
+.drawer-body{flex:1;overflow-y:auto;padding:20px}
+.drawer-body::-webkit-scrollbar{width:4px}
+.drawer-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.drawer-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
+.df-btn{padding:8px 22px;border-radius:7px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .12s}
+.df-close{background:#fff;border:1px solid var(--border);color:var(--text)}
+.df-close:hover{background:var(--bg)}
+.df-save{background:var(--blue);color:#fff;border:1px solid var(--blue);display:flex;align-items:center;gap:6px}
+.df-save:hover{opacity:.88}
+
+/* ── FORM FIELDS ── */
+.field-row{display:flex;gap:16px;margin-bottom:18px}
+.field-row.single{flex-direction:column}
+.field-group{flex:1;display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.02em}
+.field-input{border:none;border-bottom:1.5px solid var(--border);padding:6px 2px;font-size:13.5px;font-family:inherit;color:var(--text);outline:none;background:transparent;transition:border-color .15s;width:100%}
+.field-input:focus{border-bottom-color:var(--blue)}
+.field-input.error{border-bottom-color:var(--red)}
+.field-error{font-size:11px;color:var(--red);margin-top:2px}
+.field-textarea{border:1.5px solid var(--border);border-radius:7px;padding:9px 10px;font-size:13px;font-family:inherit;color:var(--text);outline:none;resize:vertical;width:100%;min-height:90px;transition:border-color .15s}
+.field-textarea:focus{border-color:var(--blue)}
+.field-select{border:none;border-bottom:1.5px solid var(--border);padding:6px 2px;font-size:13.5px;font-family:inherit;color:var(--text);outline:none;background:transparent;width:100%;cursor:pointer;appearance:auto}
+.field-select:focus{border-bottom-color:var(--blue)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.toggle-label{font-size:13.5px;color:var(--text);font-weight:500}
+.toggle{position:relative;width:40px;height:22px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .sl{position:absolute;inset:0;background:#D1D5DB;border-radius:11px;transition:.25s}
+.toggle input:checked+.sl{background:var(--blue)}
+.toggle .sl:before{position:absolute;content:'';width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.25s}
+.toggle input:checked+.sl:before{transform:translateX(18px)}
+.section-head{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:4px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.rating-badge-display{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo" onclick="location.href='fpt-pm-home.html'" title="Home">
+    <svg width="28" height="20" viewBox="0 0 56 40" fill="none">
+      <rect width="18" height="40" rx="2" fill="#F47920"/>
+      <rect x="21" width="14" height="26" rx="2" fill="#fff"/>
+      <rect x="38" width="18" height="40" rx="2" fill="#1565C0"/>
+    </svg>
+  </div>
+  <div class="nav-icon" title="Home" onclick="location.href='fpt-pm-home.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+  <div class="nav-icon" title="Programs" onclick="location.href='fpt-pm-programs.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+  <div class="nav-icon active" title="Risk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+  <div class="nav-icon" title="Dashboard" onclick="location.href='fpt-pm-dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+  <div class="nav-icon" title="Settings" style="margin-top:auto;margin-bottom:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-breadcrumb">
+      <a onclick="location.href='fpt-pm-programs.html'">Programs</a>
+      <span class="sep">/</span>
+      <a onclick="location.href='fpt-pm-programs.html'">Example Program</a>
+      <span class="sep">/</span>
+      <span class="cur">Risk</span>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Excel
+      </button>
+      <button class="topbar-btn primary" onclick="alert('Add Risk — coming soon')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Risk
+      </button>
+    </div>
+  </div>
+
+  <!-- SUB-TABS -->
+  <div class="subtabs">
+    <div class="stab" onclick="alert('Matrix view — coming soon')">Matrix</div>
+    <div class="stab" onclick="alert('Totals view — coming soon')">Totals</div>
+    <div class="stab" onclick="alert('Provision view — coming soon')">Provision</div>
+    <div class="stab" onclick="alert('Cost view — coming soon')">Cost</div>
+    <div class="stab" onclick="alert('Delay view — coming soon')">Delay</div>
+    <div class="stab active">Risk Reference</div>
+    <div class="stab" onclick="alert('None view — coming soon')">None</div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <button class="tb-btn" onclick="resetFilters()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+      Reset
+    </button>
+    <button class="tb-btn" onclick="toggleAll()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      <span id="expandAllLabel">Expand All</span>
+    </button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" onclick="alert('Columns — coming soon')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Columns
+    </button>
+    <button class="tb-btn" onclick="alert('Filter — coming soon')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filter
+    </button>
+    <div class="tb-spacer"></div>
+    <span class="tb-total" id="totalLabel">Total Rows: 12</span>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="risk-content">
+
+    <!-- RISK MATRIX -->
+    <div class="matrix-wrap">
+      <div class="matrix-inner">
+        <div class="matrix-title">Risk Matrix — Pre-Treatment</div>
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="matrix-col-label">Insignificant</th>
+              <th class="matrix-col-label">Minor</th>
+              <th class="matrix-col-label">Moderate</th>
+              <th class="matrix-col-label">Major</th>
+              <th class="matrix-col-label">Severe</th>
+            </tr>
+          </thead>
+          <tbody id="matrixBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RISK TABLE -->
+    <div class="table-wrap">
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th style="width:32px"></th>
+            <th style="width:32px"></th>
+            <th>Title</th>
+            <th>Project</th>
+            <th style="width:40px">···</th>
+            <th style="width:36px;text-align:center">Key</th>
+            <th style="width:60px;text-align:center">Risk No.</th>
+            <th style="width:72px">Status</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th style="width:90px">Pre-Rating</th>
+            <th style="width:90px;text-align:right">Pre-Cost</th>
+            <th style="width:60px;text-align:right">Pre-D.</th>
+            <th style="width:90px">Post-Rating</th>
+            <th style="width:90px;text-align:right">Post-Cost</th>
+            <th style="width:60px;text-align:right">Post-D.</th>
+            <th>Responsible</th>
+          </tr>
+        </thead>
+        <tbody id="riskBody"></tbody>
+      </table>
+      <div class="table-footer" id="footerLabel">Total Rows: 12</div>
+    </div>
+
+  </div><!-- /risk-content -->
+</div><!-- /main -->
+
+<!-- ROW CONTEXT MENU -->
+<div class="row-ctx" id="rowCtx">
+  <button class="row-ctx-item" onclick="ctxEdit()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Edit
+  </button>
+  <button class="row-ctx-item danger" onclick="ctxDelete()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+    Delete
+  </button>
+</div>
+
+<!-- DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- RIGHT DRAWER -->
+<div class="drawer" id="riskDrawer">
+  <div class="drawer-head">
+    <div class="drawer-tabs" id="drawerTabs">
+      <div class="drawer-tab active" onclick="switchTab('risk')">Risk</div>
+      <div class="drawer-tab" onclick="switchTab('causes')">Causes</div>
+      <div class="drawer-tab" onclick="switchTab('impacts')">Impacts &amp; Treatments</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">&#x2715;</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-footer">
+    <button class="df-btn df-close" onclick="closeDrawer()">Close</button>
+    <button class="df-btn df-save" onclick="saveRisk()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save
+    </button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+var RISKS = [
+  {project:"Example Project",title:"Scope Creep",num:"1",status:"Active",key:true,desc:"Uncontrolled expansion of project scope due to evolving client requirements leads to budget overrun and delivery delays.",cat:"Financial/Fraud",preLik:"Likely",preImp:"Severe",preRat:"Very High",preDelay:0,preCost:120000,postLik:"Likely",postImp:"Minor",postRat:"Medium",postDelay:0,postCost:15000,resp:"Project Manager / BA Lead",causeTitle:"Budget overrun",causeDesc:"Unplanned features require additional sprint cycles, increasing cost and pushing the release date."},
+  {project:"Example Project",title:"Key Person Dependency",num:"2",status:"Active",key:true,desc:"Over-reliance on a small number of senior engineers or architects creates a single point of failure if they leave or are unavailable.",cat:"Resource",preLik:"Likely",preImp:"Major",preRat:"High",preDelay:21,preCost:40000,postLik:"Likely",postImp:"Minor",postRat:"Medium",postDelay:7,postCost:8000,resp:"Delivery Manager",causeTitle:"Delivery delays",causeDesc:"Critical knowledge loss causes ramp-up time for replacement resources, delaying sprint delivery."},
+  {project:"Example Project",title:"Security Vulnerability",num:"3",status:"Active",key:true,desc:"Insufficient security testing may expose the system to data breaches or unauthorized access, risking client data and regulatory penalties.",cat:"Technology",preLik:"Possible",preImp:"Moderate",preRat:"Medium",preDelay:0,preCost:60000,postLik:"Possible",postImp:"Minor",postRat:"Low",postDelay:0,postCost:12000,resp:"Security Lead",causeTitle:"Compliance breach",causeDesc:"A data breach triggers regulatory investigation, potential fines, and reputational damage to FPT and the client."},
+  {project:"Example Project",title:"Third-party Integration Failure",num:"4",status:"Active",key:true,desc:"External APIs or vendor systems may be unstable, poorly documented, or deprecated, causing integration failures during development.",cat:"Delivery of Services",preLik:"Likely",preImp:"Moderate",preRat:"High",preDelay:14,preCost:25000,postLik:"Possible",postImp:"Minor",postRat:"Low",postDelay:5,postCost:5000,resp:"Technical Lead",causeTitle:"Feature blockers",causeDesc:"Blocked integration points stall dependent feature development, extending sprint timelines."},
+  {project:"SAIN",title:"Scope Creep",num:"1",status:"Active",key:true,desc:"Uncontrolled expansion of project scope due to evolving client requirements leads to budget overrun and delivery delays.",cat:"Financial/Fraud",preLik:"Likely",preImp:"Severe",preRat:"Very High",preDelay:0,preCost:120000,postLik:"Likely",postImp:"Minor",postRat:"Medium",postDelay:0,postCost:15000,resp:"Project Manager / BA Lead",causeTitle:"Budget overrun",causeDesc:"Unplanned features require additional sprint cycles, increasing cost and pushing the release date."},
+  {project:"SAIN",title:"Technical Debt Accumulation",num:"2",status:"Active",key:true,desc:"Rapid delivery pressure encourages shortcuts in code quality, leading to accumulated technical debt that slows future development.",cat:"Technology",preLik:"Likely",preImp:"Major",preRat:"High",preDelay:30,preCost:50000,postLik:"Possible",postImp:"Moderate",postRat:"Medium",postDelay:10,postCost:18000,resp:"Tech Lead / QA Lead",causeTitle:"Reduced velocity",causeDesc:"Growing technical debt increases bug density and reduces team velocity in subsequent sprints."},
+  {project:"SAIN",title:"Security Vulnerability",num:"3",status:"Active",key:true,desc:"Insufficient security testing may expose the system to data breaches or unauthorized access.",cat:"Technology",preLik:"Possible",preImp:"Moderate",preRat:"Medium",preDelay:0,preCost:60000,postLik:"Possible",postImp:"Minor",postRat:"Low",postDelay:0,postCost:12000,resp:"Security Lead",causeTitle:"Compliance breach",causeDesc:"A data breach triggers regulatory investigation, potential fines, and reputational damage."},
+  {project:"SAIN",title:"Third-party Integration Failure",num:"4",status:"Active",key:true,desc:"External APIs or vendor systems may be unstable or deprecated, causing integration failures.",cat:"Delivery of Services",preLik:"Likely",preImp:"Moderate",preRat:"High",preDelay:14,preCost:25000,postLik:"Possible",postImp:"Minor",postRat:"Low",postDelay:5,postCost:5000,resp:"Technical Lead",causeTitle:"Feature blockers",causeDesc:"Blocked integration points stall dependent feature development, extending sprint timelines."},
+  {project:"HRMS",title:"Key Person Dependency",num:"1",status:"Active",key:true,desc:"Over-reliance on senior engineers creates a single point of failure if they leave or are unavailable.",cat:"Resource",preLik:"Likely",preImp:"Major",preRat:"High",preDelay:21,preCost:40000,postLik:"Likely",postImp:"Minor",postRat:"Medium",postDelay:7,postCost:8000,resp:"Delivery Manager",causeTitle:"Delivery delays",causeDesc:"Knowledge loss causes ramp-up time for replacement resources, delaying sprint delivery."},
+  {project:"HRMS",title:"Requirement Ambiguity",num:"2",status:"Active",key:true,desc:"Poorly defined or frequently changing requirements result in rework, miscommunication between teams, and missed acceptance criteria.",cat:"Delivery of Services",preLik:"Likely",preImp:"Moderate",preRat:"High",preDelay:14,preCost:35000,postLik:"Possible",postImp:"Minor",postRat:"Low",postDelay:5,postCost:8000,resp:"BA Lead / PM",causeTitle:"Rework & UAT failures",causeDesc:"Features built on ambiguous requirements fail UAT, requiring redesign and re-testing cycles."},
+  {project:"HRMS",title:"Scope Creep",num:"3",status:"Active",key:true,desc:"Uncontrolled expansion of project scope due to evolving client requirements leads to budget overrun and delivery delays.",cat:"Financial/Fraud",preLik:"Likely",preImp:"Severe",preRat:"Very High",preDelay:0,preCost:120000,postLik:"Likely",postImp:"Minor",postRat:"Medium",postDelay:0,postCost:15000,resp:"Project Manager",causeTitle:"Budget overrun",causeDesc:"Unplanned features require additional sprint cycles, increasing cost and pushing the release date."},
+  {project:"HRMS",title:"Infrastructure Downtime",num:"4",status:"Active",key:true,desc:"Cloud or on-premise infrastructure instability causes service outages, blocking development, testing, and UAT activities.",cat:"Technology",preLik:"Possible",preImp:"Moderate",preRat:"Medium",preDelay:7,preCost:20000,postLik:"Unlikely",postImp:"Minor",postRat:"Very Low",postDelay:2,postCost:4000,resp:"DevOps Lead",causeTitle:"UAT & release delays",causeDesc:"Environment downtime during critical testing phases forces rescheduling of UAT and go-live milestones."}
+];
+
+// ── MATRIX ──
+var LIKELIHOODS = ['Almost Certain','Likely','Possible','Unlikely','Rare'];
+var IMPACTS     = ['Insignificant','Minor','Moderate','Major','Severe'];
+var MATRIX_DATA = {
+  'Almost Certain':['Low','Medium','High','Very High','Very High'],
+  'Likely':        ['Low','Medium','High','High','Very High'],
+  'Possible':      ['Very Low','Low','Medium','High','High'],
+  'Unlikely':      ['Very Low','Very Low','Low','Medium','Medium'],
+  'Rare':          ['Very Low','Very Low','Very Low','Low','Low']
+};
+var RATING_CLASS={'Very Low':'mc-vl','Low':'mc-l','Medium':'mc-m','High':'mc-h','Very High':'mc-vh'};
+
+function buildMatrix(){
+  // figure out which cells have risks
+  var occupied={};
+  RISKS.forEach(function(r){
+    var li=r.preLik, im=r.preImp;
+    occupied[li+'|'+im]=(occupied[li+'|'+im]||0)+1;
+  });
+  var html='';
+  LIKELIHOODS.forEach(function(lik){
+    html+='<tr><td class="matrix-row-label">'+lik+'</td>';
+    IMPACTS.forEach(function(imp,ci){
+      var rat=MATRIX_DATA[lik][ci];
+      var cls=RATING_CLASS[rat]||'mc-vl';
+      var hasRisk=!!occupied[lik+'|'+imp];
+      html+='<td class="matrix-cell '+cls+(hasRisk?' has-risk':'')+'"><span>'+rat+'</span></td>';
+    });
+    html+='</tr>';
+  });
+  document.getElementById('matrixBody').innerHTML=html;
+}
+
+// ── TABLE ──
+var expandedRows={};
+var allExpanded=false;
+
+function ratingClass(r){
+  if(r==='Very High')return 'rb-vh';
+  if(r==='High')return 'rb-h';
+  if(r==='Medium')return 'rb-m';
+  if(r==='Low')return 'rb-l';
+  return 'rb-vl';
+}
+function fmt(n){return n?n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'0.00';}
+function trunc(s,n){if(!s)return '';return s.length>n?s.slice(0,n)+'…':s;}
+
+function buildTable(){
+  var html='';
+  RISKS.forEach(function(r,i){
+    var open=!!expandedRows[i];
+    html+='<tr>';
+    html+='<td class="td-expand" onclick="toggleRow('+i+')"><span class="expand-arrow'+(open?' open':'')+'">▶</span></td>';
+    html+='<td><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+(r.preRat==='Very High'?'#EF4444':r.preRat==='High'?'#F97316':r.preRat==='Medium'?'#EAB308':'#22C55E')+'" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg></td>';
+    html+='<td class="td-title" title="'+r.title+'">'+r.title+'</td>';
+    html+='<td class="td-project"><a>'+r.project+'</a></td>';
+    html+='<td><button class="ctx-dots" onclick="openCtx(event,'+i+')">···</button></td>';
+    html+='<td class="td-key">'+(r.key?'<span class="key-icon">🔑</span>':'-')+'</td>';
+    html+='<td class="td-num">'+r.num+'</td>';
+    html+='<td><span class="badge-status badge-active">'+r.status+'</span></td>';
+    html+='<td class="td-desc" title="'+r.desc+'">'+trunc(r.desc,40)+'</td>';
+    html+='<td class="td-cat">'+r.cat+'</td>';
+    html+='<td><span class="risk-badge '+ratingClass(r.preRat)+'">'+r.preRat+'</span></td>';
+    html+='<td class="td-num-right">'+fmt(r.preCost)+'</td>';
+    html+='<td class="td-num-right">'+r.preDelay+'</td>';
+    html+='<td><span class="risk-badge '+ratingClass(r.postRat)+'">'+r.postRat+'</span></td>';
+    html+='<td class="td-num-right">'+fmt(r.postCost)+'</td>';
+    html+='<td class="td-num-right">'+r.postDelay+'</td>';
+    html+='<td style="white-space:nowrap;font-size:11.5px;max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+r.resp+'">'+trunc(r.resp,22)+'</td>';
+    html+='</tr>';
+    // child row
+    if(open){
+      html+='<tr class="child-row" id="child-'+i+'">';
+      html+='<td></td><td></td>';
+      html+='<td class="td-child-indent" colspan="2">↳ '+r.causeTitle+'</td>';
+      html+='<td><button class="ctx-dots" onclick="openCtx(event,'+i+')">···</button></td>';
+      html+='<td colspan="2"></td>';
+      html+='<td><span class="badge-status badge-active">'+r.status+'</span></td>';
+      html+='<td class="td-desc" colspan="2" title="'+r.causeDesc+'">'+trunc(r.causeDesc,60)+'</td>';
+      html+='<td colspan="6"></td>';
+      html+='<td></td>';
+      html+='</tr>';
+    }
+  });
+  document.getElementById('riskBody').innerHTML=html;
+  var tot=RISKS.length;
+  var open=Object.values(expandedRows).filter(Boolean).length;
+  var label='Total Rows: '+tot+(open?' ('+open+' expanded)':'');
+  document.getElementById('totalLabel').textContent=label;
+  document.getElementById('footerLabel').textContent=label;
+}
+
+function toggleRow(i){
+  expandedRows[i]=!expandedRows[i];
+  buildTable();
+}
+function toggleAll(){
+  allExpanded=!allExpanded;
+  RISKS.forEach(function(_,i){expandedRows[i]=allExpanded;});
+  document.getElementById('expandAllLabel').textContent=allExpanded?'Collapse All':'Expand All';
+  buildTable();
+}
+function resetFilters(){
+  expandedRows={};
+  allExpanded=false;
+  document.getElementById('expandAllLabel').textContent='Expand All';
+  buildTable();
+}
+
+// ── CONTEXT MENU ──
+var _ctxIdx=null;
+function openCtx(e,i){
+  e.stopPropagation();
+  _ctxIdx=i;
+  var m=document.getElementById('rowCtx');
+  m.classList.add('open');
+  var x=e.clientX, y=e.clientY;
+  if(x+140>window.innerWidth)x=window.innerWidth-145;
+  if(y+90>window.innerHeight)y=window.innerHeight-95;
+  m.style.left=x+'px'; m.style.top=y+'px';
+}
+document.addEventListener('click',function(e){
+  var m=document.getElementById('rowCtx');
+  if(m&&!m.contains(e.target))m.classList.remove('open');
+});
+function ctxEdit(){
+  document.getElementById('rowCtx').classList.remove('open');
+  openDrawer(_ctxIdx,'risk');
+}
+function ctxDelete(){
+  document.getElementById('rowCtx').classList.remove('open');
+  if(confirm('Delete "'+RISKS[_ctxIdx].title+'" from this program?')){
+    RISKS.splice(_ctxIdx,1);
+    buildTable();
+  }
+}
+
+// ── DRAWER ──
+var _drawerIdx=null;
+var _drawerTab='risk';
+
+function openDrawer(i,tab){
+  _drawerIdx=i; _drawerTab=tab||'risk';
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('riskDrawer').classList.add('open');
+  renderDrawer();
+}
+function closeDrawer(){
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('riskDrawer').classList.remove('open');
+}
+function switchTab(tab){
+  _drawerTab=tab;
+  document.querySelectorAll('.drawer-tab').forEach(function(t){t.classList.remove('active');});
+  var idx={risk:0,causes:1,impacts:2}[tab];
+  document.querySelectorAll('.drawer-tab')[idx].classList.add('active');
+  renderDrawer();
+}
+
+function ratingBadgeHtml(r){
+  var cls=ratingClass(r);
+  
+
+  return '<span class="rating-badge-display risk-badge '+cls+'"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>'+r+'</span>';
+}
+
+function renderDrawer(){
+  var r=RISKS[_drawerIdx];
+  var html='';
+  if(_drawerTab==='risk'){
+    html+='<div class="field-row">';
+    html+='<div class="field-group" style="flex:2"><div class="field-label">Title</div><input class="field-input" id="fTitle" value="'+esc(r.title)+'"></div>';
+    html+='<div class="field-group" style="flex:1"><div class="field-label">Status</div><select class="field-select" id="fStatus"><option'+(r.status==='Active'?' selected':'')+'>Active</option><option'+(r.status==='Closed'?' selected':'')+'>Closed</option><option'+(r.status==='Retired'?' selected':'')+'>Retired</option></select></div>';
+    html+='</div>';
+    html+='<div class="field-row">';
+    html+='<div class="field-group"><div class="field-label">Number</div><input class="field-input" id="fNum" value="'+esc(r.num)+'"></div>';
+    html+='</div>';
+    html+='<div class="toggle-row"><span class="toggle-label">Key Risk</span><label class="toggle"><input type="checkbox" id="fKey"'+(r.key?' checked':'')+' onchange=""><span class="sl"></span></label></div>';
+    html+='<div class="field-row single"><div class="field-group"><div class="field-label">Description</div><textarea class="field-textarea" id="fDesc">'+esc(r.desc)+'</textarea></div></div>';
+    html+='<div class="field-row">';
+    html+='<div class="field-group"><div class="field-label">Category</div><select class="field-select" id="fCat">'+['Technology','Financial/Fraud','Delivery of Services','Resource','Security','Operational','Legal/Compliance'].map(function(c){return '<option'+(r.cat===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select></div>';
+    html+='<div class="field-group"><div class="field-label">Secondary Categories</div><input class="field-input" id="fCat2" value="" placeholder="—"></div>';
+    html+='</div>';
+    html+='<div class="field-row">';
+    html+='<div class="field-group"><div class="field-label">Review Date</div><input class="field-input" type="date" id="fReview"></div>';
+    html+='<div class="field-group"><div class="field-label">Possible Realise Date</div><input class="field-input" type="date" id="fRealise"></div>';
+    html+='</div>';
+    html+='<div class="field-row single"><div class="field-group"><div class="field-label">Retired Date</div><input class="field-input" type="date" id="fRetired"></div></div>';
+    html+='<div class="section-head">Pre-Treatment</div>';
+    html+='<div class="field-row">';
+    html+='<div class="field-group"><div class="field-label">Highest Impact Rating</div>'+ratingBadgeHtml(r.preRat)+'</div>';
+    html+='<div class="field-group"><div class="field-label">Total Impact Cost</div><input class="field-input" id="fPreCost" value="'+r.preCost.toLocaleString('en-US',{minimumFractionDigits:2})+'"></div>';
+    html+='<div class="field-group"><div class="field-label">Total Impact Delay (days)</div><input class="field-input" id="fPreDelay" value="'+r.preDelay+'"></div>';
+    html+='</div>';
+    html+='<div class="section-head">Post-Treatment</div>';
+    html+='<div class="field-row">';
+    html+='<div class="field-group"><div class="field-label">Highest Impact Rating</div>'+ratingBadgeHtml(r.postRat)+'</div>';
+    html+='<div class="field-group"><div class="field-label">Total Impact Cost</div><input class="field-input" id="fPostCost" value="'+r.postCost.toLocaleString('en-US',{minimumFractionDigits:2})+'"></div>';
+    html+='<div class="field-group"><div class="field-label">Total Impact Delay (days)</div><input class="field-input" id="fPostDelay" value="'+r.postDelay+'"></div>';
+    html+='</div>';
+  } else if(_drawerTab==='causes'){
+    html+='<div class="section-head">Causes</div>';
+    html+='<div class="field-row single"><div class="field-group"><div class="field-label">Cause Title</div><input class="field-input" id="fCauseTitle" value="'+esc(r.causeTitle||'')+'"></div></div>';
+    html+='<div class="field-row single"><div class="field-group"><div class="field-label">Cause Description</div><textarea class="field-textarea" id="fCauseDesc" rows="4">'+esc(r.causeDesc||'')+'</textarea></div></div>';
+    html+='<div class="field-row">';
+    html+='<div class="field-group"><div class="field-label">Likelihood</div><select class="field-select" id="fPreLik">'+['Rare','Unlikely','Possible','Likely','Almost Certain'].map(function(v){return '<option'+(r.preLik===v?' selected':'')+'>'+v+'</option>';}).join('')+'</select></div>';
+    html+='<div class="field-group"><div class="field-label">Impact</div><select class="field-select" id="fPreImp">'+['Insignificant','Minor','Moderate','Major','Severe'].map(function(v){return '<option'+(r.preImp===v?' selected':'')+'>'+v+'</option>';}).join('')+'</select></div>';
+    html+='<div class="field-group"><div class="field-label">Pre-Rating</div>'+ratingBadgeHtml(r.preRat)+'</div>';
+    html+='</div>';
+  } else {
+    html+='<div class="section-head">Impact</div>';
+    html+='<div class="field-row single"><div class="field-group"><div class="field-label">Impact Title</div><input class="field-input" id="fImpTitle" value="'+esc(r.causeTitle||'')+'"></div></div>';
+    html+='<div class="field-row single"><div class="field-group"><div class="field-label">Impact Description</div><textarea class="field-textarea" id="fImpDesc" rows="4">'+esc(r.causeDesc||'')+'</textarea></div></div>';
+    html+='<div class="section-head">Treatment</div>';
+    html+='<div class="field-row">';
+    html+='<div class="field-group"><div class="field-label">Post Likelihood</div><select class="field-select" id="fPostLik">'+['Rare','Unlikely','Possible','Likely','Almost Certain'].map(function(v){return '<option'+(r.postLik===v?' selected':'')+'>'+v+'</option>';}).join('')+'</select></div>';
+    html+='<div class="field-group"><div class="field-label">Post Impact</div><select class="field-select" id="fPostImp">'+['Insignificant','Minor','Moderate','Major','Severe'].map(function(v){return '<option'+(r.postImp===v?' selected':'')+'>'+v+'</option>';}).join('')+'</select></div>';
+    html+='<div class="field-group"><div class="field-label">Post-Rating</div>'+ratingBadgeHtml(r.postRat)+'</div>';
+    html+='</div>';
+    html+='<div class="field-row single"><div class="field-group"><div class="field-label">Who is responsible?</div><input class="field-input" id="fResp" value="'+esc(r.resp)+'"></div></div>';
+  }
+  document.getElementById('drawerBody').innerHTML=html;
+}
+
+function esc(s){return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function saveRisk(){
+  var r=RISKS[_drawerIdx];
+  if(_drawerTab==='risk'){
+    r.title=document.getElementById('fTitle').value||r.title;
+    r.status=document.getElementById('fStatus').value;
+    r.num=document.getElementById('fNum').value;
+    r.key=document.getElementById('fKey').checked;
+    r.desc=document.getElementById('fDesc').value;
+    r.cat=document.getElementById('fCat').value;
+  } else if(_drawerTab==='causes'){
+    r.causeTitle=document.getElementById('fCauseTitle').value;
+    r.causeDesc=document.getElementById('fCauseDesc').value;
+    r.preLik=document.getElementById('fPreLik').value;
+    r.preImp=document.getElementById('fPreImp').value;
+  } else {
+    r.causeTitle=document.getElementById('fImpTitle').value;
+    r.causeDesc=document.getElementById('fImpDesc').value;
+    r.postLik=document.getElementById('fPostLik').value;
+    r.postImp=document.getElementById('fPostImp').value;
+    r.resp=document.getElementById('fResp').value;
+  }
+  closeDrawer();
+  buildTable();
+}
+
+buildMatrix();
+buildTable();
+</script>
+</body>
+</html>
