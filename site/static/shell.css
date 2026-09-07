@@ -1,0 +1,97 @@
+/*
+  The app shell: design tokens and the tab bar, in one place.
+
+  Three pages were each declaring their own `:root`, which is how the six static
+  mockups ended up with two conflicting token families (CLAUDE.md section 8). One
+  file stops that recurring, and makes the round-2 reconciliation a single edit.
+
+  Tokens follow the retriever console's set rather than the mockups' FPT brand
+  set, because this one already handles dark mode - a judge on a dark-themed
+  laptop should not get white-on-white.
+*/
+
+:root {
+  --navy: #0D2B5E;
+  --blue: #1565C0;
+  --orange: #C4550E;
+  --orange-fill: #F47920;
+  --green: #157F4A;
+  --red: #C0392B;
+  --amber: #B4530C;
+  --purple: #6D28D9;
+
+  --ink: #101A2C;
+  --ink-2: #5A6678;
+  --ink-3: #8A94A6;
+
+  --bg: #F5F7FA;
+  --surface: #fff;
+  --rule: #DCE2EB;
+  --rule-2: #EDF0F5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --navy: #3E7BD1;
+    --blue: #5E9BE8;
+    --orange: #FF9E52;
+    --orange-fill: #E8731C;
+    --green: #42C98A;
+    --red: #E8705F;
+    --amber: #E9903F;
+    --purple: #A98BF5;
+
+    --ink: #E8EDF4;
+    --ink-2: #9DA9BA;
+    --ink-3: #6F7C8F;
+
+    --bg: #0D1219;
+    --surface: #151D28;
+    --rule: #26313F;
+    --rule-2: #1C2531;
+  }
+}
+
+/* --- the tab bar ------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.tabs a {
+  padding: 9px 16px;
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: 13.5px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: -1px;
+}
+
+.tabs a:hover {
+  color: var(--ink);
+  background: var(--rule-2);
+}
+
+/* `aria-current="page"` rather than a class: the active tab is a statement
+   about the document, and screen readers get it for free. */
+.tabs a[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 650;
+  background: var(--surface);
+  border-color: var(--rule);
+  border-bottom: 1px solid var(--surface);
+}
+
+.tabs .tab-note {
+  margin-left: auto;
+  align-self: center;
+  color: var(--ink-3);
+  font-size: 12px;
+  padding-right: 4px;
+}
