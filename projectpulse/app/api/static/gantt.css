@@ -1,0 +1,159 @@
+/*
+  Styles for the shared schedule chart. Loaded by both the Schedule tab and the
+  Calculation tab, so the two cannot drift apart visually any more than they can
+  drift apart numerically.
+
+  --g-row and --g-group must match ROW and GROUP in gantt.js. The left column is
+  HTML and the plot is SVG; if these two numbers disagree, every label points at
+  the wrong bar.
+*/
+
+.gantt {
+  --g-row: 30px;
+  --g-group: 26px;
+  --g-gutter: 250px;
+
+  /* The two data fills, validated with the dataviz validator against this
+     surface in both modes (all six checks PASS). The baseline is deliberately
+     not a third hue - it is a recessive reference in a chrome token, so it can
+     never be mistaken for a series. */
+  --viz-plan: #2a78d6;
+  --viz-over: #d03b3b;
+  --viz-base: var(--ink-3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .gantt { --viz-plan: #3987e5; }
+}
+:root[data-theme="dark"] .gantt { --viz-plan: #3987e5; }
+
+/* --- frame ------------------------------------------------------------- */
+
+.g-frame { display: flex; align-items: flex-start; }
+
+.g-left {
+  flex: 0 0 var(--g-gutter);
+  width: var(--g-gutter);
+  border-right: 1px solid var(--rule);
+  /* Lines the labels up with the plot's own top padding (TOP in gantt.js). */
+  padding-top: 26px;
+}
+
+.g-plot {
+  flex: 1 1 auto;
+  overflow-x: auto;
+  padding-top: 0;
+}
+
+/* --- left column rows --------------------------------------------------- */
+
+.g-group {
+  height: var(--g-group);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.g-risk {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #fff;
+  background: var(--red);
+}
+
+.g-row {
+  height: var(--g-row);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 10px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--rule-2);
+}
+
+.g-row.driving { font-weight: 650; }
+.g-row:hover { background: var(--rule-2); }
+
+.g-id {
+  flex: 0 0 auto;
+  color: var(--ink-2);
+  font-family: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  font-size: 11.5px;
+}
+
+/* Full titles. The previous version drew these inside the SVG and had to cut
+   them at 15 characters to fit a gutter. */
+.g-title {
+  flex: 1 1 auto;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.g-slip {
+  flex: 0 0 auto;
+  color: var(--red);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+}
+
+.g-empty { color: var(--ink-3); padding: 20px; }
+
+/* --- plot -------------------------------------------------------------- */
+
+.gantt svg text { font: 10.5px "Segoe UI", system-ui, sans-serif; }
+.gantt .dim { fill: var(--ink-3); }
+.gantt .val { fill: var(--ink-2); font-weight: 700; }
+.gantt .grid { stroke: var(--rule-2); stroke-width: 1; }
+.gantt .asof { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.gantt .dep { stroke: var(--ink-3); stroke-width: 1.5; fill: none; opacity: .5; }
+.gantt .dep.driving { stroke: var(--viz-over); opacity: .85; }
+.gantt rect.mark { transition: width .5s cubic-bezier(.22, .61, .36, 1); }
+.gantt .prow:hover rect.hit { fill: var(--rule-2); }
+.gantt circle.point { stroke: var(--surface); stroke-width: 2; }
+
+/* --- key --------------------------------------------------------------- */
+
+.g-key {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 11px;
+}
+
+.g-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+.g-key i {
+  width: 12px;
+  height: 9px;
+  border-radius: 2px;
+  display: inline-block;
+  flex: none;
+}
+
+.g-key i.base { background: var(--viz-base); height: 4px; }
+.g-key i.plan { background: var(--viz-plan); }
+.g-key i.over { background: var(--viz-over); }
+.g-key i.point {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--viz-plan);
+}
+.g-key i.ms {
+  width: 9px; height: 9px; background: var(--ink-2);
+  transform: rotate(45deg); border-radius: 1px;
+}

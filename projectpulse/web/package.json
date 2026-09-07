@@ -1,0 +1,27 @@
+{
+  "name": "projectpulse-web",
+  "private": true,
+  "type": "module",
+  "description": "Insight and Calculation screens. Built output is committed so the app runs with python alone.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "types": "node scripts/gen-types.mjs",
+    "smoke": "vite-node scripts/smoke.tsx"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "openapi-typescript": "^7.5.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.0",
+    "vite": "^8.2.2"
+  }
+}

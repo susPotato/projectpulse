@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProjectPulseAI - Schedule</title>
+<link rel="stylesheet" href="/static/shell.css">
+<link rel="stylesheet" href="/static/gantt.css">
+<script src="/static/gantt.js" defer></script>
+<!--
+  The schedule view.
+
+  Read-only on purpose. This is an intelligence layer over Jira and Excel, not a
+  system of record: the precision model exists *because* we observe someone
+  else's spreadsheet rather than own it. Make this draggable and every change
+  becomes precision='exact', bounded intervals stop existing, and the most
+  defensible engineering in the project turns into dead code. The PM keeps
+  editing in Excel and presses Sync on the console tab.
+
+  Three bars per row, and the third is the product: baseline (what was
+  committed), plan (what the sheet says today), and the projected overrun (what
+  the dependency chain implies and nobody has written down).
+
+  Computes nothing. Every date arrives already decided by project_schedule().
+-->
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); padding: 20px;
+    font: 14px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  .wrap { max-width: 1240px; margin: auto; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { color: var(--ink-2); margin: 0 0 16px; font-size: 13px; }
+  h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--ink-3); margin: 24px 0 8px; font-weight: 700;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 8px; padding: 14px 16px;
+  }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+           gap: 8px; margin-bottom: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--rule);
+          border-radius: 8px; padding: 11px 13px; }
+  .stat b { display: block; font-size: 22px; line-height: 1.2;
+            font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--ink-3); font-size: 11px;
+               text-transform: uppercase; letter-spacing: .06em; }
+  .stat.bad b { color: var(--red); }
+
+  .ms-list { display: grid; gap: 2px; }
+  .ms-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 0;
+            border-bottom: 1px dotted var(--rule-2); font-size: 13px; }
+  .ms-row .nm { font-weight: 650; min-width: 160px; }
+  .ms-row .dt { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .ms-row .risk {
+    margin-left: auto; font-size: 10.5px; font-weight: 800; letter-spacing: .05em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 4px;
+    color: #fff; background: var(--red);
+  }
+  .note {
+    margin-top: 12px; padding: 9px 12px; border-radius: 7px; font-size: 12.5px;
+    background: color-mix(in srgb, var(--amber) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent);
+  }
+  .err { color: var(--red); }
+  .mono { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; }
+</style>
+
+<div class="wrap">
+  <nav class="tabs">
+    <a href="/">Retriever console</a>
+    <a href="/gantt" aria-current="page">Schedule</a>
+    <a href="/insight">Insight</a>
+    <a href="/explain">Calculation</a>
+    <span class="tab-note">read-only - the PM edits in Excel</span>
+  </nav>
+
+  <h1>Schedule</h1>
+  <p class="sub" id="sub">loading...</p>
+  <div id="main"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function $(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  }
+
+  function d(v) { return v === null || v === undefined ? "-" : v; }
+
+  /* Resolve once the document is parsed.
+
+     `gantt.js` is deferred, so it runs after parsing; this inline script runs
+     during it. Without this gate a cached API response can arrive before the
+     chart component exists - which is exactly how `PulseGantt is not defined`
+     happened. */
+  function documentReady() {
+    return new Promise(function (resolve) {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () { resolve(); });
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  function renderStats(bundle) {
+    var stats = $("div", "stats");
+    var worst = 0;
+    bundle.rows.forEach(function (r) {
+      if (r.propagated_days > worst) worst = r.propagated_days;
+    });
+    var risky = bundle.milestones.filter(function (m) { return m.at_risk; }).length;
+
+    [[bundle.rows.length, "tasks", false],
+     [d(bundle.project_end_planned), "sheet says finish", false],
+     [d(bundle.project_end_projected), "chain implies finish", true],
+     [worst + "d", "worst hidden slip", true],
+     [risky, "milestones at risk", risky > 0]].forEach(function (row) {
+      var st = $("div", "stat" + (row[2] ? " bad" : ""));
+      st.appendChild($("b", null, row[0]));
+      st.appendChild($("span", null, row[1]));
+      stats.appendChild(st);
+    });
+    return stats;
+  }
+
+  function renderMilestones(bundle) {
+    var card = $("div", "card");
+    var list = $("div", "ms-list");
+    bundle.milestones.forEach(function (m) {
+      var row = $("div", "ms-row");
+      row.appendChild($("div", "nm", m.name));
+      row.appendChild($("div", "dt", d(m.planned_date)));
+      if (m.slipped_days) {
+        row.appendChild($("div", "dt", "+" + m.slipped_days + "d vs baseline"));
+      }
+      if (m.at_risk) row.appendChild($("div", "risk", "at risk"));
+      list.appendChild(row);
+    });
+    card.appendChild(list);
+    card.appendChild($("p", "sub",
+      "Each milestone is dated from the last task beneath it. " +
+      "At risk means work under it cannot finish on its planned date."));
+    return card;
+  }
+
+  function section(title, node) {
+    var frag = document.createDocumentFragment();
+    if (title) frag.appendChild($("h2", null, title));
+    frag.appendChild(node);
+    return frag;
+  }
+
+  function render(bundle) {
+    document.getElementById("sub").textContent =
+      bundle.project_id + "  -  " + bundle.rows.length + " tasks, " +
+      bundle.rows.filter(function (r) { return r.is_inconsistent; }).length +
+      " whose planned date the chain cannot support";
+
+    var main = document.getElementById("main");
+    main.textContent = "";
+    main.appendChild(renderStats(bundle));
+
+    var card = $("div", "card");
+    card.appendChild(PulseGantt.render(bundle));
+    card.appendChild($("p", "sub",
+      "Bold rows and red arrows are the driving path - the only chain that can " +
+      "be shortened to pull the finish date in. Hover any row or bar for its dates."));
+    main.appendChild(section(null, card));
+
+    main.appendChild(section("Milestones", renderMilestones(bundle)));
+
+    if (bundle.project_end_projected > bundle.project_end_planned) {
+      main.appendChild($("div", "note",
+        "Nothing on this chart was edited by us. The red segments are dates the " +
+        "spreadsheet still shows as achievable; the schedule underneath them " +
+        "says otherwise. Fix them in Excel and press Sync on the console tab."));
+    }
+  }
+
+  function fail(title, detail, fix) {
+    var main = document.getElementById("main");
+    main.textContent = "";
+    var card = $("div", "card");
+    card.appendChild($("p", "err", title + ": " + detail));
+    if (fix) card.appendChild($("div", "mono", fix));
+    main.appendChild(card);
+    document.getElementById("sub").textContent = title;
+  }
+
+  fetch("/api/gantt")
+    .then(function (r) {
+      return r.json().then(function (body) {
+        return { ok: r.ok, status: r.status, body: body };
+      });
+    })
+    .catch(function (e) {
+      // Network layer only. A render fault must not land here, or it gets
+      // reported as an unreachable server.
+      var offline = location.protocol === "file:";
+      fail(
+        offline ? "Opened as a file, not served" : "Could not reach the server",
+        offline ? "This page fetches /api/gantt, which needs the app running." : e.message,
+        "python -m scripts.replay\npython -m scripts.demo\nthen open http://127.0.0.1:8000/gantt"
+      );
+      return null;
+    })
+    .then(function (res) {
+      if (!res) return null;
+      if (!res.ok) {
+        var detail = (res.body && res.body.detail) || "HTTP " + res.status;
+        if (res.status === 503) fail("Database unreachable", detail, "docker compose up -d");
+        else if (res.status === 404) fail("No data yet", detail, "python -m scripts.replay");
+        else fail("Could not load /api/gantt", detail, null);
+        return null;
+      }
+      return documentReady().then(function () {
+        if (typeof PulseGantt === "undefined") {
+          fail("Chart component did not load",
+               "/static/gantt.js is missing or failed to parse.",
+               "check the browser console, then reload");
+          return;
+        }
+        try {
+          render(res.body);
+        } catch (e) {
+          fail("Could not draw the schedule", e.message, null);
+        }
+      });
+    });
+})();
+</script>

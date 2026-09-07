@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/*
+  One token set, matching the static pages' shell so the two visual languages do
+  not diverge again - that is the problem the six mockups already have.
+
+  Declared through Tailwind v4's `@theme` so each token is also a utility
+  (`bg-surface`, `text-ink-2`), rather than being a parallel system beside it.
+*/
+@theme {
+  --color-navy: #0d2b5e;
+  --color-blue: #1565c0;
+  --color-orange: #c4550e;
+  --color-green: #157f4a;
+  --color-red: #c0392b;
+  --color-amber: #b4530c;
+  --color-purple: #6d28d9;
+
+  --color-ink: #101a2c;
+  --color-ink-2: #5a6678;
+  --color-ink-3: #8a94a6;
+
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-rule: #dce2eb;
+  --color-rule-2: #edf0f5;
+
+  --font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+}
+
+/* Dark is *selected*, not an automatic inversion - the same steps the static
+   pages use, so a reader switching tabs does not switch palettes. */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-navy: #3e7bd1;
+    --color-blue: #5e9be8;
+    --color-orange: #ff9e52;
+    --color-green: #42c98a;
+    --color-red: #e8705f;
+    --color-amber: #e9903f;
+    --color-purple: #a98bf5;
+
+    --color-ink: #e8edf4;
+    --color-ink-2: #9da9ba;
+    --color-ink-3: #6f7c8f;
+
+    --color-bg: #0d1219;
+    --color-surface: #151d28;
+    --color-rule: #26313f;
+    --color-rule-2: #1c2531;
+  }
+}
+
+/* The vanilla Gantt reads these names; keep one source for them. */
+:root {
+  --ink: var(--color-ink);
+  --ink-2: var(--color-ink-2);
+  --ink-3: var(--color-ink-3);
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --rule: var(--color-rule);
+  --rule-2: var(--color-rule-2);
+  --red: var(--color-red);
+  --navy: var(--color-navy);
+  --blue: var(--color-blue);
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
