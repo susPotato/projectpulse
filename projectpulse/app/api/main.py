@@ -809,8 +809,15 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
     transcript each turn - see `app/agent/chat.py`. Reuses whichever key
     narration is already configured with, so a working `/insight` narrative
     means this works too, with no second setup.
+
+    A link in the *latest* user turn is fetched and its text folded into
+    that turn before the model sees it - see `link_fetch.py`. Only the
+    latest turn, not the whole history: re-fetching every link on every
+    reply would repeat both the latency and the token cost for no new
+    information.
     """
     from app.agent.chat import ChatTurn, ChatUnavailable, gemini_chat
+    from app.agent.link_fetch import fetch_and_extract, find_first_url
     from app.narration.store import load as load_narration_settings
 
     if not body.messages:
@@ -818,6 +825,19 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
 
     settings_ = load_narration_settings()
     turns = [ChatTurn(role=m.role, content=m.content) for m in body.messages]
+
+    last = turns[-1]
+    if last.role == "user":
+        url = find_first_url(last.content)
+        if url:
+            fetched = fetch_and_extract(url)
+            turns[-1] = ChatTurn(
+                role="user",
+                content=(
+                    f"{last.content}\n\n"
+                    f"[Content fetched from {url}]\n{fetched}\n[end of fetched content]"
+                ),
+            )
 
     try:
         reply = gemini_chat(

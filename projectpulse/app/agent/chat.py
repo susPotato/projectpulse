@@ -35,7 +35,12 @@ them up. If asked something only the Insight or Risk page could answer,
 say that plainly and suggest checking there instead of guessing.
 
 Be concise and direct. You may discuss project management, general
-questions, or anything else the user asks."""
+questions, or anything else the user asks.
+
+When a message includes a block marked "[Content fetched from <url>]", that
+text was fetched from the link automatically - use it to answer, and if the
+block instead says the fetch failed or is unsupported, say so plainly rather
+than guessing at what the page might contain."""
 
 
 class ChatUnavailable(RuntimeError):

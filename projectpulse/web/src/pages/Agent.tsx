@@ -13,6 +13,39 @@ import { Card, Note, Page } from "../components/Shell";
   purpose - this is the fast first cut, not the final shape of the feature.
 */
 
+/* One-click starters, so the tab is useful without typing from scratch -
+   pattern borrowed from pimsathon-main's skill_library (preset prompts a
+   user picks rather than composes), rewritten for a PM's own work rather
+   than a developer's. They fill the box rather than send immediately, so a
+   PM can edit before committing to a turn. */
+const PRESETS = [
+  {
+    label: "Draft a status update",
+    prompt:
+      "Help me draft a short status update for stakeholders. I'll describe " +
+      "what happened this week, what's at risk, and what's next - turn it " +
+      "into a clear, concise message.",
+  },
+  {
+    label: "Explain a risk in plain language",
+    prompt:
+      "I need to explain a project risk to a non-technical stakeholder. " +
+      "Here is the risk: ",
+  },
+  {
+    label: "Brainstorm mitigations",
+    prompt:
+      "Suggest a few practical mitigation options for this risk, with the " +
+      "trade-offs of each: ",
+  },
+  {
+    label: "Prep a steering meeting agenda",
+    prompt:
+      "Draft a short agenda for a steering committee review covering " +
+      "schedule status, key risks, and decisions needed. Context: ",
+  },
+] as const;
+
 function Bubble({ message }: { message: ChatMessage }) {
   const mine = message.role === "user";
   return (
@@ -35,6 +68,17 @@ export function Agent() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  function usePreset(prompt: string) {
+    setDraft(prompt);
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    });
+  }
 
   async function submit() {
     const text = draft.trim();
@@ -104,10 +148,24 @@ export function Agent() {
         </div>
       )}
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {PRESETS.map((preset) => (
+          <button
+            key={preset.label}
+            type="button"
+            onClick={() => usePreset(preset.prompt)}
+            className="cursor-pointer rounded-full border border-rule bg-surface px-3 py-1 text-[12px] text-ink-2 hover:border-blue hover:text-blue"
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-2 flex gap-2">
         <textarea
+          ref={inputRef}
           className="min-h-[44px] flex-1 resize-none rounded-md border border-rule bg-bg px-3 py-2.5 text-[13.5px] text-ink outline-none focus:border-blue"
-          placeholder="Message the agent... (Enter to send, Shift+Enter for a new line)"
+          placeholder="Message the agent, or paste a link to have it read - Enter to send, Shift+Enter for a new line"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
