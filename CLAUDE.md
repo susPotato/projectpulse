@@ -2,7 +2,119 @@
 
 Read this first. It is the handoff between sessions.
 
-**Last updated:** 2026-09-08 (multi-vendor narration, exports, duration model, deploy files)
+**Last updated:** 2026-09-08 (live deploy, delivery confidence, risk register, OneDrive connector, Agent chat tab)
+
+---
+
+## 0. This session — 2026-09-08, read this before anything else in the file below
+
+Everything in this section happened after the rest of the file was written. Where it
+contradicts something further down (mainly §3's "Not built yet" and §8's "What to do
+next"), **this section is current** — those are being updated too, but if anything was
+missed, trust this one.
+
+**The app is live.** `https://projectpulse.fly.dev` and `https://app.mintteas.org` both
+serve the real app — Postgres on Neon, Fly app `projectpulse` (org `potato-coffee`,
+region `sin`), TLS cert issued, DNS is two `DNS only` (grey-cloud) records in Cloudflare
+per `DEPLOY.md`. `fly.toml`'s `min_machines_running = 0` means an idle app fully stops;
+the first request after a quiet spell costs a ~15-35s cold start (machine boot + DB
+connect + first narration call). Bump `min_machines_running` to 1 before a judged demo
+window if that cold start is a risk.
+
+**Narration is live and cached, not just wired.** `PULSE_NARRATION=1`,
+`PULSE_NARRATION_PROVIDER=gemini`, and a real `GOOGLE_API_KEY` are set as Fly secrets —
+§8 item 2 ("make one live call") is done, checked directly against the deployed app, not
+just the local test server the old note describes. `app/narration/cache.py` persists a
+model's phrasing in Postgres keyed by a hash of the deterministic template narrative
+(the fully-substituted fallback prose *is* the fingerprint of every fact the model saw),
+so a model is asked at most once per unique set of facts — first `/api/insight` call
+after a data change costs ~15-20s, every one after that is sub-second, correct across
+Fly's multiple/ephemeral machines. Without this the page was unusably slow in production
+(every request re-asked Gemini).
+
+**Four features landed, all with tests, all verified live in Docker and on Fly:**
+
+- **`intelligence/confidence.py` + `InsightBundle.delivery_confidence`** — a
+  deterministic `coverage x freshness` band (never a percentage) for how much to trust
+  the delivery-outlook figure, matching the architecture doc's own §8.6 design that was
+  never built. Precedent is honestly absent (retrieval still doesn't exist) rather than
+  faked. Rendered as a chip on the Insight page next to the outlook panel.
+- **A full CRUD risk register** — `app/risks/` (a new `Risk` table, deliberately with no
+  `RawDataOrigin`/provenance and walled off from `app/intelligence/`, since a PM's own
+  judgement is the data here, not something derived), `api/schemas/risk.py`, the `/risk`
+  page. Matches `Layout/fpt-pm-risk.html`'s probability x impact matrix. The rating badge
+  is a pure lookup of (likelihood, impact) — `app/risks/matrix.py` — never independently
+  typed, so it can't disagree with the pair behind it.
+- **A real Microsoft Graph OneDrive source** —
+  `app/ingest/sources/excel/graph_auth.py` + `graph_source.py`. This closes §3's "the
+  real blocker on going live" note: MSAL's device-code flow against Microsoft's own
+  pre-consented public client (`14d82eec-204b-4c2f-b7e8-296a70dab67e`, the "Microsoft
+  Graph PowerShell" client id — the same well-known-public-client trick the Azure CLI
+  uses) needs **no Azure app registration and no FPT tenant admin consent** for
+  `Files.Read`. The signed-in session is cached in Postgres
+  (`app/models/onedrive.py`), not on disk, because Fly's filesystem is ephemeral and a
+  deployment runs more than one machine. **Off by default** — `PULSE_EXCEL_TRANSPORT`
+  stays `local` until someone runs `python -m scripts.sync onedrive login` (against
+  whichever `DATABASE_URL` the live app reads — run it against Neon, not local
+  Postgres, for the deployed app to see the sign-in) and sets
+  `PULSE_EXCEL_TRANSPORT=graph` / `PULSE_ONEDRIVE_FOLDER` as Fly secrets. Nobody has
+  signed in yet as of this note.
+- **`app/agent/` — a free-form Agent chat tab (`/agent`).** Deliberately the one
+  generative surface in the app with none of narration's guarantees: no fact-checking
+  against project data, no tool use, no file/command access. The system prompt says so
+  and tells the model to say so too rather than guess at live figures. Gemini only for
+  now (the one vendor actually configured) — extending to Anthropic/OpenAI is the same
+  shape of change `narration/providers.py` already demonstrates. Two small extras came
+  from surveying `pimsathon-main` (see below): `link_fetch.py` reads a pasted URL
+  (HTML/text/`.xlsx`/`.docx`, stdlib + `openpyxl` only, no new hard dependency; PDF is
+  honestly unsupported rather than silently ignored) and folds it into the latest turn
+  before the model sees it; a row of PM-oriented preset prompts (status update,
+  explaining a risk, mitigations, a steering agenda) fills the box instead of sending —
+  rewritten for a PM's work, not copied from that repo's dev-workflow personas.
+
+**On `pimsathon-main`** (a sibling folder next to this repo, `Downloads/hackathon/
+pimsathon-main/`): it is a different, unrelated FPT internal product — "Cowork-Local
+BamBOO", a PySide6 desktop AI-agent app (chat, a Co4E workflow engine, GraphRAG,
+command-execution sandboxing). Surveyed twice, once quickly and once thoroughly after
+being asked "is that all it has to offer" — the honest answer both times was that almost
+none of it fits, because its whole design center (let an agent act on a machine safely)
+is the opposite of this app's (rules and arithmetic produce every finding). Three things
+were genuinely reusable and are already taken: the MS365/OneDrive auth pattern, the
+`link_fetch.py` idea, and the preset-prompts idea. `core/cron.py` (a small,
+dependency-free 5-field cron parser) is flagged but **not** taken — worth a look only if
+§8 item 7 (a scheduler) actually gets built.
+
+**Fixed, not just noted:**
+- The FK-ordering bug DEPLOY.md predicted ("expect to fix something on the first `fly
+  deploy`") was real: `excel/source.py`'s `run_excel_sync` called `ensure_project`
+  *after* `ingest_sheet`, which queues `Dependency` rows referencing the project.
+  `ensure_project`'s own existence-check autoflushes the session, flushing those rows
+  before the `Project` row exists — Postgres enforces the FK, SQLite (what the whole
+  test suite runs on) does not, so 502 passing tests never caught it. Fixed by moving
+  `ensure_project` before `ingest_sheet`.
+- The retriever console (`app/api/static/index.html`) polled `/api/state` every 2
+  seconds — fine on a laptop, wasteful now that the same page is served live (keeps an
+  idle Fly machine awake, hits Neon every couple seconds if a tab is left open). Slowed
+  to 15s.
+- A real API key was twice typed into `.env.example` (the committed template) instead
+  of `.env` (gitignored) — caught before either reached git. **A `.git/hooks/pre-commit`
+  hook is now installed** (local to this machine only — hooks aren't tracked by git)
+  that blocks any commit where a `*.env.example` has a non-empty `KEY=`/`TOKEN=`/
+  `SECRET=` value. Verified against both a fake leak (blocked) and a clean file (passed).
+
+**Environment state worth knowing:**
+- `.env` / `.env.example` at `projectpulse/` now also need nothing new for the features
+  above — same `GOOGLE_API_KEY` powers narration and the Agent tab.
+- Fly secrets set: `DATABASE_URL` (Neon), `GOOGLE_API_KEY`, `PULSE_NARRATION=1`,
+  `PULSE_NARRATION_PROVIDER=gemini`. `PULSE_EXCEL_TRANSPORT` / `PULSE_ONEDRIVE_FOLDER`
+  are **not** set — OneDrive stays off until someone signs in.
+- `docker-compose.yml` now has an `app` service alongside `db` — `docker compose up -d
+  --build` runs the whole stack, not just Postgres.
+- 578+ backend tests passing (`pytest -q` from `projectpulse/`), frontend typechecks
+  and builds clean, `npm run smoke` passes.
+- Everything above is committed to `main` locally; whether it has been *pushed* to
+  `origin/main` (github.com/susPotato/projectpulse) depends on when this was read —
+  check `git status` / `git log origin/main..HEAD`.
 
 ---
 
@@ -394,10 +506,18 @@ in, an `InsightBundle` out.
 
 ### Not built yet
 
-Retrieval/pgvector, APScheduler, the five remaining screens (still static mockups). The
-LLM client exists but **has never completed a live call** — see §8 item 1.
+Retrieval/pgvector, APScheduler, the five remaining screens (still static mockups).
+
+⚠️ **Superseded by §0:** the LLM client has now completed live calls — Gemini is
+deployed and cached in production. See §0 before trusting anything else in this
+subsection too far without checking there first.
 
 ### Deployed
+
+**See §0 for the current live deploy** (`projectpulse.fly.dev` / `app.mintteas.org`,
+Fly + Neon) — the real app, not a snapshot. What follows below is the earlier,
+separate static-snapshot deploy on Cloudflare Pages, which is unaffected and still
+serves as the offline fallback DEPLOY.md describes.
 
 - Architecture page: **https://arch.mintteas.org** (Cloudflare Pages project
   `projectpulse-arch`, source `site/index.html`, config `wrangler.toml`).
@@ -741,18 +861,14 @@ The intelligence layer and the insight screen are done. What remains is polish.
    of which exist — and omits the precision model, `propagated_days` and `evidence_basis`,
    which do and are the best things in it. An afternoon's work, and worth more than any
    remaining feature.
-2. **Make one live call with a commercial vendor.** The path itself is proven (see the
-   local-server test above), so this only confirms credentials and a model id:
-   `python -m scripts.sync insight --narrative --model --provider <name>`. Confirm the
-   model id first for OpenAI and Gemini — those defaults are placeholders.
-3. **Deploy it.** `DEPLOY.md` has the whole sequence; `Dockerfile` and `fly.toml` are
-   written and **unverified** — no Docker daemon on this machine, so expect to fix
-   something on the first `fly deploy`. The container logic itself *is* verified:
-   `python -m scripts.serve --check` seeds an empty database and leaves a populated one
-   alone. Target `app.mintteas.org`, keep `arch.mintteas.org` as the static fallback.
-4. **Link the exports from the UI.** `/api/template/{kind}.xlsx` and `/api/report.docx`
-   work and nothing points at them. Two buttons on the Insight page — needs
-   `npm run build` and the bundle committed.
+2. ✅ **Done — see §0.** Made a live call with Gemini, in production, cached so it costs
+   once per fact-set rather than once per request.
+3. ✅ **Done — see §0.** Deployed to Fly + Neon, both `projectpulse.fly.dev` and
+   `app.mintteas.org` verified live. The FK-ordering bug this item predicted
+   ("expect to fix something on the first `fly deploy`") was real — see §0 for the fix.
+4. ✅ **Already done** as of this note — the Insight page's action slot links
+   `/api/report.docx` ("Download report"). Confirm the `.xlsx` template is linked
+   somewhere too before assuming it; that one was not specifically checked this session.
 5. **Decide the duration classifier's fate.** It is wired, tested and inert on 3.14.
    Three options, in order of how much they cost: leave it advisory-and-absent (the
    product is complete without it, and this is the round-1 answer); run it on a
