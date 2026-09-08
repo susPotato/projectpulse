@@ -1,0 +1,32 @@
+# The venv is a Windows venv; copying it in would shadow the image's own
+# interpreter and `_bootstrap` would try to re-exec into an .exe that cannot run.
+.venv/
+
+# Local databases. A copied pulse.db would make `serve.py` think the database is
+# already seeded, and it would then serve a SQLite file that vanishes on restart.
+*.db
+*.db-journal
+
+# The front-end toolchain. `app/api/static/app/` is the committed build output and
+# is all the image needs.
+web/node_modules/
+web/dist/
+web/scripts/openapi.json
+
+# Generated demo spreadsheets - `scripts.replay` writes these inside the
+# container from code.
+data/
+
+# Trained model artefacts. Fetched on request, never baked in.
+models/
+
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Secrets are injected at runtime (docker-compose.yml env_file), never baked
+# into a layer.
+.env
+.pulse/

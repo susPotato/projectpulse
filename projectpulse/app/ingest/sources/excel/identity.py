@@ -59,6 +59,12 @@ class Rejection:
     reason: str
 
 
+#: Marks a row key we synthesised because the sheet gave us no id. It is
+#: a real key and a correct one - it is just not a name a person typed, so
+#: `assembler.entity_label` must never print it as a label. Named here so
+#: the two ends of that rule cannot drift apart.
+ANON_PREFIX = "~anon-"
+
 def _title_key(value: Any) -> str:
     return (normalize_value(value) or "").casefold()
 
@@ -70,7 +76,7 @@ def _synthetic_key(title: str) -> str:
     scan; prefixed so it is obvious in the data that this was not a real id.
     """
     digest = hashlib.sha256(title.encode("utf-8")).hexdigest()[:16]
-    return f"~anon-{digest}"
+    return f"{ANON_PREFIX}{digest}"
 
 
 def resolve_identities(

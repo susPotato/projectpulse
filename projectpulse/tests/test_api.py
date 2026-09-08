@@ -289,3 +289,302 @@ def test_the_app_never_computes_a_reported_number():
             r"\blink\.lag_days_\w+\s*[*/-]",
         ):
             assert not re.search(pattern, stripped), f"{name}: {pattern}"
+
+
+# --------------------------------------------------------------------------
+# The Tailwind span trap
+#
+# Tailwind generates CSS by scanning source *text*. A class assembled at
+# runtime - `md:col-span-${span}` - is therefore in no source file, gets no
+# rule emitted, and the board silently collapses to one column. The page
+# still renders, still looks tidy, and is simply the wrong layout.
+#
+# `Shell.tsx` spells every span out in a lookup table for that reason. These
+# two tests are what stop someone "simplifying" it back.
+# --------------------------------------------------------------------------
+
+SHELL_TSX = WEB / "src" / "components" / "Shell.tsx"
+
+
+def _built_css() -> str:
+    sheets = sorted((STATIC / "app" / "assets").glob("*.css"))
+    assert sheets, "the app has not been built"
+    return "\n".join(p.read_text(encoding="utf-8") for p in sheets)
+
+
+def _without_comments(source: str) -> str:
+    """Source with comments removed.
+
+    Needed because `Shell.tsx` *documents* this trap, and the documentation
+    naturally contains the offending pattern as an example. Scanning the raw
+    file flags the explanation as the bug it warns about.
+    """
+    source = re.sub(r"/\*.*?\*/", "", source, flags=re.S)
+    return re.sub(r"//.*", "", source)
+
+
+def test_no_span_class_is_assembled_at_runtime():
+    """An interpolated class name is invisible to Tailwind's scanner."""
+    source = _without_comments(SHELL_TSX.read_text(encoding="utf-8"))
+
+    offenders = re.findall(r"(?:md:)?col-span-\$\{[^}]+\}", source)
+
+    assert offenders == [], (
+        "these class names are built at runtime, so Tailwind emits no CSS for "
+        f"them and the board loses its columns: {offenders}"
+    )
+
+
+def test_every_span_the_shell_offers_exists_in_the_built_css():
+    """The stronger check: the classes are not merely literal, they are emitted.
+
+    Catches the case a source grep cannot - a span added to the lookup table
+    after the last build, which would be a literal string with no rule behind
+    it.
+    """
+    source = SHELL_TSX.read_text(encoding="utf-8")
+    table = re.search(r"const SPAN: Record<number, string> = \{(.*?)\}", source, re.S)
+    assert table, "Shell.tsx no longer declares a SPAN lookup table"
+
+    classes = re.findall(r'"(md:col-span-\d+)"', table.group(1))
+    assert classes, "the SPAN table declares no span classes"
+
+    css = _built_css()
+    # Tailwind escapes the colon in a variant class: `.md\:col-span-7`.
+    missing = [name for name in classes if name.replace(":", r"\:") not in css]
+
+    assert missing == [], (
+        f"declared but absent from the built stylesheet: {missing}. "
+        "Rebuild the front end (npm run build), or they are unreachable classes."
+    )
+
+
+# --------------------------------------------------------------------------
+# The rail is duplicated - so it is asserted
+#
+# Navigation is spelled out in `Shell.tsx` for the built pages and in the HTML
+# of each hand-written one. Three copies of a nav is how the six original
+# mockups ended up with two conflicting token families, so the copies are
+# checked against each other rather than trusted.
+# --------------------------------------------------------------------------
+
+HAND_WRITTEN = ("index.html", "gantt.html", "settings.html")
+
+
+def _rail_hrefs(html: str) -> list[str]:
+    rail = re.search(r'<nav class="rail".*?</nav>', html, re.S)
+    assert rail, "no rail in this page"
+    # The brand mark links into the app but is not a section.
+    return re.findall(r'<a href="([^"]+)"', rail.group(0))
+
+
+def test_every_page_carries_the_same_rail():
+    shell = (WEB / "src" / "components" / "Shell.tsx").read_text(encoding="utf-8")
+    table = re.search(r"const TABS = \[(.*?)\] as const;", shell, re.S)
+    assert table, "Shell.tsx no longer declares a TABS list"
+    expected = re.findall(r'href: "([^"]+)"', table.group(1))
+    assert expected, "TABS declares no links"
+
+    for name in HAND_WRITTEN:
+        found = _rail_hrefs((STATIC / name).read_text(encoding="utf-8"))
+        assert found == expected, (
+            f"{name}'s rail is {found} but Shell.tsx says {expected} - "
+            "the two navs have drifted"
+        )
+
+
+def test_every_hand_written_page_marks_its_own_rail_entry():
+    """Without `aria-current` the reader cannot tell which page they are on."""
+    for name in HAND_WRITTEN:
+        html = (STATIC / name).read_text(encoding="utf-8")
+        rail = re.search(r'<nav class="rail".*?</nav>', html, re.S)
+        assert rail, name
+        assert rail.group(0).count('aria-current="page"') == 1, name
+
+
+def test_the_old_horizontal_nav_is_gone_from_the_hand_written_pages():
+    """Two navigations on one page is worse than either alone.
+
+    The rail replaced the tab bar; a page keeping both would offer the reader
+    the same five links twice.
+    """
+    for name in HAND_WRITTEN:
+        html = (STATIC / name).read_text(encoding="utf-8")
+        assert 'class="tabs"' not in html, f"{name} still has the old tab bar"
+
+
+def test_the_agent_route_serves_the_bundle(client):
+    response = client.get("/agent")
+
+    assert response.status_code == 200
+    assert 'id="root"' in response.text
+
+
+def test_agent_chat_rejects_an_empty_conversation(client):
+    response = client.post("/api/agent/chat", json={"messages": []})
+    assert response.status_code == 400
+
+
+def test_agent_chat_reports_unavailable_rather_than_a_500(client, monkeypatch):
+    """No key is configured in the test environment - the route must degrade
+    to a visible `ok: false`, the same rule narration follows, not crash."""
+    response = client.post(
+        "/api/agent/chat", json={"messages": [{"role": "user", "content": "hi"}]}
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is False
+    assert body["error"]
+
+
+def test_agent_chat_returns_the_model_s_reply_when_available(client, monkeypatch):
+    def fake_gemini_chat(turns, *, model, api_key):
+        assert turns[-1].content == "hi"
+        return "hello yourself"
+
+    monkeypatch.setattr("app.agent.chat.gemini_chat", fake_gemini_chat)
+
+    response = client.post(
+        "/api/agent/chat", json={"messages": [{"role": "user", "content": "hi"}]}
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["reply"] == "hello yourself"
+
+
+def test_the_risk_route_serves_the_bundle(client):
+    """A fourth app route, wired the same way as portfolio/team/explain."""
+    response = client.get("/risk")
+
+    assert response.status_code == 200
+    assert 'id="root"' in response.text
+
+
+def test_creating_a_risk_through_the_api(client):
+    body = {
+        "project_id": "excel:Project:1:RISKTEST",
+        "title": "Vendor lock-in",
+        "category": "Technology",
+        "pre_likelihood": "Possible",
+        "pre_impact": "Major",
+    }
+
+    created = client.post("/api/risks", json=body)
+    assert created.status_code == 201
+    payload = created.json()
+    assert payload["pre_rating"] == "High"  # Possible x Major, per the matrix
+    assert payload["risk_no"] == "1"
+
+    listed = client.get("/api/risks", params={"project": "excel:Project:1:RISKTEST"})
+    assert listed.status_code == 200
+    assert [r["title"] for r in listed.json()["risks"]] == ["Vendor lock-in"]
+
+    risk_id = payload["id"]
+    updated = client.put(f"/api/risks/{risk_id}", json={"status": "Closed"})
+    assert updated.status_code == 200
+    assert updated.json()["status"] == "Closed"
+    assert updated.json()["title"] == "Vendor lock-in"  # untouched by the PUT
+
+    deleted = client.delete(f"/api/risks/{risk_id}")
+    assert deleted.status_code == 204
+
+    after = client.get("/api/risks", params={"project": "excel:Project:1:RISKTEST"})
+    assert after.json()["risks"] == []
+
+
+def test_creating_a_risk_without_a_title_is_rejected(client):
+    response = client.post(
+        "/api/risks", json={"project_id": "excel:Project:1:RISKTEST"}
+    )
+    assert response.status_code == 400
+
+
+def test_updating_a_missing_risk_is_a_404(client):
+    response = client.put("/api/risks/999999", json={"status": "Closed"})
+    assert response.status_code == 404
+
+
+def test_deleting_a_missing_risk_is_a_404(client):
+    response = client.delete("/api/risks/999999")
+    assert response.status_code == 404
+
+
+def test_the_program_route_serves_the_bundle(client):
+    """A third app route, so the portfolio can be linked like the others."""
+    response = client.get("/portfolio")
+
+    assert response.status_code == 200
+    assert 'id="root"' in response.text
+
+
+def test_the_portfolio_folds_source_ids_into_one_row(client, seeded):
+    """Invariant 7 on this screen: two source ids are one delivery project.
+
+    Excel and Jira each create their own `projects` row for the same delivery,
+    so a portfolio built from that table would list HRMS twice. `app.scope`
+    holds the pairing, and this is what stops the screen double-counting.
+    """
+    from app.api.schemas.portfolio import PortfolioBundle
+    from app.scope import PORTFOLIO
+
+    bundle = PortfolioBundle.model_validate(client.get("/api/portfolio").json())
+
+    assert len(bundle.projects) == len(PORTFOLIO)
+    for row, entry in zip(bundle.projects, PORTFOLIO):
+        assert set(row.source_ids) == set(entry.source_ids)
+
+
+def test_a_project_with_no_data_is_never_green(client):
+    """`no_data` is its own band. Colouring unknown healthy is the failure the
+    whole product argues against, so it is asserted rather than trusted."""
+    from app.intelligence.pipeline import _band_for
+
+    assert _band_for([]) == "healthy"          # findings ran, nothing fired
+    assert _band_for(["high"]) == "critical"
+    assert _band_for(["medium"]) == "watch"
+    assert _band_for(["info"]) == "healthy"
+    # And the row builder uses `no_data` when nothing was ingested - a state
+    # `_band_for` deliberately cannot produce, because it means "not analysed".
+    assert "no_data" not in {_band_for([]), _band_for(["low"])}
+
+
+def test_the_team_route_serves_the_bundle(client):
+    assert client.get("/team").status_code == 200
+
+
+def test_the_team_bundle_says_when_it_has_no_effort_data(client, seeded):
+    """`has_effort_data` exists so the page can explain an empty panel.
+
+    A zero where a total belongs reads as "nobody logged anything"; the flag
+    lets the page say "no sheet carried an Hours column" instead, which is a
+    different and truer statement.
+    """
+    from app.api.schemas.team import TeamBundle
+
+    bundle = TeamBundle.model_validate(
+        client.get("/api/team", params={"project": seeded}).json()
+    )
+
+    # The seeded fixture has one task and no worklog at all.
+    assert bundle.has_effort_data is False
+    assert bundle.total_hours == 0
+
+
+
+def test_the_program_config_exposes_the_whole_rule_table(client):
+    """Every finding is defended by pointing at one of these thresholds, so the
+    screen shows all of them rather than a sample."""
+    from app.api.schemas.program import ProgramBundle
+    from app.intelligence.rules.tables import DEFAULT_TABLE
+
+    bundle = ProgramBundle.model_validate(client.get("/api/program").json())
+
+    assert len(bundle.rules) == len(DEFAULT_TABLE.rules)
+    assert bundle.rule_table == DEFAULT_TABLE.name
+    # Tokens are deliberately NOT substituted here: this screen is about the
+    # rule, not about today's numbers.
+    assert any("{{" in rule.headline for rule in bundle.rules)
+    assert all(rule.conditions for rule in bundle.rules)

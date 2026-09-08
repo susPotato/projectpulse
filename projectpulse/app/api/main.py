@@ -14,20 +14,28 @@ or `data/demo/jira/*.json` in any editor, press Sync, and look at what changed.
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.api.schemas.explain import ExplainBundle
 from app.api.schemas.gantt import GanttBundle
+from app.api.schemas.portfolio import PortfolioBundle
+from app.api.schemas.program import ProgramBundle
+from app.api.schemas.team import TeamBundle
+from app.api.schemas.scenario import ScenarioBundle
+from app.api.schemas.agent import ChatRequest, ChatResponse
 from app.api.schemas.insight import InsightBundle
+from app.api.schemas.risk import RiskBundle, RiskIn, RiskOut
+from app import scope
 from app.config import settings
 from app.db import check_connection, create_all, drop_all, session_scope
 from app.ingest.runner import run_sync
@@ -35,6 +43,10 @@ from app.intelligence.pipeline import (
     analyze_project,
     explain_project,
     gantt_project,
+    portfolio,
+    program_config,
+    scenarios_project,
+    team_project,
 )
 from app.ingest.sources.excel.reader import sha256_file
 from app.ingest.sources.excel.source import WATCHED
@@ -45,6 +57,8 @@ from app.models.sync import RawReject, SheetScan, SyncRun
 # Importing the source modules registers them with the runner.
 import app.ingest.sources.excel.source  # noqa: F401
 import app.ingest.sources.jira.source  # noqa: F401
+
+log = logging.getLogger(__name__)
 
 app = FastAPI(title="ProjectPulse retriever console")
 STATIC = Path(__file__).parent / "static"
@@ -394,6 +408,429 @@ def api_explain(
     return bundle
 
 
+#: Content types for the two generated files. Set explicitly because a browser
+#: offered `application/octet-stream` saves a file Excel and Word will open only
+#: after a warning, which on a demo reads as a broken download.
+XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+@app.get("/api/template/{kind}.xlsx")
+def template(kind: str) -> Response:
+    """A blank input workbook, generated from the sheet contract itself.
+
+    Two files rather than one with two tabs, because that is what the watcher
+    watches. `kind` is `schedule` or `worklog`.
+    """
+    from app.exports.template import KINDS, template_bytes
+
+    if kind not in KINDS:
+        raise HTTPException(
+            status_code=404,
+            detail=f"unknown template {kind!r}; expected one of {sorted(KINDS)}",
+        )
+
+    return Response(
+        content=template_bytes(kind),
+        media_type=XLSX_TYPE,
+        headers={
+            "Content-Disposition": f'attachment; filename="projectpulse_{kind}.xlsx"'
+        },
+    )
+
+
+@app.get("/api/report.docx")
+def report(
+    project: str = "excel:Project:1:HRMS",
+    also: list[str] | None = Query(default=None),
+) -> Response:
+    """The status report, as a .docx a PM can attach to an email.
+
+    The same findings as `/api/insight` and the same projection as
+    `/api/explain`, so the document cannot disagree with either screen - it
+    renders their bundles rather than recomputing anything.
+    """
+    if also is None:
+        also = ["jira:Project:1:HRMS"]
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    from app.exports.report import ReportUnavailable, report_bytes
+
+    with session_scope() as session:
+        bundle = analyze_project(
+            session, project_id=project, also=list(also), narrator=_narrator()
+        )
+        explain = explain_project(session, project_id=project, also=list(also))
+
+    if not bundle.findings and not bundle.context.get("task_count"):
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"no data for project {project!r}. Build the demo timeline first: "
+                "python -m scripts.replay"
+            ),
+        )
+
+    try:
+        content = report_bytes(bundle, explain=explain)
+    except ReportUnavailable as exc:
+        # 501 rather than 500: the server is working, this optional extra is
+        # simply not installed, and the message says which.
+        raise HTTPException(status_code=501, detail=str(exc)) from exc
+
+    return Response(
+        content=content,
+        media_type=DOCX_TYPE,
+        headers={
+            "Content-Disposition": 'attachment; filename="delivery_status.docx"'
+        },
+    )
+
+
+@app.get("/portfolio")
+def portfolio_page() -> FileResponse:
+    """The program screen. Same bundle as /insight; the app picks by path."""
+    return FileResponse(STATIC / "app" / "index.html")
+
+
+@app.get("/api/portfolio", response_model=PortfolioBundle)
+def portfolio_api() -> PortfolioBundle:
+    """Every delivery project in the program, ranked worst first.
+
+    Folded from `analyze_project` per project rather than a separate
+    aggregation, so the program view cannot disagree with the project view.
+    """
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        return portfolio(session)
+
+
+@app.get("/team")
+def team_page() -> FileResponse:
+    """Who is carrying what, and what moved."""
+    return FileResponse(STATIC / "app" / "index.html")
+
+
+@app.get("/api/team", response_model=TeamBundle)
+def team(
+    project: str = "excel:Project:1:HRMS",
+    also: list[str] | None = Query(default=None),
+) -> TeamBundle:
+    """Workload, effort and activity, from columns the sheets actually carry.
+
+    `api/schemas/team.py` records what is served and what is deliberately
+    absent. The effort burn is reconstructed from observed `hours_spent`
+    changes rather than read off the final sheet, which is what lets a flat
+    stretch in it mean "nothing was logged" instead of "we stopped looking".
+    """
+    if also is None:
+        also = scope.also_for(project)
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        return team_project(session, project_id=project, also=list(also))
+
+
+@app.get("/api/program", response_model=ProgramBundle)
+def program() -> ProgramBundle:
+    """Program configuration: watched sources, project pairing, the rule table.
+
+    Read-only. A rule table edited in a browser has no review and no history,
+    and every finding here is defended by pointing at these thresholds.
+    """
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        return program_config(session)
+
+
+@app.get("/api/scenarios", response_model=ScenarioBundle)
+def scenarios(
+    project: str = "excel:Project:1:HRMS",
+    also: list[str] | None = Query(default=None),
+) -> ScenarioBundle:
+    """What the schedule would do if one thing changed.
+
+    Every figure is the forward pass re-run over modified rows - a simulation,
+    never a mutation: nothing is written to a task, an edge or a spreadsheet,
+    which is what lets the app answer "what if" while staying read-only.
+
+    Returns an empty list when the plan is not late. There is nothing to
+    recover then, and a list of zero-day scenarios reads as a broken feature.
+    """
+    if also is None:
+        also = ["jira:Project:1:HRMS"]
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        return scenarios_project(session, project_id=project, also=list(also))
+
+
+def _narrator():
+    """The narration drafter, if narration is switched on.
+
+    Returns None when it is not, which is the default: the served narrative is
+    then the deterministic template - complete prose, no key, no network - and
+    a request cannot be made slower or more fragile by a feature nobody turned
+    on.
+
+    Read per request from `narration.store`, so the settings page takes effect
+    on the next reload rather than the next restart. `app.config` is still the
+    floor: it supplies the defaults the store starts from.
+    """
+    from app.narration.store import load
+
+    current = load()
+    if not current.enabled:
+        return None
+
+    from app.narration.providers import ModelConfig, drafter_for
+
+    try:
+        return drafter_for(
+            current.provider,
+            ModelConfig(
+                model=current.model,
+                api_key=current.api_key,
+                base_url=current.base_url,
+            ),
+        )
+    except ValueError:
+        # An unknown provider in the stored file. Narration is optional, so a
+        # bad setting costs the model and not the page.
+        log.warning("unknown narration provider %r; serving the template", current.provider)
+        return None
+
+
+def _is_local(request: Request) -> bool:
+    """Whether the caller is on this machine.
+
+    The settings endpoints accept an API key, so writing them is restricted to
+    loopback. That is not a permission system - it is the smallest honest
+    boundary: `scripts.demo` binds 127.0.0.1, so it always passes, and a
+    deployment behind a proxy always fails and becomes read-only with no
+    configuration to forget.
+    """
+    host = (request.client.host if request.client else "") or ""
+    return host in {"127.0.0.1", "::1", "localhost"}
+
+
+class NarrationSettingsIn(BaseModel):
+    """What the settings page may change.
+
+    `api_key` omitted (or null) keeps the stored key - the page never receives
+    it, so it cannot send it back, and a save that did not retype it must not
+    wipe it. An empty string is an explicit clear.
+    """
+
+    enabled: bool | None = None
+    provider: str | None = None
+    model: str | None = None
+    api_key: str | None = None
+    base_url: str | None = None
+
+
+@app.get("/settings")
+def settings_page() -> FileResponse:
+    """Where a person turns narration on and pastes a key."""
+    return FileResponse(STATIC / "settings.html")
+
+
+@app.get("/api/settings")
+def read_settings() -> dict:
+    """Current narration settings. Never includes the key itself."""
+    from app.narration.store import public_view
+
+    view = public_view()
+    view["writable"] = True
+    return view
+
+
+@app.put("/api/settings")
+def write_settings(request: Request, body: NarrationSettingsIn) -> dict:
+    from app.narration.providers import PROVIDERS
+    from app.narration.store import public_view, update
+
+    if not _is_local(request):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "settings can only be changed from the machine the app runs on. "
+                "Set PULSE_NARRATION, PULSE_NARRATION_PROVIDER and the vendor's "
+                "API key as environment variables instead."
+            ),
+        )
+
+    if body.provider is not None and body.provider not in PROVIDERS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown provider {body.provider!r}; expected one of {list(PROVIDERS)}",
+        )
+
+    changes = {k: v for k, v in body.model_dump().items() if v is not None}
+    update(**changes)
+    return read_settings()
+
+
+@app.post("/api/settings/test")
+def test_settings(request: Request) -> dict:
+    """Ask the configured model for a narrative, and report exactly what happened.
+
+    A real end-to-end call rather than a credential ping: it builds the same
+    brief, runs the same eight-stage gate and substitutes the same way, so a
+    pass here means the feature works and not merely that the key is valid.
+    """
+    if not _is_local(request):
+        raise HTTPException(status_code=403, detail="only available locally")
+
+    from app.narration.client import narrate
+    from app.narration.providers import ModelConfig, drafter_for
+    from app.narration.store import load
+
+    current = load()
+    try:
+        drafter = drafter_for(
+            current.provider,
+            ModelConfig(
+                model=current.model,
+                api_key=current.api_key,
+                base_url=current.base_url,
+            ),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        bundle = analyze_project(
+            session,
+            project_id="excel:Project:1:HRMS",
+            also=["jira:Project:1:HRMS"],
+        )
+
+    if not bundle.findings:
+        raise HTTPException(
+            status_code=404,
+            detail="no findings to narrate. Build the demo timeline: python -m scripts.replay",
+        )
+
+    outcome = narrate(bundle, drafter=drafter)
+    return {
+        "source": outcome.source,
+        "attempts": outcome.attempts,
+        "fallback_reason": outcome.fallback_reason,
+        "narrative": outcome.narrative,
+        "provider": current.provider,
+        "model": current.model or "(provider default)",
+    }
+
+
+@app.get("/risk")
+def risk_page() -> FileResponse:
+    """The risk register: what a PM tracks by hand, not what the engine finds."""
+    return FileResponse(STATIC / "app" / "index.html")
+
+
+@app.get("/api/risks", response_model=RiskBundle)
+def read_risks(project: list[str] | None = Query(default=None)) -> RiskBundle:
+    """Every risk, program-wide by default - `Layout/fpt-pm-risk.html` lists
+    several projects in one table. Pass `?project=` (repeatable) to narrow it.
+
+    Unlike every other route in this file, this one needs no `check_connection`
+    guard against an empty analysis: an empty risk register is not an error,
+    it is a program nobody has logged a risk against yet.
+    """
+    from app.risks.service import list_risks
+
+    with session_scope() as session:
+        return list_risks(session, project_ids=project)
+
+
+@app.post("/api/risks", response_model=RiskOut, status_code=201)
+def create_risk_route(body: RiskIn) -> RiskOut:
+    from app.risks.service import create_risk
+
+    with session_scope() as session:
+        try:
+            return create_risk(session, body)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.put("/api/risks/{risk_id}", response_model=RiskOut)
+def update_risk_route(risk_id: int, body: RiskIn) -> RiskOut:
+    from app.risks.service import update_risk
+
+    with session_scope() as session:
+        updated = update_risk(session, risk_id, body)
+        if updated is None:
+            raise HTTPException(status_code=404, detail=f"no risk with id {risk_id}")
+        return updated
+
+
+@app.delete("/api/risks/{risk_id}", status_code=204)
+def delete_risk_route(risk_id: int) -> Response:
+    from app.risks.service import delete_risk
+
+    with session_scope() as session:
+        if not delete_risk(session, risk_id):
+            raise HTTPException(status_code=404, detail=f"no risk with id {risk_id}")
+    return Response(status_code=204)
+
+
+@app.get("/agent")
+def agent_page() -> FileResponse:
+    """Free-form chat - the one page with no deterministic engine behind it."""
+    return FileResponse(STATIC / "app" / "index.html")
+
+
+@app.post("/api/agent/chat", response_model=ChatResponse)
+def agent_chat(body: ChatRequest) -> ChatResponse:
+    """One reply, given the whole conversation so far.
+
+    Stateless: nothing is persisted server-side, so the client resends the
+    transcript each turn - see `app/agent/chat.py`. Reuses whichever key
+    narration is already configured with, so a working `/insight` narrative
+    means this works too, with no second setup.
+    """
+    from app.agent.chat import ChatTurn, ChatUnavailable, gemini_chat
+    from app.narration.store import load as load_narration_settings
+
+    if not body.messages:
+        raise HTTPException(status_code=400, detail="messages must not be empty")
+
+    settings_ = load_narration_settings()
+    turns = [ChatTurn(role=m.role, content=m.content) for m in body.messages]
+
+    try:
+        reply = gemini_chat(
+            turns,
+            model=settings_.model or "gemini-3.8-flash",
+            api_key=settings_.api_key or None,
+        )
+    except ChatUnavailable as exc:
+        return ChatResponse(reply="", ok=False, error=str(exc))
+
+    return ChatResponse(reply=reply, ok=True)
+
+
 @app.get("/api/insight", response_model=InsightBundle)
 def insight(
     project: str = "excel:Project:1:HRMS",
@@ -422,7 +859,9 @@ def insight(
         raise HTTPException(status_code=503, detail=problem)
 
     with session_scope() as session:
-        bundle = analyze_project(session, project_id=project, also=list(also))
+        bundle = analyze_project(
+            session, project_id=project, also=list(also), narrator=_narrator()
+        )
 
     if not bundle.findings and not bundle.context.get("task_count"):
         # An empty database is not an error, but it is indistinguishable from a

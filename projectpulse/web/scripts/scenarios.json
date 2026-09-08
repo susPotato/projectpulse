@@ -1,0 +1,108 @@
+{
+  "project_id": "excel:Project:1:HRMS",
+  "committed_end": "2026-05-29",
+  "projected_end": "2026-07-02",
+  "days_late": 34,
+  "scenarios": [
+    {
+      "id": "compress:WBS-108+compress:WBS-114+compress:WBS-118+compress:WBS-121+overlap:WBS-114+overlap:WBS-118+overlap:WBS-121",
+      "summary": "Every change below, applied together",
+      "moves": [
+        {
+          "kind": "compress",
+          "entity_id": "excel:Task:1:WBS-108",
+          "label": "WBS-108",
+          "days": 10,
+          "against_id": null,
+          "against_label": null
+        },
+        {
+          "kind": "compress",
+          "entity_id": "excel:Task:1:WBS-114",
+          "label": "WBS-114",
+          "days": 10,
+          "against_id": null,
+          "against_label": null
+        },
+        {
+          "kind": "compress",
+          "entity_id": "excel:Task:1:WBS-118",
+          "label": "WBS-118",
+          "days": 10,
+          "against_id": null,
+          "against_label": null
+        },
+        {
+          "kind": "compress",
+          "entity_id": "excel:Task:1:WBS-121",
+          "label": "WBS-121",
+          "days": 5,
+          "against_id": null,
+          "against_label": null
+        },
+        {
+          "kind": "overlap",
+          "entity_id": "excel:Task:1:WBS-114",
+          "label": "WBS-114",
+          "days": 10,
+          "against_id": "excel:Task:1:WBS-108",
+          "against_label": "WBS-108"
+        },
+        {
+          "kind": "overlap",
+          "entity_id": "excel:Task:1:WBS-118",
+          "label": "WBS-118",
+          "days": 10,
+          "against_id": "excel:Task:1:WBS-114",
+          "against_label": "WBS-114"
+        },
+        {
+          "kind": "overlap",
+          "entity_id": "excel:Task:1:WBS-121",
+          "label": "WBS-121",
+          "days": 5,
+          "against_id": "excel:Task:1:WBS-118",
+          "against_label": "WBS-118"
+        }
+      ],
+      "projected_end": "2026-05-26",
+      "days_earlier": 37,
+      "days_late": -3
+    },
+    {
+      "id": "compress:WBS-108",
+      "summary": "Deliver WBS-108 in less time",
+      "moves": [
+        {
+          "kind": "compress",
+          "entity_id": "excel:Task:1:WBS-108",
+          "label": "WBS-108",
+          "days": 10,
+          "against_id": null,
+          "against_label": null
+        }
+      ],
+      "projected_end": "2026-06-22",
+      "days_earlier": 10,
+      "days_late": 24
+    },
+    {
+      "id": "compress:WBS-121",
+      "summary": "Deliver WBS-121 in less time",
+      "moves": [
+        {
+          "kind": "compress",
+          "entity_id": "excel:Task:1:WBS-121",
+          "label": "WBS-121",
+          "days": 5,
+          "against_id": null,
+          "against_label": null
+        }
+      ],
+      "projected_end": "2026-06-27",
+      "days_earlier": 5,
+      "days_late": 29
+    }
+  ],
+  "depends_on_inferred_edges": true
+}

@@ -243,7 +243,17 @@ export function CalculationView({
     <Page
       current="/explain"
       title="Calculation"
-      subtitle={`${bundle.project_id} · ${bundle.steps.length} tasks, ${inconsistent.length} whose dates cannot hold`}
+      scope={`${bundle.project_id} · ${bundle.steps.length} tasks`}
+      asof={
+        inconsistent.length > 0 ? (
+          <>
+            <b className="font-semibold text-ink-2">{inconsistent.length}</b> whose dates
+            cannot hold
+          </>
+        ) : (
+          "every task is consistent with its dependencies"
+        )
+      }
     >
       <Stats>
         <Stat value={dash(bundle.project_end_planned)} label="sheet says finish" />

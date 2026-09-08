@@ -1,0 +1,299 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+           background: #0D1219; color: #E8EDF4; -webkit-font-smoothing: antialiased; }
+    a { color: #5E9BE8; text-decoration: none; }
+    a:hover { color: #8FBAF0; text-decoration: underline; }
+    .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
+           text-transform: uppercase; color: #6F7C8F; }
+    .card { background: #151D28; border: 1px solid #26313F; border-radius: 8px; }
+    .sev { min-width: 62px; border-radius: 4px; padding: 2px 8px; text-align: center;
+           font-size: 10.5px; font-weight: 800; letter-spacing: .05em;
+           text-transform: uppercase; color: #0D1219; }
+    .mono { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; }
+  </style>
+</helmet>
+
+<div style="display: flex; min-height: 1000px;">
+
+  <!-- left rail -->
+  <div style="width: 64px; background: #101822; border-right: 1px solid #26313F;
+              display: flex; flex-direction: column; align-items: center; gap: 4px;
+              padding: 14px 0;">
+    <div style="width: 30px; height: 30px; border-radius: 7px; background: #3E7BD1;
+                display: flex; align-items: center; justify-content: center;
+                margin-bottom: 14px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0D1219"
+           stroke-width="2.4" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 3px;
+                padding: 7px 0 6px; width: 52px; border-radius: 7px; background: #1C2531;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3E7BD1"
+           stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      <span style="font-size: 9px; color: #3E7BD1; font-weight: 600;">Board</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 0 6px; width: 52px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F7C8F"
+           stroke-width="1.8" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      <span style="font-size: 9px; color: #6F7C8F;">Schedule</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 0 6px; width: 52px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F7C8F"
+           stroke-width="1.8" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      <span style="font-size: 9px; color: #6F7C8F;">Risk</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 0 6px; width: 52px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F7C8F"
+           stroke-width="1.8" stroke-linecap="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span style="font-size: 9px; color: #6F7C8F;">Quality</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 0 6px; width: 52px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F7C8F"
+           stroke-width="1.8" stroke-linecap="round"><path d="M14 2v6h6"/><path d="M4 22V4a2 2 0 0 1 2-2h8l6 6v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></svg>
+      <span style="font-size: 9px; color: #6F7C8F;">Report</span>
+    </div>
+  </div>
+
+  <!-- main column -->
+  <div style="flex-grow: 1; display: flex; flex-direction: column;">
+
+    <!-- top bar -->
+    <div style="display: flex; align-items: center; gap: 16px; padding: 0 22px; height: 54px;
+                border-bottom: 1px solid #26313F; background: #101822;">
+      <div style="font-size: 14.5px; font-weight: 650;">HRMS Platform</div>
+      <div style="font-size: 11.5px; color: #6F7C8F; border-left: 1px solid #26313F; padding-left: 16px;">
+        Digital Transformation 2026
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <div style="font-size: 11.5px; color: #6F7C8F;">Reflects the sheet as at
+        <span style="color: #9DA9BA;">22 Mar 2026</span></div>
+      <div style="display: flex; align-items: center; gap: 6px; border: 1px solid #3E7BD1;
+                  border-radius: 6px; padding: 6px 12px; color: #3E7BD1;
+                  font-size: 12.5px; font-weight: 600;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3E7BD1"
+             stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>
+        Run AI Analysis
+      </div>
+    </div>
+
+    <!-- tab strip -->
+    <div style="display: flex; gap: 2px; padding: 0 22px; border-bottom: 1px solid #26313F;
+                background: #101822;">
+      <div style="padding: 9px 15px; font-size: 13px; color: #E8EDF4; font-weight: 600;
+                  border-bottom: 2px solid #3E7BD1;">Overview</div>
+      <div style="padding: 9px 15px; font-size: 13px; color: #6F7C8F;">Schedule</div>
+      <div style="padding: 9px 15px; font-size: 13px; color: #6F7C8F;">Quality &amp; QA</div>
+      <div style="padding: 9px 15px; font-size: 13px; color: #6F7C8F;">Risk</div>
+      <div style="padding: 9px 15px; font-size: 13px; color: #6F7C8F;">Evidence</div>
+    </div>
+
+    <!-- board -->
+    <div style="padding: 20px 22px; display: grid; gap: 14px;
+                grid-template-columns: repeat(12, minmax(0, 1fr));">
+
+      <!-- THE HOOK: delivery outlook -->
+      <div class="card" style="grid-column: span 7; padding: 18px 20px;">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <div class="lbl">Delivery outlook</div>
+          <div style="flex-grow: 1;"></div>
+          <div style="font-size: 10.5px; color: #6F7C8F;">from the schedule's own dependencies</div>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 28px; margin-top: 14px;">
+          <div>
+            <div style="font-size: 11.5px; color: #6F7C8F;">The sheet says</div>
+            <div style="font-size: 25px; font-weight: 300; color: #9DA9BA;
+                        text-decoration: line-through; text-decoration-thickness: 1px;">29 May 2026</div>
+          </div>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6F7C8F"
+               stroke-width="1.6" stroke-linecap="round" style="margin-bottom: 6px;"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <div>
+            <div style="font-size: 11.5px; color: #6F7C8F;">Its dependencies imply</div>
+            <div style="font-size: 25px; font-weight: 650; color: #FF9E52;">2 Jul 2026</div>
+          </div>
+          <div style="flex-grow: 1;"></div>
+          <div style="text-align: right;">
+            <div style="font-size: 34px; font-weight: 700; color: #FF9E52; line-height: 1;">+34</div>
+            <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 3px;">days already in the plan</div>
+          </div>
+        </div>
+        <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #26313F;
+                    font-size: 12.5px; color: #9DA9BA;">
+          Nobody has recorded this slip. It is arithmetic over the dates in the sheet and the
+          dependencies between them &mdash; every step is on the Calculation tab.
+        </div>
+      </div>
+
+      <!-- driving path -->
+      <div class="card" style="grid-column: span 5; padding: 18px 20px;">
+        <div class="lbl">Driving path</div>
+        <div style="display: grid; gap: 8px; margin-top: 13px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="mono" style="font-size: 12px; color: #3E7BD1; width: 66px;">WBS-108</span>
+            <span style="flex-grow: 1; font-size: 12.5px; color: #9DA9BA;">Environment Setup</span>
+            <span style="font-size: 12px; color: #6F7C8F;">origin</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="mono" style="font-size: 12px; color: #3E7BD1; width: 66px;">WBS-114</span>
+            <span style="flex-grow: 1; font-size: 12.5px; color: #9DA9BA;">Integration build</span>
+            <span style="font-size: 12px; font-weight: 650; color: #E9903F;">+11d</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="mono" style="font-size: 12px; color: #3E7BD1; width: 66px;">WBS-118</span>
+            <span style="flex-grow: 1; font-size: 12.5px; color: #9DA9BA;">UAT preparation</span>
+            <span style="font-size: 12px; font-weight: 650; color: #FF9E52;">+22d</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="mono" style="font-size: 12px; color: #3E7BD1; width: 66px;">WBS-121</span>
+            <span style="flex-grow: 1; font-size: 12.5px; color: #9DA9BA;">Cutover rehearsal</span>
+            <span style="font-size: 12px; font-weight: 650; color: #E8705F;">+34d</span>
+          </div>
+        </div>
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #26313F;
+                    display: flex; gap: 8px; align-items: center;">
+          <span style="font-size: 11px; border: 1px solid #42C98A; color: #42C98A;
+                       border-radius: 999px; padding: 2px 9px; font-weight: 700;">3 stated</span>
+          <span style="font-size: 11px; border: 1px solid #E9903F; color: #E9903F;
+                       border-radius: 999px; padding: 2px 9px; font-weight: 700;">1 inferred</span>
+          <span style="font-size: 11.5px; color: #6F7C8F;">dependency edges</span>
+        </div>
+      </div>
+
+      <!-- AI management brief -->
+      <div class="card" style="grid-column: span 7; padding: 18px 20px;">
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A98BF5"
+               stroke-width="1.9" stroke-linecap="round"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>
+          <div class="lbl" style="color: #A98BF5;">AI Management Brief</div>
+          <div style="flex-grow: 1;"></div>
+          <div style="font-size: 10.5px; color: #6F7C8F;">phrased by the model &middot; every figure computed</div>
+        </div>
+        <div style="display: grid; gap: 11px; margin-top: 14px;">
+          <div>
+            <div style="font-size: 12px; font-weight: 650; color: #3E7BD1;">What is at risk</div>
+            <div style="font-size: 13px; color: #9DA9BA; margin-top: 2px; line-height: 1.5;">
+              The plan cannot hold: 3 tasks are dated earlier than their own dependencies allow,
+              by up to 34 days. 3 milestones sit behind work that cannot finish on its planned date.
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 650; color: #3E7BD1;">Why it is happening</div>
+            <div style="font-size: 13px; color: #9DA9BA; margin-top: 2px; line-height: 1.5;">
+              WBS-108 moved from 4 Mar to 16 Mar; between 4 and 12 days later WBS-114 moved from
+              20 Mar to 1 Apr. The two are connected by a dependency stated in the schedule sheet.
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 650; color: #3E7BD1;">What to do next</div>
+            <div style="font-size: 13px; color: #9DA9BA; margin-top: 2px; line-height: 1.5;">
+              Re-baseline the affected tasks or compress the driving path before the next
+              steering review.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- stat column -->
+      <div style="grid-column: span 5; display: grid; gap: 14px;
+                  grid-template-columns: repeat(2, minmax(0, 1fr));">
+        <div class="card" style="padding: 16px 18px;">
+          <div class="lbl">Milestones at risk</div>
+          <div style="font-size: 30px; font-weight: 700; color: #E8705F; margin-top: 6px; line-height: 1;">3</div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 5px;">behind work that cannot finish</div>
+        </div>
+        <div class="card" style="padding: 16px 18px;">
+          <div class="lbl">Blocking QA</div>
+          <div style="font-size: 30px; font-weight: 700; color: #E8705F; margin-top: 6px; line-height: 1;">
+            17<span style="font-size: 16px; font-weight: 400; color: #6F7C8F;"> / 17</span></div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 5px;">test items blocked</div>
+        </div>
+        <div class="card" style="padding: 16px 18px;">
+          <div class="lbl">Observed changes</div>
+          <div style="font-size: 30px; font-weight: 700; color: #E8EDF4; margin-top: 6px; line-height: 1;">27</div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 5px;">6 exact &middot; 21 bounded</div>
+        </div>
+        <div class="card" style="padding: 16px 18px;">
+          <div class="lbl">Orderable pairs</div>
+          <div style="font-size: 30px; font-weight: 700; color: #E8EDF4; margin-top: 6px; line-height: 1;">203</div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 5px;">of 702 &mdash; the rest are dropped</div>
+        </div>
+      </div>
+
+      <!-- detected risks -->
+      <div class="card" style="grid-column: span 8; padding: 18px 20px;">
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <div class="lbl">AI Detected Risks</div>
+          <div style="flex-grow: 1;"></div>
+          <div style="font-size: 11.5px; color: #5E9BE8;">9 findings</div>
+        </div>
+        <div style="display: grid; gap: 9px; margin-top: 13px;">
+          <div style="display: flex; gap: 12px; align-items: flex-start;
+                      background: #0D1219; border-radius: 8px; padding: 11px 13px;">
+            <span class="sev" style="background: #E8705F;">high</span>
+            <div style="flex-grow: 1;">
+              <div style="font-size: 13px; font-weight: 600;">The plan cannot hold: 3 tasks are dated earlier than their own dependencies allow, by up to 34 days.</div>
+              <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 3px;">
+                schedule_risk &middot; rule <span class="mono">schedule_inconsistent_major</span> &middot; 5 source rows
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: flex-start;
+                      background: #0D1219; border-radius: 8px; padding: 11px 13px;">
+            <span class="sev" style="background: #E8705F;">high</span>
+            <div style="flex-grow: 1;">
+              <div style="font-size: 13px; font-weight: 600;">QA has stalled: 17 of 17 test items are blocked.</div>
+              <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 3px;">
+                quality_risk &middot; rule <span class="mono">qa_queue_stalled</span>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: flex-start;
+                      background: #0D1219; border-radius: 8px; padding: 11px 13px;">
+            <span class="sev" style="background: #FF9E52;">medium</span>
+            <div style="flex-grow: 1;">
+              <div style="font-size: 13px; font-weight: 600;">The schedule conclusion changes if inferred dependencies are removed &mdash; 1 of 4 edges came from dates rather than a person.</div>
+              <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 3px;">
+                evidence_quality &middot; this projection is a derived claim
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- what the analysis could not use -->
+      <div class="card" style="grid-column: span 4; padding: 18px 20px;">
+        <div class="lbl">What the analysis could not use</div>
+        <div style="display: grid; gap: 9px; margin-top: 13px;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-size: 17px; font-weight: 700; color: #E9903F; width: 26px;">8</span>
+            <span style="font-size: 12.5px; color: #9DA9BA;">rows could not be parsed</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-size: 17px; font-weight: 700; color: #E8EDF4; width: 26px;">0</span>
+            <span style="font-size: 12.5px; color: #9DA9BA;">changes of uncertain identity</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-size: 17px; font-weight: 700; color: #E9903F; width: 26px;">40%</span>
+            <span style="font-size: 12.5px; color: #9DA9BA;">of tasks have a baseline</span>
+          </div>
+        </div>
+        <div style="margin-top: 13px; padding-top: 12px; border-top: 1px solid #26313F;
+                    font-size: 11.5px; color: #6F7C8F; line-height: 1.5;">
+          Shown beside every conclusion rather than buried. A health score computed on part of a
+          project is worse than none.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

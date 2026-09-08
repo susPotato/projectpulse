@@ -20,6 +20,51 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3", "httpx"]  # httpx backs fastapi.testclient
+# The narration model. Optional on purpose: `narration/fallback.py` writes a
+# complete narrative without it, so the demo runs, the tests pass and the pages
+# fill with neither this package nor an API key present. `narration/client.py`
+# imports it on first use only.
+# One per vendor rather than one big extra: whichever is chosen, the other two
+# are dead weight in the image, and `narration/providers.py` imports each on
+# first call so an absent package is a fallback rather than a crash.
+# Floors are the versions carrying the surface each adapter uses; the versions
+# actually verified against are anthropic 1.4.0, openai 3.8.0, google-genai
+# 2.22.0.
+llm = ["anthropic>=1.4"]
+llm-openai = ["openai>=1.60"]
+llm-gemini = ["google-genai>=1.0"]
+# The .docx status report.
+report = ["python-docx>=1.1"]
+# The advisory duration classifier. Heavy, and entirely optional: with none of
+# this installed `load_classifier()` returns None and every caller carries on.
+# scikit-learn is pinned to the minor version that pickled the published
+# artefact: under 1.9 the unpickle dies on
+# `sklearn.compose._column_transformer._RemainderColsList`, a private class that
+# no longer exists.
+#
+# NOTE: this extra therefore needs Python 3.12 or 3.13. scikit-learn 1.6.x
+# publishes no wheel for 3.14, so on this project's 3.14 venv pip tries to
+# compile it and fails. Installing without the pin succeeds and then the model
+# will not load - `sync advise` says so explicitly rather than crashing. The
+# whole feature is advisory, so an absent classifier costs nothing.
+# The marker keeps `pip install -e ".[ml]"` clean on 3.14: without it pip tries
+# to compile 1.6.1 from source and fails on a missing C toolchain, which reads
+# as a broken project rather than an unsupported combination. With it, sklearn
+# is simply skipped there and the model reports itself unloadable.
+ml = [
+    "scikit-learn>=1.6,<1.7; python_version < '3.14'",
+    "joblib>=1.3",
+    "pandas>=2.1",
+]
+# Only needed to download the artefact once.
+ml-fetch = ["huggingface-hub>=0.24"]
+# OneDrive via Microsoft Graph - the production `excel/transport.py` route.
+# MSAL's device-code flow signs in with a person's own Microsoft account
+# against Microsoft's own pre-consented public client, so no Azure app
+# registration and no tenant admin consent are needed for `Files.Read`.
+# Optional: `LocalFolderSource` remains the default and needs neither
+# package nor sign-in - see `app/config.py`'s `excel_transport`.
+onedrive = ["msal>=1.28", "requests>=2.31"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

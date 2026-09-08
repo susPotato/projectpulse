@@ -69,16 +69,30 @@
   .mono { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; }
 </style>
 
+<div class="shell">
+<nav class="rail" aria-label="Sections">
+  <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
+  <a href="/portfolio"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Program</span></a>
+  <a href="/"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Console</span></a>
+  <a href="/gantt" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
+  <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
+  <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
+  <a href="/team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 20a6 6 0 0 0-2-4.5"/></svg><span>Team</span></a>
+  <a href="/explain"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg><span>Calc</span></a>
+  <a href="/agent"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 14h6"/></svg><span>Agent</span></a>
+  <a href="/settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a>
+</nav>
+<main>
 <div class="wrap">
-  <nav class="tabs">
-    <a href="/">Retriever console</a>
-    <a href="/gantt" aria-current="page">Schedule</a>
-    <a href="/insight">Insight</a>
-    <a href="/explain">Calculation</a>
-    <span class="tab-note">read-only - the PM edits in Excel</span>
-  </nav>
 
-  <h1>Schedule</h1>
+  <div class="appbar">
+    <h1>Schedule</h1>
+    <span class="scope">baseline, plan and projected overrun on one window</span>
+    <span class="spacer"></span>
+    <!-- Lived in the old tab bar and was lost when the rail replaced it. It is
+         load-bearing copy: it is the answer to "why can I not drag a bar?" -->
+    <span class="asof">read-only - the PM edits in Excel</span>
+  </div>
   <p class="sub" id="sub">loading...</p>
   <div id="main"></div>
 </div>
@@ -239,3 +253,5 @@
     });
 })();
 </script>
+</main>
+</div>

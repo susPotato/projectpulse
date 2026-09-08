@@ -129,6 +129,23 @@ def test_the_domain_layer_is_populated(replayed):
     assert all(t.raw_data_id is not None for t in tasks)
 
 
+def test_the_sheets_phase_column_reaches_the_domain_layer(replayed):
+    """`Phase` was parsed and then dropped, leaving `Task.phase` always null.
+
+    It matters because it is the vocabulary a delivery constraint is written in
+    - "a Testing task needs an Environment predecessor" cannot be expressed at
+    all without knowing which tasks are Testing ones. Nothing reads it yet; this
+    keeps it arriving until something does.
+    """
+    tasks = replayed.scalars(select(Task).where(Task.project_id == PROJECT)).all()
+    phases = {t.title: t.phase for t in tasks}
+
+    assert all(phase for phase in phases.values()), phases
+    # The two the colleague's example is about, on opposite sides of the plan.
+    assert phases["Environment Setup"] == "Development"
+    assert phases["UAT preparation"] == "Testing"
+
+
 def test_dependency_edges_survive_to_the_domain_layer(replayed):
     edges = replayed.scalars(select(Dependency)).all()
     sources = {e.source for e in edges}
@@ -245,6 +262,25 @@ def test_data_quality_reports_what_was_refused(replayed):
     assert bundle.data_quality.edges_stated == 3
 
 
+def test_delivery_confidence_is_populated_from_a_real_sync(replayed):
+    """`analyze_project` wires `intelligence.confidence` end to end.
+
+    `replayed` runs `run_sync`, which stamps `SyncRun.finished_at` at real
+    wall-clock time regardless of the simulated timeline `now=` the scans
+    were replayed against - so freshness should read as fresh, not as the
+    demo timeline's own (long past) dates.
+    """
+    bundle = analyze_project(replayed, project_id=PROJECT)
+
+    assert bundle.delivery_confidence is not None
+    assert bundle.delivery_confidence.band in ("high", "medium", "low")
+    assert bundle.delivery_confidence.data_age_hours is not None
+    assert bundle.delivery_confidence.data_age_hours < 1.0
+    assert bundle.delivery_confidence.freshness == 1.0
+    assert bundle.delivery_confidence.coverage == bundle.context["baseline_coverage"]
+    assert bundle.delivery_confidence.precedent_available is False
+
+
 def test_the_narrative_is_always_present(replayed):
     """The deterministic fallback means a bundle is never an empty page."""
     bundle = analyze_project(replayed, project_id=PROJECT)
@@ -353,3 +389,153 @@ def test_a_milestone_is_dated_from_the_last_task_beneath_it(replayed):
     ).all()
 
     assert env.planned_date == max(t.due_date for t in tasks if t.due_date)
+
+
+def test_the_worklog_columns_reach_the_domain_layer(replayed):
+    """`Hours` and `Owner` are read by the worklog contract and were dropped.
+
+    The same gap `Task.phase` had, in a second place. Without them there is no
+    effort in the system at all, so no workload or hours panel can be honest -
+    and the burn chart the function list asks for stays impossible.
+    """
+    items = replayed.scalars(select(QaItem)).all()
+
+    assert items, "no QA items ingested"
+    assert all(q.assignee for q in items), "Owner is not reaching QaItem"
+    assert any(q.hours_spent for q in items), "Hours is not reaching QaItem"
+
+
+def test_team_data_separates_schedule_owners_from_qa_owners(replayed):
+    """A real property of these sheets, not a bug to paper over.
+
+    Nobody who owns a scheduled task also owns a QA item, so a member row is
+    one or the other. The Team page says "appears only on the worklog" rather
+    than drawing an empty bar and letting a reader infer idleness.
+    """
+    from app.intelligence.pipeline import team_project
+
+    bundle = team_project(
+        replayed, project_id=PROJECT, also=["jira:Project:1:HRMS"]
+    )
+
+    with_tasks = {m.name for m in bundle.members if m.tasks}
+    with_hours = {m.name for m in bundle.members if m.hours_logged > 0}
+
+    assert with_tasks and with_hours
+    assert not (with_tasks & with_hours)
+
+
+def test_the_burn_is_reconstructed_from_observed_changes(replayed):
+    """The chart's spine, end to end through the real timeline.
+
+    Not a restatement of `test_effort.py`: that proves the arithmetic on
+    synthetic input, this proves the pipeline hands it the right rows. The
+    failure it catches is a query that quietly picks up the schedule sheet's
+    scans, which would put points on the chart at moments nobody looked at the
+    worklog.
+    """
+    from app.intelligence.pipeline import team_project
+
+    bundle = team_project(
+        replayed, project_id=PROJECT, also=["jira:Project:1:HRMS"]
+    )
+    burn = bundle.burn
+
+    assert burn.planned_hours == 125.0
+    assert burn.logged_hours == 28.0
+    assert burn.remaining_hours == 97.0
+    # Rises, then flattens. The flat tail is the finding.
+    assert [p.logged_hours for p in burn.points] == [16.0, 22.0, 22.0, 28.0, 28.0, 28.0]
+    # And the final point equals the snapshot total, which is the one thing a
+    # chart shown beside a figure must never get wrong.
+    assert burn.points[-1].logged_hours == bundle.total_hours
+
+
+def test_an_unchanged_worklog_scan_is_a_point_on_the_burn(replayed):
+    """The `SheetScan.changed` row earning its keep a second time.
+
+    It was added so intervals stay tight (section 5 of CLAUDE.md). It turns out
+    to be what makes a burn chart honest as well: without those rows the line
+    would jump straight from one edit to the next and the stall would be
+    invisible - the chart would simply not show the thing it exists for.
+    """
+    from app.intelligence.pipeline import team_project
+
+    bundle = team_project(
+        replayed, project_id=PROJECT, also=["jira:Project:1:HRMS"]
+    )
+
+    untouched = [p for p in bundle.burn.points if not p.changed]
+    assert len(untouched) == 2
+    assert all(p.delta_hours == 0.0 for p in untouched)
+
+
+def test_the_burn_stalls_at_the_moment_the_qa_queue_blocks(replayed):
+    """One cause, two symptoms - which is the whole product thesis.
+
+    The schedule shows a date slipping and the burn shows the work stopping.
+    Both trace to the blocked environment, and the demo is only worth running
+    if the two agree. If this ever fails, the timeline in `gen_demo_data` moved
+    and the two halves of the story have come apart.
+    """
+    from app.intelligence.pipeline import team_project
+
+    bundle = team_project(
+        replayed, project_id=PROJECT, also=["jira:Project:1:HRMS"]
+    )
+
+    assert bundle.burn.stalled_from is not None
+    # Scope grew and rows blocked on the last observation, while nothing was
+    # logged: 10 more test items queued behind a cause nobody had cleared.
+    last = bundle.burn.points[-1]
+    assert last.items_added == 10
+    assert last.blocked_added == 3
+    assert last.delta_hours == 0.0
+
+
+def test_effort_columns_survive_the_whole_ingestion_path(replayed):
+    """Parsed, and actually persisted.
+
+    The third instance of one bug: `Task.phase`, then `QaItem.assignee` and
+    `hours_spent`, were each read by the contract and dropped by the convertor,
+    so a column a PM had filled in simply did not exist downstream. `log_date`
+    and `estimate_hours` were the remaining pair, and this is the guard that
+    they do not join that list again.
+    """
+    from app.models.domain import QaItem
+
+    items = replayed.scalars(select(QaItem)).all()
+
+    assert all(i.estimate_hours is not None for i in items)
+    # Only the rows with hours against them carry a date - writing one on an
+    # untouched row would say somebody worked on a day nobody did.
+    assert {bool(i.log_date) for i in items} == {True, False}
+    assert all(bool(i.log_date) == bool(i.hours_spent) for i in items)
+
+
+def test_a_row_with_no_task_id_is_labelled_by_its_title(replayed):
+    """A synthesised identity key is not a name.
+
+    `~anon-ef0576ffa2b2a0f2` rendered as a row label on the Team and Schedule
+    pages, sitting between four colleagues with proper WBS codes. It was
+    correct data - it is the key that holds that row's identity across scans,
+    which is why the row can be tracked at all - and it read as a bug.
+    """
+    from app.intelligence.pipeline import gantt_project, team_project
+
+    labels = {
+        t.label
+        for m in team_project(
+            replayed, project_id=PROJECT, also=["jira:Project:1:HRMS"]
+        ).members
+        for t in m.tasks
+    }
+    labels |= {
+        row.label
+        for row in gantt_project(
+            replayed, project_id=PROJECT, also=["jira:Project:1:HRMS"]
+        ).rows
+    }
+
+    assert not any(label.startswith("~anon-") for label in labels), sorted(labels)
+    assert "Data migration dry-run" in labels

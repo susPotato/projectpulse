@@ -51,3 +51,6 @@ projectpulse/web/scripts/openapi.json
 
 # Stray console redirects from local smoke runs.
 projectpulse/*.txt
+
+# Local Claude Code tool config - per machine/session, not project content.
+.claude/

@@ -128,6 +128,21 @@ def _scannable(text: str) -> str:
     return ENTITY.sub(" ", _strip_tokens(text))
 
 
+def contains_quantity(text: str) -> bool:
+    """Whether `text` states a figure that must have come from the server.
+
+    The public form of the `no_literal_digits` rule, exported so that
+    `client.py` can hold *itself* to it: a brief that leaks a value into the
+    prompt would let a model copy that value rather than emit the token for it,
+    and the copy would then read as though the server had produced it.
+
+    Sharing one definition is the point. Two implementations of "contains a
+    number" would eventually disagree, and the disagreement would be a prompt
+    that looks safe and is not.
+    """
+    return bool(re.search(r"\d", _scannable(text)))
+
+
 def validate_draft(
     draft: str,
     *,

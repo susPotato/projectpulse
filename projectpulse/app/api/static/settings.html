@@ -1,0 +1,357 @@
+<!doctype html>
+<!--
+  Where narration is turned on and a key is pasted.
+
+  Hand-written rather than part of the React app on purpose: this is the page
+  someone opens when the model is NOT working, so it must not depend on the
+  bundle being fresh, on npm, or on anything the failure might have taken with
+  it. It uses the shared shell tokens, so it follows the theme like every other
+  page.
+
+  The page never receives the API key. It gets a hint ("sk-ant-...bQ4A") and a
+  boolean, and it sends a key only when someone types one - an untouched field
+  submits nothing and the stored key is left alone.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings - ProjectPulse</title>
+  <link rel="stylesheet" href="/static/shell.css">
+  <style>
+    body { margin: 0; background: var(--bg); color: var(--ink);
+           font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .wrap { max-width: 780px; margin: 0 auto; padding: 22px 20px 60px; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    .sub { color: var(--ink-2); font-size: 13px; margin-bottom: 20px; }
+    .card { background: var(--surface); border: 1px solid var(--rule);
+            border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
+    .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
+           text-transform: uppercase; color: var(--ink-3); }
+    label { display: block; font-size: 12.5px; color: var(--ink-2); margin: 14px 0 5px; }
+    input[type=text], input[type=password], select {
+      width: 100%; box-sizing: border-box; padding: 8px 10px; font: inherit;
+      font-size: 13px; color: var(--ink); background: var(--bg);
+      border: 1px solid var(--rule); border-radius: 6px;
+    }
+    input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    button { font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+             border-radius: 6px; padding: 9px 16px; border: 1px solid var(--rule);
+             background: var(--bg); color: var(--ink); }
+    button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    button:disabled { opacity: .55; cursor: default; }
+    .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+    .warn { border-left: 2px solid var(--amber); padding-left: 12px;
+            font-size: 12.5px; color: var(--ink-2); margin-top: 14px; }
+    .ok { color: var(--green); }
+    .bad { color: var(--red); }
+    pre { white-space: pre-wrap; font: 12.5px/1.6 system-ui, sans-serif;
+          background: var(--bg); border: 1px solid var(--rule); border-radius: 6px;
+          padding: 12px 14px; margin: 10px 0 0; }
+    code { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: 12px; }
+    .pill { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px;
+            padding: 2px 10px; border: 1px solid var(--rule); color: var(--ink-2); }
+    /* Within-page views, the same shape as the React `SubTabs`. */
+    .subtabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--rule);
+               margin-bottom: 18px; }
+    .subtabs button { font: inherit; font-size: 13px; cursor: pointer; background: none;
+                      border: 0; border-bottom: 2px solid transparent; color: var(--ink-2);
+                      padding: 10px 15px; margin-bottom: -1px; }
+    .subtabs button:hover { color: var(--ink); }
+    .subtabs button[aria-current="page"] { color: var(--ink); font-weight: 650;
+                                           border-bottom-color: var(--navy); }
+    table.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.grid th { text-align: left; font-size: 10.5px; letter-spacing: .06em;
+                    text-transform: uppercase; color: var(--ink-3); font-weight: 700;
+                    padding: 0 10px 7px 0; border-bottom: 1px solid var(--rule); }
+    table.grid td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule-2);
+                    vertical-align: top; }
+    .sev { font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+           border-radius: 4px; padding: 2px 7px; color: var(--surface); }
+  </style>
+</head>
+<body>
+<div class="shell">
+<nav class="rail" aria-label="Sections">
+  <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
+  <a href="/portfolio"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Program</span></a>
+  <a href="/"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Console</span></a>
+  <a href="/gantt"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
+  <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
+  <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
+  <a href="/team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 20a6 6 0 0 0-2-4.5"/></svg><span>Team</span></a>
+  <a href="/explain"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg><span>Calc</span></a>
+  <a href="/agent"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 14h6"/></svg><span>Agent</span></a>
+  <a href="/settings" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a>
+</nav>
+<main>
+<div class="wrap">
+
+  <div class="appbar">
+    <h1>Settings</h1>
+    <span class="scope">narration, sources and the rule table</span>
+  </div>
+  <nav class="subtabs" id="subtabs">
+    <button type="button" data-view="narration" aria-current="page">Narration</button>
+    <button type="button" data-view="sources">Sources</button>
+    <button type="button" data-view="rules">Rule table</button>
+  </nav>
+
+  <div id="main">Loading&hellip;</div>
+  <div id="program"></div>
+</div>
+
+<script>
+(function () {
+  var main = document.getElementById("main");
+  var state = null;
+
+  function el(html) { var d = document.createElement("div"); d.innerHTML = html; return d.firstElementChild; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+
+  function render() {
+    var s = state;
+    var opts = s.providers.map(function (p) {
+      return '<option value="' + p + '"' + (p === s.provider ? " selected" : "") + ">" + p + "</option>";
+    }).join("");
+
+    var keyLine = s.api_key_set
+      ? '<span class="ok">saved</span> <code>' + esc(s.api_key_hint) + "</code>"
+      : (s.api_key_from_environment
+          ? '<span class="ok">found in the environment</span> &mdash; nothing to paste here'
+          : '<span class="bad">not set</span>');
+
+    main.innerHTML = "";
+    main.appendChild(el(
+      '<div class="card">' +
+        '<div class="lbl">Model</div>' +
+        '<label for="enabled">Who writes the summary</label>' +
+        '<select id="enabled">' +
+          '<option value="0"' + (s.enabled ? "" : " selected") + ">Built-in template (deterministic, no key needed)</option>" +
+          '<option value="1"' + (s.enabled ? " selected" : "") + ">A language model</option>" +
+        "</select>" +
+
+        '<label for="provider">Provider</label>' +
+        '<select id="provider">' + opts + "</select>" +
+
+        '<label for="model">Model id</label>' +
+        '<input type="text" id="model" value="' + esc(s.model) + '" placeholder="' +
+          esc(s.default_models[s.provider] || "") + '">' +
+        '<div class="hint">Leave blank for this provider&rsquo;s default (<code>' +
+          esc(s.default_models[s.provider] || "-") + "</code>). " +
+          "Model names move; if the vendor rejects it, put the current id here.</div>" +
+
+        '<label for="base">Endpoint <span style="color:var(--ink-3)">(optional)</span></label>' +
+        '<input type="text" id="base" value="' + esc(s.base_url) + '" placeholder="the vendor&rsquo;s own endpoint">' +
+        '<div class="hint">Point this at a self-hosted model &mdash; vLLM, Ollama or LM Studio ' +
+          'behind an OpenAI-compatible server, or an internal gateway. With <code>openai</code> ' +
+          'selected, a local open model needs nothing else but a dummy key.</div>' +
+
+        '<label for="key">API key &mdash; ' + keyLine + "</label>" +
+        '<input type="password" id="key" placeholder="' +
+          (s.api_key_set ? "leave blank to keep the saved key" : "paste a key") + '" autocomplete="off">' +
+        '<div class="hint">An environment variable takes priority when this is blank, ' +
+          'so a proper deployment never needs to store one here.</div>' +
+
+        '<div class="warn">Saving a key writes it <strong>in plaintext</strong> to ' +
+          "<code>" + esc(s.stored_at) + "</code> (gitignored). " +
+          "This page only accepts changes from this machine.</div>" +
+
+        '<div class="row" style="margin-top:18px">' +
+          '<button class="primary" id="save">Save</button>' +
+          '<button id="test">Test it</button>' +
+          '<span id="status" class="hint" style="margin:0"></span>' +
+        "</div>" +
+      "</div>"));
+
+    main.appendChild(el('<div class="card" id="result-card" hidden>' +
+      '<div class="lbl">Result</div><div id="result"></div></div>'));
+
+    document.getElementById("provider").addEventListener("change", function (e) {
+      state.provider = e.target.value;
+      state.api_key_from_environment = false;  // re-fetched on save
+      render();
+    });
+    document.getElementById("save").addEventListener("click", save);
+    document.getElementById("test").addEventListener("click", test);
+  }
+
+  function say(msg, cls) {
+    var n = document.getElementById("status");
+    n.className = "hint " + (cls || "");
+    n.style.margin = "0";
+    n.textContent = msg;
+  }
+
+  function save() {
+    var key = document.getElementById("key").value;
+    var body = {
+      enabled: document.getElementById("enabled").value === "1",
+      provider: document.getElementById("provider").value,
+      model: document.getElementById("model").value.trim(),
+      base_url: document.getElementById("base").value.trim()
+    };
+    // Only send a key when one was typed - the page never had the real one.
+    if (key) body.api_key = key;
+
+    say("Saving…");
+    fetch("/api/settings", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
+        return j;
+      });
+    }).then(function (j) {
+      state = j;
+      render();
+      say("Saved.", "ok");
+    }).catch(function (e) { say(e.message, "bad"); });
+  }
+
+  function test() {
+    var card = document.getElementById("result-card");
+    var out = document.getElementById("result");
+    say("Asking the model… this can take a few seconds.");
+    document.getElementById("test").disabled = true;
+
+    fetch("/api/settings/test", { method: "POST" })
+      .then(function (r) {
+        return r.json().then(function (j) {
+          if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
+          return j;
+        });
+      })
+      .then(function (j) {
+        say("");
+        card.hidden = false;
+        var head = j.source === "model"
+          ? '<span class="pill" style="border-color:var(--green);color:var(--green)">the model wrote this</span>'
+          : '<span class="pill" style="border-color:var(--amber);color:var(--amber)">fell back to the template</span>';
+        var why = j.fallback_reason
+          ? '<div class="hint" style="margin-top:8px">Why: ' + esc(j.fallback_reason) + "</div>"
+          : "";
+        out.innerHTML = head +
+          '<div class="hint" style="margin-top:8px">' + esc(j.provider) + " &middot; " +
+          esc(j.model) + " &middot; " + j.attempts + " attempt(s)</div>" + why +
+          "<pre>" + esc(j.narrative) + "</pre>";
+      })
+      .catch(function (e) {
+        say("");
+        card.hidden = false;
+        out.innerHTML = '<span class="bad">' + esc(e.message) + "</span>";
+      })
+      .then(function () { document.getElementById("test").disabled = false; });
+  }
+
+  /* ---- program settings: sources and the rule table ------------------ */
+
+  var SEV = { critical: "var(--red)", high: "var(--red)", medium: "var(--orange)",
+              low: "var(--blue)", info: "var(--ink-3)" };
+  var programBox = document.getElementById("program");
+  var program = null;
+  var view = "narration";
+
+  function renderSources() {
+    var rows = program.sources.map(function (src) {
+      var when = src.last_scan ? String(src.last_scan).replace("T", " ").slice(0, 16) : "never";
+      return "<tr><td><b>" + esc(src.scope) + "</b><div class=\"hint\" style=\"margin:2px 0 0\">" +
+        "<code>" + esc(src.path) + "</code></div></td>" +
+        "<td>" + esc(src.kind) + "</td>" +
+        "<td>" + (src.exists ? '<span class="ok">present</span>' : '<span class="bad">missing</span>') + "</td>" +
+        "<td>" + esc(when) + "</td><td>" + src.rows + "</td></tr>";
+    }).join("");
+
+    var scope = program.scope.map(function (p) {
+      var also = p.also.length
+        ? p.also.map(function (a) { return "<code>" + esc(a) + "</code>"; }).join(", ")
+        : "<span class=\"hint\">no other source</span>";
+      return "<tr><td><b>" + esc(p.name) + "</b></td><td><code>" + esc(p.canonical_id) +
+        "</code></td><td>" + also + "</td></tr>";
+    }).join("");
+
+    programBox.innerHTML =
+      '<div class="card"><div class="lbl">Watched sources</div>' +
+      '<div class="hint" style="margin:6px 0 12px">Read from <code>' + esc(program.data_root) +
+      "</code>. A missing file is a note, not a failure &mdash; someone has not uploaded this week&rsquo;s sheet yet.</div>" +
+      '<table class="grid"><tr><th>Scope</th><th>Kind</th><th>File</th><th>Last scan</th><th>Rows</th></tr>' +
+      rows + "</table></div>" +
+      '<div class="card"><div class="lbl">Project pairing</div>' +
+      '<div class="hint" style="margin:6px 0 12px">One delivery project can have several source ids. ' +
+      "Jira and Excel each create their own row for the same work, and without this pairing a Jira event " +
+      "could never explain a spreadsheet observation.</div>" +
+      '<table class="grid"><tr><th>Project</th><th>Canonical id</th><th>Also known as</th></tr>' +
+      scope + "</table></div>";
+  }
+
+  function renderRules() {
+    var rows = program.rules.map(function (r) {
+      var conds = r.conditions.map(function (c) {
+        return '<code style="display:block">' + esc(c) + "</code>";
+      }).join("");
+      return '<tr><td><code>' + esc(r.id) + "</code><div class=\"hint\" style=\"margin:3px 0 0\">" +
+        esc(r.category) + "</div></td>" +
+        '<td><span class="sev" style="background:' + (SEV[r.severity] || "var(--ink-3)") + '">' +
+        esc(r.severity) + "</span></td>" +
+        "<td>" + conds + "</td>" +
+        "<td>" + esc(r.headline) + '<div class="hint" style="margin:4px 0 0"><i>' +
+        esc(r.rationale) + "</i></div></td></tr>";
+    }).join("");
+
+    programBox.innerHTML =
+      '<div class="card"><div class="lbl">Rule table &mdash; ' + esc(program.rule_table) + "</div>" +
+      '<div class="hint" style="margin:6px 0 12px">Every finding in the product is defended by ' +
+      "pointing at one of these thresholds, so they are shown in full. <b>Read-only:</b> a rule table " +
+      "edited in a browser is one with no review and no history. The prose keeps its " +
+      "<code>{{tokens}}</code> &mdash; this screen is about the rule, not about today&rsquo;s numbers.</div>" +
+      '<table class="grid"><tr><th>Rule</th><th>Severity</th><th>Fires when</th>' +
+      "<th>Says, and why that threshold</th></tr>" + rows + "</table></div>";
+  }
+
+  function show(next) {
+    view = next;
+    var buttons = document.querySelectorAll("#subtabs button");
+    for (var i = 0; i < buttons.length; i++) {
+      if (buttons[i].getAttribute("data-view") === view) {
+        buttons[i].setAttribute("aria-current", "page");
+      } else {
+        buttons[i].removeAttribute("aria-current");
+      }
+    }
+    main.hidden = view !== "narration";
+    programBox.hidden = view === "narration";
+    if (view === "sources") renderSources();
+    if (view === "rules") renderRules();
+  }
+
+  document.getElementById("subtabs").addEventListener("click", function (e) {
+    var next = e.target.getAttribute && e.target.getAttribute("data-view");
+    if (!next) return;
+    if (!program) { say("Program settings are still loading."); return; }
+    show(next);
+  });
+
+  fetch("/api/settings")
+    .then(function (r) { return r.json(); })
+    .then(function (j) { state = j; render(); })
+    .catch(function () {
+      main.textContent = "Could not reach the server. Is it running?";
+    });
+
+  /* Fetched separately and allowed to fail: a database that is down costs the
+     two program tabs, never the narration form - which is the page someone
+     opens precisely when something else is broken. */
+  fetch("/api/program")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) { program = j; })
+    .catch(function () { program = null; });
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

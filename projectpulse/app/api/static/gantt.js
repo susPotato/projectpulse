@@ -82,7 +82,9 @@
   }
 
   function tooltip(row) {
-    var lines = [row.label + (row.title ? "  " + row.title : "")];
+    var lines = [
+      row.label + (row.title && row.title !== row.label ? "  " + row.title : ""),
+    ];
     lines.push("plan      " + dash(row.start) + "  to  " + dash(row.planned_end));
     lines.push("baseline  " + dash(row.baseline_end));
     if (row.propagated_days > 0) {
@@ -110,8 +112,15 @@
 
       group.rows.forEach(function (row) {
         var line = el("div", "g-row" + (row.on_driving_path ? " driving" : ""));
-        line.appendChild(el("span", "g-id", row.label));
-        line.appendChild(el("span", "g-title", row.title || ""));
+        /* A row with no Task ID is labelled by its own title (see
+           `assembler.entity_label`), so printing both puts the same words
+           twice - once in the code font meant for an id, once truncated. Show
+           the title alone in that case: it is the only name there is. */
+        var titled = row.title && row.title !== row.label;
+        line.appendChild(el("span", titled ? "g-id" : "g-title", row.label));
+        if (titled) {
+          line.appendChild(el("span", "g-title", row.title));
+        }
         if (row.propagated_days > 0) {
           line.appendChild(el("span", "g-slip", "+" + row.propagated_days + "d"));
         }

@@ -8,7 +8,15 @@ coverage of the code that catches them.
 
 from __future__ import annotations
 
+import contextlib
+import importlib.util
+import json
+import re
+import threading
 from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+import pytest
 
 from app.api.schemas.insight import (
     CausalLink,
@@ -18,8 +26,17 @@ from app.api.schemas.insight import (
     InsightBundle,
     TimeInterval,
 )
-from app.narration.fallback import render_narrative
-from app.narration.validator import validate_draft
+from app.narration.client import NarrationUnavailable, build_brief, narrate
+from app.narration.fallback import QUESTION_HEADINGS, render_narrative
+from app.narration.providers import (
+    DEFAULT_MODELS,
+    PROVIDERS,
+    ModelConfig,
+    _import,
+    _nonempty,
+    drafter_for,
+)
+from app.narration.validator import contains_quantity, validate_draft
 
 FACTS = {"days": "12", "count": "6", "task": "WBS-108"}
 ENTITIES = {"WBS-108", "WBS-114", "QA-001"}
@@ -306,3 +323,586 @@ def test_a_better_evidenced_chain_outranks_a_weaker_one_in_the_explanation():
     why = text.split("Why it is happening\n")[1].split("\n\n")[0]
 
     assert why.startswith("WBS-108 moved later")
+
+
+# --------------------------------------------------------------------------
+# The model client
+#
+# No network anywhere. `narrate` takes its drafter as an argument precisely so
+# the interesting cases - a model that invents a number, drops a heading, or
+# times out - are three lines of stub each rather than a recorded cassette.
+# --------------------------------------------------------------------------
+
+
+def _model_bundle() -> InsightBundle:
+    """A bundle shaped like the real one: tokenised prose beside its facts."""
+    return _bundle(
+        findings=[
+            _finding(
+                headline="The plan cannot hold: 4 task(s) are late by 34 days.",
+                headline_template=(
+                    "The plan cannot hold: {{tasks_inconsistent}} task(s) are "
+                    "late by {{max_propagated_days}} days."
+                ),
+                recommendation="Re-baseline WBS-108.",
+                recommendation_template="Re-baseline WBS-108.",
+                facts={"tasks_inconsistent": "4", "max_propagated_days": "34"},
+                causal_link=_link(),
+            )
+        ],
+        data_quality=DataQuality(rows_rejected=2, changes_total=27),
+    )
+
+
+def _draft_of(bundle: InsightBundle) -> str:
+    """A well-behaved draft: every heading present, every figure a token."""
+    brief = build_brief(bundle)
+    figures = " ".join("{{" + name + "}}" for name in sorted(brief.required_tokens))
+    return "\n\n".join(
+        f"{heading}\nWBS-108 is the problem here, involving {figures} in total."
+        for heading in QUESTION_HEADINGS[:4]
+    )
+
+
+def test_the_brief_never_contains_a_figure():
+    """The rule the module imposes on the model, imposed on the module.
+
+    This is the load-bearing test. A brief that leaks a value lets a model copy
+    it instead of emitting the token for it, and a copied number is
+    indistinguishable on the page from a computed one - so the digit rule would
+    go on passing while having stopped meaning anything.
+    """
+    brief = build_brief(_model_bundle())
+
+    assert not contains_quantity(brief.user)
+    # And the value really is available for substitution, so withholding it
+    # from the prompt costs the narrative nothing.
+    assert brief.facts["fa_max_propagated_days"] == "34"
+
+
+def test_the_brief_shows_the_tokenised_headline_not_the_substituted_one():
+    brief = build_brief(_model_bundle())
+
+    assert "{{fa_max_propagated_days}}" in brief.user
+    assert "34 days" not in brief.user
+
+
+def test_a_finding_with_no_template_is_described_rather_than_quoted():
+    """A headline holding numbers and no template is not shown at all.
+
+    The safe direction: describing the finding by category and severity loses
+    detail, where quoting the substituted prose would hand over the figures.
+    """
+    bundle = _bundle(
+        findings=[_finding(headline="Slipped by 34 days.", headline_template="")]
+    )
+    brief = build_brief(bundle)
+
+    assert not contains_quantity(brief.user)
+    assert "Slipped by" not in brief.user
+    assert "schedule_risk, severity high" in brief.user
+
+
+def test_two_findings_sharing_a_field_do_not_share_a_value():
+    """Token names are namespaced per finding, so a flat merge cannot happen."""
+    bundle = _bundle(
+        findings=[
+            _finding(
+                severity="high",
+                headline_template="{{days}} days.",
+                facts={"days": "34"},
+            ),
+            _finding(
+                severity="low",
+                headline_template="{{days}} days.",
+                facts={"days": "2"},
+            ),
+        ]
+    )
+    brief = build_brief(bundle)
+
+    assert brief.facts["fa_days"] == "34"
+    assert brief.facts["fb_days"] == "2"
+
+
+def test_a_good_draft_is_served_as_the_model_narrative():
+    bundle = _model_bundle()
+    draft = _draft_of(bundle)
+
+    outcome = narrate(bundle, drafter=lambda system, user: draft)
+
+    assert outcome.source == "model"
+    assert outcome.fallback_reason is None
+    # Substitution happens after validation, so the figure reaches the page.
+    assert "34" in outcome.narrative
+    assert "{{" not in outcome.narrative
+
+
+def test_a_draft_that_invents_a_number_falls_back_to_the_template():
+    bundle = _model_bundle()
+    invented = _draft_of(bundle).replace(
+        "WBS-108 is the problem", "It slipped 99 days"
+    )
+
+    outcome = narrate(bundle, drafter=lambda system, user: invented)
+
+    assert outcome.source == "template"
+    assert "no_literal_digits" in (outcome.fallback_reason or "")
+    assert "99" not in outcome.narrative
+
+
+def test_a_draft_missing_a_heading_falls_back():
+    """A missing heading leaves that panel of the insight screen blank."""
+    bundle = _model_bundle()
+    truncated = _draft_of(bundle).split("What to do next")[0]
+
+    outcome = narrate(bundle, drafter=lambda system, user: truncated)
+
+    assert outcome.source == "template"
+    assert "What to do next" in (outcome.fallback_reason or "")
+
+
+def test_a_rejected_draft_is_retried_with_the_objections_attached():
+    """Why the validator reports every objection at once instead of the first."""
+    bundle = _model_bundle()
+    seen: list[str] = []
+
+    def drafter(system: str, user: str) -> str:
+        seen.append(user)
+        # Bad first, good second - the shape of the ordinary failure.
+        return _draft_of(bundle) if len(seen) > 1 else "It slipped 99 days entirely."
+
+    outcome = narrate(bundle, drafter=drafter)
+
+    assert outcome.source == "model"
+    assert outcome.attempts == 2
+    assert "no_literal_digits" in seen[1]
+    assert "no_literal_digits" not in seen[0]
+
+
+def test_a_drafter_that_raises_still_produces_a_narrative():
+    """A dead socket is a downgrade, never a blank page."""
+
+    def explode(system: str, user: str) -> str:
+        raise NarrationUnavailable("connection reset")
+
+    outcome = narrate(_model_bundle(), drafter=explode)
+
+    assert outcome.source == "template"
+    assert "connection reset" in (outcome.fallback_reason or "")
+    for heading in QUESTION_HEADINGS[:4]:
+        assert heading in outcome.narrative
+
+
+def test_with_no_drafter_the_template_is_served_without_a_fallback_reason():
+    """The default is not a downgrade, and must not read as one.
+
+    `fallback_reason` means a model was asked and its answer was not used. Set
+    on every bundle, it would make the ordinary configuration look broken.
+    """
+    outcome = narrate(_model_bundle())
+
+    assert outcome.source == "template"
+    assert outcome.fallback_reason is None
+    assert outcome.narrative == render_narrative(_model_bundle())
+
+
+def test_a_leaking_brief_is_refused_rather_than_sent():
+    """`BriefLeak` is a bug, and it must surface as a fallback, not a crash."""
+    bundle = _model_bundle()
+    bundle.findings[0].headline_template = "The plan slipped 34 days."
+
+    outcome = narrate(bundle, drafter=lambda system, user: "unreachable")
+
+    assert outcome.source == "template"
+    assert "brief rejected" in (outcome.fallback_reason or "")
+
+
+def test_an_empty_bundle_still_briefs_and_still_narrates():
+    outcome = narrate(_bundle(), drafter=lambda system, user: "unusable")
+
+    assert outcome.source == "template"
+    assert "What is at risk" in outcome.narrative
+
+
+def test_every_task_the_model_may_name_is_named_in_the_brief():
+    """`allowed_entities` and the brief's task list must be the same set.
+
+    If they diverge, the prompt invites a mention the validator then rejects -
+    which reads as a bad model rather than a bad brief.
+    """
+    brief = build_brief(_model_bundle())
+
+    assert brief.allowed_entities
+    for entity in brief.allowed_entities:
+        assert entity in brief.user
+
+
+# --------------------------------------------------------------------------
+# The vendor adapters
+#
+# The point of these is not that three SDKs work - two of them are not
+# installed. It is that the fence does not care which one answers, and that a
+# vendor which is absent, blocked, truncated or silent produces a template with
+# a reason rather than anything worse.
+# --------------------------------------------------------------------------
+
+
+def test_every_provider_resolves_to_a_drafter():
+    for provider in PROVIDERS:
+        assert callable(drafter_for(provider))
+
+
+def test_an_unknown_provider_fails_at_configuration_not_mid_request():
+    """A typo in PULSE_NARRATION_PROVIDER must not read as a dead model."""
+    with pytest.raises(ValueError) as caught:
+        drafter_for("claude-3")
+
+    assert "anthropic" in str(caught.value)
+
+
+def test_each_provider_has_a_default_model():
+    assert set(DEFAULT_MODELS) == set(PROVIDERS)
+    for provider in PROVIDERS:
+        assert DEFAULT_MODELS[provider]
+
+
+def test_an_explicit_model_overrides_the_default():
+    """The escape hatch when a vendor renames a model - no code change."""
+    cfg = ModelConfig(model="some-future-model")
+
+    assert callable(drafter_for("openai", cfg))
+
+
+def test_a_missing_sdk_becomes_a_fallback_with_an_install_hint():
+    """An absent vendor package is a downgrade with instructions, not a crash.
+
+    Driven through `_import` with a module that cannot exist, rather than by
+    checking which SDKs happen to be installed here - a test that passes or
+    fails on the contents of a venv tells you about the venv.
+    """
+    for provider in PROVIDERS:
+        with pytest.raises(NarrationUnavailable) as caught:
+            _import("a_vendor_sdk_that_does_not_exist", provider)
+
+        assert "not installed" in str(caught.value)
+        assert "pip install" in str(caught.value)
+
+
+def test_a_vendor_that_cannot_be_reached_still_leaves_a_narrative():
+    """The whole point of the fence, with a real adapter failure message."""
+
+    def unreachable(system: str, user: str) -> str:
+        raise NarrationUnavailable(
+            'the openai SDK is not installed; pip install -e ".[llm-openai]"'
+        )
+
+    outcome = narrate(_model_bundle(), drafter=unreachable)
+
+    assert outcome.source == "template"
+    assert "pip install" in (outcome.fallback_reason or "")
+    for heading in QUESTION_HEADINGS[:4]:
+        assert heading in outcome.narrative
+
+
+def test_an_empty_completion_is_refused_rather_than_narrated():
+    """A successful call returning nothing is the quiet failure every vendor has.
+
+    Left alone it fails the validator as "draft is empty", which sends a reader
+    to the prompt when the problem was the vendor.
+    """
+    with pytest.raises(NarrationUnavailable) as caught:
+        _nonempty("   ", "openai")
+
+    assert "empty" in str(caught.value)
+
+
+def test_the_fence_treats_every_vendor_identically():
+    """No vendor is trusted more than another, and none is trusted at all.
+
+    Not a tautology about the current code so much as a guard against the
+    tempting future edit - "Claude is reliable, skip a stage for it". Three
+    distinguishable drafters, one bad draft, and the outcome must be identical
+    down to the reason string.
+    """
+    bundle = _model_bundle()
+    invented = _draft_of(bundle).replace("WBS-108 is the problem", "It slipped 99 days")
+
+    def drafter_named(name):
+        def draft(system: str, user: str) -> str:
+            return invented
+
+        draft.__name__ = f"{name}_drafter"
+        return draft
+
+    outcomes = [narrate(bundle, drafter=drafter_named(p)) for p in PROVIDERS]
+
+    assert len({o.fallback_reason for o in outcomes}) == 1
+    for outcome in outcomes:
+        assert outcome.source == "template"
+        assert "no_literal_digits" in (outcome.fallback_reason or "")
+        assert "99" not in outcome.narrative
+
+
+# --------------------------------------------------------------------------
+# End to end, over HTTP, with no vendor
+#
+# The only test that exercises the whole model path as it actually runs: a real
+# HTTP round trip, the real OpenAI adapter, the real eight-stage gate, and the
+# real substitution. The server is local and answers in the
+# `/v1/chat/completions` shape that vLLM, Ollama, LM Studio and an internal
+# gateway all serve - which is also the evidence that a self-hosted open model
+# needs no code change, only `OPENAI_BASE_URL`.
+# --------------------------------------------------------------------------
+
+_REQUIRED_LINE = re.compile(r"Figures the summary must state: (.+)")
+_ANY_TOKEN = re.compile(r"\{\{\w+\}\}")
+
+
+def _well_behaved_draft(user_prompt: str) -> str:
+    """What a model that followed the brief would return.
+
+    It reads the tokens the brief demands and places them in its own sentences.
+    It writes no digit, because the brief it was given contains none.
+    """
+    match = _REQUIRED_LINE.search(user_prompt)
+    figures = " and ".join(_ANY_TOKEN.findall(match.group(1))) if match else ""
+    bodies = [
+        f"The plan for this project cannot hold as written, involving {figures} "
+        "in total, and WBS-108 is at the centre of it.",
+        "WBS-108 moved and WBS-108 was the cause of what followed, connected by "
+        "a dependency stated in the schedule sheet.",
+        "Work downstream of WBS-108 inherits that movement.",
+        "Re-baseline the affected tasks with their owners before the next "
+        "steering review.",
+    ]
+    return "\n\n".join(
+        f"{heading}\n{body}" for heading, body in zip(QUESTION_HEADINGS, bodies)
+    )
+
+
+class _ChatCompletions(BaseHTTPRequestHandler):
+    """Answers `/v1/chat/completions` using whatever composer the server holds.
+
+    The composer is an attribute of the server rather than a module global. The
+    first version swapped the global to install a badly-behaved model, and the
+    replacement then called the name it had just replaced - infinite recursion,
+    surfacing as a connection error because the handler died mid-response.
+    """
+
+    def do_POST(self):  # noqa: N802 - the base class names it
+        length = int(self.headers.get("content-length", "0"))
+        payload = json.loads(self.rfile.read(length) or b"{}")
+        user = next(
+            (m["content"] for m in payload["messages"] if m["role"] == "user"), ""
+        )
+        body = json.dumps(
+            {
+                "id": "chatcmpl-local",
+                "object": "chat.completion",
+                "model": payload.get("model", "local"),
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": self.server.compose(user),
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+            }
+        ).encode()
+        self.send_response(200)
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):  # keep the test output clean
+        pass
+
+
+@contextlib.contextmanager
+def _local_openai_server(compose=_well_behaved_draft):
+    server = HTTPServer(("127.0.0.1", 0), _ChatCompletions)
+    server.compose = compose
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}/v1"
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+
+def _openai_drafter():
+    return drafter_for("openai", ModelConfig(model="local-open-model"))
+
+
+requires_openai = pytest.mark.skipif(
+    importlib.util.find_spec("openai") is None, reason="openai is an optional extra"
+)
+
+
+@requires_openai
+def test_a_self_hosted_model_completes_the_whole_path(monkeypatch):
+    """The end-to-end proof, and the on-premise story in one test.
+
+    Everything here is real except the weights: the adapter, the HTTP call, the
+    eight validation stages and the substitution. What it demonstrates is the
+    property the whole design rests on - **the figures in the finished prose
+    were put there by the server, after the draft was checked.** The model was
+    never shown them and could not have changed them.
+    """
+    with _local_openai_server() as base_url:
+        monkeypatch.setenv("OPENAI_BASE_URL", base_url)
+        monkeypatch.setenv("OPENAI_API_KEY", "not-a-real-key")
+        outcome = narrate(_model_bundle(), drafter=_openai_drafter())
+
+    assert outcome.source == "model", outcome.fallback_reason
+    assert outcome.fallback_reason is None
+    assert outcome.attempts == 1
+
+    # Substituted after validation - the value came from `facts`, not the model.
+    assert "34" in outcome.narrative
+    assert "{{" not in outcome.narrative
+    for heading in QUESTION_HEADINGS[:4]:
+        assert heading in outcome.narrative
+
+
+@requires_openai
+def test_a_self_hosted_model_that_writes_a_digit_is_still_refused(monkeypatch):
+    """The gate does not soften for a model you host yourself.
+
+    Worth pinning separately: running the weights on your own hardware is
+    exactly the situation where someone would be tempted to trust them more.
+    """
+
+    def sloppy(user: str) -> str:
+        return _well_behaved_draft(user).replace(
+            "WBS-108 is at the centre of it", "the slip is 41 days"
+        )
+
+    with _local_openai_server(sloppy) as base_url:
+        monkeypatch.setenv("OPENAI_BASE_URL", base_url)
+        monkeypatch.setenv("OPENAI_API_KEY", "not-a-real-key")
+        outcome = narrate(_model_bundle(), drafter=_openai_drafter())
+
+    assert outcome.source == "template"
+    assert "no_literal_digits" in (outcome.fallback_reason or "")
+    assert "41" not in outcome.narrative
+
+
+# --------------------------------------------------------------------------
+# Gemini, end to end
+#
+# The vendor's own wire format, observed rather than assumed: the SDK posts to
+# `/v1beta/models/<model>:generateContent` with `contents`, `systemInstruction`
+# and `generationConfig`, and the reply carries `candidates[].content.parts[]`.
+# This exercises the real adapter through `base_url`, so what is proven is the
+# shipped request and the shipped response parsing.
+# --------------------------------------------------------------------------
+
+
+class _GenerateContent(BaseHTTPRequestHandler):
+    def do_POST(self):  # noqa: N802 - the base class names it
+        length = int(self.headers.get("content-length", "0"))
+        payload = json.loads(self.rfile.read(length) or b"{}")
+        self.server.seen = {
+            "path": self.path,
+            "keys": sorted(payload.keys()),
+            "system": bool(
+                payload.get("systemInstruction") or payload.get("system_instruction")
+            ),
+        }
+        user = payload["contents"][0]["parts"][0]["text"]
+        body = json.dumps(
+            {
+                "candidates": [
+                    {
+                        "content": {
+                            "parts": [{"text": self.server.compose(user)}],
+                            "role": "model",
+                        },
+                        "finishReason": "STOP",
+                    }
+                ]
+            }
+        ).encode()
+        self.send_response(200)
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+@contextlib.contextmanager
+def _local_gemini_server(compose=_well_behaved_draft):
+    server = HTTPServer(("127.0.0.1", 0), _GenerateContent)
+    server.compose = compose
+    server.seen = {}
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield server, f"http://127.0.0.1:{server.server_address[1]}"
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+
+requires_gemini = pytest.mark.skipif(
+    importlib.util.find_spec("google.genai") is None,
+    reason="google-genai is an optional extra",
+)
+
+
+@requires_gemini
+def test_gemini_completes_the_whole_path():
+    """The same proof the OpenAI adapter has, through the real Gemini client."""
+    with _local_gemini_server() as (server, base_url):
+        outcome = narrate(
+            _model_bundle(),
+            drafter=drafter_for(
+                "gemini",
+                ModelConfig(
+                    model="gemini-3.8-flash", api_key="not-a-real-key", base_url=base_url
+                ),
+            ),
+        )
+
+    assert outcome.source == "model", outcome.fallback_reason
+    assert outcome.attempts == 1
+    assert "34" in outcome.narrative
+    assert "{{" not in outcome.narrative
+
+    # The request the SDK actually built, not the one we assumed it would.
+    assert server.seen["path"].endswith(":generateContent")
+    assert "contents" in server.seen["keys"]
+    assert server.seen["system"], "the system prompt must not arrive as a user turn"
+
+
+@requires_gemini
+def test_gemini_writing_a_digit_is_refused_like_any_other_vendor():
+    def sloppy(user: str) -> str:
+        return _well_behaved_draft(user).replace(
+            "WBS-108 is at the centre of it", "the slip is 41 days"
+        )
+
+    with _local_gemini_server(sloppy) as (_server, base_url):
+        outcome = narrate(
+            _model_bundle(),
+            drafter=drafter_for(
+                "gemini",
+                ModelConfig(
+                    model="gemini-3.8-flash", api_key="not-a-real-key", base_url=base_url
+                ),
+            ),
+        )
+
+    assert outcome.source == "template"
+    assert "no_literal_digits" in (outcome.fallback_reason or "")
+    assert "41" not in outcome.narrative

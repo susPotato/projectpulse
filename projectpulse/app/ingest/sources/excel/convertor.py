@@ -190,6 +190,11 @@ def _convert_task(
         project_id=project_id,
         milestone_id=(milestones or {}).get(name),
         title=payload.get("title"),
+        # The sheet's own Phase column. Parsed by the reader and dropped here
+        # until now, which left `Task.phase` permanently null. It is what a
+        # constraint like "a Testing task needs an Environment predecessor"
+        # keys on, so a rule of that kind was not expressible at all.
+        phase=payload.get("phase"),
         status=_normalize_status(payload.get("status")),
         # What the PM typed, kept verbatim.
         original_status=payload.get("status"),
@@ -217,6 +222,12 @@ def _convert_qa_item(session, connection_id: int, project_id: str, tool, payload
         test_case=payload.get("title"),
         status=status,
         blocked_by=payload.get("blocked_by"),
+        # Parsed by the worklog contract and dropped here until now, which left
+        # the system with no effort data and no QA ownership at all.
+        assignee=payload.get("assignee"),
+        hours_spent=_to_float(payload.get("hours_spent")),
+        estimate_hours=_to_float(payload.get("estimate_hours")),
+        log_date=_to_date(payload.get("log_date")),
     )
     item.copy_origin_from(tool)
     item.raw_data_remark = tool.raw_data_remark

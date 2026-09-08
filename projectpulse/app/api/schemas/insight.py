@@ -121,6 +121,15 @@ class Finding(Response):
     #: Fully substituted prose. No `{{tokens}}` survive into a served bundle.
     headline: str
     recommendation: str = ""
+    #: The same two strings *before* substitution, tokens intact.
+    #:
+    #: Carried so `narration/client.py` can hand a model prose containing no
+    #: digit at all. The alternative - reversing the substitution by finding
+    #: each value in the finished headline - is guesswork the moment one value
+    #: is a substring of another, and the digit rule is too load-bearing to
+    #: rest on guesswork. The model rephrases these; it never sees `headline`.
+    headline_template: str = ""
+    recommendation_template: str = ""
     #: Every number this finding states, by token name. The single source for
     #: substitution, so a digit cannot drift from the data that produced it.
     facts: dict[str, str] = Field(default_factory=dict)
@@ -152,6 +161,28 @@ class DataQuality(Response):
     depends_on_inferred_edges: bool = False
 
 
+ConfidenceBand = Literal["high", "medium", "low"]
+
+
+class DeliveryConfidence(Response):
+    """How much to trust the delivery-outlook figure.
+
+    A band, never a percentage - see `app/intelligence/confidence.py` for why.
+    `score` is shown only as the arithmetic behind the band (`coverage *
+    freshness`), the same way `intelligence/explain.py` shows the arithmetic
+    behind a projected date, never as a number to anchor on by itself.
+    """
+
+    band: ConfidenceBand
+    score: float
+    coverage: float
+    freshness: float
+    #: None when nothing has ever synced successfully.
+    data_age_hours: float | None = None
+    #: Always False until retrieval lands - see `intelligence/confidence.py`.
+    precedent_available: bool = False
+
+
 class InsightBundle(Response):
     """Everything the insight screen renders, for one project at one moment."""
 
@@ -162,6 +193,9 @@ class InsightBundle(Response):
 
     findings: list[Finding] = Field(default_factory=list)
     data_quality: DataQuality = Field(default_factory=DataQuality)
+    #: Populated by `pipeline.analyze_project`, the same way the narration
+    #: fields are set after `build_bundle` returns.
+    delivery_confidence: DeliveryConfidence | None = None
 
     #: The narrative summary. Always present - the deterministic template is the
     #: fallback, so a bundle is never empty because a model was unavailable.

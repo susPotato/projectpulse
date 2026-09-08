@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "types": "node scripts/gen-types.mjs",
+    "payloads": "node scripts/capture-payloads.mjs",
     "smoke": "vite-node scripts/smoke.tsx"
   },
   "dependencies": {

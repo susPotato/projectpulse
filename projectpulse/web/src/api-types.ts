@@ -130,11 +130,11 @@ export interface paths {
         };
         /**
          * Insight Page
-         * @description The insight screen itself.
+         * @description The insight screen.
          *
-         *     Served as one static file rather than a built bundle: the rest of the UI is
-         *     static HTML, judges run the code, and a build step that fails on their
-         *     machine would mean no interface at all.
+         *     Both this and /explain serve the same bundle; the app picks the page from
+         *     the path. Two routes rather than a hash router so the URLs are real and a
+         *     judge can link to either.
          */
         get: operations["insight_page_insight_get"];
         put?: never;
@@ -197,7 +197,7 @@ export interface paths {
         };
         /**
          * Explain Page
-         * @description The arithmetic behind every number, as a page.
+         * @description The arithmetic behind every number.
          *
          *     A sibling of `/insight` rather than a panel inside it: a PM opens this only
          *     when they want to check a figure, and burying it would make the insight
@@ -226,6 +226,365 @@ export interface paths {
         get: operations["api_explain_api_explain_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/template/{kind}.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Template
+         * @description A blank input workbook, generated from the sheet contract itself.
+         *
+         *     Two files rather than one with two tabs, because that is what the watcher
+         *     watches. `kind` is `schedule` or `worklog`.
+         */
+        get: operations["template_api_template__kind__xlsx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/report.docx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report
+         * @description The status report, as a .docx a PM can attach to an email.
+         *
+         *     The same findings as `/api/insight` and the same projection as
+         *     `/api/explain`, so the document cannot disagree with either screen - it
+         *     renders their bundles rather than recomputing anything.
+         */
+        get: operations["report_api_report_docx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portfolio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Portfolio Page
+         * @description The program screen. Same bundle as /insight; the app picks by path.
+         */
+        get: operations["portfolio_page_portfolio_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portfolio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Portfolio Api
+         * @description Every delivery project in the program, ranked worst first.
+         *
+         *     Folded from `analyze_project` per project rather than a separate
+         *     aggregation, so the program view cannot disagree with the project view.
+         */
+        get: operations["portfolio_api_api_portfolio_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Team Page
+         * @description Who is carrying what, and what moved.
+         */
+        get: operations["team_page_team_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Team
+         * @description Workload, effort and activity, from columns the sheets actually carry.
+         *
+         *     `api/schemas/team.py` records what is served and what is deliberately
+         *     absent. The effort burn is reconstructed from observed `hours_spent`
+         *     changes rather than read off the final sheet, which is what lets a flat
+         *     stretch in it mean "nothing was logged" instead of "we stopped looking".
+         */
+        get: operations["team_api_team_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/program": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Program
+         * @description Program configuration: watched sources, project pairing, the rule table.
+         *
+         *     Read-only. A rule table edited in a browser has no review and no history,
+         *     and every finding here is defended by pointing at these thresholds.
+         */
+        get: operations["program_api_program_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scenarios
+         * @description What the schedule would do if one thing changed.
+         *
+         *     Every figure is the forward pass re-run over modified rows - a simulation,
+         *     never a mutation: nothing is written to a task, an edge or a spreadsheet,
+         *     which is what lets the app answer "what if" while staying read-only.
+         *
+         *     Returns an empty list when the plan is not late. There is nothing to
+         *     recover then, and a list of zero-day scenarios reads as a broken feature.
+         */
+        get: operations["scenarios_api_scenarios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Settings Page
+         * @description Where a person turns narration on and pastes a key.
+         */
+        get: operations["settings_page_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Settings
+         * @description Current narration settings. Never includes the key itself.
+         */
+        get: operations["read_settings_api_settings_get"];
+        /** Write Settings */
+        put: operations["write_settings_api_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Settings
+         * @description Ask the configured model for a narrative, and report exactly what happened.
+         *
+         *     A real end-to-end call rather than a credential ping: it builds the same
+         *     brief, runs the same eight-stage gate and substitutes the same way, so a
+         *     pass here means the feature works and not merely that the key is valid.
+         */
+        post: operations["test_settings_api_settings_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Risk Page
+         * @description The risk register: what a PM tracks by hand, not what the engine finds.
+         */
+        get: operations["risk_page_risk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/risks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Risks
+         * @description Every risk, program-wide by default - `Layout/fpt-pm-risk.html` lists
+         *     several projects in one table. Pass `?project=` (repeatable) to narrow it.
+         *
+         *     Unlike every other route in this file, this one needs no `check_connection`
+         *     guard against an empty analysis: an empty risk register is not an error,
+         *     it is a program nobody has logged a risk against yet.
+         */
+        get: operations["read_risks_api_risks_get"];
+        put?: never;
+        /** Create Risk Route */
+        post: operations["create_risk_route_api_risks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/risks/{risk_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Risk Route */
+        put: operations["update_risk_route_api_risks__risk_id__put"];
+        post?: never;
+        /** Delete Risk Route */
+        delete: operations["delete_risk_route_api_risks__risk_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Agent Page
+         * @description Free-form chat - the one page with no deterministic engine behind it.
+         */
+        get: operations["agent_page_agent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agent/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Agent Chat
+         * @description One reply, given the whole conversation so far.
+         *
+         *     Stateless: nothing is persisted server-side, so the client resends the
+         *     transcript each turn - see `app/agent/chat.py`. Reuses whichever key
+         *     narration is already configured with, so a working `/insight` narrative
+         *     means this works too, with no second setup.
+         */
+        post: operations["agent_chat_api_agent_chat_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -263,6 +622,93 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ActivityWeek
+         * @description What moved in one week, from the differ rather than from a report.
+         */
+        ActivityWeek: {
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+            /**
+             * Changes
+             * @default 0
+             */
+            changes: number;
+            /**
+             * Exact
+             * @default 0
+             */
+            exact: number;
+            /**
+             * Bounded
+             * @default 0
+             */
+            bounded: number;
+        };
+        /**
+         * BurnPoint
+         * @description Cumulative logged effort as at one scan of the worklog.
+         */
+        BurnPoint: {
+            /**
+             * Observed At
+             * Format: date
+             */
+            observed_at: string;
+            /**
+             * Logged Hours
+             * @default 0
+             */
+            logged_hours: number;
+            /**
+             * Delta Hours
+             * @default 0
+             */
+            delta_hours: number;
+            /**
+             * Items Added
+             * @default 0
+             */
+            items_added: number;
+            /**
+             * Blocked Added
+             * @default 0
+             */
+            blocked_added: number;
+            /**
+             * Changed
+             * @default true
+             */
+            changed: boolean;
+        };
+        /**
+         * BurnSeries
+         * @description Effort logged over time against the plan it is burning.
+         */
+        BurnSeries: {
+            /**
+             * Planned Hours
+             * @default 0
+             */
+            planned_hours: number;
+            /**
+             * Logged Hours
+             * @default 0
+             */
+            logged_hours: number;
+            /**
+             * Remaining Hours
+             * @default 0
+             */
+            remaining_hours: number;
+            /** Stalled From */
+            stalled_from: string | null;
+            /** Points */
+            points: components["schemas"]["BurnPoint"][];
+        };
         /**
          * Calc
          * @description One arithmetic step, written so a reader can redo it on paper.
@@ -333,6 +779,36 @@ export interface components {
             new_value: string | null;
             occurred: components["schemas"]["TimeInterval"];
         };
+        /** ChatMessage */
+        ChatMessage: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
+        };
+        /** ChatRequest */
+        ChatRequest: {
+            /** Messages */
+            messages?: components["schemas"]["ChatMessage"][];
+        };
+        /** ChatResponse */
+        ChatResponse: {
+            /**
+             * Reply
+             * @default
+             */
+            reply: string;
+            /**
+             * Ok
+             * @default true
+             */
+            ok: boolean;
+            /** Error */
+            error: string | null;
+        };
         /**
          * DataQuality
          * @description What the analysis could not use.
@@ -381,6 +857,35 @@ export interface components {
              * @default false
              */
             depends_on_inferred_edges: boolean;
+        };
+        /**
+         * DeliveryConfidence
+         * @description How much to trust the delivery-outlook figure.
+         *
+         *     A band, never a percentage - see `app/intelligence/confidence.py` for why.
+         *     `score` is shown only as the arithmetic behind the band (`coverage *
+         *     freshness`), the same way `intelligence/explain.py` shows the arithmetic
+         *     behind a projected date, never as a number to anchor on by itself.
+         */
+        DeliveryConfidence: {
+            /**
+             * Band
+             * @enum {string}
+             */
+            band: "high" | "medium" | "low";
+            /** Score */
+            score: number;
+            /** Coverage */
+            coverage: number;
+            /** Freshness */
+            freshness: number;
+            /** Data Age Hours */
+            data_age_hours: number | null;
+            /**
+             * Precedent Available
+             * @default false
+             */
+            precedent_available: boolean;
         };
         /**
          * EvidenceRef
@@ -465,6 +970,16 @@ export interface components {
              * @default
              */
             recommendation: string;
+            /**
+             * Headline Template
+             * @default
+             */
+            headline_template: string;
+            /**
+             * Recommendation Template
+             * @default
+             */
+            recommendation_template: string;
             /** Facts */
             facts: {
                 [key: string]: string;
@@ -643,6 +1158,7 @@ export interface components {
             /** Findings */
             findings: components["schemas"]["Finding"][];
             data_quality: components["schemas"]["DataQuality"];
+            delivery_confidence: components["schemas"]["DeliveryConfidence"] | null;
             /**
              * Narrative
              * @default
@@ -662,6 +1178,80 @@ export interface components {
             };
         };
         /**
+         * Member
+         * @description One person, and everything the sheets say they are carrying.
+         */
+        Member: {
+            /** Name */
+            name: string;
+            /** Tasks */
+            tasks: components["schemas"]["MemberTask"][];
+            /**
+             * Hours Logged
+             * @default 0
+             */
+            hours_logged: number;
+            /**
+             * Hours Planned
+             * @default 0
+             */
+            hours_planned: number;
+            /**
+             * Qa Items
+             * @default 0
+             */
+            qa_items: number;
+            /**
+             * Qa Blocked
+             * @default 0
+             */
+            qa_blocked: number;
+        };
+        /**
+         * MemberTask
+         * @description One dated task on someone's plate.
+         */
+        MemberTask: {
+            /** Entity Id */
+            entity_id: string;
+            /** Label */
+            label: string;
+            /** Title */
+            title: string | null;
+            /** Start */
+            start: string | null;
+            /** Planned End */
+            planned_end: string | null;
+            /** Projected End */
+            projected_end: string | null;
+            /** Propagated Days */
+            propagated_days: number | null;
+            /** Phase */
+            phase: string | null;
+            /** Progress */
+            progress: number | null;
+        };
+        /**
+         * NarrationSettingsIn
+         * @description What the settings page may change.
+         *
+         *     `api_key` omitted (or null) keeps the stored key - the page never receives
+         *     it, so it cannot send it back, and a save that did not retype it must not
+         *     wipe it. An empty string is an explicit clear.
+         */
+        NarrationSettingsIn: {
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Provider */
+            provider?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Api Key */
+            api_key?: string | null;
+            /** Base Url */
+            base_url?: string | null;
+        };
+        /**
          * Operand
          * @description One labelled value, on the way in or out.
          */
@@ -675,6 +1265,110 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /**
+         * PortfolioBundle
+         * @description Everything the program screen renders.
+         */
+        PortfolioBundle: {
+            /**
+             * Program Name
+             * @default
+             */
+            program_name: string;
+            /** Generated At */
+            generated_at: string | null;
+            /** Projects */
+            projects: components["schemas"]["ProjectRow"][];
+        };
+        /** ProgramBundle */
+        ProgramBundle: {
+            /**
+             * Program Name
+             * @default
+             */
+            program_name: string;
+            /**
+             * Data Root
+             * @default
+             */
+            data_root: string;
+            /** Sources */
+            sources: components["schemas"]["WatchedSource"][];
+            /** Scope */
+            scope: components["schemas"]["ScopeEntry"][];
+            /** Rules */
+            rules: components["schemas"]["RuleRow"][];
+            /**
+             * Rule Table
+             * @default
+             */
+            rule_table: string;
+        };
+        /**
+         * ProjectRow
+         * @description One delivery project, whatever number of sources fed it.
+         */
+        ProjectRow: {
+            /** Project Id */
+            project_id: string;
+            /** Name */
+            name: string;
+            /** Source Ids */
+            source_ids: string[];
+            /**
+             * Band
+             * @default no_data
+             * @enum {string}
+             */
+            band: "critical" | "watch" | "healthy" | "no_data";
+            /** Worst Severity */
+            worst_severity: string | null;
+            /**
+             * Findings
+             * @default 0
+             */
+            findings: number;
+            /**
+             * Task Count
+             * @default 0
+             */
+            task_count: number;
+            /** Committed End */
+            committed_end: string | null;
+            /** Projected End */
+            projected_end: string | null;
+            /**
+             * Days Late
+             * @default 0
+             */
+            days_late: number;
+            /**
+             * Milestones At Risk
+             * @default 0
+             */
+            milestones_at_risk: number;
+            /**
+             * Qa Blocked
+             * @default 0
+             */
+            qa_blocked: number;
+            /**
+             * Qa Count
+             * @default 0
+             */
+            qa_count: number;
+            /** Bands */
+            bands: {
+                [key: string]: "critical" | "watch" | "healthy" | "no_data";
+            };
+            /** Headline */
+            headline: string | null;
+            /**
+             * Depends On Inferred Edges
+             * @default false
+             */
+            depends_on_inferred_edges: boolean;
         };
         /**
          * RefusedEdge
@@ -692,6 +1386,201 @@ export interface components {
             reason: string;
         };
         /**
+         * RiskBundle
+         * @description Everything the risk register screen renders.
+         */
+        RiskBundle: {
+            /** Risks */
+            risks: components["schemas"]["RiskOut"][];
+            /** Matrix */
+            matrix: components["schemas"]["RiskMatrixCell"][];
+            /** Likelihoods */
+            likelihoods: string[];
+            /** Impacts */
+            impacts: string[];
+            /** Categories */
+            categories: string[];
+        };
+        /**
+         * RiskIn
+         * @description What a PM may set when creating or editing a risk.
+         *
+         *     Every field optional: `POST` fills in defaults for what is missing,
+         *     `PUT` changes only the fields a request body actually names, the same
+         *     "send only what changed" shape `NarrationSettingsIn` uses for settings.
+         */
+        RiskIn: {
+            /** Project Id */
+            project_id?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Risk No */
+            risk_no?: string | null;
+            /** Status */
+            status?: ("Active" | "Closed" | "Retired") | null;
+            /** Key Risk */
+            key_risk?: boolean | null;
+            /** Description */
+            description?: string | null;
+            /** Category */
+            category?: string | null;
+            /** Secondary Categories */
+            secondary_categories?: string | null;
+            /** Review Date */
+            review_date?: string | null;
+            /** Possible Realise Date */
+            possible_realise_date?: string | null;
+            /** Retired Date */
+            retired_date?: string | null;
+            /** Cause Title */
+            cause_title?: string | null;
+            /** Cause Description */
+            cause_description?: string | null;
+            /** Pre Likelihood */
+            pre_likelihood?: ("Almost Certain" | "Likely" | "Possible" | "Unlikely" | "Rare") | null;
+            /** Pre Impact */
+            pre_impact?: ("Insignificant" | "Minor" | "Moderate" | "Major" | "Severe") | null;
+            /** Pre Cost */
+            pre_cost?: number | null;
+            /** Pre Delay Days */
+            pre_delay_days?: number | null;
+            /** Post Likelihood */
+            post_likelihood?: ("Almost Certain" | "Likely" | "Possible" | "Unlikely" | "Rare") | null;
+            /** Post Impact */
+            post_impact?: ("Insignificant" | "Minor" | "Moderate" | "Major" | "Severe") | null;
+            /** Post Cost */
+            post_cost?: number | null;
+            /** Post Delay Days */
+            post_delay_days?: number | null;
+            /** Responsible */
+            responsible?: string | null;
+        };
+        /**
+         * RiskMatrixCell
+         * @description One cell of the 5x5 heat-map: its rating, and how many risks sit in it.
+         */
+        RiskMatrixCell: {
+            /**
+             * Likelihood
+             * @enum {string}
+             */
+            likelihood: "Almost Certain" | "Likely" | "Possible" | "Unlikely" | "Rare";
+            /**
+             * Impact
+             * @enum {string}
+             */
+            impact: "Insignificant" | "Minor" | "Moderate" | "Major" | "Severe";
+            /** Rating */
+            rating: string;
+            /**
+             * Risk Count
+             * @default 0
+             */
+            risk_count: number;
+        };
+        /**
+         * RiskOut
+         * @description One risk, as served. `pre_rating` / `post_rating` are computed, never stored.
+         */
+        RiskOut: {
+            /** Id */
+            id: number;
+            /** Project Id */
+            project_id: string;
+            /** Title */
+            title: string;
+            /** Risk No */
+            risk_no: string | null;
+            /**
+             * Status
+             * @default Active
+             * @enum {string}
+             */
+            status: "Active" | "Closed" | "Retired";
+            /**
+             * Key Risk
+             * @default false
+             */
+            key_risk: boolean;
+            /** Description */
+            description: string | null;
+            /** Category */
+            category: string | null;
+            /** Secondary Categories */
+            secondary_categories: string | null;
+            /** Review Date */
+            review_date: string | null;
+            /** Possible Realise Date */
+            possible_realise_date: string | null;
+            /** Retired Date */
+            retired_date: string | null;
+            /** Cause Title */
+            cause_title: string | null;
+            /** Cause Description */
+            cause_description: string | null;
+            /** Pre Likelihood */
+            pre_likelihood: ("Almost Certain" | "Likely" | "Possible" | "Unlikely" | "Rare") | null;
+            /** Pre Impact */
+            pre_impact: ("Insignificant" | "Minor" | "Moderate" | "Major" | "Severe") | null;
+            /** Pre Rating */
+            pre_rating: string | null;
+            /** Pre Cost */
+            pre_cost: number | null;
+            /** Pre Delay Days */
+            pre_delay_days: number | null;
+            /** Post Likelihood */
+            post_likelihood: ("Almost Certain" | "Likely" | "Possible" | "Unlikely" | "Rare") | null;
+            /** Post Impact */
+            post_impact: ("Insignificant" | "Minor" | "Moderate" | "Major" | "Severe") | null;
+            /** Post Rating */
+            post_rating: string | null;
+            /** Post Cost */
+            post_cost: number | null;
+            /** Post Delay Days */
+            post_delay_days: number | null;
+            /** Responsible */
+            responsible: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * RuleRow
+         * @description One row of the decision table, as a reader would challenge it.
+         */
+        RuleRow: {
+            /** Id */
+            id: string;
+            /** Category */
+            category: string;
+            /** Severity */
+            severity: string;
+            /** Conditions */
+            conditions: string[];
+            /**
+             * Headline
+             * @default
+             */
+            headline: string;
+            /**
+             * Recommendation
+             * @default
+             */
+            recommendation: string;
+            /**
+             * Rationale
+             * @default
+             */
+            rationale: string;
+        };
+        /**
          * RuleTrace
          * @description Why a rule fired, in terms a PM can challenge.
          */
@@ -705,6 +1594,84 @@ export interface components {
              * @default
              */
             rationale: string;
+        };
+        /**
+         * Scenario
+         * @description One re-run of the forward pass, and what it produced.
+         */
+        Scenario: {
+            /** Id */
+            id: string;
+            /** Summary */
+            summary: string;
+            /** Moves */
+            moves: components["schemas"]["ScenarioMove"][];
+            /** Projected End */
+            projected_end: string | null;
+            /**
+             * Days Earlier
+             * @default 0
+             */
+            days_earlier: number;
+            /**
+             * Days Late
+             * @default 0
+             */
+            days_late: number;
+        };
+        /**
+         * ScenarioBundle
+         * @description Every scenario for one project, plus what doing nothing costs.
+         */
+        ScenarioBundle: {
+            /** Project Id */
+            project_id: string;
+            /** Committed End */
+            committed_end: string | null;
+            /** Projected End */
+            projected_end: string | null;
+            /**
+             * Days Late
+             * @default 0
+             */
+            days_late: number;
+            /** Scenarios */
+            scenarios: components["schemas"]["Scenario"][];
+            /**
+             * Depends On Inferred Edges
+             * @default false
+             */
+            depends_on_inferred_edges: boolean;
+        };
+        /**
+         * ScenarioMove
+         * @description One change to the plan, in terms a PM would recognise.
+         */
+        ScenarioMove: {
+            /** Kind */
+            kind: string;
+            /** Entity Id */
+            entity_id: string;
+            /** Label */
+            label: string;
+            /** Days */
+            days: number;
+            /** Against Id */
+            against_id: string | null;
+            /** Against Label */
+            against_label: string | null;
+        };
+        /**
+         * ScopeEntry
+         * @description Which source ids are one delivery project (invariant 7).
+         */
+        ScopeEntry: {
+            /** Canonical Id */
+            canonical_id: string;
+            /** Name */
+            name: string;
+            /** Also */
+            also: string[];
         };
         /** StepRequest */
         StepRequest: {
@@ -723,6 +1690,30 @@ export interface components {
             source: string;
             /** Now */
             now?: string | null;
+        };
+        /** TeamBundle */
+        TeamBundle: {
+            /** Project Id */
+            project_id: string;
+            /** Members */
+            members: components["schemas"]["Member"][];
+            /** Activity */
+            activity: components["schemas"]["ActivityWeek"][];
+            burn: components["schemas"]["BurnSeries"];
+            /** Window Start */
+            window_start: string | null;
+            /** Window End */
+            window_end: string | null;
+            /**
+             * Total Hours
+             * @default 0
+             */
+            total_hours: number;
+            /**
+             * Has Effort Data
+             * @default false
+             */
+            has_effort_data: boolean;
         };
         /**
          * TimeInterval
@@ -761,6 +1752,35 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * WatchedSource
+         * @description One sheet or payload folder the retriever looks at.
+         */
+        WatchedSource: {
+            /** Kind */
+            kind: string;
+            /** Scope */
+            scope: string;
+            /** Path */
+            path: string;
+            /**
+             * Exists
+             * @default false
+             */
+            exists: boolean;
+            /** Last Scan */
+            last_scan: string | null;
+            /**
+             * Rows
+             * @default 0
+             */
+            rows: number;
+            /**
+             * Project Id
+             * @default
+             */
+            project_id: string;
         };
     };
     responses: never;
@@ -1038,6 +2058,513 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExplainBundle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    template_api_template__kind__xlsx_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_api_report_docx_get: {
+        parameters: {
+            query?: {
+                project?: string;
+                also?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_page_portfolio_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    portfolio_api_api_portfolio_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioBundle"];
+                };
+            };
+        };
+    };
+    team_page_team_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    team_api_team_get: {
+        parameters: {
+            query?: {
+                project?: string;
+                also?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamBundle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    program_api_program_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramBundle"];
+                };
+            };
+        };
+    };
+    scenarios_api_scenarios_get: {
+        parameters: {
+            query?: {
+                project?: string;
+                also?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioBundle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    settings_page_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    read_settings_api_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    write_settings_api_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NarrationSettingsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_settings_api_settings_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    risk_page_risk_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    read_risks_api_risks_get: {
+        parameters: {
+            query?: {
+                project?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskBundle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_risk_route_api_risks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_risk_route_api_risks__risk_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                risk_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_risk_route_api_risks__risk_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                risk_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    agent_page_agent_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    agent_chat_api_agent_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatResponse"];
                 };
             };
             /** @description Validation Error */

@@ -28,6 +28,21 @@
   --surface: #fff;
   --rule: #DCE2EB;
   --rule-2: #EDF0F5;
+
+  /* The two data fills, validated with the dataviz validator against this
+     surface in both modes (all six checks PASS).
+
+     Declared at `:root` rather than inside `.gantt`, where they used to live:
+     the Team page's bars resolved `var(--viz-plan)` to nothing and rendered
+     completely invisible - labels and values on an empty panel. One definition
+     also keeps one meaning per hue across the app, which is the point: blue is
+     always the plan, red is always the overrun the chain implies.
+
+     WARNING: re-run the validator if either hex changes, and keep the dark
+     values declared under BOTH the media query and the `data-theme` scope. */
+  --viz-plan: #2a78d6;
+  --viz-over: #d03b3b;
+  --viz-base: var(--ink-3);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,33 +64,151 @@
     --surface: #151D28;
     --rule: #26313F;
     --rule-2: #1C2531;
+
+    --viz-plan: #3987e5;
   }
+}
+
+/* Dark when it is *selected*, so a toggle wins in both directions. */
+:root[data-theme="dark"] {
+  --viz-plan: #3987e5;
+}
+
+/* --- the left rail ----------------------------------------------------- */
+
+/*
+  The app shell from the design: sections down the left, content to the right.
+
+  It replaces a horizontal tab bar as the primary navigation. The tab bar is
+  kept below for *within-page* switching and for the static snapshot's freeze
+  note, but the rail is what a reader navigates with.
+
+  Icons are inline SVG, stroke-based, on a 24px grid. Never emoji: they render
+  differently on every machine and cannot be recoloured by the theme.
+*/
+.shell {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.rail {
+  width: 64px;
+  flex: 0 0 64px;
+  background: var(--rail-bg, #101822);
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 14px 0;
+}
+
+.rail .brand {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.rail a:not(.brand) {
+  width: 54px;
+  padding: 7px 0 6px;
+  border-radius: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink-3);
+  text-decoration: none;
+  font-size: 9px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.rail a:not(.brand):hover {
+  color: var(--ink-2);
+  background: var(--rule-2);
+}
+
+.rail a[aria-current="page"] {
+  color: var(--navy);
+  background: var(--rule-2);
+  font-weight: 650;
+}
+
+/* `currentColor` so one icon definition follows the link's state instead of
+   needing an active and an inactive copy. */
+.rail svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rail .brand svg {
+  stroke: var(--bg);
+  stroke-width: 2.4;
+  width: 17px;
+  height: 17px;
+}
+
+.shell > main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The rail becomes a strip along the top on a narrow screen - a 64px column
+   costs too much of a phone's width to keep. */
+@media (max-width: 700px) {
+  .shell { flex-direction: column; }
+  .rail {
+    width: auto;
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    padding: 6px 8px;
+  }
+  .rail .brand { margin-bottom: 0; margin-right: 6px; }
 }
 
 /* --- the tab bar ------------------------------------------------------- */
 
+/*
+  Underline-active rather than folder tabs. The folder shape carried a border on
+  three sides and a notch cut into the rule below it, which at this density read
+  as chrome competing with the cards underneath. An underline says the same
+  thing with one line.
+*/
 .tabs {
   display: flex;
-  gap: 2px;
+  gap: 0;
   border-bottom: 1px solid var(--rule);
   margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
 .tabs a {
-  padding: 9px 16px;
+  padding: 10px 15px;
   color: var(--ink-2);
   text-decoration: none;
-  font-size: 13.5px;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 6px 6px 0 0;
+  font-size: 13px;
+  border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
 
 .tabs a:hover {
   color: var(--ink);
-  background: var(--rule-2);
 }
 
 /* `aria-current="page"` rather than a class: the active tab is a statement
@@ -83,9 +216,7 @@
 .tabs a[aria-current="page"] {
   color: var(--ink);
   font-weight: 650;
-  background: var(--surface);
-  border-color: var(--rule);
-  border-bottom: 1px solid var(--surface);
+  border-bottom-color: var(--navy);
 }
 
 .tabs .tab-note {
@@ -94,4 +225,118 @@
   color: var(--ink-3);
   font-size: 12px;
   padding-right: 4px;
+}
+
+/* --- the app bar ------------------------------------------------------- */
+
+/*
+  Project identity, then what the data reflects, then the one action. Replaces a
+  bare `<h1>` plus a paragraph: on a delivery screen the question "as at when?"
+  is asked of every figure on the page, so it belongs in the chrome rather than
+  in a subtitle a reader scrolls past.
+*/
+.appbar {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 16px 0 16px;
+}
+
+.appbar h1 {
+  font-size: 18px;
+  font-weight: 650;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.appbar .scope {
+  font-size: 12px;
+  color: var(--ink-3);
+  border-left: 1px solid var(--rule);
+  padding-left: 14px;
+}
+
+.appbar .spacer { flex: 1 1 auto; }
+
+.appbar .asof {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.appbar .asof b {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+/* The one action a page offers, in the chrome rather than buried in the body.
+   Every page's is a real thing it can do - the design's "Run AI Analysis" slot
+   with something behind it.
+
+   Scoped to `.action` alone, not `.appbar .action`: the built pages compose
+   their bar from Tailwind classes rather than `.appbar`, so requiring that
+   ancestor left the icon unsized and it rendered at the CSS default 300x150 -
+   a black blob across the corner of the page. */
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--navy);
+  color: var(--navy);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.action:hover { background: var(--rule-2); }
+
+.action svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* The snapshot's freeze note lives here now: with the rail carrying navigation,
+   a note appended inside `</nav>` would land in a 64px column. */
+.appbar .tab-note {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+/* --- shared surfaces --------------------------------------------------- */
+
+/* The micro-label above a figure or a panel. One definition, because three
+   pages had three nearly-identical versions of it. */
+.microlabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+
+/* A 12-column board, so panels can sit side by side the way a dashboard does
+   rather than stacking full-width down the page. Collapses to one column on a
+   narrow screen. */
+.board {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .board { grid-template-columns: 1fr; }
+  .board > * { grid-column: 1 / -1 !important; }
 }

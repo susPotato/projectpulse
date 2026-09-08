@@ -33,31 +33,14 @@ from pathlib import Path
 from openpyxl import Workbook
 
 from app.config import settings
+from app.ingest.sources.excel.reader import SCHEDULE_CONTRACT, WORKLOG_CONTRACT
 
-SCHEDULE_HEADERS = [
-    "Task ID",
-    "Activity",
-    "Phase",
-    "Milestone",
-    "Status",
-    "Owner",
-    "Start",
-    "Baseline Finish",
-    "Planned Finish",
-    "Progress",
-    # The column that closes the dependency-edge gap (architecture section 5.4). We own
-    # this template, so this is the cheapest real source of DAG edges available.
-    "Predecessor",
-]
-
-WORKLOG_HEADERS = [
-    "Task ID",
-    "Summary",
-    "Status",
-    "Blocked",
-    "Owner",
-    "Hours",
-]
+# Taken from the contracts, not restated here. The demo file and the blank
+# template a PM downloads are then the same sheet by construction - and the row
+# literals below are positional, so a header list that drifted from the contract
+# would silently shift every value one column to the left.
+SCHEDULE_HEADERS = list(SCHEDULE_CONTRACT.template_headers)
+WORKLOG_HEADERS = list(WORKLOG_CONTRACT.template_headers)
 
 
 def _schedule_rows(step: int) -> list[list]:
@@ -125,6 +108,17 @@ def _schedule_rows(step: int) -> list[list]:
     return rows
 
 
+#: When each step's worklog was last touched, matching the replay timeline in
+#: CLAUDE.md section 7. A worklog row carries the date its hours were logged
+#: because a total with no date cannot be burned down against anything.
+LOG_DATES = {
+    0: date(2026, 3, 1),
+    1: date(2026, 3, 5),
+    2: date(2026, 3, 13),
+    3: date(2026, 3, 21),
+}
+
+
 def _worklog_rows(step: int) -> list[list]:
     """QA worklog. The blocked count is the signal that matters.
 
@@ -134,26 +128,59 @@ def _worklog_rows(step: int) -> list[list]:
     and a scan between them is exactly what makes the ordering provable rather
     than merely plausible - without it the whole cascade lands in one window and
     the causal engine can prove nothing.
+
+    Effort moves too, and it is the second half of the same story. `Estimate` is
+    planned effort and never changes; `Hours` is what was actually logged and
+    grows every step until step 3, where it **stops** - the same moment the
+    blocked count jumps. That flat stretch is what a burn chart is for: the
+    schedule shows a date slipping, the burn shows the work stopping, and both
+    trace to one blocked environment.
+
+    `Hours` is in `WORKLOG_CONTRACT.tracked_fields`, so each of these
+    increments is observed by the differ as a real `state_change` bounded to the
+    scan window it fell in. The burn chart is therefore drawn from what we saw
+    happen, not from what the final sheet claims - which is the difference
+    between a chart and a report.
     """
-    rows = [
-        ["QA-001", "Login regression suite", "Open", "No", "My Nguyen", 6],
-        ["QA-002", "Payroll calculation suite", "Blocked", "Yes", "My Nguyen", 2],
-        ["QA-003", "Leave approval flow", "Blocked", "Yes", "Hoach Bach", 1],
-        ["QA-004", "Timesheet import", "Blocked", "Yes", "Hoach Bach", 0],
-        ["QA-005", "Org chart sync", "Blocked", "Yes", "My Nguyen", 0],
-        ["QA-006", "Payslip PDF render", "Open", "No", "Tung Nguyen", 4],
-        ["QA-007", "Role permissions matrix", "Open", "No", "Tung Nguyen", 3],
+    #: id, summary, owner, planned effort, then hours logged by step.
+    #: Someone who is blocked logs no more hours, which is the whole point.
+    plan = [
+        ("QA-001", "Login regression suite", "My Nguyen", 12, (6, 8, 9, 9)),
+        ("QA-002", "Payroll calculation suite", "My Nguyen", 16, (2, 2, 2, 2)),
+        ("QA-003", "Leave approval flow", "Hoach Bach", 10, (1, 1, 1, 1)),
+        ("QA-004", "Timesheet import", "Hoach Bach", 8, (0, 0, 0, 0)),
+        ("QA-005", "Org chart sync", "My Nguyen", 6, (0, 0, 0, 0)),
+        ("QA-006", "Payslip PDF render", "Tung Nguyen", 14, (4, 6, 9, 9)),
+        ("QA-007", "Role permissions matrix", "Tung Nguyen", 9, (3, 5, 7, 7)),
     ]
+    blocked_at_start = {"QA-002", "QA-003", "QA-004", "QA-005"}
+    logged_on = LOG_DATES[min(step, 3)]
+
+    rows = []
+    for task_id, summary, owner, estimate, by_step in plan:
+        hours = by_step[min(step, 3)]
+        blocked = task_id in blocked_at_start
+        if step >= 3 and task_id in {"QA-001", "QA-006", "QA-007"}:
+            # Everything that needed the environment is now blocked behind it.
+            blocked = True
+        rows.append([
+            task_id,
+            summary,
+            "Blocked" if blocked else "Open",
+            "Yes" if blocked else "No",
+            owner,
+            estimate,
+            hours,
+            # No hours logged means no log date. Writing one anyway would say
+            # somebody worked on it on a day nobody did.
+            logged_on if hours else None,
+        ])
 
     if step >= 3:
-        # Everything that needed the environment is now blocked behind it.
-        for row in rows:
-            if row[0] in {"QA-001", "QA-006", "QA-007"}:
-                row[2], row[3] = "Blocked", "Yes"
         rows.extend(
             [
                 [f"QA-{n:03d}", f"Integration case {n - 7}", "Blocked", "Yes",
-                 "My Nguyen", 0]
+                 "My Nguyen", 5, 0, None]
                 for n in range(8, 18)
             ]
         )

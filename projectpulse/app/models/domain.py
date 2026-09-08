@@ -15,6 +15,7 @@ from __future__ import annotations
 from datetime import date, datetime
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -28,7 +29,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, DomainEntity
+from app.models.base import Base, BigIntPK, DomainEntity, Timestamped
 
 
 # --------------------------------------------------------------------------
@@ -84,6 +85,11 @@ class Task(DomainEntity, Base):
         ForeignKey("milestones.id"), default=None
     )
     title: Mapped[str | None] = mapped_column(Text, default=None)
+    #: The sheet's own Phase column - "Planning", "Development", "Testing".
+    #: Carried because it is the vocabulary a delivery constraint is written in
+    #: ("a Testing task needs an Environment predecessor"); a rule of that shape
+    #: is not expressible without it. Nothing reads it yet.
+    phase: Mapped[str | None] = mapped_column(String(50), default=None)
     status: Mapped[str | None] = mapped_column(String(50), default=None)
     #: The vendor's own value, never discarded. The rules read `status`; the
     #: evidence panel shows `original_status`, because that is what the PM typed.
@@ -140,6 +146,18 @@ class QaItem(DomainEntity, Base):
     priority: Mapped[str | None] = mapped_column(String(20), default=None)
     blocked_by: Mapped[str | None] = mapped_column(String(255), default=None)
     aging_days: Mapped[int | None] = mapped_column(Integer, default=None)
+    #: Both are read by `WORKLOG_CONTRACT` and were being dropped by the
+    #: convertor - the same gap `Task.phase` had. Without them there is no
+    #: effort in the system at all, so no burn or workload chart can be honest.
+    assignee: Mapped[str | None] = mapped_column(Text, default=None)
+    hours_spent: Mapped[float | None] = mapped_column(Numeric(7, 2), default=None)
+    #: Planned effort, and the date the hours were last logged. Both exist
+    #: because we own this template - the same reason the schedule sheet has a
+    #: `Predecessor` column. Without the pair there is no burn chart that is
+    #: not invented: `hours_spent` alone is a total with no baseline and no
+    #: time axis.
+    estimate_hours: Mapped[float | None] = mapped_column(Numeric(7, 2), default=None)
+    log_date: Mapped[date | None] = mapped_column(Date, default=None)
 
 
 # --------------------------------------------------------------------------
@@ -217,3 +235,64 @@ class StateChange(DomainEntity, Base):
             f"{self.old_value!r} -> {self.new_value!r} "
             f"({self.precision})>"
         )
+
+
+# --------------------------------------------------------------------------
+# Risk register
+# --------------------------------------------------------------------------
+
+
+class Risk(Base, Timestamped):
+    """A risk a PM tracks by hand - probability, impact, cost and delay
+    estimates, mitigation ownership.
+
+    Genuinely unlike everything above: nothing here is derived from a sheet,
+    so it carries no `RawDataOrigin` - there is no raw row to point evidence
+    at, because a PM's own judgement *is* the data. For the same reason
+    `app/intelligence/` must never read this table: a rule conditioning on an
+    opinion could not still call itself deterministic. `project_id` is not a
+    foreign key, matching `RawReject` - a risk entered before a project's
+    first sync must not be rejected for a row that does not exist yet.
+
+    `pre_rating` / `post_rating` are deliberately absent as columns. They are
+    a pure lookup of (likelihood, impact) - see `app/risks/matrix.py` - so a
+    badge can never disagree with the pair a PM actually chose, the same
+    reason `intelligence/confidence.py` computes a band rather than storing
+    one.
+    """
+
+    __tablename__ = "risks"
+
+    id: Mapped[int] = mapped_column(BigIntPK, primary_key=True, autoincrement=True)
+    project_id: Mapped[str] = mapped_column(String(255), index=True)
+
+    title: Mapped[str] = mapped_column(Text)
+    #: PM-typed, per-project sequence number - "Risk No." in the register.
+    #: Text because a PM may type "4a"; nothing here parses it as an integer.
+    risk_no: Mapped[str | None] = mapped_column(String(20), default=None)
+    status: Mapped[str] = mapped_column(String(20), default="Active")
+    key_risk: Mapped[bool] = mapped_column(Boolean, default=False)
+    description: Mapped[str | None] = mapped_column(Text, default=None)
+    category: Mapped[str | None] = mapped_column(String(50), default=None)
+    secondary_categories: Mapped[str | None] = mapped_column(Text, default=None)
+
+    review_date: Mapped[date | None] = mapped_column(Date, default=None)
+    possible_realise_date: Mapped[date | None] = mapped_column(Date, default=None)
+    retired_date: Mapped[date | None] = mapped_column(Date, default=None)
+
+    cause_title: Mapped[str | None] = mapped_column(Text, default=None)
+    cause_description: Mapped[str | None] = mapped_column(Text, default=None)
+
+    # Pre-treatment: the assessment before any mitigation.
+    pre_likelihood: Mapped[str | None] = mapped_column(String(20), default=None)
+    pre_impact: Mapped[str | None] = mapped_column(String(20), default=None)
+    pre_cost: Mapped[float | None] = mapped_column(Numeric(14, 2), default=None)
+    pre_delay_days: Mapped[int | None] = mapped_column(Integer, default=None)
+
+    # Post-treatment: the assessment after the mitigation below is applied.
+    post_likelihood: Mapped[str | None] = mapped_column(String(20), default=None)
+    post_impact: Mapped[str | None] = mapped_column(String(20), default=None)
+    post_cost: Mapped[float | None] = mapped_column(Numeric(14, 2), default=None)
+    post_delay_days: Mapped[int | None] = mapped_column(Integer, default=None)
+
+    responsible: Mapped[str | None] = mapped_column(Text, default=None)

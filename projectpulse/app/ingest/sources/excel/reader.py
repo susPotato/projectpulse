@@ -48,6 +48,12 @@ class SheetContract:
     ``columns`` maps normalized header text to our canonical field name, so the
     template can say "Planned Finish" while the code says ``planned_end``, and a
     later rename is a one-line change here rather than a migration.
+
+    ``template_headers`` is the other direction: the exact headers, in order,
+    that a blank template we hand a PM should carry. It lives here rather than
+    in `exports/` because a sheet we ask someone to fill in and a sheet we know
+    how to read have to be the same sheet. Several headers in ``columns`` are
+    accepted aliases; this picks the one to write.
     """
 
     name: str
@@ -56,9 +62,23 @@ class SheetContract:
     tracked_fields: tuple[str, ...]
     columns: dict[str, str]
     entity_type: str = "task"
+    template_headers: tuple[str, ...] = ()
 
     def canonical_fields(self) -> set[str]:
         return set(self.columns.values())
+
+    def template_fields(self) -> set[str]:
+        """The canonical fields a blank template actually offers a column for.
+
+        Compared against `canonical_fields` by a test: adding a column to the
+        contract and forgetting the template would otherwise ship a template
+        that cannot express the thing we just started reading.
+        """
+        return {
+            self.columns[normalize_header(h)]
+            for h in self.template_headers
+            if normalize_header(h) in self.columns
+        }
 
 
 @dataclass
@@ -200,6 +220,24 @@ SCHEDULE_CONTRACT = SheetContract(
     # not something a causal chain should ever be built on.
     tracked_fields=("status", "planned_end", "progress", "assignee", "milestone"),
     entity_type="task",
+    # What a blank schedule template carries, in this order. `gen_demo_data`
+    # writes the same list, so the demo file and the template a judge downloads
+    # cannot describe two different sheets.
+    template_headers=(
+        "Task ID",
+        "Activity",
+        "Phase",
+        "Milestone",
+        "Status",
+        "Owner",
+        "Start",
+        "Baseline Finish",
+        "Planned Finish",
+        "Progress",
+        # The column that closes the dependency-edge gap (architecture 5.4). We
+        # own this template, so it is the cheapest real source of DAG edges.
+        "Predecessor",
+    ),
     columns={
         "task id": "task_id",
         "wbs": "task_id",
@@ -230,6 +268,19 @@ WORKLOG_CONTRACT = SheetContract(
     title_field="title",
     tracked_fields=("status", "blocked", "hours_spent", "assignee"),
     entity_type="qa_item",
+    template_headers=(
+        "Task ID",
+        "Summary",
+        "Status",
+        "Blocked",
+        "Owner",
+        # Planned effort beside actual, at the same grain, plus the date the
+        # hours were logged. A burn chart needs all three: a total with no
+        # baseline and no time axis cannot be drawn honestly.
+        "Estimate",
+        "Hours",
+        "Date",
+    ),
     columns={
         "task id": "task_id",
         "ticket": "task_id",
@@ -242,6 +293,8 @@ WORKLOG_CONTRACT = SheetContract(
         "assignee": "assignee",
         "hours": "hours_spent",
         "hours spent": "hours_spent",
+        "estimate": "estimate_hours",
+        "estimated hours": "estimate_hours",
         "date": "log_date",
     },
 )

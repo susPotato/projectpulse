@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+           background: #0D1219; color: #E8EDF4; -webkit-font-smoothing: antialiased; }
+    a { color: #5E9BE8; text-decoration: none; }
+    a:hover { color: #8FBAF0; text-decoration: underline; }
+    .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
+           text-transform: uppercase; color: #6F7C8F; }
+    .mono { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; }
+    .opt { background: #0D1219; border: 1px solid #26313F; border-radius: 9px;
+           padding: 14px 16px; display: flex; gap: 14px; align-items: center; }
+  </style>
+</helmet>
+
+<div style="position: relative; width: 980px; height: 700px; background: #0D1219; overflow: hidden;">
+  <div style="position: absolute; inset: 0; padding: 22px; display: grid; gap: 12px;
+              grid-template-columns: repeat(3, minmax(0, 1fr)); opacity: .18;">
+    <div style="height: 120px; background: #151D28; border: 1px solid #26313F; border-radius: 8px;"></div>
+    <div style="height: 120px; background: #151D28; border: 1px solid #26313F; border-radius: 8px;"></div>
+    <div style="height: 120px; background: #151D28; border: 1px solid #26313F; border-radius: 8px;"></div>
+    <div style="height: 200px; background: #151D28; border: 1px solid #26313F; border-radius: 8px; grid-column: span 2;"></div>
+    <div style="height: 200px; background: #151D28; border: 1px solid #26313F; border-radius: 8px;"></div>
+  </div>
+  <div style="position: absolute; inset: 0; background: rgba(6, 10, 15, .74);"></div>
+
+  <div style="position: absolute; left: 96px; top: 34px; width: 788px;
+              background: #151D28; border: 1px solid #2E3A4A; border-radius: 12px;
+              box-shadow: 0 24px 64px rgba(0,0,0,.55);">
+
+    <div style="display: flex; align-items: center; gap: 10px; padding: 16px 20px;
+                border-bottom: 1px solid #26313F;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#42C98A"
+           stroke-width="1.9" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/></svg>
+      <div style="font-size: 14px; font-weight: 650;">Recovery scenarios</div>
+      <div style="flex-grow: 1;"></div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F7C8F"
+           stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </div>
+
+    <div style="padding: 18px 20px; display: grid; gap: 14px;">
+
+      <div style="display: flex; align-items: center; gap: 16px; background: #0D1219;
+                  border: 1px solid #26313F; border-radius: 8px; padding: 13px 16px;">
+        <div>
+          <div class="lbl">Doing nothing</div>
+          <div style="font-size: 19px; font-weight: 650; color: #FF9E52; margin-top: 3px;">2 Jul 2026</div>
+        </div>
+        <div style="flex-grow: 1; font-size: 12.5px; color: #9DA9BA; line-height: 1.5;">
+          Three changes were simulated against the same forward pass that produced that date.
+          Each figure below is the projection recomputed &mdash; not an estimate.
+        </div>
+      </div>
+
+      <!-- option A -->
+      <div class="opt">
+        <div style="width: 26px; height: 26px; border-radius: 50%; border: 1px solid #3E4B5C;
+                    color: #9DA9BA; font-size: 12px; font-weight: 700; flex-shrink: 0;
+                    display: flex; align-items: center; justify-content: center;">A</div>
+        <div style="flex-grow: 1;">
+          <div style="font-size: 13.5px; font-weight: 600;">Compress Integration build by 6 days</div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 3px;">
+            <span class="mono" style="color: #5E9BE8;">WBS-114</span> duration 18d &rarr; 12d
+          </div>
+        </div>
+        <div style="text-align: right; min-width: 128px;">
+          <div style="font-size: 15px; font-weight: 650; color: #E9903F;">26 Jun 2026</div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 2px;">recovers 6 of 34 days</div>
+        </div>
+      </div>
+
+      <!-- option B -->
+      <div class="opt">
+        <div style="width: 26px; height: 26px; border-radius: 50%; border: 1px solid #3E4B5C;
+                    color: #9DA9BA; font-size: 12px; font-weight: 700; flex-shrink: 0;
+                    display: flex; align-items: center; justify-content: center;">B</div>
+        <div style="flex-grow: 1;">
+          <div style="font-size: 13.5px; font-weight: 600;">Overlap UAT preparation with Integration build</div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 3px;">
+            <span class="mono" style="color: #5E9BE8;">WBS-114 &rarr; WBS-118</span> finish-to-start becomes start-to-start + 10d
+          </div>
+        </div>
+        <div style="text-align: right; min-width: 128px;">
+          <div style="font-size: 15px; font-weight: 650; color: #E9903F;">17 Jun 2026</div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 2px;">recovers 15 of 34 days</div>
+        </div>
+      </div>
+
+      <!-- option C, recommended -->
+      <div class="opt" style="border: 1px solid #42C98A; background: #0F1B18;">
+        <div style="width: 26px; height: 26px; border-radius: 50%; background: #42C98A;
+                    color: #0D1219; font-size: 12px; font-weight: 800; flex-shrink: 0;
+                    display: flex; align-items: center; justify-content: center;">C</div>
+        <div style="flex-grow: 1;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="font-size: 13.5px; font-weight: 600;">Both A and B</div>
+            <span style="font-size: 10px; font-weight: 800; letter-spacing: .05em;
+                         text-transform: uppercase; background: #42C98A; color: #0D1219;
+                         border-radius: 4px; padding: 2px 7px;">recommended</span>
+          </div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 3px;">
+            compress <span class="mono" style="color: #5E9BE8;">WBS-114</span>, then overlap
+            <span class="mono" style="color: #5E9BE8;">WBS-118</span>
+          </div>
+        </div>
+        <div style="text-align: right; min-width: 128px;">
+          <div style="font-size: 15px; font-weight: 700; color: #42C98A;">12 Jun 2026</div>
+          <div style="font-size: 11.5px; color: #6F7C8F; margin-top: 2px;">recovers 20 of 34 days</div>
+        </div>
+      </div>
+
+      <!-- the honesty panel: what a simulation cannot tell you -->
+      <div style="background: #0D1219; border-left: 2px solid #E9903F; border-radius: 0 8px 8px 0;
+                  padding: 12px 15px;">
+        <div class="lbl" style="color: #E9903F;">What this cannot tell you</div>
+        <div style="font-size: 12.5px; color: #9DA9BA; margin-top: 6px; line-height: 1.55;">
+          These are schedule arithmetic only. Whether the team can absorb a 6-day compression is a
+          resource question, and no allocation data has been ingested &mdash; so no scenario here
+          claims to be achievable, only to be what the dependency graph would do.
+          Option B also assumes the overlap is safe, which the sheet cannot know.
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="flex-grow: 1; font-size: 11.5px; color: #6F7C8F;">
+          Nothing is written back. Your spreadsheet is untouched.
+        </div>
+        <div style="border: 1px solid #3E4B5C; color: #9DA9BA; border-radius: 7px;
+                    padding: 9px 16px; font-size: 12.5px;">Compare side by side</div>
+        <div style="background: #42C98A; color: #0D1219; border-radius: 7px;
+                    padding: 10px 18px; font-size: 13px; font-weight: 700;">Open option C</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

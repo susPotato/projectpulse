@@ -1,1 +1,903 @@
-{"project_id": "excel:Project:1:HRMS", "steps": [{"entity_id": "excel:Task:1:WBS-101", "label": "WBS-101", "title": "Requirements sign-off", "start": "2026-01-12", "duration_days": 18, "driver": null, "driver_label": null, "lag_days": null, "earliest_start": "2026-01-12", "projected_end": "2026-01-30", "planned_end": "2026-01-30", "baseline_end": "2026-01-30", "propagated_days": 0, "variance_days": 0, "recorded_slip_days": 0, "is_inconsistent": false, "inputs": [{"label": "start date", "value": "2026-01-12", "note": ""}, {"label": "planned finish", "value": "2026-01-30", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "2026-01-30", "note": "what was originally committed"}, {"label": "predecessors", "value": "none", "note": "nothing upstream constrains this task"}], "calc": [{"number": 1, "question": "How long does the plan say this takes?", "formula": "planned finish - start date", "substituted": "2026-01-30 - 2026-01-12", "result": "18 days", "note": "Taken from the sheet's own two dates - never estimated."}, {"number": 2, "question": "So when does it finish?", "formula": "earliest start + duration", "substituted": "2026-01-12 + 18 days", "result": "2026-01-30", "note": ""}, {"number": 3, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-01-30 - 2026-01-30", "result": "0 days", "note": "Zero means the sheet agrees with its own dependencies."}], "outputs": [{"label": "projected finish", "value": "2026-01-30", "note": ""}, {"label": "hidden slip", "value": "0 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "0 days", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "0 days", "note": "projected finish against the original commitment"}]}, {"entity_id": "excel:Task:1:~anon-ef0576ffa2b2a0f2", "label": "~anon-ef0576ffa2b2a0f2", "title": "Data migration dry-run", "start": "2026-03-10", "duration_days": 17, "driver": null, "driver_label": null, "lag_days": null, "earliest_start": "2026-03-10", "projected_end": "2026-03-27", "planned_end": "2026-03-27", "baseline_end": "2026-03-27", "propagated_days": 0, "variance_days": 0, "recorded_slip_days": 0, "is_inconsistent": false, "inputs": [{"label": "start date", "value": "2026-03-10", "note": ""}, {"label": "planned finish", "value": "2026-03-27", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "2026-03-27", "note": "what was originally committed"}, {"label": "predecessors", "value": "none", "note": "nothing upstream constrains this task"}], "calc": [{"number": 1, "question": "How long does the plan say this takes?", "formula": "planned finish - start date", "substituted": "2026-03-27 - 2026-03-10", "result": "17 days", "note": "Taken from the sheet's own two dates - never estimated."}, {"number": 2, "question": "So when does it finish?", "formula": "earliest start + duration", "substituted": "2026-03-10 + 17 days", "result": "2026-03-27", "note": ""}, {"number": 3, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-03-27 - 2026-03-27", "result": "0 days", "note": "Zero means the sheet agrees with its own dependencies."}], "outputs": [{"label": "projected finish", "value": "2026-03-27", "note": ""}, {"label": "hidden slip", "value": "0 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "0 days", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "0 days", "note": "projected finish against the original commitment"}]}, {"entity_id": "jira:Task:1:10101", "label": "10101", "title": "Requirements sign-off", "start": null, "duration_days": null, "driver": null, "driver_label": null, "lag_days": null, "earliest_start": null, "projected_end": "2026-01-30", "planned_end": "2026-01-30", "baseline_end": null, "propagated_days": 0, "variance_days": null, "recorded_slip_days": null, "is_inconsistent": false, "inputs": [{"label": "start date", "value": "not in the sheet", "note": ""}, {"label": "planned finish", "value": "2026-01-30", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "not in the sheet", "note": "what was originally committed"}, {"label": "predecessors", "value": "none", "note": "nothing upstream constrains this task"}], "calc": [{"number": 1, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-01-30 - 2026-01-30", "result": "0 days", "note": "Zero means the sheet agrees with its own dependencies."}], "outputs": [{"label": "projected finish", "value": "2026-01-30", "note": ""}, {"label": "hidden slip", "value": "0 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "-", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "-", "note": "projected finish against the original commitment"}]}, {"entity_id": "jira:Task:1:10108", "label": "10108", "title": "Environment Setup", "start": null, "duration_days": null, "driver": null, "driver_label": null, "lag_days": null, "earliest_start": null, "projected_end": "2026-03-16", "planned_end": "2026-03-16", "baseline_end": null, "propagated_days": 0, "variance_days": null, "recorded_slip_days": null, "is_inconsistent": false, "inputs": [{"label": "start date", "value": "not in the sheet", "note": ""}, {"label": "planned finish", "value": "2026-03-16", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "not in the sheet", "note": "what was originally committed"}, {"label": "predecessors", "value": "none", "note": "nothing upstream constrains this task"}], "calc": [{"number": 1, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-03-16 - 2026-03-16", "result": "0 days", "note": "Zero means the sheet agrees with its own dependencies."}], "outputs": [{"label": "projected finish", "value": "2026-03-16", "note": ""}, {"label": "hidden slip", "value": "0 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "-", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "-", "note": "projected finish against the original commitment"}]}, {"entity_id": "jira:Task:1:10114", "label": "10114", "title": "Integration build", "start": null, "duration_days": null, "driver": null, "driver_label": null, "lag_days": null, "earliest_start": null, "projected_end": "2026-04-01", "planned_end": "2026-04-01", "baseline_end": null, "propagated_days": 0, "variance_days": null, "recorded_slip_days": null, "is_inconsistent": false, "inputs": [{"label": "start date", "value": "not in the sheet", "note": ""}, {"label": "planned finish", "value": "2026-04-01", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "not in the sheet", "note": "what was originally committed"}, {"label": "predecessors", "value": "none", "note": "nothing upstream constrains this task"}], "calc": [{"number": 1, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-04-01 - 2026-04-01", "result": "0 days", "note": "Zero means the sheet agrees with its own dependencies."}], "outputs": [{"label": "projected finish", "value": "2026-04-01", "note": ""}, {"label": "hidden slip", "value": "0 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "-", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "-", "note": "projected finish against the original commitment"}]}, {"entity_id": "jira:Task:1:10118", "label": "10118", "title": "UAT preparation", "start": null, "duration_days": null, "driver": null, "driver_label": null, "lag_days": null, "earliest_start": null, "projected_end": "2026-05-26", "planned_end": "2026-05-26", "baseline_end": null, "propagated_days": 0, "variance_days": null, "recorded_slip_days": null, "is_inconsistent": false, "inputs": [{"label": "start date", "value": "not in the sheet", "note": ""}, {"label": "planned finish", "value": "2026-05-26", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "not in the sheet", "note": "what was originally committed"}, {"label": "predecessors", "value": "none", "note": "nothing upstream constrains this task"}], "calc": [{"number": 1, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-05-26 - 2026-05-26", "result": "0 days", "note": "Zero means the sheet agrees with its own dependencies."}], "outputs": [{"label": "projected finish", "value": "2026-05-26", "note": ""}, {"label": "hidden slip", "value": "0 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "-", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "-", "note": "projected finish against the original commitment"}]}, {"entity_id": "excel:Task:1:WBS-108", "label": "WBS-108", "title": "Environment Setup", "start": "2026-02-16", "duration_days": 28, "driver": null, "driver_label": null, "lag_days": null, "earliest_start": "2026-02-16", "projected_end": "2026-03-16", "planned_end": "2026-03-16", "baseline_end": "2026-03-04", "propagated_days": 0, "variance_days": 12, "recorded_slip_days": 12, "is_inconsistent": false, "inputs": [{"label": "start date", "value": "2026-02-16", "note": ""}, {"label": "planned finish", "value": "2026-03-16", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "2026-03-04", "note": "what was originally committed"}, {"label": "predecessor", "value": "WBS-101", "note": "a person wrote this in the Predecessor column"}], "calc": [{"number": 1, "question": "How long does the plan say this takes?", "formula": "planned finish - start date", "substituted": "2026-03-16 - 2026-02-16", "result": "28 days", "note": "Taken from the sheet's own two dates - never estimated."}, {"number": 2, "question": "When can it actually start?", "formula": "the latest of: its own start, and each predecessor's projected finish plus lag", "substituted": "its own planned start 2026-02-16; WBS-101 finishes 2026-01-30 -> 2026-01-30", "result": "2026-02-16", "note": "A task cannot begin before the work it depends on is done."}, {"number": 3, "question": "So when does it finish?", "formula": "earliest start + duration", "substituted": "2026-02-16 + 28 days", "result": "2026-03-16", "note": ""}, {"number": 4, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-03-16 - 2026-03-16", "result": "0 days", "note": "Zero means the sheet agrees with its own dependencies."}], "outputs": [{"label": "projected finish", "value": "2026-03-16", "note": ""}, {"label": "hidden slip", "value": "0 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "12 days", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "12 days", "note": "projected finish against the original commitment"}]}, {"entity_id": "excel:Task:1:WBS-114", "label": "WBS-114", "title": "Integration build", "start": "2026-03-05", "duration_days": 27, "driver": "excel:Task:1:WBS-108", "driver_label": "WBS-108", "lag_days": 0, "earliest_start": "2026-03-16", "projected_end": "2026-04-12", "planned_end": "2026-04-01", "baseline_end": "2026-03-20", "propagated_days": 11, "variance_days": 23, "recorded_slip_days": 12, "is_inconsistent": true, "inputs": [{"label": "start date", "value": "2026-03-05", "note": ""}, {"label": "planned finish", "value": "2026-04-01", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "2026-03-20", "note": "what was originally committed"}, {"label": "predecessor", "value": "WBS-108", "note": "a person wrote this in the Predecessor column"}], "calc": [{"number": 1, "question": "How long does the plan say this takes?", "formula": "planned finish - start date", "substituted": "2026-04-01 - 2026-03-05", "result": "27 days", "note": "Taken from the sheet's own two dates - never estimated."}, {"number": 2, "question": "When can it actually start?", "formula": "the latest of: its own start, and each predecessor's projected finish plus lag", "substituted": "its own planned start 2026-03-05; WBS-108 finishes 2026-03-16 -> 2026-03-16", "result": "2026-03-16", "note": "A task cannot begin before the work it depends on is done."}, {"number": 3, "question": "So when does it finish?", "formula": "earliest start + duration", "substituted": "2026-03-16 + 27 days", "result": "2026-04-12", "note": ""}, {"number": 4, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-04-12 - 2026-04-01", "result": "11 days", "note": "Above zero means the sheet's date cannot hold."}], "outputs": [{"label": "projected finish", "value": "2026-04-12", "note": ""}, {"label": "hidden slip", "value": "11 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "12 days", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "23 days", "note": "projected finish against the original commitment"}]}, {"entity_id": "excel:Task:1:WBS-118", "label": "WBS-118", "title": "UAT preparation", "start": "2026-03-23", "duration_days": 64, "driver": "excel:Task:1:WBS-114", "driver_label": "WBS-114", "lag_days": 2, "earliest_start": "2026-04-12", "projected_end": "2026-06-17", "planned_end": "2026-05-26", "baseline_end": "2026-05-14", "propagated_days": 22, "variance_days": 34, "recorded_slip_days": 12, "is_inconsistent": true, "inputs": [{"label": "start date", "value": "2026-03-23", "note": ""}, {"label": "planned finish", "value": "2026-05-26", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "2026-05-14", "note": "what was originally committed"}, {"label": "predecessor", "value": "WBS-114, +2 day lag", "note": "a person wrote this in the Predecessor column"}], "calc": [{"number": 1, "question": "How long does the plan say this takes?", "formula": "planned finish - start date", "substituted": "2026-05-26 - 2026-03-23", "result": "64 days", "note": "Taken from the sheet's own two dates - never estimated."}, {"number": 2, "question": "When can it actually start?", "formula": "the latest of: its own start, and each predecessor's projected finish plus lag", "substituted": "its own planned start 2026-03-23; WBS-114 finishes 2026-04-12 +2d lag -> 2026-04-14", "result": "2026-04-14", "note": "A task cannot begin before the work it depends on is done."}, {"number": 3, "question": "So when does it finish?", "formula": "earliest start + duration", "substituted": "2026-04-14 + 64 days", "result": "2026-06-17", "note": ""}, {"number": 4, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-06-17 - 2026-05-26", "result": "22 days", "note": "Above zero means the sheet's date cannot hold."}], "outputs": [{"label": "projected finish", "value": "2026-06-17", "note": ""}, {"label": "hidden slip", "value": "22 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "12 days", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "34 days", "note": "projected finish against the original commitment"}]}, {"entity_id": "excel:Task:1:WBS-121", "label": "WBS-121", "title": "Cutover rehearsal", "start": "2026-05-18", "duration_days": 11, "driver": "excel:Task:1:WBS-118", "driver_label": "WBS-118", "lag_days": 4, "earliest_start": "2026-06-17", "projected_end": "2026-07-02", "planned_end": "2026-05-29", "baseline_end": "2026-05-29", "propagated_days": 34, "variance_days": 34, "recorded_slip_days": 0, "is_inconsistent": true, "inputs": [{"label": "start date", "value": "2026-05-18", "note": ""}, {"label": "planned finish", "value": "2026-05-29", "note": "what the sheet says today"}, {"label": "baseline finish", "value": "2026-05-29", "note": "what was originally committed"}, {"label": "predecessor", "value": "WBS-118, +4 day lag", "note": "inferred from the sheet's own dates"}], "calc": [{"number": 1, "question": "How long does the plan say this takes?", "formula": "planned finish - start date", "substituted": "2026-05-29 - 2026-05-18", "result": "11 days", "note": "Taken from the sheet's own two dates - never estimated."}, {"number": 2, "question": "When can it actually start?", "formula": "the latest of: its own start, and each predecessor's projected finish plus lag", "substituted": "its own planned start 2026-05-18; WBS-118 finishes 2026-06-17 +4d lag -> 2026-06-21", "result": "2026-06-21", "note": "A task cannot begin before the work it depends on is done."}, {"number": 3, "question": "So when does it finish?", "formula": "earliest start + duration", "substituted": "2026-06-21 + 11 days", "result": "2026-07-02", "note": ""}, {"number": 4, "question": "Does the sheet's date survive this?", "formula": "projected finish - planned finish", "substituted": "2026-07-02 - 2026-05-29", "result": "34 days", "note": "Above zero means the sheet's date cannot hold."}], "outputs": [{"label": "projected finish", "value": "2026-07-02", "note": ""}, {"label": "hidden slip", "value": "34 days", "note": "the number a PM cannot get from their own spreadsheet"}, {"label": "slip already recorded", "value": "0 days", "note": "what a human had already typed against the baseline"}, {"label": "total variance", "value": "34 days", "note": "projected finish against the original commitment"}]}], "driving_path": ["excel:Task:1:WBS-108", "excel:Task:1:WBS-114", "excel:Task:1:WBS-118", "excel:Task:1:WBS-121"], "project_end_planned": "2026-05-29", "project_end_projected": "2026-07-02", "project_slip_days": 34, "stated_only_end": "2026-06-17", "depends_on_inferred_edges": true, "edges_stated": 3, "edges_inferred": 1, "refused_edges": [], "scalars": {"project_id": "excel:Project:1:HRMS", "as_of": "2026-07-02", "task_count": 10, "tasks_blocked": 3, "tasks_done": 2, "tasks_not_started": 0, "tasks_with_baseline": 6, "baseline_coverage": 0.6, "tasks_inconsistent": 3, "max_propagated_days": 34, "max_recorded_slip_days": 12, "project_slip_days": 34, "milestones_at_risk": 3, "avg_progress": 0.0, "qa_count": 17, "qa_blocked": 17, "qa_blocked_ratio": 1.0, "qa_newly_blocked": 0, "edges_total": 4, "edges_stated": 3, "edges_inferred": 1, "edges_dropped": 0, "depends_on_inferred_edges": true, "chain_count": 0, "chains_dependency_backed": 0, "chains_exact": 0, "strongest_chain_template": "", "changes_total": 0, "changes_exact": 0, "changes_bounded": 0, "changes_low_confidence": 0, "rows_rejected": 0, "low_confidence_ratio": 0.0}}
+{
+  "project_id": "excel:Project:1:HRMS",
+  "steps": [
+    {
+      "entity_id": "excel:Task:1:WBS-101",
+      "label": "WBS-101",
+      "title": "Requirements sign-off",
+      "start": "2026-01-12",
+      "duration_days": 18,
+      "driver": null,
+      "driver_label": null,
+      "lag_days": null,
+      "earliest_start": "2026-01-12",
+      "projected_end": "2026-01-30",
+      "planned_end": "2026-01-30",
+      "baseline_end": "2026-01-30",
+      "propagated_days": 0,
+      "variance_days": 0,
+      "recorded_slip_days": 0,
+      "is_inconsistent": false,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "2026-01-12",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-01-30",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "2026-01-30",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessors",
+          "value": "none",
+          "note": "nothing upstream constrains this task"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "How long does the plan say this takes?",
+          "formula": "planned finish - start date",
+          "substituted": "2026-01-30 - 2026-01-12",
+          "result": "18 days",
+          "note": "Taken from the sheet's own two dates - never estimated."
+        },
+        {
+          "number": 2,
+          "question": "So when does it finish?",
+          "formula": "earliest start + duration",
+          "substituted": "2026-01-12 + 18 days",
+          "result": "2026-01-30",
+          "note": ""
+        },
+        {
+          "number": 3,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-01-30 - 2026-01-30",
+          "result": "0 days",
+          "note": "Zero means the sheet agrees with its own dependencies."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-01-30",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "0 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "0 days",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "0 days",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "excel:Task:1:~anon-ef0576ffa2b2a0f2",
+      "label": "~anon-ef0576ffa2b2a0f2",
+      "title": "Data migration dry-run",
+      "start": "2026-03-10",
+      "duration_days": 17,
+      "driver": null,
+      "driver_label": null,
+      "lag_days": null,
+      "earliest_start": "2026-03-10",
+      "projected_end": "2026-03-27",
+      "planned_end": "2026-03-27",
+      "baseline_end": "2026-03-27",
+      "propagated_days": 0,
+      "variance_days": 0,
+      "recorded_slip_days": 0,
+      "is_inconsistent": false,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "2026-03-10",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-03-27",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "2026-03-27",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessors",
+          "value": "none",
+          "note": "nothing upstream constrains this task"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "How long does the plan say this takes?",
+          "formula": "planned finish - start date",
+          "substituted": "2026-03-27 - 2026-03-10",
+          "result": "17 days",
+          "note": "Taken from the sheet's own two dates - never estimated."
+        },
+        {
+          "number": 2,
+          "question": "So when does it finish?",
+          "formula": "earliest start + duration",
+          "substituted": "2026-03-10 + 17 days",
+          "result": "2026-03-27",
+          "note": ""
+        },
+        {
+          "number": 3,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-03-27 - 2026-03-27",
+          "result": "0 days",
+          "note": "Zero means the sheet agrees with its own dependencies."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-03-27",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "0 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "0 days",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "0 days",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "jira:Task:1:10101",
+      "label": "10101",
+      "title": "Requirements sign-off",
+      "start": null,
+      "duration_days": null,
+      "driver": null,
+      "driver_label": null,
+      "lag_days": null,
+      "earliest_start": null,
+      "projected_end": "2026-01-30",
+      "planned_end": "2026-01-30",
+      "baseline_end": null,
+      "propagated_days": 0,
+      "variance_days": null,
+      "recorded_slip_days": null,
+      "is_inconsistent": false,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "not in the sheet",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-01-30",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "not in the sheet",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessors",
+          "value": "none",
+          "note": "nothing upstream constrains this task"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-01-30 - 2026-01-30",
+          "result": "0 days",
+          "note": "Zero means the sheet agrees with its own dependencies."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-01-30",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "0 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "-",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "-",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "jira:Task:1:10108",
+      "label": "10108",
+      "title": "Environment Setup",
+      "start": null,
+      "duration_days": null,
+      "driver": null,
+      "driver_label": null,
+      "lag_days": null,
+      "earliest_start": null,
+      "projected_end": "2026-03-16",
+      "planned_end": "2026-03-16",
+      "baseline_end": null,
+      "propagated_days": 0,
+      "variance_days": null,
+      "recorded_slip_days": null,
+      "is_inconsistent": false,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "not in the sheet",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-03-16",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "not in the sheet",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessors",
+          "value": "none",
+          "note": "nothing upstream constrains this task"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-03-16 - 2026-03-16",
+          "result": "0 days",
+          "note": "Zero means the sheet agrees with its own dependencies."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-03-16",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "0 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "-",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "-",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "jira:Task:1:10114",
+      "label": "10114",
+      "title": "Integration build",
+      "start": null,
+      "duration_days": null,
+      "driver": null,
+      "driver_label": null,
+      "lag_days": null,
+      "earliest_start": null,
+      "projected_end": "2026-04-01",
+      "planned_end": "2026-04-01",
+      "baseline_end": null,
+      "propagated_days": 0,
+      "variance_days": null,
+      "recorded_slip_days": null,
+      "is_inconsistent": false,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "not in the sheet",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-04-01",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "not in the sheet",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessors",
+          "value": "none",
+          "note": "nothing upstream constrains this task"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-04-01 - 2026-04-01",
+          "result": "0 days",
+          "note": "Zero means the sheet agrees with its own dependencies."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-04-01",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "0 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "-",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "-",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "jira:Task:1:10118",
+      "label": "10118",
+      "title": "UAT preparation",
+      "start": null,
+      "duration_days": null,
+      "driver": null,
+      "driver_label": null,
+      "lag_days": null,
+      "earliest_start": null,
+      "projected_end": "2026-05-26",
+      "planned_end": "2026-05-26",
+      "baseline_end": null,
+      "propagated_days": 0,
+      "variance_days": null,
+      "recorded_slip_days": null,
+      "is_inconsistent": false,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "not in the sheet",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-05-26",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "not in the sheet",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessors",
+          "value": "none",
+          "note": "nothing upstream constrains this task"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-05-26 - 2026-05-26",
+          "result": "0 days",
+          "note": "Zero means the sheet agrees with its own dependencies."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-05-26",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "0 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "-",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "-",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "excel:Task:1:WBS-108",
+      "label": "WBS-108",
+      "title": "Environment Setup",
+      "start": "2026-02-16",
+      "duration_days": 28,
+      "driver": null,
+      "driver_label": null,
+      "lag_days": null,
+      "earliest_start": "2026-02-16",
+      "projected_end": "2026-03-16",
+      "planned_end": "2026-03-16",
+      "baseline_end": "2026-03-04",
+      "propagated_days": 0,
+      "variance_days": 12,
+      "recorded_slip_days": 12,
+      "is_inconsistent": false,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "2026-02-16",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-03-16",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "2026-03-04",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessor",
+          "value": "WBS-101",
+          "note": "a person wrote this in the Predecessor column"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "How long does the plan say this takes?",
+          "formula": "planned finish - start date",
+          "substituted": "2026-03-16 - 2026-02-16",
+          "result": "28 days",
+          "note": "Taken from the sheet's own two dates - never estimated."
+        },
+        {
+          "number": 2,
+          "question": "When can it actually start?",
+          "formula": "the latest of: its own start, and each predecessor's projected finish plus lag",
+          "substituted": "its own planned start 2026-02-16; WBS-101 finishes 2026-01-30 -> 2026-01-30",
+          "result": "2026-02-16",
+          "note": "A task cannot begin before the work it depends on is done."
+        },
+        {
+          "number": 3,
+          "question": "So when does it finish?",
+          "formula": "earliest start + duration",
+          "substituted": "2026-02-16 + 28 days",
+          "result": "2026-03-16",
+          "note": ""
+        },
+        {
+          "number": 4,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-03-16 - 2026-03-16",
+          "result": "0 days",
+          "note": "Zero means the sheet agrees with its own dependencies."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-03-16",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "0 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "12 days",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "12 days",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "excel:Task:1:WBS-114",
+      "label": "WBS-114",
+      "title": "Integration build",
+      "start": "2026-03-05",
+      "duration_days": 27,
+      "driver": "excel:Task:1:WBS-108",
+      "driver_label": "WBS-108",
+      "lag_days": 0,
+      "earliest_start": "2026-03-16",
+      "projected_end": "2026-04-12",
+      "planned_end": "2026-04-01",
+      "baseline_end": "2026-03-20",
+      "propagated_days": 11,
+      "variance_days": 23,
+      "recorded_slip_days": 12,
+      "is_inconsistent": true,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "2026-03-05",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-04-01",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "2026-03-20",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessor",
+          "value": "WBS-108",
+          "note": "a person wrote this in the Predecessor column"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "How long does the plan say this takes?",
+          "formula": "planned finish - start date",
+          "substituted": "2026-04-01 - 2026-03-05",
+          "result": "27 days",
+          "note": "Taken from the sheet's own two dates - never estimated."
+        },
+        {
+          "number": 2,
+          "question": "When can it actually start?",
+          "formula": "the latest of: its own start, and each predecessor's projected finish plus lag",
+          "substituted": "its own planned start 2026-03-05; WBS-108 finishes 2026-03-16 -> 2026-03-16",
+          "result": "2026-03-16",
+          "note": "A task cannot begin before the work it depends on is done."
+        },
+        {
+          "number": 3,
+          "question": "So when does it finish?",
+          "formula": "earliest start + duration",
+          "substituted": "2026-03-16 + 27 days",
+          "result": "2026-04-12",
+          "note": ""
+        },
+        {
+          "number": 4,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-04-12 - 2026-04-01",
+          "result": "11 days",
+          "note": "Above zero means the sheet's date cannot hold."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-04-12",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "11 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "12 days",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "23 days",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "excel:Task:1:WBS-118",
+      "label": "WBS-118",
+      "title": "UAT preparation",
+      "start": "2026-03-23",
+      "duration_days": 64,
+      "driver": "excel:Task:1:WBS-114",
+      "driver_label": "WBS-114",
+      "lag_days": 2,
+      "earliest_start": "2026-04-12",
+      "projected_end": "2026-06-17",
+      "planned_end": "2026-05-26",
+      "baseline_end": "2026-05-14",
+      "propagated_days": 22,
+      "variance_days": 34,
+      "recorded_slip_days": 12,
+      "is_inconsistent": true,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "2026-03-23",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-05-26",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "2026-05-14",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessor",
+          "value": "WBS-114, +2 day lag",
+          "note": "a person wrote this in the Predecessor column"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "How long does the plan say this takes?",
+          "formula": "planned finish - start date",
+          "substituted": "2026-05-26 - 2026-03-23",
+          "result": "64 days",
+          "note": "Taken from the sheet's own two dates - never estimated."
+        },
+        {
+          "number": 2,
+          "question": "When can it actually start?",
+          "formula": "the latest of: its own start, and each predecessor's projected finish plus lag",
+          "substituted": "its own planned start 2026-03-23; WBS-114 finishes 2026-04-12 +2d lag -> 2026-04-14",
+          "result": "2026-04-14",
+          "note": "A task cannot begin before the work it depends on is done."
+        },
+        {
+          "number": 3,
+          "question": "So when does it finish?",
+          "formula": "earliest start + duration",
+          "substituted": "2026-04-14 + 64 days",
+          "result": "2026-06-17",
+          "note": ""
+        },
+        {
+          "number": 4,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-06-17 - 2026-05-26",
+          "result": "22 days",
+          "note": "Above zero means the sheet's date cannot hold."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-06-17",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "22 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "12 days",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "34 days",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    },
+    {
+      "entity_id": "excel:Task:1:WBS-121",
+      "label": "WBS-121",
+      "title": "Cutover rehearsal",
+      "start": "2026-05-18",
+      "duration_days": 11,
+      "driver": "excel:Task:1:WBS-118",
+      "driver_label": "WBS-118",
+      "lag_days": 4,
+      "earliest_start": "2026-06-17",
+      "projected_end": "2026-07-02",
+      "planned_end": "2026-05-29",
+      "baseline_end": "2026-05-29",
+      "propagated_days": 34,
+      "variance_days": 34,
+      "recorded_slip_days": 0,
+      "is_inconsistent": true,
+      "inputs": [
+        {
+          "label": "start date",
+          "value": "2026-05-18",
+          "note": ""
+        },
+        {
+          "label": "planned finish",
+          "value": "2026-05-29",
+          "note": "what the sheet says today"
+        },
+        {
+          "label": "baseline finish",
+          "value": "2026-05-29",
+          "note": "what was originally committed"
+        },
+        {
+          "label": "predecessor",
+          "value": "WBS-118, +4 day lag",
+          "note": "inferred from the sheet's own dates"
+        }
+      ],
+      "calc": [
+        {
+          "number": 1,
+          "question": "How long does the plan say this takes?",
+          "formula": "planned finish - start date",
+          "substituted": "2026-05-29 - 2026-05-18",
+          "result": "11 days",
+          "note": "Taken from the sheet's own two dates - never estimated."
+        },
+        {
+          "number": 2,
+          "question": "When can it actually start?",
+          "formula": "the latest of: its own start, and each predecessor's projected finish plus lag",
+          "substituted": "its own planned start 2026-05-18; WBS-118 finishes 2026-06-17 +4d lag -> 2026-06-21",
+          "result": "2026-06-21",
+          "note": "A task cannot begin before the work it depends on is done."
+        },
+        {
+          "number": 3,
+          "question": "So when does it finish?",
+          "formula": "earliest start + duration",
+          "substituted": "2026-06-21 + 11 days",
+          "result": "2026-07-02",
+          "note": ""
+        },
+        {
+          "number": 4,
+          "question": "Does the sheet's date survive this?",
+          "formula": "projected finish - planned finish",
+          "substituted": "2026-07-02 - 2026-05-29",
+          "result": "34 days",
+          "note": "Above zero means the sheet's date cannot hold."
+        }
+      ],
+      "outputs": [
+        {
+          "label": "projected finish",
+          "value": "2026-07-02",
+          "note": ""
+        },
+        {
+          "label": "hidden slip",
+          "value": "34 days",
+          "note": "the number a PM cannot get from their own spreadsheet"
+        },
+        {
+          "label": "slip already recorded",
+          "value": "0 days",
+          "note": "what a human had already typed against the baseline"
+        },
+        {
+          "label": "total variance",
+          "value": "34 days",
+          "note": "projected finish against the original commitment"
+        }
+      ]
+    }
+  ],
+  "driving_path": [
+    "excel:Task:1:WBS-108",
+    "excel:Task:1:WBS-114",
+    "excel:Task:1:WBS-118",
+    "excel:Task:1:WBS-121"
+  ],
+  "project_end_planned": "2026-05-29",
+  "project_end_projected": "2026-07-02",
+  "project_slip_days": 34,
+  "stated_only_end": "2026-06-17",
+  "depends_on_inferred_edges": true,
+  "edges_stated": 3,
+  "edges_inferred": 1,
+  "refused_edges": [],
+  "scalars": {
+    "project_id": "excel:Project:1:HRMS",
+    "as_of": "2026-07-02",
+    "task_count": 10,
+    "tasks_blocked": 3,
+    "tasks_done": 2,
+    "tasks_not_started": 0,
+    "tasks_with_baseline": 6,
+    "baseline_coverage": 0.6,
+    "data_age_hours": -1,
+    "tasks_inconsistent": 3,
+    "max_propagated_days": 34,
+    "max_recorded_slip_days": 12,
+    "project_slip_days": 34,
+    "milestones_at_risk": 3,
+    "avg_progress": 0,
+    "qa_count": 17,
+    "qa_blocked": 17,
+    "qa_blocked_ratio": 1,
+    "qa_newly_blocked": 0,
+    "edges_total": 4,
+    "edges_stated": 3,
+    "edges_inferred": 1,
+    "edges_dropped": 0,
+    "depends_on_inferred_edges": true,
+    "chain_count": 0,
+    "chains_dependency_backed": 0,
+    "chains_exact": 0,
+    "strongest_chain_template": "",
+    "changes_total": 0,
+    "changes_exact": 0,
+    "changes_bounded": 0,
+    "changes_low_confidence": 0,
+    "rows_rejected": 0,
+    "low_confidence_ratio": 0
+  }
+}

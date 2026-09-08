@@ -1,0 +1,628 @@
+import { useEffect, useState } from "react";
+import {
+  dash,
+  load,
+  send,
+  type ApiProblem,
+  type RiskBundle,
+  type RiskIn,
+  type RiskOut,
+} from "../api";
+import { Board, Card, Note, Page, Panel, Problem, Section } from "../components/Shell";
+
+/*
+  The risk register: a PM's own judgement, entered and edited by hand - the one
+  screen in this app where a person's assessment is the data, not the engine's
+  arithmetic over dates in a sheet. `pre_rating` / `post_rating` are the one
+  exception: read off the likelihood x impact a PM chose
+  (`app/risks/matrix.py`), never typed, so this page never renders a badge that
+  disagrees with the pair behind it.
+*/
+
+const RATING_STYLE: Record<string, string> = {
+  "Very Low": "border-green/45 bg-green/10 text-green",
+  Low: "border-green/45 bg-green/10 text-green",
+  Medium: "border-amber/45 bg-amber/10 text-amber",
+  High: "border-orange/45 bg-orange/10 text-orange",
+  "Very High": "border-red/45 bg-red/10 text-red",
+};
+
+const CELL_STYLE: Record<string, string> = {
+  "Very Low": "bg-green/10",
+  Low: "bg-green/20",
+  Medium: "bg-amber/20",
+  High: "bg-orange/20",
+  "Very High": "bg-red/20",
+};
+
+function RatingBadge({ rating }: { rating: string | null | undefined }) {
+  if (!rating) {
+    return <span className="text-[11.5px] text-ink-3">not assessed</span>;
+  }
+  return (
+    <span
+      className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-bold ${
+        RATING_STYLE[rating] ?? "border-rule bg-bg text-ink-3"
+      }`}
+    >
+      {rating}
+    </span>
+  );
+}
+
+function money(value: number | null | undefined): string {
+  if (value == null) return "-";
+  return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
+
+/* The 5x5 heat-map. Cells come from the server (`build_matrix`), which is the
+   same rating lookup a risk's own badge uses - a cell here can never disagree
+   with a badge in the table below it. */
+function Matrix({ bundle }: { bundle: RiskBundle }) {
+  const cellAt = (likelihood: string, impact: string) =>
+    bundle.matrix.find((c) => c.likelihood === likelihood && c.impact === impact);
+
+  return (
+    <Panel caption="Risk matrix — pre-treatment" span={12}>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="w-[120px]" />
+              {bundle.impacts.map((impact) => (
+                <th
+                  key={impact}
+                  className="pb-1.5 text-center text-[11px] font-medium text-ink-3"
+                >
+                  {impact}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {bundle.likelihoods.map((likelihood) => (
+              <tr key={likelihood}>
+                <td className="pr-2.5 text-right text-[11.5px] font-medium whitespace-nowrap text-ink-3">
+                  {likelihood}
+                </td>
+                {bundle.impacts.map((impact) => {
+                  const cell = cellAt(likelihood, impact);
+                  return (
+                    <td
+                      key={impact}
+                      className={`h-12 w-[110px] rounded border-2 border-surface text-center ${
+                        cell ? CELL_STYLE[cell.rating] ?? "" : ""
+                      }`}
+                    >
+                      <div className="text-[10.5px] font-semibold text-ink-2">
+                        {cell?.rating}
+                      </div>
+                      {!!cell?.risk_count && (
+                        <div className="text-[11px] font-bold text-ink">
+                          {cell.risk_count} risk{cell.risk_count === 1 ? "" : "s"}
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Panel>
+  );
+}
+
+/* One field on the form: a label over an input, sized by `span` out of the
+   two-column grid the form lays out in. */
+function Field({
+  label,
+  span = 1,
+  children,
+}: {
+  label: string;
+  span?: 1 | 2;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className={`grid gap-1 ${span === 2 ? "sm:col-span-2" : ""}`}>
+      <span className="text-[11px] font-medium tracking-[0.02em] text-ink-3">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const inputClass =
+  "w-full rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[13px] text-ink outline-none focus:border-blue";
+
+const LIKELIHOOD_OPTIONS = ["", "Almost Certain", "Likely", "Possible", "Unlikely", "Rare"];
+const IMPACT_OPTIONS = ["", "Insignificant", "Minor", "Moderate", "Major", "Severe"];
+const STATUS_OPTIONS = ["Active", "Closed", "Retired"];
+
+/* Create or edit. One form for both: editing seeds every field from the row
+   being edited, creating starts from a mostly-empty draft. Saving always goes
+   through the same validator the server runs - the badges above are never
+   trusted from what this form typed, only from what `POST`/`PUT` echoes back. */
+function RiskForm({
+  initial,
+  categories,
+  onClose,
+  onSaved,
+}: {
+  initial: RiskOut | null;
+  categories: string[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [draft, setDraft] = useState<RiskIn>(() => ({
+    project_id: initial?.project_id ?? "excel:Project:1:HRMS",
+    title: initial?.title ?? "",
+    risk_no: initial?.risk_no ?? null,
+    status: initial?.status ?? "Active",
+    key_risk: initial?.key_risk ?? false,
+    description: initial?.description ?? null,
+    category: initial?.category ?? categories[0] ?? null,
+    secondary_categories: initial?.secondary_categories ?? null,
+    review_date: initial?.review_date ?? null,
+    possible_realise_date: initial?.possible_realise_date ?? null,
+    retired_date: initial?.retired_date ?? null,
+    cause_title: initial?.cause_title ?? null,
+    cause_description: initial?.cause_description ?? null,
+    pre_likelihood: initial?.pre_likelihood ?? null,
+    pre_impact: initial?.pre_impact ?? null,
+    pre_cost: initial?.pre_cost ?? null,
+    pre_delay_days: initial?.pre_delay_days ?? null,
+    post_likelihood: initial?.post_likelihood ?? null,
+    post_impact: initial?.post_impact ?? null,
+    post_cost: initial?.post_cost ?? null,
+    post_delay_days: initial?.post_delay_days ?? null,
+    responsible: initial?.responsible ?? null,
+  }));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function set<K extends keyof RiskIn>(key: K, value: RiskIn[K]) {
+    setDraft((d) => ({ ...d, [key]: value }));
+  }
+
+  async function save() {
+    if (!draft.title?.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      if (initial) {
+        await send(`/api/risks/${initial.id}`, "PUT", draft);
+      } else {
+        await send("/api/risks", "POST", draft);
+      }
+      onSaved();
+    } catch (err) {
+      setError((err as ApiProblem).detail ?? "Could not save this risk.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-navy/25" onClick={onClose}>
+      <div
+        className="flex h-full w-full max-w-[560px] flex-col overflow-y-auto bg-surface p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between">
+          <h2 className="m-0 text-[16px] font-semibold">
+            {initial ? "Edit risk" : "Add risk"}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer rounded border-0 bg-transparent text-lg text-ink-3 hover:text-ink"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-3 rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[12.5px] text-red">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-3.5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Title" span={2}>
+              <input
+                className={inputClass}
+                value={draft.title ?? ""}
+                onChange={(e) => set("title", e.target.value)}
+              />
+            </Field>
+            <Field label="Project ID" span={2}>
+              <input
+                className={inputClass}
+                value={draft.project_id ?? ""}
+                onChange={(e) => set("project_id", e.target.value)}
+              />
+            </Field>
+            <Field label="Risk No.">
+              <input
+                className={inputClass}
+                value={draft.risk_no ?? ""}
+                placeholder="auto"
+                onChange={(e) => set("risk_no", e.target.value || null)}
+              />
+            </Field>
+            <Field label="Status">
+              <select
+                className={inputClass}
+                value={draft.status ?? "Active"}
+                onChange={(e) => set("status", e.target.value as RiskIn["status"])}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Category">
+              <select
+                className={inputClass}
+                value={draft.category ?? ""}
+                onChange={(e) => set("category", e.target.value || null)}
+              >
+                <option value="">—</option>
+                {categories.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+            <label className="flex items-center gap-2 pt-5 text-[13px]">
+              <input
+                type="checkbox"
+                checked={draft.key_risk ?? false}
+                onChange={(e) => set("key_risk", e.target.checked)}
+              />
+              Key risk
+            </label>
+            <Field label="Description" span={2}>
+              <textarea
+                className={`${inputClass} min-h-[70px] resize-y`}
+                value={draft.description ?? ""}
+                onChange={(e) => set("description", e.target.value || null)}
+              />
+            </Field>
+            <Field label="Responsible" span={2}>
+              <input
+                className={inputClass}
+                value={draft.responsible ?? ""}
+                onChange={(e) => set("responsible", e.target.value || null)}
+              />
+            </Field>
+          </div>
+
+          <div className="border-t border-rule pt-3.5 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+            Pre-treatment
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Likelihood">
+              <select
+                className={inputClass}
+                value={draft.pre_likelihood ?? ""}
+                onChange={(e) => set("pre_likelihood", (e.target.value || null) as RiskIn["pre_likelihood"])}
+              >
+                {LIKELIHOOD_OPTIONS.map((v) => (
+                  <option key={v || "none"} value={v}>
+                    {v || "—"}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Impact">
+              <select
+                className={inputClass}
+                value={draft.pre_impact ?? ""}
+                onChange={(e) => set("pre_impact", (e.target.value || null) as RiskIn["pre_impact"])}
+              >
+                {IMPACT_OPTIONS.map((v) => (
+                  <option key={v || "none"} value={v}>
+                    {v || "—"}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Cost impact (USD)">
+              <input
+                type="number"
+                className={inputClass}
+                value={draft.pre_cost ?? ""}
+                onChange={(e) => set("pre_cost", e.target.value === "" ? null : Number(e.target.value))}
+              />
+            </Field>
+            <Field label="Delay impact (days)">
+              <input
+                type="number"
+                className={inputClass}
+                value={draft.pre_delay_days ?? ""}
+                onChange={(e) =>
+                  set("pre_delay_days", e.target.value === "" ? null : Number(e.target.value))
+                }
+              />
+            </Field>
+          </div>
+
+          <div className="border-t border-rule pt-3.5 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+            Post-treatment
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Likelihood">
+              <select
+                className={inputClass}
+                value={draft.post_likelihood ?? ""}
+                onChange={(e) =>
+                  set("post_likelihood", (e.target.value || null) as RiskIn["post_likelihood"])
+                }
+              >
+                {LIKELIHOOD_OPTIONS.map((v) => (
+                  <option key={v || "none"} value={v}>
+                    {v || "—"}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Impact">
+              <select
+                className={inputClass}
+                value={draft.post_impact ?? ""}
+                onChange={(e) => set("post_impact", (e.target.value || null) as RiskIn["post_impact"])}
+              >
+                {IMPACT_OPTIONS.map((v) => (
+                  <option key={v || "none"} value={v}>
+                    {v || "—"}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Cost impact (USD)">
+              <input
+                type="number"
+                className={inputClass}
+                value={draft.post_cost ?? ""}
+                onChange={(e) => set("post_cost", e.target.value === "" ? null : Number(e.target.value))}
+              />
+            </Field>
+            <Field label="Delay impact (days)">
+              <input
+                type="number"
+                className={inputClass}
+                value={draft.post_delay_days ?? ""}
+                onChange={(e) =>
+                  set("post_delay_days", e.target.value === "" ? null : Number(e.target.value))
+                }
+              />
+            </Field>
+          </div>
+
+          <div className="border-t border-rule pt-3.5 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+            Cause &amp; treatment
+          </div>
+          <div className="grid gap-3">
+            <Field label="Cause">
+              <input
+                className={inputClass}
+                value={draft.cause_title ?? ""}
+                onChange={(e) => set("cause_title", e.target.value || null)}
+              />
+            </Field>
+            <Field label="Cause / treatment description">
+              <textarea
+                className={`${inputClass} min-h-[70px] resize-y`}
+                value={draft.cause_description ?? ""}
+                onChange={(e) => set("cause_description", e.target.value || null)}
+              />
+            </Field>
+          </div>
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2 border-t border-rule pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer rounded-md border border-rule bg-bg px-4 py-1.5 text-[13px] font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={save}
+            className="cursor-pointer rounded-md border border-blue bg-blue px-4 py-1.5 text-[13px] font-semibold text-white disabled:opacity-60"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RiskRow({
+  risk,
+  onEdit,
+  onDeleted,
+}: {
+  risk: RiskOut;
+  onEdit: () => void;
+  onDeleted: () => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
+
+  async function remove() {
+    if (!confirm(`Delete "${risk.title}"?`)) return;
+    setDeleting(true);
+    try {
+      await send(`/api/risks/${risk.id}`, "DELETE");
+      onDeleted();
+    } catch {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <tr className="border-b border-rule/60 hover:bg-bg">
+      <td className="py-2 pr-2.5 text-[11.5px] text-ink-3">{dash(risk.risk_no)}</td>
+      <td className="py-2 pr-2.5">
+        <div className="font-semibold text-[13px]">{risk.title}</div>
+        <div className="text-[11.5px] text-ink-3">{risk.project_id}</div>
+      </td>
+      <td className="py-2 pr-2.5 text-[11.5px]">{dash(risk.category)}</td>
+      <td className="py-2 pr-2.5">
+        <span
+          className={
+            "inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold " +
+            (risk.status === "Active" ? "bg-green/15 text-green" : "bg-ink-3/15 text-ink-3")
+          }
+        >
+          {risk.status}
+        </span>
+      </td>
+      <td className="py-2 pr-2.5">
+        <RatingBadge rating={risk.pre_rating} />
+      </td>
+      <td className="py-2 pr-2.5 text-right text-[12px] whitespace-nowrap">
+        {money(risk.pre_cost)}
+      </td>
+      <td className="py-2 pr-2.5">
+        <RatingBadge rating={risk.post_rating} />
+      </td>
+      <td className="py-2 pr-2.5 text-right text-[12px] whitespace-nowrap">
+        {money(risk.post_cost)}
+      </td>
+      <td className="py-2 pr-2.5 text-[11.5px] whitespace-nowrap">{dash(risk.responsible)}</td>
+      <td className="py-2 text-right whitespace-nowrap">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="cursor-pointer rounded border-0 bg-transparent px-1.5 text-[12px] text-blue hover:underline"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={remove}
+          className="cursor-pointer rounded border-0 bg-transparent px-1.5 text-[12px] text-red hover:underline disabled:opacity-50"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+function RiskTable({ bundle, onEdit, onChanged }: {
+  bundle: RiskBundle;
+  onEdit: (risk: RiskOut) => void;
+  onChanged: () => void;
+}) {
+  if (bundle.risks.length === 0) {
+    return <Card>No risks logged yet. Add the first one.</Card>;
+  }
+
+  return (
+    <Panel caption={`Risks — ${bundle.risks.length}`} span={12}>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b border-rule text-[11px] font-bold tracking-[0.05em] text-ink-3 uppercase">
+              <th className="pb-2 pr-2.5">No.</th>
+              <th className="pb-2 pr-2.5">Title / Project</th>
+              <th className="pb-2 pr-2.5">Category</th>
+              <th className="pb-2 pr-2.5">Status</th>
+              <th className="pb-2 pr-2.5">Pre-rating</th>
+              <th className="pb-2 pr-2.5 text-right">Pre-cost</th>
+              <th className="pb-2 pr-2.5">Post-rating</th>
+              <th className="pb-2 pr-2.5 text-right">Post-cost</th>
+              <th className="pb-2 pr-2.5">Responsible</th>
+              <th className="pb-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {bundle.risks.map((risk) => (
+              <RiskRow key={risk.id} risk={risk} onEdit={() => onEdit(risk)} onDeleted={onChanged} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Panel>
+  );
+}
+
+export function Risk() {
+  const [bundle, setBundle] = useState<RiskBundle | null>(null);
+  const [problem, setProblem] = useState<ApiProblem | null>(null);
+  const [editing, setEditing] = useState<RiskOut | "new" | null>(null);
+
+  function refresh() {
+    load<RiskBundle>("/api/risks").then(setBundle, setProblem);
+  }
+
+  useEffect(refresh, []);
+
+  if (problem) {
+    return (
+      <Page current="/risk" title="Risk" subtitle={problem.title}>
+        <Problem {...problem} />
+      </Page>
+    );
+  }
+  if (!bundle) {
+    return <Page current="/risk" title="Risk" subtitle="Loading..." children={null} />;
+  }
+
+  return (
+    <Page
+      current="/risk"
+      title="Risk Register"
+      scope={`${bundle.risks.length} risk(s)`}
+      action={
+        <button
+          type="button"
+          onClick={() => setEditing("new")}
+          className="action"
+          style={{ cursor: "pointer", border: "none" }}
+        >
+          + Add risk
+        </button>
+      }
+    >
+      <Section>
+        <Note>
+          Entered and edited by a PM - not derived from a sheet. Only the rating
+          badges are computed: they are the likelihood x impact pair looked up
+          against the org's risk matrix, never typed independently, so a badge
+          here can never disagree with the pair behind it.
+        </Note>
+      </Section>
+
+      <Board className="mb-6">
+        <Matrix bundle={bundle} />
+        <RiskTable bundle={bundle} onEdit={setEditing} onChanged={refresh} />
+      </Board>
+
+      {editing && (
+        <RiskForm
+          initial={editing === "new" ? null : editing}
+          categories={bundle.categories}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            refresh();
+          }}
+        />
+      )}
+    </Page>
+  );
+}

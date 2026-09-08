@@ -34,6 +34,7 @@ from app.api.schemas.insight import (
     RuleTrace,
     TimeInterval,
 )
+from app.ingest.sources.excel.identity import ANON_PREFIX
 from app.intelligence.context import DeliveryContext
 from app.intelligence.rules.engine import RuleHit
 from app.intelligence.rules.tables import TOKEN
@@ -46,13 +47,28 @@ log = logging.getLogger(__name__)
 _RATIO_SUFFIXES = ("_ratio", "_coverage")
 
 
-def entity_label(entity_id: str) -> str:
+def entity_label(entity_id: str, *, title: str | None = None) -> str:
     """`excel:Task:1:WBS-108` -> `WBS-108`.
 
     Domain ids are self-describing by design, which makes them unreadable on a
     slide. The last component is what a human typed.
+
+    Except when nobody typed one. A row with no `Task ID` gets a synthesised
+    key (`~anon-<16 hex>`), and that key is correct - it is what holds the row's
+    identity across scans - but it is not a name. Printed as a label it looks
+    exactly like a data bug, and on the Team page it looked like one for a
+    while: a real task rendered as `~anon-ef0576ffa2b2a0f2` beside four
+    colleagues with proper WBS codes.
+
+    So `title` is the fallback, used only for those keys: the row still has the
+    words the person wrote in the summary column, and those are the best label
+    available. Callers with nothing to offer get the key, which is still better
+    than an empty cell - the row exists and hiding it would be worse.
     """
-    return entity_id.split(":", 3)[-1] if ":" in entity_id else entity_id
+    tail = entity_id.split(":", 3)[-1] if ":" in entity_id else entity_id
+    if title and tail.startswith(ANON_PREFIX):
+        return title
+    return tail
 
 
 def format_fact(name: str, value: object) -> str:
@@ -270,6 +286,10 @@ def build_bundle(
                 severity=hit.severity,
                 headline=headline,
                 recommendation=recommendation,
+                # The pre-substitution text, kept for the narration client. It
+                # is the only form of this prose a model may be shown.
+                headline_template=hit.headline,
+                recommendation_template=hit.recommendation,
                 facts=facts,
                 evidence=_evidence_for_rule(hit, strongest, evidence_for, impact),
                 causal_link=link,
@@ -299,6 +319,10 @@ def build_bundle(
                 severity=_chain_severity(group),
                 headline=headline,
                 recommendation=group.question,
+                headline_template=headline_template,
+                # The question is prose about a hypothesis, never a figure, so
+                # it is already its own template.
+                recommendation_template=group.question,
                 facts=facts,
                 evidence=[
                     ref

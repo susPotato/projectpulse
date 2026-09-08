@@ -4,6 +4,7 @@
     python -m scripts.sync run [--trigger scheduled|manual]
     python -m scripts.sync changes
     python -m scripts.sync rejects
+    python -m scripts.sync onedrive login
 
 `run` is the same call the scheduler and the "Update now" button make.
 """
@@ -18,9 +19,11 @@ bootstrap()
 import argparse  # noqa: E402
 import logging  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 from sqlalchemy import select  # noqa: E402
 
+from app.config import settings
 from app.db import create_all, session_scope
 from app.ingest.runner import run_sync
 from app.models.domain import StateChange
@@ -30,6 +33,7 @@ from app.models.sync import RawReject, SyncRun
 import app.ingest.sources.excel.source  # noqa: F401
 import app.ingest.sources.jira.source  # noqa: F401
 from app.intelligence.temporal.ordering import OrderingBasis, ordering_basis
+from app.narration.providers import PROVIDERS
 
 
 def cmd_init(_args) -> None:
@@ -47,6 +51,64 @@ def _parse_now(value: str | None) -> datetime:
     if value is None:
         return datetime.now(timezone.utc)
     return datetime.fromisoformat(value).replace(tzinfo=timezone.utc)
+
+
+def cmd_onedrive_login(_args) -> None:
+    """Device-code sign-in, cached in the database - see `graph_auth.py`.
+
+    Run once per environment you point at a given database: sign in locally
+    against a Neon/Supabase URL and the deployed app reads the same cache,
+    because the cache lives in the database, not on this machine.
+    """
+    from app.ingest.sources.excel.graph_auth import (
+        GraphAuthError,
+        sign_in_device_code,
+        signed_in_identity,
+    )
+
+    def on_code(flow: dict) -> None:
+        print(flow.get("message") or (
+            f"Go to {flow.get('verification_uri')} and enter code "
+            f"{flow.get('user_code')}"
+        ))
+        print("Waiting for sign-in to complete...")
+
+    with session_scope() as session:
+        try:
+            sign_in_device_code(session, on_code)
+        except GraphAuthError as exc:
+            print(f"sign-in failed: {exc}")
+            raise SystemExit(1) from None
+        identity = signed_in_identity(session)
+
+    print(f"signed in as {identity}")
+    print(
+        "Set PULSE_EXCEL_TRANSPORT=graph (and PULSE_ONEDRIVE_FOLDER, if the "
+        "sheets are not at the OneDrive root) to read from OneDrive on the "
+        "next sync."
+    )
+
+
+def cmd_onedrive_status(_args) -> None:
+    from app.ingest.sources.excel.graph_auth import signed_in_identity
+
+    with session_scope() as session:
+        identity = signed_in_identity(session)
+
+    if identity:
+        print(f"signed in as {identity}")
+    else:
+        print("not signed in - run: python -m scripts.sync onedrive login")
+    print(f"excel_transport = {settings.excel_transport!r}")
+    print(f"onedrive_folder = {settings.onedrive_folder!r} (root if empty)")
+
+
+def cmd_onedrive_logout(_args) -> None:
+    from app.ingest.sources.excel.graph_auth import sign_out
+
+    with session_scope() as session:
+        sign_out(session)
+    print("signed out")
 
 
 def cmd_run(args) -> None:
@@ -187,20 +249,151 @@ def cmd_order(_args) -> None:
     )
 
 
+def cmd_template(args) -> None:
+    """Write the blank input workbooks a PM fills in.
+
+    Generated from `SheetContract.template_headers`, so the file handed out and
+    the file the reader understands are the same file by construction.
+    """
+    from app.exports.template import KINDS, template_bytes
+
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+
+    kinds = [args.kind] if args.kind else sorted(KINDS)
+    for kind in kinds:
+        path = out / f"projectpulse_{kind}.xlsx"
+        path.write_bytes(template_bytes(kind))
+        contract, sheet_name, _ = KINDS[kind]
+        print(f"{path}  sheet={sheet_name}  columns={len(contract.template_headers)}")
+
+
+def cmd_report(args) -> None:
+    """Write the .docx status report.
+
+    Renders the same two bundles the screens render, so the document cannot
+    disagree with the app. No figure is formatted here.
+    """
+    from app.exports.report import ReportUnavailable, report_bytes
+    from app.intelligence.pipeline import analyze_project, explain_project
+
+    project_ids = [args.project, *(args.also or [])]
+    with session_scope() as session:
+        bundle = analyze_project(
+            session, project_id=args.project, also=args.also or []
+        )
+        explain = explain_project(
+            session, project_id=args.project, also=args.also or []
+        )
+
+    if not bundle.findings and not bundle.context.get("task_count"):
+        print(
+            f"no data for project {args.project}. Build the timeline first:\n"
+            "  python -m scripts.replay"
+        )
+        return
+
+    try:
+        content = report_bytes(bundle, explain=explain, project_name=args.name)
+    except ReportUnavailable as exc:
+        print(f"{exc}")
+        return
+
+    path = Path(args.out)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+    print(
+        f"{path}  ({len(content)} bytes)  "
+        f"{len(bundle.findings)} finding(s), {len(explain.steps)} projection row(s)"
+    )
+    print(f"  narration: {bundle.narration_source}")
+    print(f"  covers {len(project_ids)} source project id(s)")
+
+
+def cmd_advise(args) -> None:
+    """Show the advisory duration band for each task, if the model is present.
+
+    Prints a band and never a number of days - see app/ml/duration.py. With no
+    artefact on disk this says so and exits, which is the ordinary state.
+    """
+    from app.ml.duration import TaskFacts, try_load
+    from app.models.domain import Task
+
+    classifier, why = try_load(args.model or None)
+    if classifier is None:
+        # `why` distinguishes a missing file from one that will not unpickle.
+        # Printing "no duration model" for the second sends a reader looking for
+        # a download they have already done.
+        print(f"duration advice unavailable: {why}")
+        print(
+            "  python -m scripts.fetch_model      # downloads the artefact\n"
+            '  pip install -e ".[ml]"             # and its pinned dependencies'
+        )
+        return
+
+    project_ids = [args.project, *(args.also or [])]
+    with session_scope() as session:
+        tasks = session.scalars(
+            select(Task).where(Task.project_id.in_(project_ids)).order_by(Task.id)
+        ).all()
+
+    if not tasks:
+        print("no tasks; run python -m scripts.replay first")
+        return
+
+    print(f"{len(tasks)} task(s). Advisory only - a band, never a number of days.\n")
+    header = f"{'task':<26} {'band':<14} {'confidence':<11} basis"
+    print(header)
+    print("-" * len(header))
+    for task in tasks:
+        advice = classifier.advise(
+            TaskFacts(
+                title=task.title or "",
+                project_key=task.project_id.split(":")[-1],
+                created=task.start_date,
+                has_assignee=bool(task.assignee),
+            )
+        )
+        label = task.id.split(":", 3)[-1]
+        if advice is None:
+            print(f"{label:<26} {'-':<14} {'-':<11} the model declined")
+            continue
+        print(
+            f"{label:<26} {advice.label:<14} {advice.confidence:<11} {advice.basis}"
+        )
+
+
 def cmd_insight(args) -> None:
     """The whole intelligence layer, printed.
 
     This is the command that shows what the product actually produces: what is at
     risk, why, what it will impact, and what to do - each finding with the rule
     that fired, the values it compared, and the source rows behind it.
+
+    `--model` asks a language model to phrase the narrative instead of the
+    deterministic template; `--provider` picks the vendor. It changes no finding
+    and no figure whichever vendor answers: the draft is validated before any
+    number is substituted into it, and a draft that fails is dropped in favour
+    of the template with the reason printed. So the flag is safe to leave off,
+    and safe to turn on.
     """
     from app.intelligence.pipeline import analyze_project
+
+    narrator = None
+    if args.model:
+        from app.narration.providers import ModelConfig, drafter_for
+
+        narrator = drafter_for(
+            args.provider or settings.narration_provider,
+            ModelConfig(model=args.llm_model or settings.narration_model),
+        )
 
     with session_scope() as session:
         bundle = analyze_project(
             session,
             project_id=args.project,
             also=args.also or [],
+            narrator=narrator,
         )
 
         print(f"{bundle.project_id}  as of {bundle.as_of:%Y-%m-%d %H:%M}")
@@ -246,6 +439,12 @@ def cmd_insight(args) -> None:
 
         if args.narrative:
             print("\n" + "=" * 72)
+            # Where the prose came from, before the prose itself. A reader who
+            # cannot tell which they are looking at cannot judge either.
+            print(f"narration: {bundle.narration_source}")
+            if bundle.narration_fallback_reason:
+                print(f"  fell back because: {bundle.narration_fallback_reason}")
+            print()
             print(bundle.narrative)
 
 
@@ -353,7 +552,49 @@ def main() -> None:
     insight.add_argument(
         "--narrative", action="store_true", help="print the narrative summary too"
     )
+    insight.add_argument(
+        "--model",
+        action="store_true",
+        help="let a language model phrase the narrative; needs one of the llm "
+             "extras and credentials, and falls back to the template if either "
+             "is absent",
+    )
+    insight.add_argument(
+        "--provider",
+        choices=PROVIDERS,
+        help="which vendor to ask (default: PULSE_NARRATION_PROVIDER, or "
+             "anthropic). The gate around the answer is the same either way.",
+    )
+    insight.add_argument(
+        "--llm-model",
+        help="override the model id, e.g. claude-opus-5 (default: that "
+             "provider's entry in narration.providers.DEFAULT_MODELS)",
+    )
     insight.set_defaults(func=cmd_insight)
+
+    template = sub.add_parser(
+        "template", help="write the blank input workbooks a PM fills in"
+    )
+    template.add_argument("--out", default="templates", help="output directory")
+    template.add_argument(
+        "--kind", choices=("schedule", "worklog"), help="just one of them"
+    )
+    template.set_defaults(func=cmd_template)
+
+    report = sub.add_parser("report", help="write the .docx status report")
+    report.add_argument("--project", default="excel:Project:1:HRMS")
+    report.add_argument("--also", action="append")
+    report.add_argument("--out", default="delivery_status.docx")
+    report.add_argument("--name", default="", help="project name for the title")
+    report.set_defaults(func=cmd_report)
+
+    advise = sub.add_parser(
+        "advise", help="advisory duration band per task (needs the ml extra)"
+    )
+    advise.add_argument("--project", default="excel:Project:1:HRMS")
+    advise.add_argument("--also", action="append")
+    advise.add_argument("--model", default="", help="path to the joblib artefact")
+    advise.set_defaults(func=cmd_advise)
 
     explain_cmd = sub.add_parser(
         "explain", help="show the arithmetic behind every number"
@@ -382,6 +623,12 @@ def main() -> None:
     sub.add_parser("changes").set_defaults(func=cmd_changes)
     sub.add_parser("rejects").set_defaults(func=cmd_rejects)
     sub.add_parser("runs").set_defaults(func=cmd_runs)
+
+    onedrive = sub.add_parser("onedrive", help="Microsoft Graph / OneDrive sign-in")
+    onedrive_sub = onedrive.add_subparsers(dest="onedrive_command", required=True)
+    onedrive_sub.add_parser("login").set_defaults(func=cmd_onedrive_login)
+    onedrive_sub.add_parser("status").set_defaults(func=cmd_onedrive_status)
+    onedrive_sub.add_parser("logout").set_defaults(func=cmd_onedrive_logout)
 
     args = parser.parse_args()
     args.func(args)

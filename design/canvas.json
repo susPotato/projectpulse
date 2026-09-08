@@ -1,0 +1,34 @@
+{
+  "artboards": [
+    { "file": "Program.dc.html", "x": 0, "y": 0, "w": 1440, "h": 900, "title": "Program / Portfolio" },
+    { "file": "Main.dc.html", "x": 1560, "y": 0, "w": 1440, "h": 1000, "title": "Project dashboard" },
+    { "file": "Schedule.dc.html", "x": 3120, "y": 0, "w": 1440, "h": 860, "title": "Schedule / Activities" },
+    { "file": "AIAnalysis.dc.html", "x": 0, "y": 1180, "w": 980, "h": 700, "title": "AI Analysis" },
+    { "file": "RecoveryScenarios.dc.html", "x": 1080, "y": 1180, "w": 980, "h": 700, "title": "Recovery Scenarios" },
+    { "file": "RecoveryPlan.dc.html", "x": 2160, "y": 1180, "w": 980, "h": 740, "title": "Recovery Plan" }
+  ],
+  "annotations": [
+    {
+      "id": "top-row",
+      "x": 0,
+      "y": -150,
+      "w": 620,
+      "text": "SCREENS — mapped to the P0 tiles in PiMSatho_Overview.xlsx.\nEvery figure is real output from the current demo timeline: 34 days of unrecorded slip, driving path WBS-108 > 114 > 118 > 121, 17 of 17 QA blocked, 3 stated + 1 inferred edges."
+    },
+    {
+      "id": "modal-row",
+      "x": 0,
+      "y": 1030,
+      "w": 620,
+      "text": "AI FLOW — the spec's Demo AI Sample screens: Detect > Main reason > Evidence > Recovery.\nOne deliberate departure: no invented 'delivery confidence 61% > 91%'. Scenarios are priced in dates and days recovered, because those come out of the forward pass and can be checked."
+    },
+    {
+      "id": "not-built",
+      "x": 1080,
+      "y": 1960,
+      "w": 620,
+      "text": "Recovery Scenarios and Recovery Plan are NOT BUILT — this is the proposal. Everything on the three screens above exists today apart from the portfolio rollup."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

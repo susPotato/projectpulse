@@ -2,7 +2,7 @@
 
 Read this first. It is the handoff between sessions.
 
-**Last updated:** 2026-09-07 (intelligence layer complete)
+**Last updated:** 2026-09-08 (multi-vendor narration, exports, duration model, deploy files)
 
 ---
 
@@ -39,8 +39,10 @@ worth more than an extra feature.
 |---|---|
 | `ProjectPulseAI_Product_Design_v2.md` | Product narrative and pitch. Revised to v2.1. |
 | `ProjectPulseAI_PiMSathon.pptx` | **The pitch deck, 16 slides.** ⚠️ Written before the intelligence layer and **not reconciled with it** — it promises health scores, a 89% confidence figure, org-memory retrieval and an LLM agent, none of which exist; and it omits the precision model, `propagated_days` and `evidence_basis`, which do. See section 8. |
+| `PiMSatho_Overview.xlsx` | **The PM's own requirements spec — read this before planning anything.** 9 sheets: 170-row Function List, tile catalogues (Program ~116 / Project ~150), 29 UI mockups across 3 Layout sheets, a 186-row Risk List, a 6-slide `Approach` vision deck, and 5 `Demo AI Sample` screens of the intended AI flow. Crucially it carries its **own P0/P1/P2 prioritisation with our deadline** (`P1: ~11/9`). Text is Vietnamese — dump it to a UTF-8 file, a cp932 console cannot print it. |
 | `ProjectPulseAI_Architecture.md` | **Design of record.** Schema, contracts, repo layout, build sequence, risk register. Start here for anything technical. |
 | `projectpulse/README.md` | How to run what exists. |
+| `projectpulse/DEPLOY.md` | **How to put the app on a real host.** Dockerfile + fly.toml are written and unverified - no Docker daemon on the dev machine. Says exactly what can and cannot be live. |
 | `Layout/*.html` | 6 static UI mockups (vanilla ES5, no build). Visual language only — **no screen exists for any AI surface**; the insight/evidence screen is new design work. |
 
 Reference repos, **read-only, never run**: `devlake/` (schema + ETL patterns we ported),
@@ -60,7 +62,7 @@ in, an `InsightBundle` out.
 203 of 702 pairs orderable
 4 dependency edges: 3 stated, 1 inferred
 9 findings, 3 causal chains (edge / path / project)
-382 tests, ~7s, no Docker + a typechecked front end
+486 tests, ~40s, no Docker + a typechecked front end
 ```
 
 - **Excel path** — header contract, sha256 skip, row-identity resolution, snapshot
@@ -107,13 +109,124 @@ in, an `InsightBundle` out.
   - `assembler.py` — the only place a number is formatted. Rules emit `{{tokens}}`; a
     finding that cannot be fully substituted is dropped, never shipped with a literal.
   - `pipeline.py` — the only module with a session.
+- **`intelligence/schedule/whatif.py` — recovery scenarios (the design's what-if).** Cheap
+  only because `project_schedule` is a pure function of (tasks, edges): a scenario is copy,
+  change one thing, re-run, diff. `_apply` builds new frozen dataclasses, so a
+  **simulation is never a mutation** — which is how the app answers "what if" while
+  staying read-only. Served at `GET /api/scenarios`.
+  - **Two moves, both chosen because the forward pass honours them**: shorten a task, or
+    give a dependency negative lag (`FS-10d`). ⚠️ **Do not express overlap as `dep_type`
+    SS** — the engine reasons about finish-to-start only, so it would re-run to an
+    identical answer and report zero days recovered: a wrong number that looks computed.
+  - ⚠️ **Two figures, not one.** `days_earlier` is measured against doing nothing;
+    `days_late` against the **original** commitment. Compressing a task moves
+    `project_end_planned` too, so a scenario compared against its own plan reports "on
+    time" for having moved the goalposts. The first version said "recovers 37 of 34 days".
+  - ⚠️ **A healthy plan yields no scenarios**, and equivalent outcomes collapse to the
+    simplest. Any plan can be made shorter, so an on-time project was being offered ways
+    to finish early — true arithmetic, wrong feature.
+  - **Feasibility is not modelled and must not be implied.** `resources` is empty by
+    decision, so the panel carries a "what this cannot tell you" block.
+- **`/team` — workload, effort and activity.** Workload on one shared window, QA hours by
+  owner, and what moved per week split by *precision*. ⚠️ **`api/schemas/team.py` records
+  what is deliberately absent and why** — an effort burn-down needs planned effort (no
+  sheet has that column) and a date on each logged hour (`log_date` is read by the worklog
+  contract and **dropped by the convertor**, the third instance of that gap); productivity
+  needs both halves; the bars are calendar span, not capacity. The page says all of this
+  in a panel rather than drawing it anyway.
+  - A real property of these sheets: **schedule owners and QA owners are disjoint sets**,
+    so a member row is one or the other. The page says "appears only on the worklog"
+    rather than drawing an empty bar. Asserted.
+- **`/settings` is tabbed — Narration / Sources / Rule table.** The Program settings the
+  spec asks for. Sources lists watched sheets and the project pairing; **Rule table shows
+  all ten rules with their thresholds and rationales**, tokens unsubstituted because the
+  screen is about the rule, not today's numbers. Read-only by decision.
+- ⚠️ **`--viz-plan` / `--viz-over` live at `:root` in `shell.css`, not inside `.gantt`.**
+  Scoped to the component they resolved to nothing on any other chart, and bars rendered
+  **invisible** — labels floating on an empty panel, with every test passing. One meaning
+  per hue across the app. Re-run the dataviz validator if either hex changes, and keep the
+  dark values under both the media query and the `data-theme` scope.
+- **`/portfolio` — the Program screen.** `pipeline.portfolio()` folds `analyze_project`
+  **per project** rather than aggregating a shortcut, so the program view cannot disagree
+  with the project view. **Bands, not scores**: `critical` / `watch` / `healthy` /
+  `no_data`, with `worst_severity` naming the finding that set it. ⚠️ **`no_data` is its
+  own band and never green** — colouring unknown healthy is the failure this product
+  argues against.
+- **`app/scope.py` — which source ids are one delivery project.** Invariant 7 used to be
+  a literal `also = ["jira:Project:1:HRMS"]` inside the API route; a portfolio built from
+  the `projects` table would have listed HRMS **twice**. One definition, guarded by a test.
+  A real deployment reads this from scope config.
+- **Insight has within-project views** (Overview / Risk / Evidence) — the design's second
+  tab row, as state rather than URLs so there is still one source of truth about which
+  URLs exist. Only views with something behind them; Schedule and Quality have their own
+  screens and are not repeated as half-versions.
 - **`api/schemas/insight.py`** — `InsightBundle`, frozen. Served at `GET /api/insight`.
-- **`narration/`** — deterministic `fallback.py` (never a blank page) and `validator.py`,
-  the 8-stage gate. The load-bearing stage is `no_literal_digits`: validation runs
-  *before* substitution, so a model cannot change a number, only fail to produce one.
+- **`narration/`** — deterministic `fallback.py` (never a blank page), `validator.py`, the
+  8-stage gate, and `client.py`, the model. The load-bearing stage is `no_literal_digits`:
+  validation runs *before* substitution, so a model cannot change a number, only fail to
+  produce one.
+
+  `client.py` is the enforcement of that. The model is handed
+  `Finding.headline_template` — the prose as its rule author wrote it, tokens intact —
+  never `Finding.headline`, which has the figures substituted in. ⚠️ **Do not try to
+  reverse the substitution** to recover the template: searching a finished headline for
+  each value breaks the moment one value is a substring of another, and this is the one
+  rule that cannot rest on a heuristic. The templates are carried on the finding for
+  exactly this reason.
+
+  `build_brief` then holds *itself* to the rule: `_assert_no_quantity` runs
+  `validator.contains_quantity` over the finished prompt and raises rather than send one
+  with a figure in it. That is why findings in the brief are labelled **A, B, C and not
+  1, 2, 3** — a numbered list is the obvious way to write it, and every digit in a brief
+  is a digit a model can copy with no way to know that one was only a bullet. Facts are
+  namespaced per finding (`fa_`, `fb_`) because two findings routinely carry the same
+  field name. A rejected draft is retried once with the validator's objections attached,
+  which is what running all eight stages after a failure was always for.
+
+- **`narration/providers.py` — the vendor is a one-word setting.** Claude, GPT and
+  Gemini each reduced to a `Drafter`: `(system, user) -> str`. `client.py` names no
+  vendor, so the validator, the substitution, the retry-with-objections and the template
+  fallback are identical whichever answers — `test_the_fence_treats_every_vendor_identically`
+  guards that, because "Claude is reliable, skip a stage for it" is the tempting future
+  edit. Pick with `PULSE_NARRATION_PROVIDER` or `--provider`; override the model id with
+  `PULSE_NARRATION_MODEL` or `--llm-model`.
+
+  Each SDK is a separate optional extra (`llm`, `llm-openai`, `llm-gemini`) imported on
+  first call, so all three can be absent. Off by default (`PULSE_NARRATION=1` or
+  `--model`). Every failure — no package, no key, dead socket, refusal, content filter,
+  truncation, empty completion, rejected draft — lands on the template with
+  `narration_fallback_reason` set, so a judge needs no package and no key and the demo
+  never depends on a network call.
+
+  ✅ **Two of the three adapters are proven end to end.** OpenAI and Gemini each complete
+  a real HTTP round trip against a local server speaking that vendor's wire format —
+  request, response parsing, the eight-stage gate, substitution — and return
+  `narration_source: model`. Gemini's test asserts the observed request shape
+  (`/v1beta/models/<model>:generateContent`, `systemInstruction` sent as a system
+  instruction and not a user turn). Sibling tests prove a model that writes a digit is
+  still refused, whichever vendor it is. **Anthropic's response parsing is still
+  unexercised** and no commercial endpoint has been called — there are no credentials
+  here.
+
+  **That test is also the on-premise story.** `/v1/chat/completions` is what vLLM,
+  Ollama, LM Studio and an internal FPT gateway all serve, so a self-hosted open model
+  (26B-100B) needs **no code change** - set `OPENAI_BASE_URL` and a dummy
+  `OPENAI_API_KEY`. Nothing leaves the building. ⚠️ **The OpenAI and Gemini model ids in
+  `DEFAULT_MODELS` are placeholders** — confirm against the vendor's current list.
 - **`excel/convertor.py`** — tool rows → `tasks`/`qa_items`. Was missing; without it the
   DAG joined ids with no dates on them.
-- **The insight screen** — `app/api/static/insight.html`, served at `GET /insight`.
+- **The insight screen** — served at `GET /insight`. **Opens on the delivery-outlook
+  figure**: the sheet's finish date, the date its own dependencies imply, and the gap
+  (2026-05-29 -> 2026-07-02, +34 days) — then the driving path in forward-pass order, then
+  a pressure row, then the findings. It renders the *same* `ExplainBundle` the Calculation
+  tab does rather than recomputing, and the projection is fetched separately and allowed
+  to fail: no outlook panel rather than no findings. ⚠️ **The hero hides itself when
+  `project_slip_days <= 0`** — a healthy project showing "+0 days" in 34px type reads as
+  alarming. Asserted by `web/scripts/smoke.tsx`.
+- ⚠️ **`design/` is a mockup canvas, not the app.** Six dark-mode screens proposing a
+  fuller UI (portfolio, project dashboard, the AI-analysis and recovery flow). Nothing
+  there is implemented except the outlook panel above; do not read it as shipped.
+- **The older static insight page** — `app/api/static/insight.html`.
   Severity-ranked findings, each expanding to its rule trace (with the values it
   compared), its causal chain (cause → effect, basis badge, lag as a range), and its
   evidence rows. **No build step** — see §8 for why that deviates from the plan.
@@ -146,17 +259,143 @@ in, an `InsightBundle` out.
   sets `Task.milestone_id` — a real foreign key. This deleted `pipeline._milestone_names`,
   a label workaround that carried milestone text alongside because nothing populated the
   table; row keys are only unique per sheet, so it could trade names between projects.
+- **The app shell is the design's**: a left icon rail plus an app bar with one real
+  action, on all five pages. ⚠️ **`shell.css` must be linked by `web/index.html`** — the
+  built pages had duplicated the chrome in Tailwind and needed no stylesheet until the
+  rail did; without it `.rail`'s `<svg>` falls back to the CSS default 300x150, pushes the
+  page off screen, and renders **blank** while `pytest` and `npm run smoke` both pass
+  (server-side rendering never loads CSS). Only `scripts.shots` catches it.
+  ⚠️ **The rail is duplicated in four files** — `Shell.tsx` and the three hand-written
+  pages — and `tests/test_api.py` asserts they match. ⚠️ **Component classes like
+  `.action` are scoped to themselves, not `.appbar .action`**: the built pages compose
+  their bar from Tailwind, so an ancestor selector leaves icons unsized.
+- **The visual language is the design's, and lives in two files that must change
+  together** — `api/static/shell.css` (the three hand-written pages) and
+  `web/src/components/Shell.tsx` (the two built ones). Underline tabs, an app bar
+  (identity / what the data reflects / one action), `.microlabel`, `.panel`, and a
+  12-column `.board`. ⚠️ **Restyle both or the app splits into two looks.**
+  ⚠️ **`Panel`'s span classes are spelled out in a lookup table** — Tailwind scans source
+  text, so an interpolated `md:col-span-${n}` emits no CSS and the board silently
+  collapses to one column.
+  ✅ **Both former traps are now guarded.** `_snapshot_nav` matches the console tab by
+  **`href="/"`**, not by label text, so labels are free to change; a tab bar with tabs but
+  no `/` link fails the build. And the span classes are checked twice — a source scan for
+  interpolated `col-span-${...}` (comments stripped) plus a check that every class in the
+  `SPAN` table is present in the *built* stylesheet.
+- **Insight is a board**: outlook panel (7 cols) beside the driving path (5), then the
+  **AI-analysis panel** (detected / chain / evidence / rule trace), then **Recovery
+  scenarios**, then the findings. The AI panel leads with the **best-evidenced** cause rather than the most
+  severe, and is composed from the same components the finding cards use.
+- **Effort is real data now, and the burn chart is real with it.** The worklog
+  sheet gained two columns: `Estimate` (→ `QaItem.estimate_hours`) and `Date`
+  (→ `QaItem.log_date`, which the contract had parsed and the convertor had
+  dropped — the third instance of that bug after `Task.phase` and
+  `QaItem.assignee`). We own the template, so adding a column is the same
+  legitimate move that closed the dependency-edge gap by adding `Predecessor`.
+  - **What was deliberately not done:** the log dates were **not** back-derived
+    from scan windows. A scan interval bounds when we *noticed* an edit, never
+    when the work happened, and turning one into the other would manufacture
+    precision the source never had — the exact failure §5 exists to prevent.
+  - `intelligence/effort.py` (pure) reconstructs cumulative logged effort
+    **backwards from the current total**: a row's creation is not a state
+    change, so summing forwards starts at zero and never reaches today's
+    figure. Guarded by `test_the_last_point_always_equals_the_snapshot_total`.
+  - The chart is **one axis**. The blocked count and the rows added ride along
+    as markers on the point that observed them, never as a second series with
+    a second y-scale.
+  - **`SheetScan.changed` earns its keep twice.** It was added so intervals stay
+    tight (§5); it turns out to be what makes a flat stretch in the burn mean
+    "nobody logged an hour" rather than "we stopped looking".
+  - The demo story now has two halves that agree: the schedule shows a date
+    slipping, the burn shows work stopping at the same moment, and both trace
+    to one blocked environment.
+    `test_the_burn_stalls_at_the_moment_the_qa_queue_blocks` fails if the
+    timeline in `gen_demo_data` ever pulls them apart.
+  - The Team page's "what these sheets cannot show" panel kept both of its
+    entries rather than losing them: a *sloping* planned line is still refused
+    (`estimate_hours` is untracked, so we have never seen the plan change), and
+    so is productivity-as-output-per-effort (`progress` is self-reported).
+- **`entity_label` no longer prints an identity key as a name.** A row with no
+  `Task ID` gets `~anon-<16 hex>`, which is correct — it is what tracks the row
+  across scans — and it rendered as a Team/Schedule row label between four
+  colleagues with real WBS codes. It now falls back to the row's title where the
+  caller has one. The derivation surfaces (`explain`, the Calculation tab) still
+  show the key on purpose: those pages are about mechanism.
+- **`web/scripts/capture-payloads.mjs` + `npm run payloads`.** `smoke.tsx` had
+  claimed since it was written that its fixtures "are captured from the running
+  API by `capture-payloads`" — a script that did not exist. The JSON was
+  refreshed by hand, so every schema change surfaced as an `undefined` in a
+  stack trace. It builds each bundle by calling the pipeline directly, so no
+  server is needed and it cannot capture a stale build.
 - **`api/static/shell.css`** — shared tokens and the tab bar. Three pages were each
   declaring their own `:root`; one file stops that recurring and makes the round-2 token
   reconciliation a single edit. `insight.html` keeps the FPT palette and aliases the
   shell's names onto it.
+- **Exports — the two files the product hands back.** `app/exports/`.
+  - `template.py` — the blank `.xlsx` a PM fills in, generated from
+    `SheetContract.template_headers` rather than written by hand. `gen_demo_data`
+    now reads the same tuple, so the demo file and the downloadable template are one
+    sheet by construction. ⚠️ **The test that matters is the round-trip**
+    (`test_a_generated_template_is_readable_by_the_real_ingester`): a template that
+    opens in Excel and that our own reader refuses fails *after* a PM has filled it
+    in. ⚠️ **No example rows** — an example row comes back as a real task and the
+    identity resolver cannot know it was decorative. Guidance goes on a `Notes` tab,
+    which the reader never opens.
+  - `report.py` — the `.docx` status report: narrative, every finding with its rule
+    trace / chain / source rows, the projection table with the driving path first,
+    and the data-quality caveats. **Formats no number** — headlines are already
+    substituted, everything else goes through `assembler.format_fact`. That is
+    invariant 1 on the artefact that outlives the session, and
+    `test_the_report_formats_a_percentage_the_way_the_assembler_does` pins it.
+    `python-docx` is the optional `report` extra.
+  - Served at `GET /api/template/{schedule|worklog}.xlsx` and `GET /api/report.docx`;
+    CLI `sync template` / `sync report`. **No UI button yet** — the routes exist, the
+    React pages do not link them.
+- **`app/ml/duration.py` — the advisory duration classifier.** Wraps
+  `omaradly/jira-task-duration-classifier` (sklearn pipeline: TF-IDF + one-hot +
+  scaled numerics + logistic regression) which sorts a task into `Short` /
+  `Standard` / `Long-running`. This fits invariant 5 exactly, because **the model's
+  own output is a band and not a number.** The pipeline also returns probabilities;
+  those are reduced to a `low`/`medium`/`high` word before leaving the module, so
+  there is no float a caller could render.
+  - **Invariant 5 is enforced by a test, not a comment.** `tests/test_ml.py` walks
+    the AST of every module under `app/intelligence/` and fails if one imports
+    `app.ml` — and checks the reverse direction too, so the dependency cannot be
+    inverted instead.
+  - ⚠️ **The inputs are partial, and that is the honest reason it is advisory.** The
+    model wants Jira metadata (description, priority, issue type, labels, votes); a
+    spreadsheet row has a title, dates and an owner. `DurationAdvice.basis` reports
+    "2 of 10 inputs known" so a band from a title alone can be discounted.
+  - ⚠️ **The artefact downloads and does not load on this venv, and cannot be made
+    to.** Pickled by scikit-learn **1.6.1**; unpickling under 1.9 dies on
+    `sklearn.compose._column_transformer._RemainderColsList`, a private class that no
+    longer exists. Installing 1.6.1 to match is impossible here — **it ships no wheel
+    for Python 3.14**, so pip compiles from source and there is no C toolchain (and
+    3.14 is the only Python on the machine). **The classifier needs Python 3.12 or
+    3.13.** `try_load()` returns that whole diagnosis as a sentence, so nobody has to
+    rediscover the trail.
+  - ⚠️ **Do not "fix" this by retraining locally.** Considered and rejected: the
+    repo's `training/model_training.py` reads `final_cleaned.csv`, which is **not
+    published** — what ships is a 100-row `final_cleaned_sample.csv`. A model refitted
+    on 100 rows across three classes would carry the same name and far less meaning.
+    Nor should you shim the missing private class: silently-altered behaviour in an
+    advisory feature is worse than its absence.
+  - The feature frame is transcribed from the model's own `api/main.py` (including
+    `issue_priority` being a *string* join `issuetype__priority`, not an ordinal).
+    `test_the_adapter_round_trips_a_real_pipeline` fits a genuine sklearn pipeline
+    over those exact columns and predicts through our loader — which proves our
+    contract and cannot prove theirs.
+  - `python -m scripts.fetch_model` downloads it (note: the repo path is
+    `models/<file>`, not the bare filename — that was a 404); `sync advise` prints the
+    bands. `models/` is gitignored. **The product is complete without this**, which is
+    the whole reason it was built as an optional advisory feature.
 - **`WORKLOG.md`** — live view of what is being worked on, plus a function index
   regenerated by `python -m scripts.index_code` from the AST so it cannot drift.
 
 ### Not built yet
 
-Retrieval/pgvector, the LLM client (`narration/client.py` — the fallback and the gate it
-must pass are both ready), APScheduler, the five remaining screens (still static mockups).
+Retrieval/pgvector, APScheduler, the five remaining screens (still static mockups). The
+LLM client exists but **has never completed a live call** — see §8 item 1.
 
 ### Deployed
 
@@ -212,6 +451,54 @@ The architecture gets more truthful closer to the source instead of needing more
 
 ---
 
+### What `PiMSatho_Overview.xlsx` says, and where we stand against it
+
+**Their vision slide is our architecture.** "AI helps PMs understand what is wrong, why,
+what the impact is, and what to do next" — the same four questions the narrative is
+built around — over `SEE > UNDERSTAND > DETECT > EXPLAIN > RECOMMEND > ACT > LEARN`. And
+in their own words: **"Not another dashboard. Not another chatbot. Not another reporting
+tool."** The tile sheet is blunter still: *"Gantt đầy đủ | Drop/P2 | tốn effort nhưng
+không tạo khác biệt"* — a full Gantt is explicitly **not** the differentiator.
+
+Their **P0** list against what exists:
+
+| P0 tile | Their note | Us |
+|---|---|---|
+| AI Management Brief | "Entry point cực mạnh" | ✅ the narrative |
+| AI Detected Risks | "Core AI capability" | ✅ findings + severity |
+| **AI Root Cause Analysis** | **"Differentiator lớn nhất"** | ✅ **and stronger than asked** — chains carry an ordering proof, an evidence basis, and we *drop* what we cannot prove |
+| AI Impact Analysis | "Nối risk với delivery impact" | ✅ `propagated_days` forward pass |
+| AI Recommended Actions | "Biến AI insight thành decision" | ✅ per-finding recommendation |
+| Milestones at Risk | "Dữ liệu tốt để AI reason" | ✅ `milestone_risk` |
+| QA Status / Blocking QA | "IT-specific" | ✅ `qa_blocked_ratio` rules |
+| Quality Health | "IT-specific" | ✅ `quality_risk` |
+| Program Health · Project Portfolio · Health Heatmap | "Cho BGK hiểu tổng thể trong 3 giây" | ❌ **the one real P0 gap — we are single-project, they want portfolio** |
+
+The `Demo AI Sample` screens show the intended flow as
+**AI DETECTED → MAIN REASON → SUPPORTING SIGNALS → Find Recovery Plan**. We implement the
+first three, and our supporting signals are source rows rather than counts. The fourth is
+what-if, which their own sheet rates *"What-if Simulation | Phase 2 | wow nhất nhưng khó
+explain accuracy"* — and explaining accuracy is exactly what a pure, arithmetic forward
+pass does, so it is the one place we can do the wow feature *credibly*.
+
+⚠️ **Three places the mockups contradict the thesis. Decide them deliberately.**
+1. **"Delivery confidence 61% → 91%"** and the **health score "68"** are invented numbers,
+   which §4.1 forbids. The same mockup also shows **ETA `Sep 18 → Sep 12`** — a date our
+   forward pass produces honestly. Prefer the date, or a real ratio ("recovers 20 of the
+   34 days"). A status **band** (Healthy / Watch / Critical) from the rules is compatible;
+   a score is not.
+2. **"Apply This Plan to Jira"** is a write path. §8 "Why the app stays read-only" argues
+   against it, and writing back changes the precision model. A product decision, not a
+   refactor.
+3. **Activity CRUD** (add / edit / delete / reorder) across the Schedule sheet — same
+   issue.
+
+**Lucky alignment worth knowing:** their Schedule screen columns are
+*Start / Baseline Completion / Planned Completion / Phase* — exactly
+`start_date` / `baseline_end` / `due_date` / `phase`, which is the contract already built.
+
+---
+
 ## 4. Invariants — do not break these
 
 These are product thesis, not implementation detail. Changing one is a product
@@ -220,6 +507,10 @@ decision, not a refactor.
 1. **Numbers and dates are born in exactly one place.** Today that is the ingestion
    convertors; once it exists it is `intelligence/assembler.py`. The language model
    emits `{{tokens}}`, never a digit; the server substitutes after validation.
+   **The model is never *shown* a digit either** — `narration/client.py` builds its
+   prompt from tokenised templates and refuses to send one containing a figure. Both
+   halves matter: validation stops a model changing a number, and the brief stops it
+   copying one, which would be indistinguishable on the page from a computed one.
 2. **Every finding resolves to a source record.** `_raw_data_id` is stamped by the
    extractor and **copied, never re-derived**, through tool → domain. That chain is the
    evidence panel.
@@ -307,6 +598,13 @@ def provably_before(a, b) -> bool:
 | A test run **hangs** instead of failing | `app/db.py` builds its engine at import from `DATABASE_URL`, defaulting to Postgres on :5433. Any test importing `app.api.main` then waits on a connect timeout. `tests/conftest.py` points it at temp SQLite unless the var is already set — don't remove it. |
 | A finding appears 48 times | Chains are per cause/effect *pair*. `group_chains` collapses them per cause; the assembler emits one finding per group and caps at `max_chain_findings`. |
 | `ModuleNotFoundError: No module named 'psycopg'` on **any** import of `app.db` | The venv was missing a declared dependency, so the *default* Postgres URL could not connect and only the SQLite override worked. `db.py` builds the engine at import time, so this breaks `scripts.demo` and `sync init` too — i.e. the exact path a judge runs. Fixed by `pip install "psycopg[binary]>=3.2"`. **After any venv rebuild, check `pip list` against `pyproject.toml`.** |
+| **Building one SQLite database deleted another** | `scripts.replay` unlinked `--db` (default `pulse.db`) regardless of what `DATABASE_URL` actually pointed at, so seeding any other SQLite file destroyed the default one. It ate a populated `pulse.db` the first time `scripts.serve` seeded a different file. **Fixed** — it now derives the file from the target URL and removes only that. Guarded by `test_replay_only_deletes_the_database_it_builds`. |
+| A judge's console cannot print a docstring | Already in this table, but it caught `scripts/serve.py` on the first run: `argparse(description=__doc__)` prints module docstrings as `--help`, so a `WARNING` emoji in a docstring is a `UnicodeEncodeError` on cp932. **All CLI source must be ASCII** — `tests/test_scripts.py` is what noticed. |
+| The duration model downloads and will not load | Pickled by scikit-learn 1.6.1; 1.9 removed `_RemainderColsList`. Pinning 1.6.x is impossible on **Python 3.14** (no wheel, no compiler). Needs a 3.12/3.13 environment. The `ml` extra carries a `python_version < "3.14"` marker so the install stays clean instead of failing on meson, and `try_load()` explains the rest. |
+| **`scripts.replay` says a file is open in another process** | A running server holds `pulse.db` open, so the rebuild cannot delete it - the stale-uvicorn trap in a new disguise. It used to surface as a raw `PermissionError: WinError 32`, which reads like a corrupt database; `replay.py` now names the cause and prints the fix. |
+| `npm run smoke` fails with `undefined` deep in a React stack | The captured payload in `web/scripts/*.json` predates a field the page now reads. Run **`npm run payloads`** first - it rebuilds all six from the pipeline. The script did not exist for a long time even though `smoke.tsx` named it. |
+| A figure interpolated into JSX is **not found** by a smoke assertion | Server-side rendering splits a text node around `{value}` with an HTML comment, so `"planned - 125h of estimates"` never appears contiguously. Assert the halves (`"planned - "`, `"h of estimates"`), not the sentence a reader sees. |
+| **`scripts.shots` photographs the Schedule page as its own "chart component did not load"** | A flake in the screenshot tool, not a broken build - `node --check app/api/static/gantt.js` will pass. Per-shot throwaway profiles fixed most of it and it still happens occasionally when several pages are shot in a row. Re-shoot that page **alone** (`--page /gantt`) before believing it. |
 | Windows file locks on `.venv` | `rm -rf .venv` can fail; move it aside instead. |
 
 ---
@@ -358,7 +656,7 @@ cd projectpulse
 # Console: edit data/demo files, watch the effect. http://127.0.0.1:8000
 python -m scripts.demo
 
-python -m pytest                      # 217 tests, ~13s, no DB needed
+python -m pytest                      # 486 tests, ~40s, no DB needed
 docker compose up -d                  # postgres+pgvector on :5433 (Docker Desktop must be running)
 python -m scripts.sync init
 
@@ -384,6 +682,13 @@ python -m scripts.sync changes rejects runs
 # The product. Findings, rule traces, causal chains, evidence.
 python -m scripts.sync insight --also jira:Project:1:HRMS --narrative
 
+# The same thing with a model phrasing the narrative instead of the template.
+# Needs one of the llm extras and credentials; prints `narration: template`
+# plus a reason if either is missing, and changes no finding and no figure.
+python -m scripts.sync insight --narrative --model
+python -m scripts.sync insight --narrative --model --provider openai
+python -m scripts.sync insight --narrative --model --provider gemini --llm-model gemini-2.5-flash
+
 # Show the arithmetic behind every number, so it can be checked by hand.
 python -m scripts.sync explain
 python -m scripts.sync explain --task WBS-114 --scalars
@@ -391,6 +696,24 @@ python -m scripts.sync explain --task WBS-114 --scalars
 # Freeze a public snapshot of the two screens into site/ (does not deploy).
 python -m scripts.publish
 cd .. && npx wrangler pages deploy    # publishes to arch.mintteas.org
+
+# The two files the product hands back.
+python -m scripts.sync template --out templates       # blank .xlsx a PM fills in
+python -m scripts.sync report --also jira:Project:1:HRMS --out status.docx
+
+# The advisory duration band per task. Prints how to get the model if absent.
+python -m scripts.fetch_model          # downloads the artefact (needs ml-fetch)
+python -m scripts.sync advise
+
+# What the container runs: schema, seed only if empty, then uvicorn.
+python -m scripts.serve --check        # everything but binding a port
+python -m scripts.serve
+
+# The UI check. Photographs all five pages with headless Chrome/Edge, starting
+# the app itself. Run this before calling a front-end change done: a page can
+# answer 200 with a collapsed layout, and curl cannot tell you.
+python -m scripts.shots                # dark, into shots/ (gitignored)
+python -m scripts.shots --light --page /insight
 
 python -m scripts.index_code           # regenerate the function index in WORKLOG.md
 python -m scripts.index_code --check   # fail if it is stale
@@ -412,16 +735,35 @@ session. Kill it if the port is taken.
 
 The intelligence layer and the insight screen are done. What remains is polish.
 
-1. **`narration/client.py`.** Everything it needs exists: `fallback.py` is the thing it
-   must beat, `validator.py` is the gate it must pass, and the bundle carries
-   `narration_fallback_reason` so a rejected draft is visible rather than silent. Hand the
-   model tokenised text and the finding list; **never let it see a digit** — substitution
-   happens after validation, which is what makes the digit rule enforceable.
-2. **Retrieval / pgvector.** Needs `CREATE EXTENSION vector` added to `create_all()`.
+1. **Reconcile the pitch deck with the product.** ⚠️ **This is now the biggest risk, and
+   it is not in the code.** Judges read the deck *and* run the code. The deck promises
+   health scores, an 89% confidence figure, org-memory retrieval and an LLM agent — none
+   of which exist — and omits the precision model, `propagated_days` and `evidence_basis`,
+   which do and are the best things in it. An afternoon's work, and worth more than any
+   remaining feature.
+2. **Make one live call with a commercial vendor.** The path itself is proven (see the
+   local-server test above), so this only confirms credentials and a model id:
+   `python -m scripts.sync insight --narrative --model --provider <name>`. Confirm the
+   model id first for OpenAI and Gemini — those defaults are placeholders.
+3. **Deploy it.** `DEPLOY.md` has the whole sequence; `Dockerfile` and `fly.toml` are
+   written and **unverified** — no Docker daemon on this machine, so expect to fix
+   something on the first `fly deploy`. The container logic itself *is* verified:
+   `python -m scripts.serve --check` seeds an empty database and leaves a populated one
+   alone. Target `app.mintteas.org`, keep `arch.mintteas.org` as the static fallback.
+4. **Link the exports from the UI.** `/api/template/{kind}.xlsx` and `/api/report.docx`
+   work and nothing points at them. Two buttons on the Insight page — needs
+   `npm run build` and the bundle committed.
+5. **Decide the duration classifier's fate.** It is wired, tested and inert on 3.14.
+   Three options, in order of how much they cost: leave it advisory-and-absent (the
+   product is complete without it, and this is the round-1 answer); run it on a
+   3.12/3.13 side environment; or run the model's own FastAPI service as a sidecar and
+   make our adapter an HTTP client instead of a pickle loader — which would drop
+   scikit-learn, pandas and joblib from this project entirely.
+6. **Retrieval / pgvector.** Needs `CREATE EXTENSION vector` added to `create_all()`.
    First on the cut list — skip it if round 1 gets tight.
-3. **APScheduler.** `runner.py` already holds the advisory lock, so a second instance
+7. **APScheduler.** `runner.py` already holds the advisory lock, so a second instance
    joins rather than double-writes. Mostly wiring.
-4. **Round 2: port the other five screens.** They are ~3,500 lines of ES5 across two
+8. **Round 2: port the other five screens.** They are ~3,500 lines of ES5 across two
    independently-authored token sets. Reconcile them first (Family A is the FPT brand set
    the insight screen now uses; Family B is Tailwind gray).
 
@@ -445,7 +787,8 @@ cd web
 npm install
 npm run types     # regenerate src/api-types.ts from the live OpenAPI schema
 npm run build     # typecheck + build into ../app/api/static/app  (COMMIT THIS)
-npm run smoke     # render both views against real payloads and assert the output
+npm run payloads  # re-capture the payloads smoke renders against (run after any schema change)
+npm run smoke     # render every view against those payloads and assert the output
 npm run dev       # hot reload, proxying /api to :8000
 ```
 
@@ -466,11 +809,27 @@ one projection. If it ever needs React state, port it once and delete the vanill
 
 ### Cut order if time runs short
 
-retrieval/precedent → the LLM (ship fallback prose) → the rule-table editor (show tables
+retrieval/precedent → the duration classifier (it is advisory; the product stands
+without it) → the LLM (ship fallback prose) → the rule-table editor (show tables
 read-only) → Excel fuzzy matching (require `Task ID`).
+
+**The exports are not on the cut list.** A PM circulating a `.docx` is the artefact the
+whole analysis exists to produce, and the blank template is how a second project starts.
 
 **Never cut:** the evidence panel, the precision model, the rule trace. They are the
 product.
+
+### The final check before calling front-end work done
+
+`pytest` and `npm run smoke` prove the data and the render; neither looks at the page.
+**`python -m scripts.shots`** does — it photographs all seven pages and starts the app
+itself. It **checks each page's status first**, so the stale-server trap is an error and
+not a picture, and gives each shot a throwaway browser profile — six launches sharing the
+default one contend and one page comes back as its own error page. Compare against `design/`. This is not ceremony: it is what caught raw
+`file://` paths wrapping across two lines in the evidence panel, and a hint that had
+been wrong for two entries. ⚠️ **Heights are per page on purpose** — a short page in a
+very tall window makes Chrome repeat the paint, which looks exactly like a
+duplicate-render bug.
 
 ### Why the app stays read-only — decided
 

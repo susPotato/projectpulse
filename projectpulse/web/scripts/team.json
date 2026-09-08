@@ -1,0 +1,261 @@
+{
+  "project_id": "excel:Project:1:HRMS",
+  "members": [
+    {
+      "name": "Nguyen Van A",
+      "tasks": [
+        {
+          "entity_id": "excel:Task:1:WBS-118",
+          "label": "WBS-118",
+          "title": "UAT preparation",
+          "start": "2026-03-23",
+          "planned_end": "2026-05-26",
+          "projected_end": "2026-06-17",
+          "propagated_days": 22,
+          "phase": "Testing",
+          "progress": 0
+        },
+        {
+          "entity_id": "excel:Task:1:WBS-121",
+          "label": "WBS-121",
+          "title": "Cutover rehearsal",
+          "start": "2026-05-18",
+          "planned_end": "2026-05-29",
+          "projected_end": "2026-07-02",
+          "propagated_days": 34,
+          "phase": "Deployment",
+          "progress": 0
+        },
+        {
+          "entity_id": "jira:Task:1:10118",
+          "label": "10118",
+          "title": "UAT preparation",
+          "start": null,
+          "planned_end": "2026-05-26",
+          "projected_end": "2026-05-26",
+          "propagated_days": 0,
+          "phase": null,
+          "progress": null
+        }
+      ],
+      "hours_logged": 0,
+      "hours_planned": 0,
+      "qa_items": 0,
+      "qa_blocked": 0
+    },
+    {
+      "name": "Tran Quoc B",
+      "tasks": [
+        {
+          "entity_id": "excel:Task:1:WBS-108",
+          "label": "WBS-108",
+          "title": "Environment Setup",
+          "start": "2026-02-16",
+          "planned_end": "2026-03-16",
+          "projected_end": "2026-03-16",
+          "propagated_days": 0,
+          "phase": "Development",
+          "progress": 75
+        },
+        {
+          "entity_id": "excel:Task:1:~anon-ef0576ffa2b2a0f2",
+          "label": "Data migration dry-run",
+          "title": "Data migration dry-run",
+          "start": "2026-03-10",
+          "planned_end": "2026-03-27",
+          "projected_end": "2026-03-27",
+          "propagated_days": 0,
+          "phase": "Development",
+          "progress": 0
+        },
+        {
+          "entity_id": "jira:Task:1:10108",
+          "label": "10108",
+          "title": "Environment Setup",
+          "start": null,
+          "planned_end": "2026-03-16",
+          "projected_end": "2026-03-16",
+          "propagated_days": 0,
+          "phase": null,
+          "progress": null
+        }
+      ],
+      "hours_logged": 0,
+      "hours_planned": 0,
+      "qa_items": 0,
+      "qa_blocked": 0
+    },
+    {
+      "name": "Pham Hong D",
+      "tasks": [
+        {
+          "entity_id": "excel:Task:1:WBS-114",
+          "label": "WBS-114",
+          "title": "Integration build",
+          "start": "2026-03-05",
+          "planned_end": "2026-04-01",
+          "projected_end": "2026-04-12",
+          "propagated_days": 11,
+          "phase": "Development",
+          "progress": 0
+        },
+        {
+          "entity_id": "jira:Task:1:10114",
+          "label": "10114",
+          "title": "Integration build",
+          "start": null,
+          "planned_end": "2026-04-01",
+          "projected_end": "2026-04-01",
+          "propagated_days": 0,
+          "phase": null,
+          "progress": null
+        }
+      ],
+      "hours_logged": 0,
+      "hours_planned": 0,
+      "qa_items": 0,
+      "qa_blocked": 0
+    },
+    {
+      "name": "Le Van C",
+      "tasks": [
+        {
+          "entity_id": "excel:Task:1:WBS-101",
+          "label": "WBS-101",
+          "title": "Requirements sign-off",
+          "start": "2026-01-12",
+          "planned_end": "2026-01-30",
+          "projected_end": "2026-01-30",
+          "propagated_days": 0,
+          "phase": "Planning",
+          "progress": 100
+        },
+        {
+          "entity_id": "jira:Task:1:10101",
+          "label": "10101",
+          "title": "Requirements sign-off",
+          "start": null,
+          "planned_end": "2026-01-30",
+          "projected_end": "2026-01-30",
+          "propagated_days": 0,
+          "phase": null,
+          "progress": null
+        }
+      ],
+      "hours_logged": 0,
+      "hours_planned": 0,
+      "qa_items": 0,
+      "qa_blocked": 0
+    },
+    {
+      "name": "Tung Nguyen",
+      "tasks": [],
+      "hours_logged": 16,
+      "hours_planned": 23,
+      "qa_items": 2,
+      "qa_blocked": 2
+    },
+    {
+      "name": "My Nguyen",
+      "tasks": [],
+      "hours_logged": 11,
+      "hours_planned": 84,
+      "qa_items": 13,
+      "qa_blocked": 13
+    },
+    {
+      "name": "Hoach Bach",
+      "tasks": [],
+      "hours_logged": 1,
+      "hours_planned": 18,
+      "qa_items": 2,
+      "qa_blocked": 2
+    }
+  ],
+  "activity": [
+    {
+      "week_start": "2026-01-26",
+      "changes": 1,
+      "exact": 1,
+      "bounded": 0
+    },
+    {
+      "week_start": "2026-03-02",
+      "changes": 9,
+      "exact": 4,
+      "bounded": 5
+    },
+    {
+      "week_start": "2026-03-09",
+      "changes": 6,
+      "exact": 0,
+      "bounded": 6
+    },
+    {
+      "week_start": "2026-03-16",
+      "changes": 17,
+      "exact": 1,
+      "bounded": 16
+    }
+  ],
+  "burn": {
+    "planned_hours": 125,
+    "logged_hours": 28,
+    "remaining_hours": 97,
+    "stalled_from": "2026-03-18",
+    "points": [
+      {
+        "observed_at": "2026-03-02",
+        "logged_hours": 16,
+        "delta_hours": 0,
+        "items_added": 0,
+        "blocked_added": 0,
+        "changed": true
+      },
+      {
+        "observed_at": "2026-03-06",
+        "logged_hours": 22,
+        "delta_hours": 6,
+        "items_added": 0,
+        "blocked_added": 0,
+        "changed": true
+      },
+      {
+        "observed_at": "2026-03-10",
+        "logged_hours": 22,
+        "delta_hours": 0,
+        "items_added": 0,
+        "blocked_added": 0,
+        "changed": false
+      },
+      {
+        "observed_at": "2026-03-14",
+        "logged_hours": 28,
+        "delta_hours": 6,
+        "items_added": 0,
+        "blocked_added": 0,
+        "changed": true
+      },
+      {
+        "observed_at": "2026-03-18",
+        "logged_hours": 28,
+        "delta_hours": 0,
+        "items_added": 0,
+        "blocked_added": 0,
+        "changed": false
+      },
+      {
+        "observed_at": "2026-03-22",
+        "logged_hours": 28,
+        "delta_hours": 0,
+        "items_added": 10,
+        "blocked_added": 3,
+        "changed": true
+      }
+    ]
+  },
+  "window_start": "2026-01-12",
+  "window_end": "2026-07-02",
+  "total_hours": 28,
+  "has_effort_data": true
+}

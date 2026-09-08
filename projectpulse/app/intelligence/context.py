@@ -62,6 +62,13 @@ class DeliveryContext:
     tasks_not_started: int = 0
     tasks_with_baseline: int = 0
     baseline_coverage: float = 0.0
+    #: Hours between `generated_at` and the most recent successful sync of any
+    #: source, or -1 when nothing has ever synced. Not the age of the events
+    #: the data describes - the demo timeline is fixed in the past by design -
+    #: but of the sync itself. Feeds `intelligence.confidence`; -1 rather than
+    #: None because ZEN compares numbers, and a rule can test `< 0` for "never
+    #: synced" the same way it tests any other threshold.
+    data_age_hours: float = -1.0
     #: Tasks whose plan contradicts its own dependencies.
     tasks_inconsistent: int = 0
     #: The worst single case of slip the sheet does not yet show.
@@ -130,6 +137,7 @@ def build_context(
     rows_rejected: int = 0,
     stated_only_impact: ImpactReport | None = None,
     newly_blocked_qa: int = 0,
+    data_age_hours: float = -1.0,
 ) -> DeliveryContext:
     """Aggregate one project into the scalars the rules compare.
 
@@ -174,6 +182,7 @@ def build_context(
         tasks_not_started=sum(1 for t in tasks if _status_of(t) == "not started"),
         tasks_with_baseline=with_baseline,
         baseline_coverage=_ratio(with_baseline, len(tasks)),
+        data_age_hours=data_age_hours,
         tasks_inconsistent=len(impact.inconsistent()),
         max_propagated_days=max(propagated, default=0),
         max_recorded_slip_days=max(recorded, default=0),

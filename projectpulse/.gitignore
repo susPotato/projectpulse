@@ -6,3 +6,17 @@ __pycache__/
 .pytest_cache/
 pulse.db
 data/demo/*.xlsx
+
+# Trained model artefacts. Downloaded on request by `scripts.fetch_model`, never
+# committed - it is a third-party binary and the app treats its absence as a
+# complete state.
+models/
+
+# Runtime state a person edits, including an API key in plaintext.
+.pulse/
+
+# Local secrets - copy .env.example to .env and fill it in.
+.env
+
+# Screenshots from `python -m scripts.shots` - regenerate, never commit.
+shots/

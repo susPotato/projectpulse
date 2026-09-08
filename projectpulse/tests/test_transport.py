@@ -191,3 +191,36 @@ def test_a_fetched_sheet_carries_what_ingest_needs(tmp_path):
 
     assert isinstance(fetched, FetchedSheet)
     assert fetched.watched.file_name == WATCHED.file_name
+
+
+def test_default_transport_is_local_unless_switched_on(tmp_path):
+    """`PULSE_EXCEL_TRANSPORT` picks the source; local stays the default so
+    installing the `onedrive` extra never changes behaviour by itself."""
+    from app.ingest.sources.excel.source import _default_transport
+
+    source = _default_transport(session=object(), data_root=tmp_path)
+    assert isinstance(source, LocalFolderSource)
+    assert source.root == tmp_path
+
+
+def test_graph_transport_is_selected_when_configured(monkeypatch):
+    import dataclasses
+
+    from app.ingest.sources.excel.graph_source import GraphSheetSource
+    from app.ingest.sources.excel.source import _default_transport
+
+    # `settings` is a frozen dataclass - swap the module-level name for a
+    # variant instance rather than mutating a field on the shared one.
+    from app.config import settings as live_settings
+
+    switched = dataclasses.replace(
+        live_settings, excel_transport="graph", onedrive_folder="Documents/PP"
+    )
+    monkeypatch.setattr("app.ingest.sources.excel.source.settings", switched)
+
+    session = object()
+    source = _default_transport(session=session, data_root=None)
+
+    assert isinstance(source, GraphSheetSource)
+    assert source.folder == "Documents/PP"
+    assert source.session is session

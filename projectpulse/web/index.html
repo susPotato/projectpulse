@@ -8,6 +8,12 @@
          Schedule page and this app. Porting it to React would create a second
          one, and two implementations eventually draw two different pictures of
          one projection. -->
+    <!-- The app shell - rail, app bar, panel and board classes - is defined
+         once in `shell.css` and shared with the three hand-written pages. The
+         app must link it: without it `.rail` is unstyled and its `<svg>`
+         elements fall back to the CSS default 300x150, which pushed the whole
+         page off screen and photographed as a blank frame. -->
+    <link rel="stylesheet" href="/static/shell.css" />
     <link rel="stylesheet" href="/static/gantt.css" />
     <script src="/static/gantt.js"></script>
   </head>

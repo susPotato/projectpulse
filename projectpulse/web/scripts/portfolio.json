@@ -1,0 +1,32 @@
+{
+  "program_name": "Digital Transformation 2026",
+  "generated_at": "2026-09-08",
+  "projects": [
+    {
+      "project_id": "excel:Project:1:HRMS",
+      "name": "HRMS Platform",
+      "source_ids": [
+        "excel:Project:1:HRMS",
+        "jira:Project:1:HRMS"
+      ],
+      "band": "critical",
+      "worst_severity": "high",
+      "findings": 9,
+      "task_count": 10,
+      "committed_end": "2026-05-29",
+      "projected_end": "2026-07-02",
+      "days_late": 34,
+      "milestones_at_risk": 3,
+      "qa_blocked": 17,
+      "qa_count": 17,
+      "bands": {
+        "schedule": "critical",
+        "quality": "critical",
+        "qa": "critical",
+        "evidence": "watch"
+      },
+      "headline": "The plan cannot hold: 3 task(s) are dated earlier than their own dependencies allow, by up to 34 days.",
+      "depends_on_inferred_edges": true
+    }
+  ]
+}

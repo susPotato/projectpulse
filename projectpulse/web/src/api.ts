@@ -12,13 +12,30 @@ export type CausalLink = components["schemas"]["CausalLink"];
 export type RuleTrace = components["schemas"]["RuleTrace"];
 export type EvidenceRef = components["schemas"]["EvidenceRef"];
 export type DataQuality = components["schemas"]["DataQuality"];
+export type DeliveryConfidence = components["schemas"]["DeliveryConfidence"];
 
 export type ExplainBundle = components["schemas"]["ExplainBundle"];
 export type ForwardStep = components["schemas"]["ForwardStep"];
+export type ScenarioBundle = components["schemas"]["ScenarioBundle"];
+export type Scenario = components["schemas"]["Scenario"];
+export type PortfolioBundle = components["schemas"]["PortfolioBundle"];
+export type ProjectRow = components["schemas"]["ProjectRow"];
+export type TeamBundle = components["schemas"]["TeamBundle"];
+export type Member = components["schemas"]["Member"];
+export type BurnSeries = components["schemas"]["BurnSeries"];
+export type BurnPoint = components["schemas"]["BurnPoint"];
+export type ProgramBundle = components["schemas"]["ProgramBundle"];
 export type Calc = components["schemas"]["Calc"];
 export type Operand = components["schemas"]["Operand"];
 
 export type GanttBundle = components["schemas"]["GanttBundle"];
+
+export type RiskBundle = components["schemas"]["RiskBundle"];
+export type ChatMessage = components["schemas"]["ChatMessage"];
+export type ChatResponse = components["schemas"]["ChatResponse"];
+export type RiskOut = components["schemas"]["RiskOut"];
+export type RiskIn = components["schemas"]["RiskIn"];
+export type RiskMatrixCell = components["schemas"]["RiskMatrixCell"];
 
 /** What went wrong, in terms a reader can act on rather than a status code. */
 export interface ApiProblem {
@@ -64,6 +81,37 @@ export async function load<T>(path: string): Promise<T> {
   }
 
   return body as T;
+}
+
+/**
+ * The write half of `load` - same error shape, for the one screen in this
+ * app where a person's own data is being changed rather than the engine's
+ * findings being rendered (the risk register).
+ */
+export async function send<T>(
+  path: string,
+  method: "POST" | "PUT" | "DELETE",
+  body?: unknown,
+): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (error) {
+    throw { title: "Could not reach the server", detail: String(error) } satisfies ApiProblem;
+  }
+
+  if (!response.ok) {
+    const problem: unknown = await response.json().catch(() => null);
+    const detail = (problem as { detail?: string } | null)?.detail ?? `HTTP ${response.status}`;
+    throw { title: `${method} ${path} failed`, detail } satisfies ApiProblem;
+  }
+
+  if (response.status === 204) return undefined as T;
+  return (await response.json()) as T;
 }
 
 /** A dash, never a zero: unknown and "none" are different claims. */

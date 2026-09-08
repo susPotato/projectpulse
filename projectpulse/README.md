@@ -7,8 +7,10 @@ the language model only writes the sentences.
 Design: [`../ProjectPulseAI_Product_Design_v2.md`](../ProjectPulseAI_Product_Design_v2.md) ·
 Architecture: [`../ProjectPulseAI_Architecture.md`](../ProjectPulseAI_Architecture.md)
 
-**Status:** ingestion complete for both sources, and the ordering guard that makes
-causal claims possible. Rules, schedule math, narration and API to follow.
+**Status:** complete end to end - spreadsheets in, an `InsightBundle` out. Ingestion
+for both sources, the ordering guard that makes causal claims possible, the schedule
+engine, the rule table, the narration layer and four screens. Still to come: retrieval,
+a scheduler, and the five remaining screens.
 
 ---
 
@@ -32,7 +34,7 @@ python -m scripts.demo        # http://127.0.0.1:8000
 A small local page for watching the retriever work: which sheets are being watched
 and whether they have been edited since the last scan, what state changes came out,
 how precisely each is dated, how many pairs can actually be ordered, and which rows
-were refused. It polls every two seconds, so saving a workbook in Excel makes it say
+were refused. It polls every 15 seconds, so saving a workbook in Excel makes it say
 "edited - sync to ingest" without a reload.
 
 "Run whole tour" replays the four scans below in one click. The more convincing use
@@ -69,8 +71,77 @@ DATABASE_URL=sqlite:///pulse.db python -m scripts.sync init
 ```
 
 ```bash
-python -m pytest        # 56 tests, no database required
+python -m pytest        # 458 tests, no database required
 ```
+
+The narrative is written by a deterministic template. To have a language model
+phrase it instead - which changes no finding and no figure, because the draft is
+validated before any number is substituted into it:
+
+```bash
+python -m pip install -e ".[llm]"          # Claude   (or .[llm-openai] / .[llm-gemini])
+python -m scripts.sync insight --narrative --model
+python -m scripts.sync insight --narrative --model --provider openai
+```
+
+Claude, GPT and Gemini sit behind one seam - `(system, user) -> str` - so the
+validator, the token substitution and the template fallback are the same
+whichever answers. With no package and no credentials the template is served and
+the reason printed, so this is safe to leave off and safe to turn on.
+
+Running a self-hosted open model? Set the provider to `openai`, put your
+server's address in **Endpoint** (`http://localhost:11434/v1` for Ollama,
+whatever vLLM or LM Studio prints) and any dummy key. Nothing else changes:
+the same validator, the same substitution, the same fallback.
+
+Or do it in the app: **http://127.0.0.1:8000/settings** — pick the provider,
+paste a key, press **Test it**. It runs a real narration through the real
+validator and tells you which wrote the summary and, if it fell back, why.
+
+The key is stored in plaintext in `.pulse/narration.json` (gitignored), the same
+bargain as a `.env` file; an environment variable takes priority when it is
+blank. Settings can only be changed from the machine the app runs on.
+
+Also settable without the page: `PULSE_NARRATION=1`, `PULSE_NARRATION_PROVIDER`,
+`PULSE_NARRATION_MODEL`.
+
+### Files it hands back
+
+```bash
+python -m scripts.sync template --out templates    # blank .xlsx for a PM to fill in
+python -m scripts.sync report --out status.docx    # .docx status report
+```
+
+Also at `GET /api/template/{schedule|worklog}.xlsx` and `GET /api/report.docx`.
+
+The template is generated from the sheet contract, so the file handed out and the
+file the ingester understands are the same file - a test writes one and reads it
+back with the real reader. The report renders the same bundles the screens
+render and formats no number of its own.
+
+### Advisory duration bands (optional)
+
+```bash
+python -m pip install -e ".[ml,ml-fetch]"
+python -m scripts.fetch_model                      # ~a few MB, from Hugging Face
+python -m scripts.sync advise
+```
+
+Wraps `omaradly/jira-task-duration-classifier`. It returns `Short` / `Standard` /
+`Long-running` and **never a number of days**, and nothing under
+`app/intelligence/` is permitted to import it - a test walks the imports to make
+sure. Without the artefact the feature is simply absent.
+
+**Needs Python 3.12 or 3.13.** The published artefact was pickled by
+scikit-learn 1.6.x, which has no wheel for 3.14 - on a 3.14 venv the model
+downloads and then reports itself unloadable, naming the reason. The product is
+complete without it, which is why it is advisory and optional.
+
+### Deploying
+
+See [`DEPLOY.md`](DEPLOY.md). `Dockerfile` and `fly.toml` are checked in; the
+container entry point is `python -m scripts.serve`, which creates the schema,
+replays the demo timeline **only if the database is empty**, then serves.
 
 ---
 
@@ -171,8 +242,11 @@ tests/                      56 tests; differ, identity and ordering need no data
 
 ## Next
 
-1. `temporal/templates.py` + `chains.py` - match ordered pairs against named
-   hypotheses (environment delay -> QA blocked, and five more), so a chain is a
-   pattern a PM asked for rather than any two events that happen to be orderable.
-2. Rules (ZEN) and the schedule engine over the ingested data.
-3. `InsightBundle`, narration, validator, and the React insight route.
+1. One live model call. `narration/client.py` is built and its failure path is
+   verified, but no successful round trip has been made - there are no API
+   credentials on the machine it was written on.
+2. Retrieval over past projects (pgvector), so a finding can cite a precedent.
+   First on the cut list.
+3. A scheduler. `ingest/runner.py` already takes a Postgres advisory lock per
+   source, so a second instance joins an in-flight run rather than double-writing.
+4. The five remaining screens, still static mockups under `../Layout/`.

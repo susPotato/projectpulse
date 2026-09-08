@@ -473,18 +473,21 @@ def test_the_snapshot_says_it_is_a_snapshot_and_when():
     """Presenting frozen data as a live system is the dishonesty this avoids."""
     from scripts.publish import _snapshot_nav
 
-    rewritten = _snapshot_nav('<nav class="tabs">\n</nav>', "2026-09-07")
+    rewritten = _snapshot_nav('<nav class="rail"><a href="/">Console</a></nav>\\n<div class="appbar">\\n  <h1>Schedule</h1>\\n  <span class="spacer"></span>\\n</div>', "2026-09-07")
 
     assert "static snapshot" in rewritten
     assert "2026-09-07" in rewritten
     assert "runs locally" in rewritten
+    # In the app bar, not the rail: navigation is a 64px column now, and a
+    # sentence appended inside it would be squeezed to nothing.
+    assert rewritten.index("static snapshot") > rewritten.index('appbar')
 
 
 def test_the_snapshot_note_is_not_added_twice():
     """Publishing twice must not stack banners."""
     from scripts.publish import _snapshot_nav
 
-    once = _snapshot_nav('<nav class="tabs">\n</nav>', "2026-09-07")
+    once = _snapshot_nav('<nav class="rail"><a href="/">Console</a></nav>\\n<div class="appbar">\\n  <h1>Schedule</h1>\\n  <span class="spacer"></span>\\n</div>', "2026-09-07")
     twice = _snapshot_nav(once, "2026-09-08")
 
     assert twice.count("static snapshot") == 1
@@ -536,3 +539,113 @@ def test_immutable_caching_is_only_claimed_for_hashed_paths():
 
     source = (SCRIPTS / "publish.py").read_text(encoding="utf-8")
     assert "_version_assets(_snapshot_nav(" in source
+
+
+# --------------------------------------------------------------------------
+# `scripts.replay` deleting a database it was not asked to build
+# --------------------------------------------------------------------------
+
+
+def test_replay_only_deletes_the_database_it_builds():
+    """A regression test for a bug that destroyed data.
+
+    `replay` removed `--db` (default `pulse.db`) whatever `DATABASE_URL` said,
+    so building any other SQLite database silently deleted the default one. It
+    ate a populated `pulse.db` the first time `scripts.serve` seeded a different
+    file, and it would have taken a judge's demo data just as readily.
+    """
+    from pathlib import Path
+
+    from scripts.replay import REPO, sqlite_file_to_remove
+
+    # The case that caused the loss: a different SQLite target.
+    assert sqlite_file_to_remove("sqlite:///fresh.db", postgres=False) == (
+        REPO / "fresh.db"
+    )
+
+    # A server is never a file. This one mapping to a path would be catastrophic
+    # rather than merely annoying.
+    assert (
+        sqlite_file_to_remove("postgresql+psycopg://u:p@host/db", postgres=False)
+        is None
+    )
+    assert sqlite_file_to_remove("sqlite:///pulse.db", postgres=True) is None
+
+    # `sqlite://` with no path is in-memory - there is nothing to unlink.
+    assert sqlite_file_to_remove("sqlite://", postgres=False) is None
+
+    # An absolute path is respected rather than re-rooted under the repo.
+    absolute = Path("C:/tmp/x.db") if REPO.drive else Path("/tmp/x.db")
+    assert sqlite_file_to_remove(
+        f"sqlite:///{absolute}", postgres=False
+    ) == absolute
+
+
+def test_the_relabel_is_matched_by_href_not_by_label_text():
+    """The trap this closes.
+
+    The rewrite used to be a literal `.replace(">Retriever console<", ...)`.
+    Renaming that tab turned it into a silent no-op - the snapshot shipped with
+    a console link that cannot work on Pages - and the test above went on
+    passing, because "the old label is absent" is trivially true once the old
+    label is gone. Matching the `href` makes the label free to change.
+    """
+    from scripts.publish import _snapshot_nav
+
+    renamed = '<nav class="tabs">\n<a href="/">Console</a>\n</nav>'
+
+    rewritten = _snapshot_nav(renamed, "2026-09-07")
+
+    assert ">Architecture<" in rewritten
+    assert ">Console<" not in rewritten
+
+
+def test_a_tab_bar_with_tabs_but_no_root_link_fails_the_build():
+    """Loudly, rather than publishing a page whose first tab is dead."""
+    import pytest
+
+    from scripts.publish import _snapshot_nav
+
+    with pytest.raises(SystemExit) as caught:
+        _snapshot_nav(
+            '<nav class="tabs">\n<a href="/insight">Insight</a>\n</nav>', "2026-09-07"
+        )
+
+    assert "none link to" in str(caught.value)
+
+
+def test_the_react_pages_carry_no_static_nav_and_pass_through():
+    """They build their tab bar in JavaScript, so there is nothing to rewrite.
+
+    Asserted because the guard above must not start failing the build for the
+    two pages that legitimately have no `<nav class="tabs">`.
+    """
+    from scripts.publish import _snapshot_nav
+
+    react_page = '<div id="root"></div><script src="/static/app/x.js"></script>'
+
+    assert "Architecture" not in _snapshot_nav(react_page, "2026-09-07")
+
+
+def test_an_empty_tab_bar_is_not_treated_as_a_broken_one():
+    """A nav with no tabs has no dead console link to worry about.
+
+    This is the distinction the first version of the guard got wrong: it fired
+    on any static nav, which broke the two tests that check the freeze stamp.
+    """
+    from scripts.publish import _snapshot_nav
+
+    assert _snapshot_nav('<nav class="tabs">\n</nav>', "2026-09-07")
+
+
+def test_a_page_with_no_server_rendered_bar_is_left_alone():
+    """The React pages build their chrome in the bundle.
+
+    There is nothing to stamp, so the publisher must say nothing rather than
+    inject stray markup into a page it does not understand.
+    """
+    from scripts.publish import _snapshot_nav
+
+    react_page = '<div id="root"></div>'
+
+    assert _snapshot_nav(react_page, "2026-09-07") == react_page

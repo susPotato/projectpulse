@@ -8,9 +8,29 @@ and must not be hand-edited.
 
 ## Now
 
-**Idle.** Four tabs live and verified over HTTP. The Gantt is one shared component used by
-both the Schedule and Calculation tabs. Next per CLAUDE.md section 8 is `narration/client.py` (the LLM), then
-retrieval, then APScheduler.
+**Idle.** Seven screens live over HTTP behind the design's app shell - a left rail, an app
+bar with one real action per page, and within-project views on Insight. `/portfolio` is
+the Program screen. Insight opens on the delivery-outlook figure. Narration wired for three vendors behind one
+`Drafter` seam. Exports (blank .xlsx template, .docx status report), the advisory
+duration classifier, and container/Fly files all added. Next per CLAUDE.md section 8:
+one live model call, then deploy, then link the exports from the UI.
+
+Three things not verifiable here: **no vendor has completed a live model call** (no
+credentials), **the image has never been built** (no Docker daemon, and the host server
+is where it will be tested), and **the duration classifier cannot load on this machine**
+- it needs Python 3.12/3.13 and 3.14 is the only Python installed. See entry 21.
+The container *logic* is verified - `python -m scripts.serve --check` seeds an empty
+database and leaves a populated one alone. The classifier's feature frame is transcribed from the model's own
+serving code and round-tripped through a real sklearn pipeline built over those exact
+columns, which proves our contract and not theirs.
+
+Outstanding on the model path: **no vendor has completed a live call.** No credentials on
+this machine. Verified for all three: every kwarg is accepted by the installed SDK and the
+call reaches the network layer (dead local port, so nothing was sent anywhere). Unverified:
+response parsing, which a 401 never reaches. The *failure* path is verified end to end for
+all three - the template is served and the reason prints. Run
+`python -m scripts.sync insight --narrative --model --provider <name>` with a key to close
+it, and confirm the model id first for OpenAI and Gemini (those defaults are placeholders).
 
 ---
 
@@ -18,6 +38,437 @@ retrieval, then APScheduler.
 
 Newest first. Each entry names the functions that changed, so a reader can jump
 straight to them.
+
+### 30 - Program settings, the Team screen, and what the sheets cannot show
+Asked for a program settings tab, plus a burn chart, member calendar, productivity and
+prediction. Half of those the source data supports; the other half it does not, and the
+honest answer is a panel saying so rather than a chart of invented numbers.
+
+- **Program settings** answers the direct question: `/settings` is now tabbed -
+  **Narration / Sources / Rule table**. Sources shows the watched sheets, their last scan
+  and the project pairing; Rule table shows **all ten rules in full** with their
+  thresholds and rationales, tokens deliberately unsubstituted because the screen is
+  about the rule and not today's numbers. Read-only by decision: a rule table edited in a
+  browser has no review and no history, and every finding is defended by pointing at it.
+- **A third dropped-column bug, found by looking for effort.** `QaItem` had no `assignee`
+  and no `hours_spent`, though `WORKLOG_CONTRACT` reads both - the same gap `Task.phase`
+  had. There was literally **no effort data in the system**. Added and populated: 17 QA
+  items, 16 hours, 3 owners. The demo spine is unchanged (27 changes, 203/702, 9
+  findings).
+- **`/team`** - workload on one shared window (plan + the overrun the chain implies),
+  QA hours by owner, and what moved per week split by *precision*, which is the product's
+  own distinction. A real finding surfaced by the data: **nobody who owns a scheduled task
+  also owns a QA item**, so the page says "appears only on the worklog" rather than
+  drawing an empty bar and letting a reader infer idleness. Asserted.
+- **Refused, in writing on the page:** an effort burn-down (needs planned effort, which no
+  sheet has - and the actual hours carry no date, because `log_date` is *also* read and
+  dropped), productivity (needs both halves), and capacity (the bars are calendar span,
+  not how full someone's days are). Prediction already exists and is the forward pass.
+- **Two invisible-chart bugs, both caught by the screenshots and both the same shape as
+  the `shell.css` one:**
+  - `--viz-plan` / `--viz-over` were declared inside `.gantt`, so every bar on the Team
+    page resolved to nothing and the panels rendered as labels floating on emptiness.
+    Promoted to `:root` in `shell.css` - one meaning per hue across the app, values
+    unchanged so the validation still holds.
+  - The weekly columns had a percentage height against an auto-height parent, so every
+    one computed to zero. `h-full` on the wrapper.
+  - Also fixed: end labels on bars near the window's end pushed themselves off the panel,
+    the same mistake the Gantt already fixed once. Space reserved.
+- 5 more tests, 486 total.
+
+### 29 - The Program screen and the within-project views
+The two things I had twice said were "not built". Both are in.
+
+- **`/portfolio` - the design's Program screen.** Program status band, largest unrecorded
+  slip, needing-attention list, and the four-dimension heatmap. `pipeline.portfolio()`
+  folds `analyze_project` **per project** rather than aggregating a shortcut, so the
+  program view cannot disagree with the project view - it *is* the project view, folded.
+- **`app/scope.py`** - which source ids are one delivery project. Invariant 7 was
+  previously a literal `also = ["jira:Project:1:HRMS"]` inside the API route, which meant
+  a portfolio built from the `projects` table would have listed HRMS **twice**. One
+  definition now, and a test asserts the folding.
+- **Bands, not scores.** The design shows a health score of 68; this shows
+  critical / watch / healthy / **no_data**, with `worst_severity` naming the finding that
+  set it. `no_data` is its own band and never green - colouring unknown healthy is the
+  failure the whole product argues against, and the legend says so on the page.
+- **Within-project views on Insight** (Overview / Risk / Evidence) - the design's second
+  tab row. Only views with something behind them: Schedule and Quality have screens of
+  their own and are not repeated here as half-versions. Kept as state, not URLs, so there
+  is still one source of truth about which URLs exist.
+- **Three failures the screenshot check caught, and one it caused:**
+  - **`/portfolio` photographed as `{"detail":"Not Found"}`.** A `scripts.demo` that
+    failed to bind left an **older build** answering the port - the third time that trap
+    bit in one session. `shots` now checks each page's status *before* photographing it
+    and fails with the kill command, so a stale server is an error rather than a picture.
+  - **The Schedule page came back as its own "chart did not load" error.** Caused by
+    `shots` itself: six Chrome launches sharing the default profile contend for it. Each
+    shot gets a throwaway `--user-data-dir` now. The same shot taken alone was fine, which
+    is exactly how a flaky check teaches you to ignore it.
+  - **The rail injector deleted real copy.** `read-only - the PM edits in Excel` lived
+    inside the old tab bar and went with it. Restored to the app bar; it is the answer to
+    "why can I not drag a bar?".
+- 4 more tests, 481 total.
+
+### 28 - The app shell, which is what "that style" actually meant
+Told twice that the UI was not what we designed, and both times I was answering about
+the visual language when the complaint was about the **shell**. The design's most
+recognisable feature is a left icon rail with a top bar beside it, and I had skipped it -
+citing a `publish.py` coupling that I then fixed in entry 26. So the reason was stale and
+the gap was real.
+
+- **A left icon rail**, defined once in `shell.css` and used by all five pages. Inline SVG
+  on a 24px grid stroked with `currentColor`, so one icon definition follows the link's
+  state. It replaces the horizontal tab bar as navigation.
+- **An app bar with a real action.** The design's "Run AI Analysis" slot now holds
+  something that works: Insight offers **Download report**, which the `.docx` exporter
+  already produces. An action button that does nothing is worse than an empty slot.
+- **Three bugs found while doing it, two of them by the screenshot check:**
+  - **The React pages never linked `shell.css`.** They had duplicated the chrome in
+    Tailwind classes, so nothing needed it until the rail did. Unstyled `.rail` meant its
+    `<svg>` fell back to the CSS default **300x150**, which pushed the page off screen and
+    photographed as a **completely blank frame** - while `pytest` and `npm run smoke` both
+    passed, because server-side rendering never loads a stylesheet.
+  - **`.appbar .action svg` needed an ancestor the built pages do not have.** Their bar is
+    composed from Tailwind classes, so the download icon was unsized and rendered as a
+    black blob across the corner. Scoped to `.action` alone.
+  - **The injector corrupted a page.** Closing the new wrapper at the last `</div>` matched
+    one inside a JavaScript string in `settings.html`. It closes before `</body>` now - and
+    `gantt.html` turned out to have no `</body>` at all, which the assert caught rather
+    than silently mangling.
+- **The rail is duplicated across four files, so it is asserted**, not trusted: a test
+  compares every hand-written page's rail links against `Shell.tsx`'s TABS, checks each
+  page marks its own entry with `aria-current`, and checks the old tab bar is gone so no
+  page offers the same five links twice.
+- **The publisher's freeze note moved to the app bar.** Appended inside `</nav>` it would
+  now be squeezed into a 64px column. It matches the bar as a block and inserts before its
+  closing tag - the console page has several `<span class="spacer">` in its toolbar, so
+  anchoring on the first one put the note in the wrong row. Three tests repointed at the
+  page shape production actually has.
+- **Noted for next time:** on Git Bash, `--page /insight` needs `MSYS_NO_PATHCONV=1` or
+  MSYS rewrites it to a Windows path and the picture lands somewhere surprising.
+- 478 tests.
+
+### 27 - The UI check is a command now
+Noted that I kept flashing the server up and down to poke one URL with curl, and that
+"does it look like the template" was never actually being checked.
+
+- **`python -m scripts.shots`** photographs all five pages with headless Chrome or Edge -
+  whichever is already installed, so no Playwright and nothing to keep in sync. It starts
+  the app if nothing is listening and stops it again; if a server is already up it says
+  so, because a stale one will cheerfully be photographed instead.
+- **This immediately paid for itself.** Looking at the pictures found two things curl
+  could not: the evidence links rendered raw `file:///C:/Users/.../hrms_schedule.xlsx#Activities!row5`
+  paths wrapping over two lines, burying the one part a PM can act on - the breadcrumb is
+  the label now, the path is the link and the tooltip. And the settings page still said
+  the OpenAI and Gemini defaults were placeholders, which stopped being true in entry 23.
+- **Per-page window heights, not one tall value.** Photographing a short page in a
+  2200px window makes Chrome repeat the paint - the settings page came back with its
+  header twice, which reads exactly like a duplicate-render bug and is not one. Confirmed
+  by re-shooting at 900px: one header. The heights are per page with a comment saying why.
+- ⚠️ **Still visible and not fixed:** the Gantt shows a row labelled
+  `~anon-ef0576ffa2b2a0f2` - the internal identity key for a sheet row with no Task ID.
+  It should read as its title plus "no Task ID". Left alone deliberately at the end of a
+  long change; `entity_label` is shared by chains and findings, so it wants its own pass.
+- 474 tests.
+
+### 26 - Recovery scenarios, and both traps closed
+**Traps first**, since both would have failed silently.
+
+- **`publish.py` matched the console tab by label text.** `.replace(">Retriever console<",
+  ...)` meant renaming that tab turned the rewrite into a no-op and shipped a snapshot
+  with a dead console link - and the test went on passing, because "the old label is
+  absent" is trivially true once the old label is gone. It now matches by **`href="/"`**,
+  so the label is free to change, and a tab bar that *has* tabs but none pointing at `/`
+  fails the build. First version of that guard was too strict and broke the two
+  freeze-stamp tests by firing on an empty nav; it now distinguishes "no tabs" from "no
+  root tab".
+- **Tailwind span classes are now guarded two ways.** A source scan for
+  `md:col-span-${...}` (comments stripped - `Shell.tsx` documents the trap, and the
+  documentation contains the pattern it warns about), plus a check that every class in the
+  `SPAN` table is actually present in the **built** stylesheet. Verified the guard by
+  reintroducing the interpolation: it failed with the right message, then passed on revert.
+
+**Then the feature.** `intelligence/schedule/whatif.py` - recovery scenarios.
+
+- Cheap only because `project_schedule` is a pure function of (tasks, edges): a scenario
+  is copy, change one thing, re-run, diff. `_apply` builds new frozen dataclasses, so a
+  **simulation is never a mutation** and the app stays read-only.
+- **Two moves, both chosen because the forward pass honours them**: shorten a task, or
+  give a dependency negative lag (`FS-10d`). ⚠️ Switching `dep_type` to SS would have
+  re-run to an identical answer and reported zero days recovered - a wrong number that
+  looks computed.
+- **Fixed two defects in the first output.** It reported "recovers 37 of 34 days", because
+  compressing a task moves `project_end_planned` too, so a scenario compared against its
+  own plan flatters itself. Now `days_earlier` (vs doing nothing) and `days_late` (vs the
+  **original** commitment) are two separate subtractions. And three rows landing on the
+  same date with the same recovery looked like a broken sum, so equivalent outcomes
+  collapse to the simplest.
+- **A healthy plan yields no scenarios.** The first version happily offered to finish an
+  on-time project early - true arithmetic, wrong feature. Caught by its own test.
+- Served at `GET /api/scenarios`; panel on Insight priced in **dates and days**, never a
+  confidence percentage, with a "what this cannot tell you" block: feasibility is a
+  resource question and there is no allocation data.
+- 10 tests for the engine plus 5 for the traps; 473 total.
+
+### 25 - The app moved to the mockup's visual language
+Asked to start building in the design's style, and to build whatever real data can back.
+
+- **The shared chrome, changed in one place.** `shell.css` is used by the three
+  hand-written pages and `Shell.tsx` by the two built ones, so both got the same
+  treatment together - otherwise the app would have split into two looks.
+  - Folder tabs became an **underline strip**. The folder shape carried borders on three
+    sides and a notch in the rule below it, which at this density competed with the cards.
+  - An **app bar**: what this is, then what the data reflects, then the one action. It
+    replaces a bare `<h1>` plus a paragraph, because "as at when?" is asked of every
+    figure on a delivery screen and belongs in the chrome.
+  - `.microlabel`, `.panel` and a 12-column `.board` defined once - three pages had three
+    near-identical micro-label rules.
+- **Insight is now a board**, not a stack: the outlook panel (7 cols) beside the driving
+  path (5), then the AI-analysis panel across the full width, then findings.
+- **The AI-analysis panel** is the design's centrepiece and needed no new data - detected,
+  the chain, the evidence rows, the rule trace. Composed from the components the finding
+  cards already use, so there is still one definition of a chain, an evidence list and a
+  rule trace rather than a second implementation.
+  - It leads with the **best-evidenced** cause rather than the most severe. The panel's
+    claim is "here is why", so a weakly-linked coincidence at the top would undercut
+    everything under it.
+- **`Panel`'s column spans are spelled out in a lookup**, not interpolated: Tailwind scans
+  source text, so `md:col-span-${n}` compiles to no CSS at all and the board would have
+  silently collapsed to one column.
+- **Not built, and why:** the portfolio screen needs more than one analysed project, and
+  Recovery Scenarios needs the what-if engine - neither is a restyle. `design/` still
+  holds both as proposals.
+- Verified by smoke-rendering the real payload, then over HTTP that all five pages answer,
+  that the app bar and tab bar are on each hand-written page, and that the served bundle
+  hash carries the new copy.
+
+### 24 - The Insight page now leads with the number
+The mockups were a design canvas; nothing in the app had changed, which is why it still
+looked like the old version. This puts the best part of that design into the real page.
+
+- **A Delivery Outlook panel at the top of Insight**: the sheet says 2026-05-29, its own
+  dependencies imply 2026-07-02, +34 days nobody recorded. It links to the Calculation tab
+  rather than asking to be believed.
+- **A driving-path panel** underneath, in forward-pass order rather than sorted by size,
+  so it reads as a chain: WBS-108 origin, then +11d, +22d, +34d.
+- **A pressure row** from `bundle.context` - milestones at risk, QA blocked, tasks whose
+  dates cannot hold - reusing the existing `Stat`/`Stats` components rather than new ones.
+- **Reused rather than rebuilt.** The same figures already existed on the Calculation tab;
+  this is the same `ExplainBundle` rendered on the page a PM opens first.
+- **The hero hides itself when `project_slip_days <= 0`.** A healthy project showing a big
+  "+0 days" hero reads as alarming, which is the opposite of the point. Asserted.
+- **The projection is fetched separately and allowed to fail**, like the Calculation tab's
+  chart: no outlook panel rather than no findings.
+- Verified by rendering the real payload and grepping the output for the actual values
+  (`2026-05-29`, `2026-07-02`, `+34`, `+11d`, `origin`), then over HTTP that the served
+  bundle contains the new copy and both assets answer with the right content types.
+
+### 23 - Finishing Gemini, and a base URL
+- **Both default model ids were badly stale.** `gemini-2.5-pro` and `gpt-4.1` predate my
+  knowledge; checked against each vendor's current list and replaced with
+  `gemini-3.8-flash` and `gpt-5.6-terra` - the cost-balanced tier, because this job is
+  phrasing under a rule the validator enforces, not reasoning.
+- **Gemini is now proven end to end**, not merely inspected: a local server speaking the
+  real wire format, through the real adapter. The test asserts the *observed* request -
+  `/v1beta/models/<model>:generateContent` with `contents`, `generationConfig` and
+  `systemInstruction` - so the system prompt is confirmed to arrive as a system
+  instruction rather than a user turn.
+- **`ModelConfig.base_url`** added and wired through all three adapters (Gemini takes it
+  as `http_options`, the other two as `base_url`). It made the Gemini test possible
+  without monkeypatching the adapter, and it is the self-hosted story: verified live -
+  `provider=openai`, a local server, a dummy key, `source: model`.
+- **Surfaced as an Endpoint field on `/settings`**, so running an open model on your own
+  hardware is a form field rather than a fork.
+- **Hit the documented stale-uvicorn trap while verifying.** The new server failed to
+  bind, the old one answered with pre-edit code, and `base_url` looked like it was being
+  dropped. `pkill` does not work here; `Get-NetTCPConnection | Stop-Process` does. The
+  bind error was in the log the whole time, exactly as CLAUDE.md section 6 says.
+- 4 tests, 458 total.
+
+### 22 - Settings, and somewhere to put the key
+Asked for a base version to test, with the key configurable in the app. The gap was real:
+narration could only be turned on with environment variables, which is not a thing you
+try - it is a thing you configure and restart for.
+
+- **`narration/store.py`** is the mutable half of the configuration; `app.config` stays
+  the frozen deployment half and supplies the defaults it starts from. Persisted to
+  `.pulse/narration.json`, gitignored. `_narrator()` reads it per request, so a change
+  lands on the next reload.
+- **The page never receives the key.** It gets `api_key_set` plus a hint. A save that did
+  not retype the key keeps the stored one - the page could not send it back, so treating
+  absent as "clear" would wipe the credential on every unrelated edit. A key shorter than
+  12 characters is masked entirely, because a short secret is all suffix.
+- **Writes are loopback-only.** The endpoint accepts an API key. `scripts.demo` binds
+  127.0.0.1 so it always passes; a deployment behind a proxy is read-only with nothing to
+  configure and nothing to forget. Caught immediately in testing: `TestClient` presents as
+  `testclient`, so it got a 403 on the first try - which was the guard working.
+- **`POST /api/settings/test` is a real end-to-end call**, not a credential ping: same
+  brief, same eight-stage gate, same substitution. Verified against a local
+  `/v1/chat/completions` server - `source: model`, with 34 and 3 substituted by the server
+  after validation - and with no key at all, where it falls back and prints the reason.
+- **Hand-written HTML, not React**, deliberately: this is the page someone opens when the
+  model is *not* working, so it must not depend on the bundle being fresh.
+- **`ModelConfig.api_key`** plumbed through all three adapters, passed to the client
+  explicitly and *omitted* when blank - every SDK treats an absent argument as "read the
+  environment" and an explicit empty string as a blank credential, which fails confusingly
+  instead of falling back.
+- Settings tab added to all four existing pages; types regenerated and the bundle rebuilt
+  (the staleness test caught that on the first run).
+- 14 tests, 454 total.
+
+### 21 - The duration model, actually run at it
+Asked how the predict model is running. Answer at the time: it was not. Wired, tested
+and inert, because the artefact had never been downloaded. So I downloaded it.
+
+- **404 first.** `ARTEFACT_NAME` was used as both the local filename and the path inside
+  the Hugging Face repo, and the file lives under `models/` there. Now two constants,
+  and `fetch_model` takes the basename for the local write so it cannot land in
+  `models/models/`.
+- **Then it downloaded (373KB) and would not load.** Pickled by scikit-learn 1.6.1;
+  under 1.9 the unpickle dies on `_RemainderColsList`, a private class that no longer
+  exists. **The degradation path worked exactly as designed** - warning logged, None
+  returned, page and CLI unaffected - which is the one satisfying part of this.
+- **The pin is impossible on this machine.** scikit-learn 1.6.x publishes no wheel for
+  Python 3.14, so pip fell back to meson and there is no C compiler; `py -0` lists only
+  3.14. **The classifier needs Python 3.12 or 3.13.**
+- **Retraining locally: considered, rejected.** The repo's `training/model_training.py`
+  reads `final_cleaned.csv`, which is not published - what ships is a **100-row**
+  `final_cleaned_sample.csv`. A model refitted on 100 rows across three classes would
+  carry the same name and far less meaning. Shimming the missing private class was also
+  rejected: silently-altered behaviour in an advisory feature is worse than absence.
+- **Fixed two things this exposed.** The CLI printed "no duration model at <path>" while
+  the file sat right there, sending a reader to a download they had already done -
+  `try_load()` now returns the reason, and `_version_hint` appends the whole diagnosis
+  (pickling version, installed version, Python version, what to do). And the 373KB
+  artefact was **not gitignored**; `models/` is now.
+- **Made the extra installable.** `scikit-learn>=1.6,<1.7; python_version < "3.14"` -
+  without the marker, the documented `pip install -e ".[ml]"` fails on a meson error,
+  which reads as a broken project rather than an unsupported combination.
+- Net position: the product is complete without it, which is why it was built as an
+  optional advisory feature in the first place. 437 tests, unchanged.
+
+### 20 - Exports, the duration model, and a bug that ate a database
+Three requests in one pass: generate documents, generate the blank template, wire the
+Hugging Face duration model. Plus deploy files.
+
+- **The template is generated from the contract, not written.** `SheetContract` gained
+  `template_headers`; `exports/template.py` builds the workbook from it and
+  `gen_demo_data` now reads the same tuple instead of its own copy. The demo file and
+  the downloadable template are one sheet by construction - and `gen_demo_data`'s rows
+  are *positional*, so a drifted header list would have shifted every value one column
+  left, which still opens cleanly in Excel.
+- **The test is a round-trip through the real reader**, not an assertion about bytes: a
+  template that opens in Excel and that our own ingester refuses fails after a PM has
+  already done the work of filling it in. Header row found, key column present, zero
+  unknown headers, zero rejects.
+- **No example rows.** An example row comes back as a real task with a real id and the
+  identity resolver cannot know it was decorative. Guidance sits on a `Notes` tab, which
+  the reader never opens.
+- **The .docx report formats nothing.** Headlines are already substituted; everything
+  else goes through `assembler.format_fact`. `baseline_coverage` 0.4 renders as `40%`
+  because that is what the screen says - a report is the copy that gets quoted in a
+  steering meeting six weeks later, so it is the worst place to have a second formatter.
+  Pinned by a test that also asserts `"0.4"` is absent.
+- **Invariant 5 is now enforced rather than requested.** `tests/test_ml.py` walks the
+  AST of every module under `app/intelligence/` and fails if one imports `app.ml`, and
+  checks the reverse direction so the dependency cannot be inverted instead.
+- **The model's own output is a band, which is why it fits.** `Short` / `Standard` /
+  `Long-running`. It also returns probabilities; those are banded to a word before
+  leaving the module, so there is no float a caller could render onto a page whose whole
+  claim is that its figures are arithmetic.
+- **Transcribed, not guessed.** `issue_priority` is a *string* join
+  `issuetype__priority`, and the word ratio falls back to the summary count rather than
+  zero - both from the model's serving code. `inspect.signature` hid
+  `GenerateContentConfig`'s fields earlier in the day, so this time the derivation was
+  read rather than inferred. A real sklearn pipeline is fitted over the exact columns in
+  a test, which proves our contract and cannot prove theirs.
+- **Fixed a data-destroying bug in `scripts.replay`.** It unlinked `--db` (default
+  `pulse.db`) whatever `DATABASE_URL` said - so seeding `fresh.db` deleted a populated
+  `pulse.db`. It did exactly that, to me, on the first `scripts.serve` run. The decision
+  is now `sqlite_file_to_remove()`, extracted so it can be tested, and a Postgres URL
+  can never map to a filesystem path.
+- **`scripts.serve` is Python, not entrypoint.sh**, so the container's logic can be run
+  and verified on Windows. It seeds only an *empty* database - replaying over a seeded
+  one would append a second copy of the timeline and quietly double every state count.
+- **The ASCII rule caught `serve.py`** on the first full run: a warning emoji in a module
+  docstring, which `argparse(description=__doc__)` prints as `--help`.
+- 34 more tests, 437 total.
+
+### 19 - Three vendors behind one seam
+Asked for OpenAI and Gemini alongside Claude, since the vendor choice is not settled.
+This cost almost nothing, which was the test of whether entry 18 drew the seam in the
+right place.
+
+- **Moved the vendor code out of the fence.** `client.py` named Anthropic; it now names
+  nobody, and `providers.py` holds one adapter each for Claude, GPT and Gemini. A
+  `Drafter` is `(system, user) -> str`, and everything that decides whether the string is
+  usable happens outside it - so the validator, the substitution, the retry and the
+  template fallback are shared rather than reimplemented per vendor.
+- **`drafter_for(provider)` is the only entry point**, so a typo in
+  `PULSE_NARRATION_PROVIDER` raises at startup instead of quietly disabling narration and
+  presenting as "the model never worked".
+- **Each adapter raises rather than returning bad prose.** OpenAI's `content_filter` and
+  `refusal`, Gemini's `block_reason` and `SAFETY` finish, and a truncation or empty
+  completion from any of them all arrive as *successful* HTTP responses - so each is
+  turned into `NarrationUnavailable` and the known-good template wins.
+- **OpenAI goes through Chat Completions, not Responses**, so the same adapter covers
+  Azure OpenAI, a local vLLM or an internal FPT gateway via `OPENAI_BASE_URL`.
+- **Verified as far as it can be without keys:** installed all three SDKs and confirmed
+  each accepts every kwarg used, then pointed each at a dead local port and confirmed the
+  call reaches the network layer - so nothing was sent to any vendor. `google-genai` hid
+  `system_instruction` from `inspect.signature` (pydantic), which looked like a wrong
+  parameter until checked via `model_fields`. Response parsing stays unverified.
+- **Fixed a test that lied.** `test_the_fence_is_identical_whichever_vendor_answers`
+  passed three identical lambdas and asserted nothing about vendors. It now uses three
+  distinguishable drafters and asserts the fallback reason is byte-identical across them -
+  a guard against the tempting future edit, "Claude is reliable, skip a stage for it".
+- **Fixed a second test that depended on the venv.** The missing-SDK test asserted at
+  least one vendor package was absent, which stopped being true the moment I installed
+  them. It drives `_import` with a module that cannot exist instead.
+- 8 more tests, 403 total.
+
+### 18 - The narration model, and the fence around it
+`narration/client.py`. The last piece of the layer, and the one designed to be least
+trusted: `fallback.py` already writes a complete narrative and `validator.py` already
+refuses a bad draft, so all that was left for a model was phrasing.
+
+- **The problem worth solving was not the API call.** `Finding.headline` is fully
+  substituted - it has the numbers in it - so handing findings to a model would hand it
+  the digits and invite it to copy them. Reversing the substitution by searching the
+  finished headline for each value is guesswork the moment one value is a substring of
+  another ("5" inside "15"), and the digit rule is too load-bearing to rest on guesswork.
+- **Fixed by carrying the tokenised source instead.** `Finding.headline_template` /
+  `recommendation_template` are the prose as its rule author wrote it, tokens intact,
+  populated in `assembler.build_bundle`. The model rephrases those; it never sees
+  `headline`. Additive schema change - `npm run types` regenerated, bundle rebuilt.
+- **`build_brief` holds itself to the rule it imposes.** `_assert_no_quantity` runs
+  `validator.contains_quantity` over the finished prompt and refuses to send one with a
+  figure in it. `contains_quantity` is a new public helper *on the validator* so that the
+  brief and the gate share one definition of "contains a number" - two implementations
+  would eventually disagree, and the disagreement would be a prompt that looks safe.
+- **It caught its own author twice.** The system prompt's numbered rule list, and then
+  `[1] schedule_risk` as the finding label. Findings are now labelled A, B, C - a numbered
+  list is the obvious way to write it and every digit in a brief is a digit a model can
+  copy, with no way to know that one was only ever a bullet.
+- **Also fixed before it shipped:** `_SYSTEM.format(headings=...)` would have collapsed
+  every `{{token}}` example in the prompt to `{token}`, teaching the model the one syntax
+  the validator rejects. It is a `.replace` on a marker now.
+- **Facts are namespaced per finding** (`fa_`, `fb_`). Two findings routinely carry the
+  same field - `max_propagated_days` belongs to whichever asked for it - and a flat merge
+  would have quietly given both the same value.
+- **A rejected draft is retried once with the objections attached**, which is what the
+  validator running all eight stages after a failure was always for.
+- **Percentages are formatted by `assembler.format_fact`,** not here. The caveat panel
+  had its own `round(x * 100)` for a moment, which is invariant 1 breaking.
+- **`fallback_reason` is `None` when no model was configured.** It first read "no model
+  configured", which made the default configuration look like a failed one on every page.
+  It means a model was asked and its answer was not used, and nothing else.
+- **Added** `narrate()` (always returns prose), `anthropic_drafter()`, an optional
+  `narrator` argument on `analyze_project`, `PULSE_NARRATION` / `PULSE_NARRATION_MODEL`,
+  `sync insight --model`, and `anthropic` as an **optional** `llm` extra - imported lazily,
+  so a judge needs neither the package nor a key.
+- 13 tests, no network: the drafter is injected, so "a model that invents a number" is a
+  three-line stub rather than a recorded cassette. 395 total.
 
 ### 17 - Published pages were unstyled and chartless
 The local server and the published site looked completely different, and the published
@@ -329,6 +780,19 @@ _A small local console for watching the retriever work._
 - `api_gantt(project, also)` - Tasks, milestones and dependency edges on one shared time window.
 - `explain_page()` - The arithmetic behind every number.
 - `api_explain(project, also)` - The forward pass, with the working, for one project.
+- `template(kind)` - A blank input workbook, generated from the sheet contract itself.
+- `report(project, also)` - The status report, as a .docx a PM can attach to an email.
+- `portfolio_page()` - The program screen. Same bundle as /insight; the app picks by path.
+- `portfolio_api()` - Every delivery project in the program, ranked worst first.
+- `team_page()` - Who is carrying what, and what moved.
+- `team(project, also)` - Workload, effort and activity, from columns the sheets actually carry.
+- `program()` - Program configuration: watched sources, project pairing, the rule table.
+- `scenarios(project, also)` - What the schedule would do if one thing changed.
+- **`class NarrationSettingsIn`** - What the settings page may change.
+- `settings_page()` - Where a person turns narration on and pastes a key.
+- `read_settings()` - Current narration settings. Never includes the key itself.
+- `write_settings(request, body)` - 
+- `test_settings(request)` - Ask the configured model for a narrative, and report exactly what happened.
 - `insight(project, also)` - The whole intelligence layer for one project, as one object.
 
 ### `app/api/schemas/base.py`
@@ -364,6 +828,37 @@ _The contract between the intelligence layer and everything that displays it._
 - **`class DataQuality`** - What the analysis could not use.
 - **`class InsightBundle`** - Everything the insight screen renders, for one project at one moment. - methods: `top_severity`, `by_severity`
 
+### `app/api/schemas/portfolio.py`
+_The program view: every delivery project, ranked, with bands not scores._
+
+- **`class ProjectRow`** - One delivery project, whatever number of sources fed it.
+- **`class PortfolioBundle`** - Everything the program screen renders. - methods: `band`, `worst_slip`
+
+### `app/api/schemas/program.py`
+_Program-level configuration, read-only._
+
+- **`class WatchedSource`** - One sheet or payload folder the retriever looks at.
+- **`class ScopeEntry`** - Which source ids are one delivery project (invariant 7).
+- **`class RuleRow`** - One row of the decision table, as a reader would challenge it.
+- **`class ProgramBundle`** - 
+
+### `app/api/schemas/scenario.py`
+_What the schedule would do if one thing changed, ready to serve._
+
+- **`class ScenarioMove`** - One change to the plan, in terms a PM would recognise.
+- **`class Scenario`** - One re-run of the forward pass, and what it produced.
+- **`class ScenarioBundle`** - Every scenario for one project, plus what doing nothing costs. - methods: `best`
+
+### `app/api/schemas/team.py`
+_Who is carrying what, and what has moved - from data the sheets actually have._
+
+- **`class MemberTask`** - One dated task on someone's plate.
+- **`class Member`** - One person, and everything the sheets say they are carrying. - methods: `days_committed`
+- **`class ActivityWeek`** - What moved in one week, from the differ rather than from a report.
+- **`class BurnPoint`** - Cumulative logged effort as at one scan of the worklog.
+- **`class BurnSeries`** - Effort logged over time against the plan it is burning.
+- **`class TeamBundle`** - 
+
 ### `app/config.py`
 _Runtime configuration._
 
@@ -376,6 +871,19 @@ _Engine, session, and schema creation._
 - `session_scope()` - Transaction boundary. Commits on success, rolls back on any exception.
 - `create_all()` - 
 - `drop_all()` - 
+
+### `app/exports/report.py`
+_The status report a project manager circulates._
+
+- **`class ReportUnavailable`** - `python-docx` is not installed.
+- `build_report(bundle, *, explain, project_name, generated_at)` - The whole report as a `docx.Document`, ready to save.
+- `report_bytes(bundle, *, explain, project_name, generated_at)` - The report as bytes, for an HTTP response or a file write.
+
+### `app/exports/template.py`
+_The blank workbook we ask a project manager to fill in._
+
+- `template_workbook(kind)` - One blank workbook, ready to ingest once someone types in it.
+- `template_bytes(kind)` - The workbook as bytes, for an HTTP response or a file write.
 
 ### `app/ids.py`
 _Deterministic domain identifiers._
@@ -426,7 +934,7 @@ _Ingest one spreadsheet: read, identify, diff, persist._
 _Read a spreadsheet against a declared contract._
 
 - `normalize_header(text)` - 
-- **`class SheetContract`** - What we require of a sheet, and what we will read from it. - methods: `canonical_fields`
+- **`class SheetContract`** - What we require of a sheet, and what we will read from it. - methods: `canonical_fields`, `template_fields`
 - **`class SheetRead`** - 
 - `sha256_file(path)` - Content hash, used to skip a sheet that has not changed since last scan.
 - `read_sheet(path, sheet_name, contract)` - Read one sheet into canonical row dicts.
@@ -481,7 +989,7 @@ _The Jira source: collect -> extract -> convert, wired into the runner._
 ### `app/intelligence/assembler.py`
 _Where every number in the product is born, and the only place it is formatted._
 
-- `entity_label(entity_id)` - `excel:Task:1:WBS-108` -> `WBS-108`.
+- `entity_label(entity_id, *, title)` - `excel:Task:1:WBS-108` -> `WBS-108`.
 - `format_fact(name, value)` - One value, one formatting rule, applied everywhere.
 - `substitute(text, facts)` - Replace `{{tokens}}`, reporting any that could not be resolved.
 - `facts_for(record, names)` - Format exactly the fields a piece of prose refers to.
@@ -493,6 +1001,15 @@ _Everything the rules engine is allowed to see, flattened to scalars._
 
 - **`class DeliveryContext`** - ~30 scalars describing one project at one moment. - methods: `as_record`
 - `build_context(*, project_id, as_of, schedule, impact, chains, changes, qa_items, edges, rows_rejected, stated_only_impact, newly_blocked_qa)` - Aggregate one project into the scalars the rules compare.
+
+### `app/intelligence/effort.py`
+_Cumulative logged effort over time, from what the differ actually saw._
+
+- **`class Increment`** - One observed change to a logged-hours figure.
+- **`class Observation`** - One scan of the worklog sheet.
+- **`class BurnPoint`** - Cumulative logged effort as at one observation.
+- **`class BurnSeries`** - The chart, and the sentence that has to be true for it to be honest. - methods: `logged_hours`, `remaining_hours`, `stalled_from`
+- `burn_series(observations, increments, *, planned_hours, logged_hours, rows_added, blocked_added)` - Cumulative logged effort at each observation.
 
 ### `app/intelligence/explain.py`
 _Show the arithmetic as input, algorithm, output._
@@ -513,8 +1030,12 @@ _Run the whole intelligence layer for one project and return one bundle._
 - `load_tasks(session, project_ids)` - 
 - `load_edges(session, project_ids)` - 
 - `evidence_resolver(session)` - Turn a `_raw_data_id` into something a PM can look at.
-- `analyze_project(session, *, project_id, also, as_of, generated_at, table, engine)` - Everything the insight screen needs for one project.
+- `analyze_project(session, *, project_id, also, as_of, generated_at, table, engine, narrator)` - Everything the insight screen needs for one project.
 - `explain_project(session, *, project_id, also)` - The schedule arithmetic for one project, ready to serve.
+- `portfolio(session)` - Every delivery project in the program, ranked worst first.
+- `program_config(session)` - What the retriever reads, how projects are paired, and the rule table.
+- `team_project(session, *, project_id, also)` - Who is carrying what, and what moved - from real sheet columns only.
+- `scenarios_project(session, *, project_id, also)` - Recovery scenarios for one project.
 - `gantt_project(session, *, project_id, also)` - The schedule view for one project.
 
 ### `app/intelligence/rules/engine.py`
@@ -553,6 +1074,13 @@ _What a slip costs, by forward-scheduling the DAG._
 - `project_schedule(schedule)` - Forward-pass the DAG and report where the plan stops being consistent.
 - `answer_survives_stated_only(tasks, edges)` - Project twice - all edges, then human-stated edges only.
 
+### `app/intelligence/schedule/whatif.py`
+_Recovery scenarios: what the dependency graph would do if one thing changed._
+
+- **`class Move`** - One change to the plan, described in terms a PM would recognise.
+- **`class Scenario`** - One re-run of the forward pass, and what it produced. - methods: `is_worthwhile`, `outcome`
+- `recovery_scenarios(tasks, edges, *, stated_only, baseline, limit)` - Scenarios worth showing, best recovery first.
+
 ### `app/intelligence/temporal/chains.py`
 _Match provably-ordered pairs against the named hypotheses._
 
@@ -585,6 +1113,17 @@ _The named hypotheses a causal chain is allowed to claim._
 - `value_delta(old, new)` - Signed magnitude of a change - days for dates, units for numbers.
 - **`class ChangePattern`** - What a state change has to look like to play a role in a chain. - methods: `matches`
 - **`class CausalTemplate`** - One named hypothesis, and everything needed to test it. - methods: `matches`
+
+### `app/ml/duration.py`
+_The duration classifier. Advisory, and structurally unable to be otherwise._
+
+- **`class TaskFacts`** - What we can honestly say about a task, from either source. - methods: `real_feature_count`
+- **`class DurationAdvice`** - A band, a coarse confidence, and how much was actually known. - methods: `is_weak`
+- `build_features(facts)` - The model's feature frame for one task.
+- **`class DurationClassifier`** - A loaded pipeline, and the only thing allowed to touch it. - methods: `advise`
+- `model_path(explicit)` - Where the artefact is expected to be.
+- `try_load(path)` - The classifier and, when there isn't one, why not in a sentence.
+- `load_classifier(path)` - The classifier, or None - which is the ordinary case.
 
 ### `app/models/base.py`
 _Declarative base and the audit/provenance mixins every table inherits._
@@ -628,17 +1167,51 @@ _The tool layer: parsed into each source's own shape, before normalization._
 - **`class ToolJiraIssue`** - 
 - **`class ToolJiraChangelog`** - One field transition from a Jira changelog.
 
+### `app/narration/client.py`
+_The language model, fenced in on every side._
+
+- **`class BriefLeak`** - A prompt was built that contains a figure the model must not see.
+- **`class NarrationUnavailable`** - The model could not be reached, or answered with something unusable.
+- **`class NarrationBrief`** - Everything a model is given, and everything needed to check what it says.
+- **`class NarrationOutcome`** - What the caller writes onto the bundle.
+- `build_brief(bundle, *, max_findings)` - Turn a bundle into a prompt that contains no figure at all.
+- `narrate(bundle, *, drafter, attempts)` - The narrative for one bundle, and an honest account of where it came from.
+
 ### `app/narration/fallback.py`
 _Deterministic prose. The safety net, and the offline demo._
 
 - `render_narrative(bundle)` - The full narrative, as four labelled sections plus a caveat block.
+
+### `app/narration/providers.py`
+_One `Drafter` per vendor, and nothing else._
+
+- **`class ModelConfig`** - What to ask, and how patiently.
+- `drafter_for(provider, config)` - The adapter for one vendor, with its default model filled in.
+
+### `app/narration/store.py`
+_Narration settings a person can change while the app is running._
+
+- **`class NarrationSettings`** - What a person can change without restarting anything.
+- `state_path()` - 
+- `load()` - Current settings, falling back to `app.config` then to the defaults.
+- `save(current)` - Write settings to disk and return what was written.
+- `update(**changes)` - Change some fields and persist.
+- `public_view()` - What a browser is allowed to know. Never the key itself.
 
 ### `app/narration/validator.py`
 _The gate every model draft passes before a reader sees it._
 
 - **`class ValidationIssue`** - 
 - **`class ValidationResult`** -  - methods: `add`, `summary`
+- `contains_quantity(text)` - Whether `text` states a figure that must have come from the server.
 - `validate_draft(draft, *, facts, allowed_entities, required_tokens, has_causal_link)` - Run all eight stages against one model draft.
+
+### `app/scope.py`
+_Which source ids are one delivery project._
+
+- **`class DeliveryProject`** - One project as a delivery manager thinks of it, whatever fed it. - methods: `source_ids`
+- `find(canonical_id)` - 
+- `also_for(canonical_id)` - The other source ids for this project, for `analyze_project(also=...)`.
 
 ### `scripts/_bootstrap.py`
 _Make every `python -m scripts.*` command work, whatever Python you typed._
@@ -651,6 +1224,12 @@ _Make every `python -m scripts.*` command work, whatever Python you typed._
 _Start the retriever console._
 
 - `main()` - 
+
+### `scripts/fetch_model.py`
+_Download the advisory duration classifier from Hugging Face._
+
+- `fetch(destination, repo, filename)` - Copy one file out of a Hugging Face repo into `destination`.
+- `main(argv)` - 
 
 ### `scripts/gen_demo_data.py`
 _Write the demo spreadsheets at a given point in their history._
@@ -681,8 +1260,27 @@ _Bake a static snapshot of the app into `site/`._
 ### `scripts/replay.py`
 _Build the whole demo from nothing, in one command._
 
+- `sqlite_file_to_remove(target, *, postgres)` - The SQLite file this run is about to rebuild, if any.
 - `run(args, env)` - 
 - `main()` - 
+
+### `scripts/serve.py`
+_Start the app the way a server starts it: schema, seed if empty, then serve._
+
+- `database_url()` - 
+- `is_empty()` - Whether this database has no delivery data yet.
+- `seed()` - Replay the demo timeline into an empty database.
+- `main(argv)` - 
+
+### `scripts/shots.py`
+_Screenshot every page, so "does it still look right?" is a command._
+
+- `find_browser()` - 
+- `listening()` - 
+- `wait_for_server(timeout)` - 
+- `status_of(url)` - The HTTP status for a page, so a 404 is not photographed as a design.
+- `shoot(browser, url, out, *, dark, height)` - One page, one PNG. Returns whether a file appeared.
+- `main(argv)` - 
 
 ### `scripts/sync.py`
 _Drive the ingestion pipeline from the command line._
@@ -693,6 +1291,9 @@ _Drive the ingestion pipeline from the command line._
 - `cmd_rejects(_args)` - 
 - `cmd_runs(_args)` - 
 - `cmd_order(_args)` - Which orderings the data actually supports.
+- `cmd_template(args)` - Write the blank input workbooks a PM fills in.
+- `cmd_report(args)` - Write the .docx status report.
+- `cmd_advise(args)` - Show the advisory duration band for each task, if the model is present.
 - `cmd_insight(args)` - The whole intelligence layer, printed.
 - `cmd_explain(args)` - Show the arithmetic behind every number, so it can be checked by hand.
 - `main()` - 

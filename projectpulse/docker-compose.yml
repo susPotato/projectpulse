@@ -19,5 +19,24 @@ services:
       timeout: 3s
       retries: 20
 
+  # The app itself, built from the same Dockerfile the deploy target uses.
+  # Narration settings and the API key come from `.env` (copy `.env.example`,
+  # never committed); DATABASE_URL is fixed here to the `db` service's
+  # internal address, overriding whatever `.env` has for local, non-Docker
+  # runs - `environment:` wins over `env_file:` in Compose.
+  app:
+    build: .
+    container_name: projectpulse-app
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://pulse:pulse@db:5432/projectpulse
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pulse-pgdata:

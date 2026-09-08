@@ -13,19 +13,12 @@
   --g-group: 26px;
   --g-gutter: 250px;
 
-  /* The two data fills, validated with the dataviz validator against this
-     surface in both modes (all six checks PASS). The baseline is deliberately
-     not a third hue - it is a recessive reference in a chrome token, so it can
-     never be mistaken for a series. */
-  --viz-plan: #2a78d6;
-  --viz-over: #d03b3b;
-  --viz-base: var(--ink-3);
+  /* The two data fills now live at `:root` in `shell.css` - every page loads
+     it, and scoping them here made them resolve to nothing on any chart
+     outside this element. The baseline is deliberately not a third hue: it is
+     a recessive reference in a chrome token, so it can never be mistaken for
+     a series. */
 }
-
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) .gantt { --viz-plan: #3987e5; }
-}
-:root[data-theme="dark"] .gantt { --viz-plan: #3987e5; }
 
 /* --- frame ------------------------------------------------------------- */
 
