@@ -22,7 +22,14 @@ from app.api.schemas.portfolio import Band, ProjectRow
 
 
 class ProgramSummary(Response):
-    """One row on the Programs list (`Layout_Program` image12)."""
+    """One row on the Programs list (`Layout_Program` image12).
+
+    Carries its own `projects`, not just a count - the Programs list is the
+    single entry point into the Program -> Project hierarchy (there is no
+    separate "Project" tab, deliberately), so picking a project has to be
+    possible from the same page as picking a program, without a click into
+    the program's own dashboard first.
+    """
 
     id: str
     name: str
@@ -33,6 +40,7 @@ class ProgramSummary(Response):
     project_count: int = 0
     #: The worst of its projects' bands - same rule as `PortfolioBundle.band`.
     band: Band = "no_data"
+    projects: list[ProjectRow] = Field(default_factory=list)
 
 
 class ProgramListBundle(Response):

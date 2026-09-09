@@ -494,11 +494,13 @@ def portfolio(session) -> "PortfolioBundle":
 
 
 def list_programs(session) -> "ProgramListBundle":
-    """Every Program, with a project count and its worst project's band.
+    """Every Program, each with its own ranked projects.
 
-    Backs the Programs list (`Layout_Program` image12). A Program with no
-    projects yet - the deliberately-empty second seed row - is a legitimate
-    `no_data` row, not an error.
+    Backs the Programs list (`Layout_Program` image12) - the single entry
+    point into the Program -> Project hierarchy, so a project has to be
+    reachable from here directly, not only from within its program's own
+    dashboard. A Program with no projects yet - the deliberately-empty
+    second seed row - is a legitimate `no_data` row, not an error.
     """
     from datetime import date as _date
 
@@ -532,6 +534,7 @@ def list_programs(session) -> "ProgramListBundle":
         if not rows and program.name in names_with_projects:
             continue
         band = min((r.band for r in rows), key=lambda b: rank.get(b, 9), default="no_data")
+        ranked_rows = sorted(rows, key=lambda r: (rank.get(r.band, 9), -r.days_late, r.name))
         summaries.append(
             ProgramSummary(
                 id=program.id,
@@ -542,6 +545,7 @@ def list_programs(session) -> "ProgramListBundle":
                 end_date=program.end_date,
                 project_count=len(rows),
                 band=band,
+                projects=ranked_rows,
             )
         )
     summaries.sort(key=lambda p: (-p.project_count, p.name))

@@ -2064,6 +2064,12 @@ export interface components {
         /**
          * ProgramSummary
          * @description One row on the Programs list (`Layout_Program` image12).
+         *
+         *     Carries its own `projects`, not just a count - the Programs list is the
+         *     single entry point into the Program -> Project hierarchy (there is no
+         *     separate "Project" tab, deliberately), so picking a project has to be
+         *     possible from the same page as picking a program, without a click into
+         *     the program's own dashboard first.
          */
         ProgramSummary: {
             /** Id */
@@ -2089,6 +2095,8 @@ export interface components {
              * @enum {string}
              */
             band: "critical" | "watch" | "healthy" | "no_data";
+            /** Projects */
+            projects: components["schemas"]["ProjectRow"][];
         };
         /**
          * ProjectRow
