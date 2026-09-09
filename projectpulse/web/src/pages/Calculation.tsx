@@ -8,6 +8,7 @@ import {
   type ForwardStep,
   type GanttBundle,
   type Operand,
+  withProject,
 } from "../api";
 import { GanttChart } from "../components/GanttChart";
 import { Card, Note, Page, Problem, Section, Stat, Stats } from "../components/Shell";
@@ -343,10 +344,10 @@ export function Calculation() {
   const [problem, setProblem] = useState<ApiProblem | null>(null);
 
   useEffect(() => {
-    load<ExplainBundle>("/api/explain").then(setBundle, setProblem);
+    load<ExplainBundle>(withProject("/api/explain")).then(setBundle, setProblem);
     // The chart is orientation on this tab; the derivations are the point. A
     // failure here drops the chart rather than the page.
-    load<GanttBundle>("/api/gantt").then(setSchedule, () => setSchedule(null));
+    load<GanttBundle>(withProject("/api/gantt")).then(setSchedule, () => setSchedule(null));
   }, []);
 
   if (problem) {

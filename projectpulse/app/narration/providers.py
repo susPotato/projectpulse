@@ -91,6 +91,38 @@ EXTRAS = {
     "gemini": 'pip install -e ".[llm-gemini]"',
 }
 
+#: Model choices worth offering on the settings page, richest for `fpt` where
+#: they were actually measured (`scripts.probe_fpt --full`, 2026-09-09) rather
+#: than assumed. The other three vendors get their single `DEFAULT_MODELS`
+#: entry - no credential on this machine has ever probed an alternative for
+#: them, so listing more would be a guess dressed up as a recommendation.
+#:
+#: Only the eight FPT models that both hold a chat *and* pass the narration
+#: gate are here - `Qwen2.5-VL-7B-Instruct` answered but was refused for
+#: dropping a required figure, and the six speech/rerank/embedding models on
+#: the same permission screen cannot chat at all. Ordered fastest first.
+MODEL_OPTIONS: dict[str, tuple[dict, ...]] = {
+    "anthropic": (
+        {"id": DEFAULT_MODELS["anthropic"], "label": "claude-opus-5 (recommended)"},
+    ),
+    "openai": (
+        {"id": DEFAULT_MODELS["openai"], "label": "gpt-5.6-terra (recommended)"},
+    ),
+    "gemini": (
+        {"id": DEFAULT_MODELS["gemini"], "label": "gemini-3.8-flash (recommended)"},
+    ),
+    "fpt": (
+        {"id": "gemma-4-31B-it", "label": "gemma-4-31B-it (recommended - fastest, ~3s)"},
+        {"id": "gpt-oss-120b", "label": "gpt-oss-120b (~5s)"},
+        {"id": "gemma-3-27b-it", "label": "gemma-3-27b-it (~7s)"},
+        {"id": "Llama-3.3-70B-Instruct", "label": "Llama-3.3-70B-Instruct (~10s)"},
+        {"id": "GLM-5.2", "label": "GLM-5.2 (~12s, reasoning model)"},
+        {"id": "gemma-4-26B-A4B-it", "label": "gemma-4-26B-A4B-it (~13s)"},
+        {"id": "Qwen3.6-27B", "label": "Qwen3.6-27B (~29s, reasoning model)"},
+        {"id": "DeepSeek-V4-Flash", "label": "DeepSeek-V4-Flash (~74s, reasoning model)"},
+    ),
+}
+
 #: Per-vendor timeout, where the shared default is wrong. Measured, not guessed:
 #: the full narration brief against the FPT gateway takes **~60 seconds**, which
 #: is exactly `ModelConfig.timeout_seconds` - so the default produced a coin-flip

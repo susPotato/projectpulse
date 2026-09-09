@@ -1,14 +1,19 @@
 """The Excel source: which workbooks we watch, and what each sheet means.
 
-Scope configuration is declarative and lives here rather than in a database
-table, because for now the set of watched sheets changes with the code that
-understands them. When a PM can add their own sheet, this moves to a table and
-the shape stays the same.
+The demo's two sheets are a built-in seed; anything registered since -
+uploaded for a project via Settings > Sources - is layered on top of it and
+persisted as JSON in `PULSE_STATE_DIR`, the same pattern `app.scope` uses for
+the project pairing it names. It moved off the module-level constant this
+docstring used to describe as the eventual step "when a PM can add their own
+sheet" - that is now what an upload does.
 """
 
 from __future__ import annotations
 
+import json
 import logging
+import os
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -16,7 +21,7 @@ from app.config import settings
 from app.ingest.runner import register_source
 from app.ingest.sources.excel.convertor import convert_scope, ensure_project
 from app.ingest.sources.excel.ingest import ingest_sheet
-from app.ingest.sources.excel.reader import SCHEDULE_CONTRACT, WORKLOG_CONTRACT
+from app.ingest.sources.excel.reader import SCHEDULE_CONTRACT, WORKLOG_CONTRACT, SheetContract
 from app.ingest.sources.excel.transport import (
     LocalFolderSource,
     SheetSource,
@@ -27,18 +32,145 @@ log = logging.getLogger(__name__)
 
 SOURCE = "excel"
 
-__all__ = ["SOURCE", "WATCHED", "WatchedSheet", "run_excel_sync"]
+__all__ = [
+    "SOURCE",
+    "WATCHED",
+    "WatchedSheet",
+    "all_watched",
+    "register_watched",
+    "SHEET_KINDS",
+    "run_excel_sync",
+]
 
+_LOCK = threading.Lock()
+_FILENAME = "watched_sheets.json"
 
-#: The demo portfolio. A real deployment reads this from scope config.
-WATCHED: tuple[WatchedSheet, ...] = (
+#: What an upload may say a sheet is. Keyed by the same short name the
+#: settings-page form sends, valued by what `WatchedSheet` actually needs -
+#: kept in one place so the two can never name the sheet differently or point
+#: at the wrong contract.
+SHEET_KINDS: dict[str, tuple[str, SheetContract]] = {
+    "schedule": ("Activities", SCHEDULE_CONTRACT),
+    "worklog": ("Worklog", WORKLOG_CONTRACT),
+}
+
+#: The demo's sheets. A registered entry with the same `file_name`
+#: overrides one of these rather than duplicating it.
+#:
+#: SAIN and Example Project (`scripts/gen_portfolio_data.py`) are watched from
+#: the same connection as HRMS on purpose: `ensure_project` gives every
+#: project on one connection the same `excel:Program:1:DEFAULT` program row,
+#: so these three land under one real `Program` - "Digital Transformation
+#: 2026" - without any separate program-assignment step. That is the
+#: multi-project portfolio the Program dashboard rolls up.
+_SEED: tuple[WatchedSheet, ...] = (
     WatchedSheet(
         "hrms_schedule.xlsx", "Activities", SCHEDULE_CONTRACT, "excel:Project:1:HRMS"
     ),
     WatchedSheet(
         "hrms_worklog.xlsx", "Worklog", WORKLOG_CONTRACT, "excel:Project:1:HRMS"
     ),
+    WatchedSheet(
+        "sain_schedule.xlsx", "Activities", SCHEDULE_CONTRACT, "excel:Project:1:SAIN"
+    ),
+    WatchedSheet(
+        "sain_worklog.xlsx", "Worklog", WORKLOG_CONTRACT, "excel:Project:1:SAIN"
+    ),
+    WatchedSheet(
+        "example_project_schedule.xlsx", "Activities", SCHEDULE_CONTRACT,
+        "excel:Project:1:EXPROJ",
+    ),
+    WatchedSheet(
+        "example_project_worklog.xlsx", "Worklog", WORKLOG_CONTRACT,
+        "excel:Project:1:EXPROJ",
+    ),
 )
+
+#: Kept for the handful of call sites written before this became a registry -
+#: the seed only. Prefer `all_watched()`, which also sees what was uploaded.
+WATCHED = _SEED
+
+
+def _state_path() -> Path:
+    return Path(settings.state_dir) / _FILENAME
+
+
+def _load_registered() -> list[WatchedSheet]:
+    path = _state_path()
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return []
+    except (OSError, json.JSONDecodeError) as exc:
+        log.warning("ignoring unreadable watched-sheet registry at %s: %s", path, exc)
+        return []
+
+    if not isinstance(raw, list):
+        return []
+
+    out: list[WatchedSheet] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        file_name = str(item.get("file_name") or "")
+        kind = str(item.get("kind") or "")
+        project_id = str(item.get("project_id") or "")
+        spec = SHEET_KINDS.get(kind)
+        if not file_name or not project_id or spec is None:
+            continue
+        sheet_name, contract = spec
+        out.append(WatchedSheet(file_name, sheet_name, contract, project_id))
+    return out
+
+
+def all_watched() -> tuple[WatchedSheet, ...]:
+    """Every sheet this source reads: the demo seed, plus anything uploaded
+    since. Read fresh each call - a second worker process must see what the
+    first one wrote."""
+    merged: dict[str, WatchedSheet] = {w.file_name: w for w in _SEED}
+    for entry in _load_registered():
+        merged[entry.file_name] = entry
+    return tuple(merged.values())
+
+
+def register_watched(file_name: str, kind: str, project_id: str) -> WatchedSheet:
+    """Start watching one more sheet, keyed by its logical file name.
+
+    Called by `POST /api/sources/upload` after the bytes are written to
+    `settings.data_root / file_name` - the same folder `LocalFolderSource`
+    already reads, so nothing about the transport has to change for this
+    sheet to start syncing on the next run.
+    """
+    spec = SHEET_KINDS.get(kind)
+    if spec is None:
+        raise ValueError(f"unknown sheet kind {kind!r}; expected one of {list(SHEET_KINDS)}")
+    sheet_name, contract = spec
+    entry = WatchedSheet(file_name, sheet_name, contract, project_id)
+
+    with _LOCK:
+        registered = {w.file_name: w for w in _load_registered()}
+        registered[file_name] = entry
+        path = _state_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                [
+                    {
+                        "file_name": w.file_name,
+                        "kind": next(k for k, (sn, _c) in SHEET_KINDS.items() if sn == w.sheet_name),
+                        "project_id": w.project_id,
+                    }
+                    for w in registered.values()
+                ],
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        try:
+            os.chmod(path, 0o600)
+        except OSError:  # pragma: no cover - platform dependent
+            pass
+    return entry
 
 
 def _default_transport(session, data_root: Path | None) -> SheetSource:
@@ -73,7 +205,7 @@ def run_excel_sync(
     provider = sheet_source or _default_transport(session, data_root)
     totals = {"rows_ok": 0, "rows_rejected": 0, "changes_emitted": 0, "notes": []}
 
-    for watched in WATCHED:
+    for watched in all_watched():
         fetched = provider.fetch(watched)
         if fetched is None:
             totals["notes"].append(f"{watched.file_name}: not present, skipped")

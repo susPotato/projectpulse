@@ -1,0 +1,264 @@
+"""CRUD for dashboard layouts and tiles, and the catalogue they draw from.
+
+One dashboard per `(scope_type, scope_id)` - "New Dashboard" (Blank / Browse
+Templates / Create with AI, Phase D) replaces the current one rather than
+adding to a list. That is a deliberate round-1 simplification: no dashboard
+history, no picker between several saved layouts per scope - see the plan's
+cut line. `get_dashboard` auto-creates an empty one on first look, so the
+canvas always has something to render.
+"""
+
+from __future__ import annotations
+
+import json
+
+from sqlalchemy import select
+
+from app.api.schemas.dashboard import (
+    CatalogueBundle,
+    DashboardOut,
+    TileIn,
+    TileOut,
+    TileSpecOut,
+)
+from app.dashboard.catalogue import BY_KEY, CATALOGUE, TEMPLATES
+from app.models.dashboard import Dashboard, DashboardTile
+
+#: react-grid-layout's column count on every canvas - fixed rather than
+#: responsive, matching the mockup's fixed desktop canvas (design §15: the
+#: mockups are desktop-only).
+GRID_COLS = 12
+
+
+def auto_layout(tile_keys: list[str]) -> list[tuple[str, int, int, int, int]]:
+    """Pack tiles left-to-right, wrapping at `GRID_COLS` - used by Blank/
+    Template/the AI generator (Phase D), none of which ask a person or a
+    model to place x/y by hand. An unknown key is skipped rather than
+    raising, so a stale template or a generator response with one bad key
+    still produces a dashboard instead of a 500."""
+    x = y = row_h = 0
+    placed: list[tuple[str, int, int, int, int]] = []
+    for key in tile_keys:
+        spec = BY_KEY.get(key)
+        if spec is None:
+            continue
+        w, h = spec.default_w, spec.default_h
+        if x + w > GRID_COLS:
+            x, y = 0, y + row_h
+            row_h = 0
+        placed.append((key, x, y, w, h))
+        x += w
+        row_h = max(row_h, h)
+    return placed
+
+
+def get_catalogue() -> CatalogueBundle:
+    return CatalogueBundle(
+        tiles=[
+            TileSpecOut(
+                key=t.key, label=t.label, category=t.category,
+                description=t.description, scope=t.scope,
+                default_w=t.default_w, default_h=t.default_h,
+                preview=t.preview,
+            )
+            for t in CATALOGUE
+        ],
+        templates={name: list(keys) for name, keys in TEMPLATES.items()},
+    )
+
+
+def _to_tile_out(tile: DashboardTile) -> TileOut:
+    settings = None
+    if tile.settings_json:
+        try:
+            settings = json.loads(tile.settings_json)
+        except (TypeError, ValueError):
+            settings = None
+    return TileOut(
+        id=tile.id, tile_key=tile.tile_key, x=tile.x, y=tile.y, w=tile.w, h=tile.h,
+        settings=settings,
+    )
+
+
+def _to_dashboard_out(session, dashboard: Dashboard) -> DashboardOut:
+    tiles = session.scalars(
+        select(DashboardTile)
+        .where(DashboardTile.dashboard_id == dashboard.id)
+        .order_by(DashboardTile.id)
+    ).all()
+    return DashboardOut(
+        id=dashboard.id,
+        scope_type=dashboard.scope_type,  # type: ignore[arg-type]
+        scope_id=dashboard.scope_id,
+        name=dashboard.name,
+        source=dashboard.source,
+        ai_prompt=dashboard.ai_prompt,
+        tiles=[_to_tile_out(t) for t in tiles],
+    )
+
+
+def get_dashboard(session, scope_type: str, scope_id: str) -> DashboardOut:
+    dashboard = session.scalars(
+        select(Dashboard).where(
+            Dashboard.scope_type == scope_type, Dashboard.scope_id == scope_id
+        )
+    ).first()
+    if dashboard is None:
+        dashboard = Dashboard(scope_type=scope_type, scope_id=scope_id, name="Dashboard")
+        session.add(dashboard)
+        session.flush()
+    return _to_dashboard_out(session, dashboard)
+
+
+def _dashboard_row(session, scope_type: str, scope_id: str) -> Dashboard:
+    dashboard = session.scalars(
+        select(Dashboard).where(
+            Dashboard.scope_type == scope_type, Dashboard.scope_id == scope_id
+        )
+    ).first()
+    if dashboard is None:
+        dashboard = Dashboard(scope_type=scope_type, scope_id=scope_id)
+        session.add(dashboard)
+        session.flush()
+    return dashboard
+
+
+def replace_dashboard(
+    session,
+    scope_type: str,
+    scope_id: str,
+    *,
+    name: str | None = None,
+    source: str = "blank",
+    ai_prompt: str | None = None,
+    tiles: list[tuple[str, int, int, int, int]] = (),
+) -> DashboardOut:
+    """Reset this scope's dashboard: new name/source, and a fresh tile set.
+
+    `tiles` is `(tile_key, x, y, w, h)` tuples rather than `TileIn` so callers
+    that already computed a layout (Blank/Template/the generator) don't have
+    to round-trip through the API schema to call this.
+    """
+    dashboard = _dashboard_row(session, scope_type, scope_id)
+    dashboard.name = name or dashboard.name or "Dashboard"
+    dashboard.source = source
+    dashboard.ai_prompt = ai_prompt
+
+    for existing in session.scalars(
+        select(DashboardTile).where(DashboardTile.dashboard_id == dashboard.id)
+    ).all():
+        session.delete(existing)
+    session.flush()
+
+    for tile_key, x, y, w, h in tiles:
+        session.add(
+            DashboardTile(
+                dashboard_id=dashboard.id, tile_key=tile_key, x=x, y=y, w=w, h=h
+            )
+        )
+    session.flush()
+    return _to_dashboard_out(session, dashboard)
+
+
+def reset_blank(session, scope_type: str, scope_id: str) -> DashboardOut:
+    """Blank Canvas: an empty dashboard, ready for "+ Add Tiles"."""
+    return replace_dashboard(session, scope_type, scope_id, source="blank", tiles=[])
+
+
+def apply_template(
+    session, scope_type: str, scope_id: str, template: str
+) -> DashboardOut | None:
+    """Browse Templates: one of the canned starter sets in `catalogue.TEMPLATES`."""
+    keys = TEMPLATES.get(template)
+    if keys is None:
+        return None
+    scoped_keys = [k for k in keys if BY_KEY[k].scope == scope_type]
+    return replace_dashboard(
+        session, scope_type, scope_id,
+        name=template.replace("_", " ").title(),
+        source="template",
+        tiles=auto_layout(scoped_keys),
+    )
+
+
+def generate(
+    session, scope_type: str, scope_id: str, prompt: str, drafter
+) -> DashboardOut:
+    """Create with AI: the generator picks tiles, this places and saves them."""
+    from app.dashboard.generator import generate_layout
+
+    keys, fallback_reason = generate_layout(
+        prompt, scope_type, scope_id, drafter=drafter
+    )
+    out = replace_dashboard(
+        session, scope_type, scope_id,
+        name="Dashboard",
+        source="ai",
+        ai_prompt=prompt,
+        tiles=auto_layout(keys),
+    )
+    return out.model_copy(update={"fallback_reason": fallback_reason or None})
+
+
+def add_tile(session, scope_type: str, scope_id: str, data: TileIn) -> TileOut | None:
+    if not data.tile_key:
+        raise ValueError("tile_key is required")
+    dashboard = _dashboard_row(session, scope_type, scope_id)
+    tile = DashboardTile(
+        dashboard_id=dashboard.id,
+        tile_key=data.tile_key,
+        x=data.x or 0,
+        y=data.y or 0,
+        w=data.w or 4,
+        h=data.h or 3,
+        settings_json=json.dumps(data.settings) if data.settings is not None else None,
+    )
+    session.add(tile)
+    session.flush()
+    return _to_tile_out(tile)
+
+
+def update_tile(session, tile_id: int, data: TileIn) -> TileOut | None:
+    """Merge only the fields the request actually set - move, resize, or
+    change settings independently, same partial-update convention as
+    `app/risks/service.py:update_risk`."""
+    tile = session.get(DashboardTile, tile_id)
+    if tile is None:
+        return None
+
+    changes = data.model_dump(exclude_unset=True)
+    if "settings" in changes:
+        settings = changes.pop("settings")
+        tile.settings_json = json.dumps(settings) if settings is not None else None
+    for field, value in changes.items():
+        if value is not None:
+            setattr(tile, field, value)
+
+    session.flush()
+    return _to_tile_out(tile)
+
+
+def duplicate_tile(session, tile_id: int) -> TileOut | None:
+    tile = session.get(DashboardTile, tile_id)
+    if tile is None:
+        return None
+    copy = DashboardTile(
+        dashboard_id=tile.dashboard_id,
+        tile_key=tile.tile_key,
+        x=tile.x,
+        y=tile.y + tile.h,
+        w=tile.w,
+        h=tile.h,
+        settings_json=tile.settings_json,
+    )
+    session.add(copy)
+    session.flush()
+    return _to_tile_out(copy)
+
+
+def delete_tile(session, tile_id: int) -> bool:
+    tile = session.get(DashboardTile, tile_id)
+    if tile is None:
+        return False
+    session.delete(tile)
+    return True

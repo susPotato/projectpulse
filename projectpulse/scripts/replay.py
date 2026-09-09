@@ -120,6 +120,10 @@ def main() -> None:
 
     run(["scripts.sync", "init"], env)
     run(["scripts.gen_jira_data"], env)
+    # SAIN + Example Project: single-snapshot, on disk before the first excel
+    # sync below so that sync picks them up (and every later excel sync in the
+    # timeline just hash-skips them - nothing here edits between steps).
+    run(["scripts.gen_portfolio_data"], env)
 
     for step, source, when in TIMELINE:
         if step is not None:
@@ -129,6 +133,14 @@ def main() -> None:
             label = "no edit"
         run(["scripts.sync", "run", "--source", source, "--now", when], env)
         print(f"  {when}  {source:<12} {label}")
+
+    # Needs the Program/Project rows the syncs above just created - a second
+    # Program row (so the Programs list isn't hardcoded to one) and a small
+    # hand-authored Resource dataset (no source has allocation data yet - see
+    # CLAUDE.md section 8 "resources stays empty on purpose" - so this is
+    # seeded directly rather than through a fake collector, same reasoning as
+    # the Risk register in app/risks/).
+    run(["scripts.seed_extras"], env)
 
     # No DATABASE_URL prefix in these hints: every entry point bootstraps to the
     # same SQLite default, so telling people to set it again would imply the

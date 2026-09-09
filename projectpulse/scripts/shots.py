@@ -60,7 +60,10 @@ HOST, PORT = "127.0.0.1", 8000
 #: check exists to break.
 PAGES = (
     ("/portfolio", "program", 1200),
-    ("/", "console", 1500),
+    ("/programs", "programs", 900),
+    ("/programs/dashboard?program=excel:Program:1:DEFAULT", "program-dashboard", 1400),
+    ("/project/dashboard?project=excel:Project:1:HRMS", "project-dashboard", 1400),
+    ("/console", "console", 1500),
     ("/gantt", "schedule", 1100),
     ("/insight", "insight", 2500),
     ("/risk", "risk", 1600),

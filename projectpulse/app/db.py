@@ -13,7 +13,7 @@ from app.models.base import Base
 
 # Importing the model modules registers their tables on Base.metadata. Without
 # these, create_all() would produce an empty schema.
-from app.models import domain, narration, onedrive, raw, sync, tool  # noqa: F401
+from app.models import dashboard, domain, narration, onedrive, raw, sync, tool  # noqa: F401
 
 def _connect_args() -> dict:
     """Fail fast when the database is not there.

@@ -142,7 +142,7 @@ def update(**changes) -> NarrationSettings:
 
 def public_view() -> dict:
     """What a browser is allowed to know. Never the key itself."""
-    from app.narration.providers import DEFAULT_MODELS, PROVIDERS
+    from app.narration.providers import DEFAULT_MODELS, MODEL_OPTIONS, PROVIDERS
 
     current = load()
     return {
@@ -156,6 +156,7 @@ def public_view() -> dict:
         "api_key_from_environment": _env_key_present(current.provider),
         "providers": list(PROVIDERS),
         "default_models": dict(DEFAULT_MODELS),
+        "model_options": {k: [dict(o) for o in v] for k, v in MODEL_OPTIONS.items()},
         "stored_at": str(state_path()),
     }
 

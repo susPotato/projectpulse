@@ -25,6 +25,7 @@ import {
   type ReportBlock,
   type ReportOptions,
   type ReportPreview,
+  withProject,
 } from "../api";
 import { Board, Page, Panel, Problem } from "../components/Shell";
 
@@ -177,7 +178,7 @@ export function ReportsView({
               <a
                 key={format.id}
                 className="action"
-                href={`/api/report.${format.extension}?${query(chosen)}`}
+                href={withProject(`/api/report.${format.extension}?${query(chosen)}`)}
                 title={format.description}
               >
                 {format.label}
@@ -336,7 +337,7 @@ export function Reports() {
   const [building, setBuilding] = useState(false);
 
   useEffect(() => {
-    load<ReportOptions>("/api/report/options")
+    load<ReportOptions>(withProject("/api/report/options"))
       .then((next) => {
         setOptions(next);
         const first =
@@ -353,7 +354,7 @@ export function Reports() {
   useEffect(() => {
     if (!options) return;
     setBuilding(true);
-    load<ReportPreview>(`/api/report/preview?${query(chosen)}`)
+    load<ReportPreview>(withProject(`/api/report/preview?${query(chosen)}`))
       .then((next) => {
         setPreview(next);
         setProblem(null);

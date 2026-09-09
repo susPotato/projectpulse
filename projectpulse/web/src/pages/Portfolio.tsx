@@ -12,7 +12,13 @@
   against.
 */
 import { useEffect, useState } from "react";
-import { load, type ApiProblem, type PortfolioBundle, type ProjectRow } from "../api";
+import {
+  load,
+  projectLink,
+  type ApiProblem,
+  type PortfolioBundle,
+  type ProjectRow,
+} from "../api";
 import { Board, Page, Panel, Problem, Stat, Stats } from "../components/Shell";
 
 const DIMENSIONS = ["schedule", "quality", "qa", "evidence"] as const;
@@ -58,7 +64,7 @@ function Row({ row }: { row: ProjectRow }) {
     <>
       <div className="min-w-0">
         <a
-          href={`/insight?project=${encodeURIComponent(row.project_id)}`}
+          href={projectLink("/insight", row)}
           className="block truncate text-[13px] font-semibold no-underline hover:underline"
         >
           {row.name}

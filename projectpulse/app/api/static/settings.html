@@ -52,6 +52,10 @@
     code { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: 12px; }
     .pill { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px;
             padding: 2px 10px; border: 1px solid var(--rule); color: var(--ink-2); }
+    .key-row { position: relative; }
+    .key-row input { padding-right: 62px; font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; }
+    .key-toggle { position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+                  font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 4px; }
     /* Within-page views, the same shape as the React `SubTabs`. */
     .subtabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--rule);
                margin-bottom: 18px; }
@@ -76,7 +80,8 @@
 <nav class="rail" aria-label="Sections">
   <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
   <a href="/portfolio"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Program</span></a>
-  <a href="/"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Console</span></a>
+  <a href="/programs"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Programs</span></a>
+  <a href="/console"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Console</span></a>
   <a href="/gantt"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
   <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
   <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
@@ -112,6 +117,29 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
     return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
 
+  //  Model dropdown: each provider's recommended id(s) from `model_options`,
+  //  plus "Other" for a model that moved past what's listed here.
+  function isCustomModel() {
+    var opts = (state.model_options && state.model_options[state.provider]) || [];
+    if (!state.model) return false;
+    return !opts.some(function (o) { return o.id === state.model; });
+  }
+
+  function modelOptionsHtml() {
+    var s = state;
+    var opts = (s.model_options && s.model_options[s.provider]) || [];
+    var defaultId = s.default_models[s.provider] || "";
+    var custom = isCustomModel();
+    var html = '<option value=""' + (!s.model ? " selected" : "") + '>Provider default' +
+      (defaultId ? " (" + esc(defaultId) + ")" : "") + "</option>";
+    html += opts.map(function (o) {
+      var sel = !custom && !!s.model && o.id === s.model;
+      return '<option value="' + esc(o.id) + '"' + (sel ? " selected" : "") + ">" + esc(o.label) + "</option>";
+    }).join("");
+    html += '<option value="__custom__"' + (custom ? " selected" : "") + ">Other&hellip; (type a model id)</option>";
+    return html;
+  }
+
   function render() {
     var s = state;
     var opts = s.providers.map(function (p) {
@@ -138,11 +166,11 @@
         '<select id="provider">' + opts + "</select>" +
 
         '<label for="model">Model id</label>' +
-        '<input type="text" id="model" value="' + esc(s.model) + '" placeholder="' +
-          esc(s.default_models[s.provider] || "") + '">' +
-        '<div class="hint">Leave blank for this provider&rsquo;s default (<code>' +
-          esc(s.default_models[s.provider] || "-") + "</code>). " +
-          "Model names move; if the vendor rejects it, put the current id here.</div>" +
+        '<select id="model">' + modelOptionsHtml() + "</select>" +
+        '<input type="text" id="model-custom" value="' + esc(s.model) + '" placeholder="paste a model id" ' +
+          'style="margin-top:8px' + (isCustomModel() ? "" : ";display:none") + '">' +
+        '<div class="hint">Model names move; pick "Other" and paste the current id if the ' +
+          "vendor rejects the one shown.</div>" +
 
         '<label for="base">Endpoint <span style="color:var(--ink-3)">(optional)</span></label>' +
         '<input type="text" id="base" value="' + esc(s.base_url) + '" placeholder="the vendor&rsquo;s own endpoint">' +
@@ -151,9 +179,13 @@
           'selected, a local open model needs nothing else but a dummy key.</div>' +
 
         '<label for="key">API key &mdash; ' + keyLine + "</label>" +
-        '<input type="password" id="key" placeholder="' +
+        '<div class="key-row">' +
+          '<input type="password" id="key" placeholder="' +
           (s.api_key_set ? "leave blank to keep the saved key" : "paste a key") + '" autocomplete="off">' +
-        '<div class="hint">An environment variable takes priority when this is blank, ' +
+          '<button type="button" id="key-toggle" class="key-toggle">Show</button>' +
+        "</div>" +
+        '<div class="hint">Hidden by default &mdash; click Show to check what you pasted. ' +
+          "An environment variable takes priority when this is blank, " +
           'so a proper deployment never needs to store one here.</div>' +
 
         '<div class="warn">Saving a key writes it <strong>in plaintext</strong> to ' +
@@ -175,6 +207,18 @@
       state.api_key_from_environment = false;  // re-fetched on save
       render();
     });
+    document.getElementById("model").addEventListener("change", function (e) {
+      var custom = document.getElementById("model-custom");
+      custom.style.display = e.target.value === "__custom__" ? "" : "none";
+      if (e.target.value !== "__custom__") state.model = e.target.value;
+      if (e.target.value === "__custom__") custom.focus();
+    });
+    document.getElementById("key-toggle").addEventListener("click", function () {
+      var key = document.getElementById("key");
+      var showing = key.type === "text";
+      key.type = showing ? "password" : "text";
+      this.textContent = showing ? "Show" : "Hide";
+    });
     document.getElementById("save").addEventListener("click", save);
     document.getElementById("test").addEventListener("click", test);
   }
@@ -188,10 +232,14 @@
 
   function save() {
     var key = document.getElementById("key").value;
+    var modelSel = document.getElementById("model").value;
+    var model = modelSel === "__custom__"
+      ? document.getElementById("model-custom").value.trim()
+      : modelSel;
     var body = {
       enabled: document.getElementById("enabled").value === "1",
       provider: document.getElementById("provider").value,
-      model: document.getElementById("model").value.trim(),
+      model: model,
       base_url: document.getElementById("base").value.trim()
     };
     // Only send a key when one was typed - the page never had the real one.
@@ -275,7 +323,34 @@
         "</code></td><td>" + also + "</td></tr>";
     }).join("");
 
+    var projectOptions = program.scope.map(function (p) {
+      return '<option value="' + esc(p.canonical_id) + '">' + esc(p.name) + "</option>";
+    }).join("");
+
     programBox.innerHTML =
+      '<div class="card"><div class="lbl">Upload a document</div>' +
+      '<div class="hint" style="margin:6px 0 12px">The alternative to the OneDrive-synced folder below ' +
+      "&mdash; the only way to add data on a deployed host, which has no such folder to sync. " +
+      "Ingests through the same reader, differ and rules as everything else.</div>" +
+      '<label for="up-target">Project</label>' +
+      '<select id="up-target">' +
+        '<option value="__new__">New project&hellip;</option>' +
+        projectOptions +
+      "</select>" +
+      '<input type="text" id="up-name" placeholder="project name" style="margin-top:8px">' +
+      '<label for="up-kind">Sheet</label>' +
+      '<select id="up-kind">' +
+        '<option value="schedule">Schedule (Activities)</option>' +
+        '<option value="worklog">Worklog</option>' +
+      "</select>" +
+      '<label for="up-file">Workbook</label>' +
+      '<input type="file" id="up-file" accept=".xlsx,.xlsm">' +
+      '<div class="row" style="margin-top:14px">' +
+        '<button class="primary" id="up-submit">Upload &amp; sync</button>' +
+        '<span id="up-status" class="hint" style="margin:0"></span>' +
+      "</div>" +
+      '<div id="up-result"></div>' +
+      "</div>" +
       '<div class="card"><div class="lbl">Watched sources</div>' +
       '<div class="hint" style="margin:6px 0 12px">Read from <code>' + esc(program.data_root) +
       "</code>. A missing file is a note, not a failure &mdash; someone has not uploaded this week&rsquo;s sheet yet.</div>" +
@@ -287,6 +362,89 @@
       "could never explain a spreadsheet observation.</div>" +
       '<table class="grid"><tr><th>Project</th><th>Canonical id</th><th>Also known as</th></tr>' +
       scope + "</table></div>";
+
+    var target = document.getElementById("up-target");
+    var nameField = document.getElementById("up-name");
+    function syncNameField() {
+      nameField.style.display = target.value === "__new__" ? "" : "none";
+    }
+    target.addEventListener("change", syncNameField);
+    syncNameField();
+
+    document.getElementById("up-submit").addEventListener("click", uploadSource);
+  }
+
+  function uploadSource() {
+    var statusEl = document.getElementById("up-status");
+    var resultEl = document.getElementById("up-result");
+    var fileInput = document.getElementById("up-file");
+    var target = document.getElementById("up-target").value;
+    var kind = document.getElementById("up-kind").value;
+    var name = document.getElementById("up-name").value.trim();
+
+    if (!fileInput.files.length) {
+      statusEl.className = "hint bad";
+      statusEl.textContent = "Choose a workbook first.";
+      return;
+    }
+    if (target === "__new__" && !name) {
+      statusEl.className = "hint bad";
+      statusEl.textContent = "Name the new project first.";
+      return;
+    }
+
+    var body = new FormData();
+    body.append("file", fileInput.files[0]);
+    body.append("sheet_kind", kind);
+    if (target === "__new__") {
+      body.append("project_name", name);
+    } else {
+      body.append("project_id", target);
+    }
+
+    statusEl.className = "hint";
+    statusEl.textContent = "Uploading and syncing…";
+    resultEl.innerHTML = "";
+    document.getElementById("up-submit").disabled = true;
+
+    fetch("/api/sources/upload", { method: "POST", body: body })
+      .then(function (r) {
+        return r.json().then(function (j) {
+          if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
+          return j;
+        });
+      })
+      .then(function (j) {
+        if (!j.ok) {
+          statusEl.textContent = "";
+          resultEl.innerHTML = '<div class="hint bad" style="margin-top:8px">' + esc(j.error) + "</div>";
+          return;
+        }
+        // Refresh first - it replaces this whole card, `up-result` included -
+        // then write the outcome into the card that replacement just made.
+        return loadProgram().then(function () {
+          var freshResult = document.getElementById("up-result");
+          var freshStatus = document.getElementById("up-status");
+          if (freshStatus) freshStatus.textContent = "";
+          if (!freshResult) return;
+          var notes = (j.notes || []).map(function (n) {
+            return "<div>" + esc(n) + "</div>";
+          }).join("");
+          freshResult.innerHTML =
+            '<div class="hint" style="margin-top:10px"><span class="ok">' + esc(j.project_name) +
+            "</span> &middot; " + j.rows_ok + " row(s), " + j.changes_emitted + " change(s)" +
+            (j.rows_rejected ? ", " + j.rows_rejected + " rejected" : "") + "</div>" +
+            '<div class="hint" style="margin-top:4px">' + notes + "</div>";
+        });
+      })
+      .catch(function (e) {
+        statusEl.textContent = "";
+        resultEl.innerHTML = '<div class="hint bad" style="margin-top:8px">' + esc(e.message) + "</div>";
+      })
+      .then(function () {
+        var submit = document.getElementById("up-submit");
+        if (submit) submit.disabled = false;
+      });
   }
 
   function renderRules() {
@@ -345,11 +503,21 @@
 
   /* Fetched separately and allowed to fail: a database that is down costs the
      two program tabs, never the narration form - which is the page someone
-     opens precisely when something else is broken. */
-  fetch("/api/program")
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) { program = j; })
-    .catch(function () { program = null; });
+     opens precisely when something else is broken. Also called after a
+     successful upload, so the sources table and project pairing reflect it
+     without a reload. */
+  function loadProgram() {
+    return fetch("/api/program")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        program = j;
+        if (view === "sources") renderSources();
+        if (view === "rules") renderRules();
+      })
+      .catch(function () { program = null; });
+  }
+
+  loadProgram();
 })();
 </script>
 </main>

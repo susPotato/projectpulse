@@ -27,6 +27,56 @@
       },
       "headline": "The plan cannot hold: 3 task(s) are dated earlier than their own dependencies allow, by up to 34 days.",
       "depends_on_inferred_edges": true
+    },
+    {
+      "project_id": "excel:Project:1:EXPROJ",
+      "name": "Example Project",
+      "source_ids": [
+        "excel:Project:1:EXPROJ"
+      ],
+      "band": "healthy",
+      "worst_severity": null,
+      "findings": 0,
+      "task_count": 3,
+      "committed_end": "2026-04-02",
+      "projected_end": "2026-04-02",
+      "days_late": 0,
+      "milestones_at_risk": 0,
+      "qa_blocked": 0,
+      "qa_count": 1,
+      "bands": {
+        "schedule": "healthy",
+        "quality": "healthy",
+        "qa": "healthy",
+        "evidence": "healthy"
+      },
+      "headline": null,
+      "depends_on_inferred_edges": false
+    },
+    {
+      "project_id": "excel:Project:1:SAIN",
+      "name": "SAIN",
+      "source_ids": [
+        "excel:Project:1:SAIN"
+      ],
+      "band": "healthy",
+      "worst_severity": null,
+      "findings": 0,
+      "task_count": 5,
+      "committed_end": "2026-04-06",
+      "projected_end": "2026-04-06",
+      "days_late": 0,
+      "milestones_at_risk": 0,
+      "qa_blocked": 0,
+      "qa_count": 2,
+      "bands": {
+        "schedule": "healthy",
+        "quality": "healthy",
+        "qa": "healthy",
+        "evidence": "healthy"
+      },
+      "headline": null,
+      "depends_on_inferred_edges": false
     }
   ]
 }

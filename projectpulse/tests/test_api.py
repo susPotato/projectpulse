@@ -532,9 +532,13 @@ def test_the_portfolio_folds_source_ids_into_one_row(client, seeded):
 
     bundle = PortfolioBundle.model_validate(client.get("/api/portfolio").json())
 
+    # Rows are ranked worst-first (see `portfolio()`), not seed order - the
+    # portfolio now holds more than one project (SAIN, Example Project
+    # alongside HRMS), so match by id instead of a positional zip.
     assert len(bundle.projects) == len(PORTFOLIO)
-    for row, entry in zip(bundle.projects, PORTFOLIO):
-        assert set(row.source_ids) == set(entry.source_ids)
+    by_id = {row.project_id: row for row in bundle.projects}
+    for entry in PORTFOLIO:
+        assert set(by_id[entry.canonical_id].source_ids) == set(entry.source_ids)
 
 
 def test_a_project_with_no_data_is_never_green(client):

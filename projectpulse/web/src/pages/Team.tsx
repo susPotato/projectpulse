@@ -27,6 +27,7 @@ import {
   type BurnSeries,
   type Member,
   type TeamBundle,
+  withProject,
 } from "../api";
 import { Board, Card, Page, Panel, Problem, Section, Stat, Stats } from "../components/Shell";
 
@@ -569,7 +570,7 @@ export function Team() {
   const [problem, setProblem] = useState<ApiProblem | null>(null);
 
   useEffect(() => {
-    load<TeamBundle>("/api/team").then(setBundle, setProblem);
+    load<TeamBundle>(withProject("/api/team")).then(setBundle, setProblem);
   }, []);
 
   if (problem) {

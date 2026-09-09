@@ -461,19 +461,23 @@ def test_the_snapshot_relabels_the_tab_that_cannot_work_statically():
     """The retriever console POSTs; there is no server on Pages to POST to."""
     from scripts.publish import _snapshot_nav
 
-    source = '<nav class="tabs">\n<a href="/">Retriever console</a>\n</nav>'
+    source = '<nav class="tabs">\n<a href="/console">Retriever console</a>\n</nav>'
 
     rewritten = _snapshot_nav(source, "2026-09-07")
 
     assert ">Architecture<" in rewritten
     assert "Retriever console" not in rewritten
+    # The href moves too: `/console` has no server to POST to on Pages, and
+    # `/` is where the architecture page actually lives there.
+    assert 'href="/"' in rewritten
+    assert "/console" not in rewritten
 
 
 def test_the_snapshot_says_it_is_a_snapshot_and_when():
     """Presenting frozen data as a live system is the dishonesty this avoids."""
     from scripts.publish import _snapshot_nav
 
-    rewritten = _snapshot_nav('<nav class="rail"><a href="/">Console</a></nav>\\n<div class="appbar">\\n  <h1>Schedule</h1>\\n  <span class="spacer"></span>\\n</div>', "2026-09-07")
+    rewritten = _snapshot_nav('<nav class="rail"><a href="/console">Console</a></nav>\\n<div class="appbar">\\n  <h1>Schedule</h1>\\n  <span class="spacer"></span>\\n</div>', "2026-09-07")
 
     assert "static snapshot" in rewritten
     assert "2026-09-07" in rewritten
@@ -487,7 +491,7 @@ def test_the_snapshot_note_is_not_added_twice():
     """Publishing twice must not stack banners."""
     from scripts.publish import _snapshot_nav
 
-    once = _snapshot_nav('<nav class="rail"><a href="/">Console</a></nav>\\n<div class="appbar">\\n  <h1>Schedule</h1>\\n  <span class="spacer"></span>\\n</div>', "2026-09-07")
+    once = _snapshot_nav('<nav class="rail"><a href="/console">Console</a></nav>\\n<div class="appbar">\\n  <h1>Schedule</h1>\\n  <span class="spacer"></span>\\n</div>', "2026-09-07")
     twice = _snapshot_nav(once, "2026-09-08")
 
     assert twice.count("static snapshot") == 1
@@ -592,7 +596,7 @@ def test_the_relabel_is_matched_by_href_not_by_label_text():
     """
     from scripts.publish import _snapshot_nav
 
-    renamed = '<nav class="tabs">\n<a href="/">Console</a>\n</nav>'
+    renamed = '<nav class="tabs">\n<a href="/console">Console</a>\n</nav>'
 
     rewritten = _snapshot_nav(renamed, "2026-09-07")
 

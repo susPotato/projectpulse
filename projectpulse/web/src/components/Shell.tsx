@@ -5,7 +5,14 @@
   differ in body and agree on everything around it - and the tab bar must agree
   across the *static* pages too, so its links are spelled out here once.
 */
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import {
+  currentProject,
+  load,
+  projectLink,
+  type PortfolioBundle,
+  type ProjectRow,
+} from "../api";
 
 /* One list, and the hand-written pages carry the same one. `tests/test_api.py`
    asserts they match, because three copies of a nav is how the six original
@@ -15,7 +22,8 @@ import type { ReactNode } from "react";
    `href`, not by what it is called. */
 const TABS = [
   { href: "/portfolio", label: "Program" },
-  { href: "/", label: "Console" },
+  { href: "/programs", label: "Programs" },
+  { href: "/console", label: "Console" },
   { href: "/gantt", label: "Schedule" },
   { href: "/insight", label: "Insight" },
   { href: "/risk", label: "Risk" },
@@ -36,7 +44,15 @@ const ICONS: Record<string, ReactNode> = {
       <path d="m7 15 4-4 3 3 5-6" />
     </>
   ),
-  "/": <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
+  "/programs": (
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </>
+  ),
+  "/console": <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
   "/gantt": <path d="M4 6h9M4 12h14M4 18h6" />,
   "/insight": (
     <>
@@ -155,6 +171,66 @@ export function SubTabs({
   );
 }
 
+/* Spelled out rather than interpolated - same Tailwind-scanning trap as the
+   board's column spans. Mirrors `Portfolio.tsx`'s own `CELL`; kept as a
+   separate small literal rather than a shared import because the two pages
+   want it for different things (a heatmap cell vs. a 6px status dot) and a
+   shared name would suggest a coupling that is not there. */
+const BAND_DOT: Record<string, string> = {
+  critical: "bg-red",
+  watch: "bg-amber",
+  healthy: "bg-green",
+  no_data: "bg-rule",
+};
+
+/* Which project every project-scoped page reads - see `api.ts#currentProject`.
+   Lives in the shell rather than each page so switching carries across a full
+   page navigation without seven copies of the same fetch-and-redirect. Shows
+   up on every page, including ones with nothing to scope yet (Program, which
+   already shows all of them, and Agent, which has no project fetch of its
+   own) - picking there still updates what the *next* page you open shows,
+   which is the point of it living in the shell and not the page body. */
+function ProjectSwitcher() {
+  const [bundle, setBundle] = useState<PortfolioBundle | null>(null);
+
+  useEffect(() => {
+    load<PortfolioBundle>("/api/portfolio").then(setBundle, () => setBundle(null));
+  }, []);
+
+  if (!bundle || bundle.projects.length === 0) return null;
+
+  const selectedId = currentProject()?.id ?? bundle.projects[0]?.project_id;
+  const selected = bundle.projects.find((p) => p.project_id === selectedId);
+
+  function goTo(row: ProjectRow) {
+    window.location.href = projectLink(window.location.pathname, row);
+  }
+
+  return (
+    <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
+      <span
+        className={`h-2 w-2 shrink-0 rounded-full ${BAND_DOT[selected?.band ?? "no_data"]}`}
+        title={selected ? `${selected.band} - ${selected.name}` : undefined}
+      />
+      <span className="sr-only">Project</span>
+      <select
+        value={selectedId ?? ""}
+        onChange={(e) => {
+          const row = bundle.projects.find((p) => p.project_id === e.target.value);
+          if (row) goTo(row);
+        }}
+        className="max-w-[220px] cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-[12px] text-ink"
+      >
+        {bundle.projects.map((row) => (
+          <option key={row.project_id} value={row.project_id}>
+            {row.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export function Page({
   current,
   title,
@@ -163,6 +239,7 @@ export function Page({
   subtitle,
   action,
   children,
+  wide = false,
 }: {
   current: string;
   title: string;
@@ -171,18 +248,23 @@ export function Page({
   subtitle?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
+  //: Tables and prose read better capped at 1280px; a canvas of tiles just
+  //: loses screen space to it. Opt in per page rather than widening every
+  //: page, since most of them are the former.
+  wide?: boolean;
 }) {
   return (
     <div className="shell">
       <Rail current={current} />
       <main>
-        <div className="mx-auto max-w-[1280px] px-6 pt-5 pb-12">
+        <div className={`mx-auto pt-5 pb-12 ${wide ? "max-w-[1880px] px-4" : "max-w-[1280px] px-6"}`}>
       <div className="mb-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-2">
         <h1 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">{title}</h1>
         {scope && (
           <span className="border-l border-rule pl-3.5 text-[12px] text-ink-3">{scope}</span>
         )}
         <div className="flex-1" />
+        <ProjectSwitcher />
         {asof && <span className="text-[12px] text-ink-3">{asof}</span>}
         {action}
       </div>

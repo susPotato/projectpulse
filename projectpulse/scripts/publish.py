@@ -132,14 +132,19 @@ def _version_assets(html: str) -> str:
     return ASSET_REF.sub(replace, html)
 
 
-#: The tab pointing at `/`, whatever it happens to be called.
+#: The tab pointing at `/console`, whatever it happens to be called.
 #:
 #: Matched by `href` rather than by label text on purpose. This used to be a
 #: literal `.replace(">Retriever console<", ...)`, which meant renaming that tab
 #: silently turned the rewrite into a no-op and shipped a snapshot with a dead
 #: console link - and the test for it went on passing, because "the old label is
 #: absent" is trivially true once the old label is gone.
-_CONSOLE_TAB = re.compile(r'(<a\s[^>]*href="/"[^>]*>)([^<]*)(</a>)')
+#:
+#: Rewrites the href too, not just the label: locally the console lives at
+#: `/console`, but on Pages there is no server for it to POST to and the only
+#: thing actually at that snapshot's root is the architecture page - so the
+#: link has to move to `/` as well or "Architecture" would point at a 404.
+_CONSOLE_TAB = re.compile(r'(<a\s[^>]*)href="/console"([^>]*>)([^<]*)(</a>)')
 
 #: A server-rendered tab bar, captured so the guard below can look *inside* it.
 #: Scoped to the nav rather than the whole document: a page can carry plenty of
@@ -150,29 +155,32 @@ _STATIC_NAV = re.compile(r'<nav class="tabs".*?</nav>', re.S)
 def _snapshot_nav(html: str, stamp: str) -> str:
     """Point the tab bar at what actually exists on the static site.
 
-    Locally `/` is the retriever console; on Pages it is the architecture page,
-    and the console cannot work at all without a server to POST to. Rewriting
-    the label is more honest than leaving a tab that does nothing.
+    Locally `/console` is the retriever console; on Pages it is the
+    architecture page at `/`, and the console cannot work at all without a
+    server to POST to. Rewriting the label - and the href, onto `/` - is more
+    honest than leaving a tab that does nothing.
 
     The React pages build their tab bar in JavaScript, so they carry no such
     anchor and the rewrite correctly does nothing to them - what this still does
     for them is stamp the freeze date. A page that *does* carry a static nav and
-    yet has no `/` tab is a bug, and raises rather than publishing a dead link.
+    yet has no `/console` tab is a bug, and raises rather than publishing a dead
+    link.
     """
     html, replaced = _CONSOLE_TAB.subn(
-        lambda m: f"{m.group(1)}Architecture{m.group(3)}", html, count=1
+        lambda m: f'{m.group(1)}href="/"{m.group(2)}Architecture{m.group(4)}', html, count=1
     )
 
     if not replaced:
-        # Only a nav that actually has tabs and yet none pointing at `/` is a
-        # bug. An empty nav is not a broken console link, and the React pages
-        # have no static nav at all - both must pass through untouched.
+        # Only a nav that actually has tabs and yet none pointing at
+        # `/console` is a bug. An empty nav is not a broken console link, and
+        # the React pages have no static nav at all - both must pass through
+        # untouched.
         nav = _STATIC_NAV.search(html)
         if nav is not None and "<a " in nav.group(0):
             raise SystemExit(
-                "snapshot nav: the tab bar has tabs but none link to '/'. The tab "
-                "that becomes Architecture on Pages could not be found, so this "
-                "page would publish with a console link that cannot work."
+                "snapshot nav: the tab bar has tabs but none link to '/console'. "
+                "The tab that becomes Architecture on Pages could not be found, "
+                "so this page would publish with a console link that cannot work."
             )
 
     note = (

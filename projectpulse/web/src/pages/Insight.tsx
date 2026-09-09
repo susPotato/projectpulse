@@ -13,6 +13,7 @@ import {
   type Scenario,
   type ScenarioBundle,
   type RuleTrace,
+  withProject,
 } from "../api";
 import {
   Board,
@@ -291,6 +292,45 @@ function FindingCard({ finding }: { finding: Finding }) {
         {!detail && <p className="m-0 text-ink-3">No further detail recorded.</p>}
       </div>
     </details>
+  );
+}
+
+/* One bar per severity actually present, ranked worst first, colored by the
+   same status tokens `FindingCard`'s pill already uses - so a PM sees the
+   shape of the findings list before reading a word of it, and the color a
+   bar carries here is the same color that finding wears when they scroll to
+   it. Count is a direct label rather than an axis, because five bars do not
+   need one. */
+function SeverityBreakdown({ findings }: { findings: Finding[] }) {
+  const counts = SEVERITY_ORDER.map((severity) => ({
+    severity,
+    count: findings.filter((f) => f.severity === severity).length,
+  })).filter((row) => row.count > 0);
+
+  if (counts.length === 0) return null;
+  const max = Math.max(...counts.map((row) => row.count));
+
+  return (
+    <Panel caption="Findings by severity" span={4} className="content-start">
+      <div className="grid gap-2.5">
+        {counts.map((row) => (
+          <div key={row.severity} className="flex items-center gap-2.5">
+            <span className="w-14 shrink-0 text-[11px] font-semibold text-ink-2 uppercase">
+              {row.severity}
+            </span>
+            <div className="h-3.5 min-w-0 flex-1 rounded bg-rule-2">
+              <div
+                className={`h-full rounded ${SEVERITY_STYLE[row.severity] ?? "bg-ink-3"}`}
+                style={{ width: `${Math.max((row.count / max) * 100, 8)}%` }}
+              />
+            </div>
+            <span className="w-5 shrink-0 text-right text-[12.5px] font-semibold tabular-nums text-ink">
+              {row.count}
+            </span>
+          </div>
+        ))}
+      </div>
+    </Panel>
   );
 }
 
@@ -723,6 +763,7 @@ export function InsightView({
             )}
             {explain && <DrivingPath explain={explain} />}
             {cause && <AiAnalysis finding={cause} />}
+            <SeverityBreakdown findings={findings} />
             {scenarios && <Scenarios bundle={scenarios} />}
             {forecast && <Forecast bundle={forecast} />}
           </Board>
@@ -764,7 +805,14 @@ export function InsightView({
             {findings.length === 0 ? (
               <Card>Nothing breaches a delivery threshold.</Card>
             ) : (
-              findings.map((finding) => <FindingCard key={finding.id} finding={finding} />)
+              <>
+                <Board className="mb-3.5">
+                  <SeverityBreakdown findings={findings} />
+                </Board>
+                {findings.map((finding) => (
+                  <FindingCard key={finding.id} finding={finding} />
+                ))}
+              </>
             )}
           </Section>
         </>
@@ -805,12 +853,12 @@ export function Insight() {
   const [problem, setProblem] = useState<ApiProblem | null>(null);
 
   useEffect(() => {
-    load<InsightBundle>("/api/insight").then(setBundle, setProblem);
+    load<InsightBundle>(withProject("/api/insight")).then(setBundle, setProblem);
     // Fetched separately and allowed to fail: the outlook panel is the best
     // thing on the page, and still not worth the findings for.
-    load<ExplainBundle>("/api/explain").then(setExplain, () => setExplain(null));
-    load<ScenarioBundle>("/api/scenarios").then(setScenarios, () => setScenarios(null));
-    load<ForecastBundle>("/api/forecast").then(setForecast, () => setForecast(null));
+    load<ExplainBundle>(withProject("/api/explain")).then(setExplain, () => setExplain(null));
+    load<ScenarioBundle>(withProject("/api/scenarios")).then(setScenarios, () => setScenarios(null));
+    load<ForecastBundle>(withProject("/api/forecast")).then(setForecast, () => setForecast(null));
   }, []);
 
   if (problem) {

@@ -16,13 +16,14 @@ from __future__ import annotations
 import importlib.util
 import json
 import logging
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -32,6 +33,19 @@ from app.api.schemas.explain import ExplainBundle
 from app.api.schemas.gantt import GanttBundle
 from app.api.schemas.portfolio import PortfolioBundle
 from app.api.schemas.program import ProgramBundle
+from app.api.schemas.programs import ProgramListBundle, ProgramRollupBundle
+from app.api.schemas.dashboard import (
+    CatalogueBundle,
+    CustomChartDraft,
+    CustomTileDraftRequest,
+    CustomTileIn,
+    CustomTileListBundle,
+    CustomTileOut,
+    DashboardOut,
+    GenerateRequest,
+    TileIn,
+    TileOut,
+)
 from app.api.schemas.team import TeamBundle
 from app.api.schemas.scenario import ScenarioBundle
 from app.api.schemas.forecast import ForecastBundle
@@ -56,13 +70,15 @@ from app.intelligence.pipeline import (
     explain_project,
     gantt_project,
     forecast_project,
+    list_programs,
     portfolio,
     program_config,
+    program_rollup,
     scenarios_project,
     team_project,
 )
 from app.ingest.sources.excel.reader import sha256_file
-from app.ingest.sources.excel.source import WATCHED
+from app.ingest.sources.excel.source import all_watched
 from app.intelligence.temporal.ordering import OrderingBasis, ordering_basis
 from app.models.domain import StateChange
 from app.models.sync import RawReject, SheetScan, SyncRun
@@ -105,6 +121,23 @@ def _short(entity_id: str) -> str:
 
 @app.get("/")
 def index() -> FileResponse:
+    """The landing page: the Program board, worst project first.
+
+    Used to be the raw ingestion console - moved to `/console` so a PM opening
+    the app sees which projects are in trouble instead of a retriever debug
+    log. `main.tsx` picks Portfolio for this path the same way it does for
+    every other built-bundle route.
+    """
+    return _spa()
+
+
+@app.get("/console")
+def console_page() -> FileResponse:
+    """The retriever console: what was read, what was refused, what changed.
+
+    Not the product UI - see the module docstring. Lives at its own path now
+    that `/` is the Program board.
+    """
     return FileResponse(STATIC / "index.html")
 
 
@@ -154,7 +187,7 @@ def state() -> dict:
         total_pairs = len(changes) * (len(changes) - 1)
 
         files = []
-        for watched in WATCHED:
+        for watched in all_watched():
             path = Path(settings.data_root) / watched.file_name
             scope = f"{watched.file_name}#{watched.sheet_name}"
             scan = last_scan.get(scope)
@@ -363,7 +396,7 @@ def api_gantt(
 ) -> GanttBundle:
     """Tasks, milestones and dependency edges on one shared time window."""
     if also is None:
-        also = ["jira:Project:1:HRMS"]
+        also = scope.also_for(project)
 
     problem = check_connection()
     if problem is not None:
@@ -401,7 +434,7 @@ def api_explain(
 ) -> ExplainBundle:
     """The forward pass, with the working, for one project."""
     if also is None:
-        also = ["jira:Project:1:HRMS"]
+        also = scope.also_for(project)
 
     problem = check_connection()
     if problem is not None:
@@ -788,6 +821,38 @@ def portfolio_api() -> PortfolioBundle:
         return portfolio(session)
 
 
+@app.get("/programs")
+def programs_page() -> FileResponse:
+    """The Programs list. Same shell as every other page; the app picks by path."""
+    return FileResponse(STATIC / "app" / "index.html")
+
+
+@app.get("/api/programs", response_model=ProgramListBundle)
+def programs_api() -> ProgramListBundle:
+    """Every Program, with a project count and its worst project's band."""
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        return list_programs(session)
+
+
+@app.get("/api/programs/{program_id}", response_model=ProgramRollupBundle)
+def program_detail_api(program_id: str) -> ProgramRollupBundle:
+    """One program's cross-project rollup: ranked projects, resources, and
+    resource conflicts - the data behind the Program dashboard's tiles."""
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        bundle = program_rollup(session, program_id)
+        if bundle is None:
+            raise HTTPException(status_code=404, detail=f"no program {program_id!r}")
+        return bundle
+
+
 @app.get("/team")
 def team_page() -> FileResponse:
     """Who is carrying what, and what moved."""
@@ -832,6 +897,91 @@ def program() -> ProgramBundle:
         return program_config(session)
 
 
+@app.post("/api/sources/upload")
+async def upload_source(
+    file: UploadFile = File(...),
+    sheet_kind: str = Form(...),
+    project_name: str = Form(""),
+    project_id: str = Form(""),
+) -> dict:
+    """Ingest one Excel sheet for a project, from a file picked in the browser.
+
+    The alternative to the OneDrive-synced folder `scripts.sync` reads - and
+    the only ingestion path that works on a deployed host, which has no such
+    folder. Saves the file into `settings.data_root` under a name derived
+    from the project rather than the upload's own filename (stable across
+    re-uploads, which is what a `WatchedSheet.file_name` needs to be for the
+    differ to find last time's baseline - see `transport.py`), registers it,
+    and runs the same sync a PM's button does.
+
+    ⚠️ Ephemeral on a host with no attached volume: the file and the
+    registration live on local disk and do not survive a redeploy to a new
+    machine, only a restart of the same one. What gets ingested into the
+    database from it does survive - only *re*-ingesting a later edit to the
+    same document would need another upload.
+    """
+    from app.ingest.sources.excel.source import SHEET_KINDS, register_watched
+
+    kind = sheet_kind.strip().lower()
+    if kind not in SHEET_KINDS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown sheet_kind {sheet_kind!r}; expected one of {list(SHEET_KINDS)}",
+        )
+
+    if file.filename and not file.filename.lower().endswith((".xlsx", ".xlsm")):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{file.filename!r} is not an Excel workbook (.xlsx)",
+        )
+
+    project_id = project_id.strip()
+    project_name = project_name.strip()
+
+    if project_id:
+        found = scope.find(project_id)
+        if found is None:
+            raise HTTPException(status_code=400, detail=f"unknown project {project_id!r}")
+        project_name = found.name
+    else:
+        if not project_name:
+            raise HTTPException(
+                status_code=400,
+                detail="project_name is required when project_id is not given",
+            )
+        name_slug = re.sub(r"[^a-z0-9]+", "-", project_name.lower()).strip("-") or "project"
+        project_id = f"excel:Project:upload:{name_slug}"
+        scope.register(project_id, project_name)
+
+    id_slug = re.sub(r"[^a-z0-9]+", "-", project_id.lower()).strip("-")
+    file_name = f"upload_{id_slug}_{kind}.xlsx"
+
+    data_root = Path(settings.data_root)
+    data_root.mkdir(parents=True, exist_ok=True)
+    (data_root / file_name).write_bytes(await file.read())
+
+    register_watched(file_name, kind, project_id)
+
+    try:
+        with session_scope() as session:
+            outcome = run_sync(session, "excel", "manual")
+    except Exception as exc:  # noqa: BLE001 - surfaced on the page, not swallowed
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "project_id": project_id}
+
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "project_name": project_name,
+        "file_name": file_name,
+        "run_id": outcome.run_id,
+        "status": outcome.status,
+        "rows_ok": outcome.rows_ok,
+        "rows_rejected": outcome.rows_rejected,
+        "changes_emitted": outcome.changes_emitted,
+        "notes": outcome.notes,
+    }
+
+
 @app.get("/api/scenarios", response_model=ScenarioBundle)
 def scenarios(
     project: str = "excel:Project:1:HRMS",
@@ -847,7 +997,7 @@ def scenarios(
     recover then, and a list of zero-day scenarios reads as a broken feature.
     """
     if also is None:
-        also = ["jira:Project:1:HRMS"]
+        also = scope.also_for(project)
 
     problem = check_connection()
     if problem is not None:
@@ -1072,6 +1222,162 @@ def delete_risk_route(risk_id: int) -> Response:
     return Response(status_code=204)
 
 
+@app.get("/programs/dashboard")
+def program_dashboard_page() -> FileResponse:
+    """The Program canvas. Same shell as every other page; picked by path."""
+    return FileResponse(STATIC / "app" / "index.html")
+
+
+@app.get("/project/dashboard")
+def project_dashboard_page() -> FileResponse:
+    """The Project canvas. Same shell as every other page; picked by path."""
+    return FileResponse(STATIC / "app" / "index.html")
+
+
+@app.get("/api/dashboard/catalogue", response_model=CatalogueBundle)
+def dashboard_catalogue_api() -> CatalogueBundle:
+    from app.dashboard.service import get_catalogue
+
+    return get_catalogue()
+
+
+@app.get("/api/dashboards", response_model=DashboardOut)
+def get_dashboard_api(scope_type: str, scope_id: str) -> DashboardOut:
+    from app.dashboard.service import get_dashboard
+
+    with session_scope() as session:
+        return get_dashboard(session, scope_type, scope_id)
+
+
+@app.post("/api/dashboards/blank", response_model=DashboardOut)
+def reset_dashboard_api(scope_type: str, scope_id: str) -> DashboardOut:
+    from app.dashboard.service import reset_blank
+
+    with session_scope() as session:
+        return reset_blank(session, scope_type, scope_id)
+
+
+@app.post("/api/dashboards/apply-template", response_model=DashboardOut)
+def apply_template_api(scope_type: str, scope_id: str, template: str) -> DashboardOut:
+    from app.dashboard.service import apply_template
+
+    with session_scope() as session:
+        bundle = apply_template(session, scope_type, scope_id, template)
+        if bundle is None:
+            raise HTTPException(status_code=404, detail=f"no template {template!r}")
+        return bundle
+
+
+@app.post("/api/dashboards/generate", response_model=DashboardOut)
+def generate_dashboard_api(body: GenerateRequest) -> DashboardOut:
+    """Create with AI: the model picks tiles from the catalogue, never data.
+
+    Reuses whichever provider narration is already configured with (`_narrator`,
+    same as `/api/agent/chat`) - no separate credential for this feature."""
+    from app.dashboard.service import generate
+
+    with session_scope() as session:
+        return generate(session, body.scope_type, body.scope_id, body.prompt, _narrator())
+
+
+@app.post("/api/custom-tiles/draft", response_model=CustomChartDraft)
+def draft_custom_tile_api(body: CustomTileDraftRequest) -> CustomChartDraft:
+    """Parse pasted data into a chart - not saved yet. Reuses whichever
+    provider narration is already configured with; falls back to a plain
+    two-column CSV/TSV parse when there's no model or its output doesn't
+    validate, so 'paste a label,value table' still works with narration off."""
+    from app.dashboard.custom import draft_chart
+
+    try:
+        return draft_chart(body.raw_data, body.hint, drafter=_narrator())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+
+@app.get("/api/custom-tiles", response_model=CustomTileListBundle)
+def list_custom_tiles_api() -> CustomTileListBundle:
+    from app.dashboard.custom import list_custom_tiles
+
+    with session_scope() as session:
+        return CustomTileListBundle(tiles=list_custom_tiles(session))
+
+
+@app.post("/api/custom-tiles", response_model=CustomTileOut)
+def create_custom_tile_api(body: CustomTileIn) -> CustomTileOut:
+    from app.dashboard.custom import create_custom_tile
+
+    with session_scope() as session:
+        try:
+            return create_custom_tile(session, body)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from None
+
+
+@app.get("/api/custom-tiles/{tile_id}", response_model=CustomTileOut)
+def get_custom_tile_api(tile_id: int) -> CustomTileOut:
+    from app.dashboard.custom import get_custom_tile
+
+    with session_scope() as session:
+        tile = get_custom_tile(session, tile_id)
+        if tile is None:
+            raise HTTPException(status_code=404, detail=f"no custom tile with id {tile_id}")
+        return tile
+
+
+@app.delete("/api/custom-tiles/{tile_id}", status_code=204)
+def delete_custom_tile_api(tile_id: int) -> Response:
+    from app.dashboard.custom import delete_custom_tile
+
+    with session_scope() as session:
+        if not delete_custom_tile(session, tile_id):
+            raise HTTPException(status_code=404, detail=f"no custom tile with id {tile_id}")
+    return Response(status_code=204)
+
+
+@app.post("/api/dashboards/tiles", response_model=TileOut)
+def add_tile_api(scope_type: str, scope_id: str, data: TileIn) -> TileOut:
+    from app.dashboard.service import add_tile
+
+    with session_scope() as session:
+        try:
+            tile = add_tile(session, scope_type, scope_id, data)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from None
+        return tile
+
+
+@app.patch("/api/dashboards/tiles/{tile_id}", response_model=TileOut)
+def update_tile_api(tile_id: int, data: TileIn) -> TileOut:
+    from app.dashboard.service import update_tile
+
+    with session_scope() as session:
+        tile = update_tile(session, tile_id, data)
+        if tile is None:
+            raise HTTPException(status_code=404, detail=f"no tile with id {tile_id}")
+        return tile
+
+
+@app.post("/api/dashboards/tiles/{tile_id}/duplicate", response_model=TileOut)
+def duplicate_tile_api(tile_id: int) -> TileOut:
+    from app.dashboard.service import duplicate_tile
+
+    with session_scope() as session:
+        tile = duplicate_tile(session, tile_id)
+        if tile is None:
+            raise HTTPException(status_code=404, detail=f"no tile with id {tile_id}")
+        return tile
+
+
+@app.delete("/api/dashboards/tiles/{tile_id}", status_code=204)
+def delete_tile_api(tile_id: int) -> Response:
+    from app.dashboard.service import delete_tile
+
+    with session_scope() as session:
+        if not delete_tile(session, tile_id):
+            raise HTTPException(status_code=404, detail=f"no tile with id {tile_id}")
+    return Response(status_code=204)
+
+
 @app.get("/agent")
 def agent_page() -> FileResponse:
     """Free-form chat - the one page with no deterministic engine behind it."""
@@ -1145,7 +1451,7 @@ def insight(
     # The demo portfolio is the same project in both sources; a real deployment
     # reads this pairing from scope config alongside the watched sheets.
     if also is None:
-        also = ["jira:Project:1:HRMS"]
+        also = scope.also_for(project)
 
     # Report an unreachable database as an unreachable database. Letting the
     # driver error propagate gives a 500 with a stack trace in the log and a bare

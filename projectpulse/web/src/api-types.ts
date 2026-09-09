@@ -11,8 +11,39 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Index */
+        /**
+         * Index
+         * @description The landing page: the Program board, worst project first.
+         *
+         *     Used to be the raw ingestion console - moved to `/console` so a PM opening
+         *     the app sees which projects are in trouble instead of a retriever debug
+         *     log. `main.tsx` picks Portfolio for this path the same way it does for
+         *     every other built-bundle route.
+         */
         get: operations["index__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/console": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Console Page
+         * @description The retriever console: what was read, what was refused, what changed.
+         *
+         *     Not the product UI - see the module docstring. Lives at its own path now
+         *     that `/` is the Program board.
+         */
+        get: operations["console_page_console_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -463,6 +494,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/programs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Programs Page
+         * @description The Programs list. Same shell as every other page; the app picks by path.
+         */
+        get: operations["programs_page_programs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/programs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Programs Api
+         * @description Every Program, with a project count and its worst project's band.
+         */
+        get: operations["programs_api_api_programs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/programs/{program_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Program Detail Api
+         * @description One program's cross-project rollup: ranked projects, resources, and
+         *     resource conflicts - the data behind the Program dashboard's tiles.
+         */
+        get: operations["program_detail_api_api_programs__program_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/team": {
         parameters: {
             query?: never;
@@ -525,6 +617,40 @@ export interface paths {
         get: operations["program_api_program_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sources/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Source
+         * @description Ingest one Excel sheet for a project, from a file picked in the browser.
+         *
+         *     The alternative to the OneDrive-synced folder `scripts.sync` reads - and
+         *     the only ingestion path that works on a deployed host, which has no such
+         *     folder. Saves the file into `settings.data_root` under a name derived
+         *     from the project rather than the upload's own filename (stable across
+         *     re-uploads, which is what a `WatchedSheet.file_name` needs to be for the
+         *     differ to find last time's baseline - see `transport.py`), registers it,
+         *     and runs the same sync a PM's button does.
+         *
+         *     ⚠️ Ephemeral on a host with no attached volume: the file and the
+         *     registration live on local disk and do not survive a redeploy to a new
+         *     machine, only a restart of the same one. What gets ingested into the
+         *     database from it does survive - only *re*-ingesting a later edit to the
+         *     same document would need another upload.
+         */
+        post: operations["upload_source_api_sources_upload_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -687,6 +813,248 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/programs/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Program Dashboard Page
+         * @description The Program canvas. Same shell as every other page; picked by path.
+         */
+        get: operations["program_dashboard_page_programs_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/project/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Project Dashboard Page
+         * @description The Project canvas. Same shell as every other page; picked by path.
+         */
+        get: operations["project_dashboard_page_project_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/catalogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Catalogue Api */
+        get: operations["dashboard_catalogue_api_api_dashboard_catalogue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Dashboard Api */
+        get: operations["get_dashboard_api_api_dashboards_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboards/blank": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset Dashboard Api */
+        post: operations["reset_dashboard_api_api_dashboards_blank_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboards/apply-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Template Api */
+        post: operations["apply_template_api_api_dashboards_apply_template_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboards/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Dashboard Api
+         * @description Create with AI: the model picks tiles from the catalogue, never data.
+         *
+         *     Reuses whichever provider narration is already configured with (`_narrator`,
+         *     same as `/api/agent/chat`) - no separate credential for this feature.
+         */
+        post: operations["generate_dashboard_api_api_dashboards_generate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/custom-tiles/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draft Custom Tile Api
+         * @description Parse pasted data into a chart - not saved yet. Reuses whichever
+         *     provider narration is already configured with; falls back to a plain
+         *     two-column CSV/TSV parse when there's no model or its output doesn't
+         *     validate, so 'paste a label,value table' still works with narration off.
+         */
+        post: operations["draft_custom_tile_api_api_custom_tiles_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/custom-tiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Custom Tiles Api */
+        get: operations["list_custom_tiles_api_api_custom_tiles_get"];
+        put?: never;
+        /** Create Custom Tile Api */
+        post: operations["create_custom_tile_api_api_custom_tiles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/custom-tiles/{tile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Custom Tile Api */
+        get: operations["get_custom_tile_api_api_custom_tiles__tile_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Custom Tile Api */
+        delete: operations["delete_custom_tile_api_api_custom_tiles__tile_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboards/tiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Tile Api */
+        post: operations["add_tile_api_api_dashboards_tiles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboards/tiles/{tile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Tile Api */
+        delete: operations["delete_tile_api_api_dashboards_tiles__tile_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Tile Api */
+        patch: operations["update_tile_api_api_dashboards_tiles__tile_id__patch"];
+        trace?: never;
+    };
+    "/api/dashboards/tiles/{tile_id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Duplicate Tile Api */
+        post: operations["duplicate_tile_api_api_dashboards_tiles__tile_id__duplicate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agent": {
         parameters: {
             query?: never;
@@ -795,6 +1163,23 @@ export interface components {
              */
             bounded: number;
         };
+        /** Body_upload_source_api_sources_upload_post */
+        Body_upload_source_api_sources_upload_post: {
+            /** File */
+            file: string;
+            /** Sheet Kind */
+            sheet_kind: string;
+            /**
+             * Project Name
+             * @default
+             */
+            project_name: string;
+            /**
+             * Project Id
+             * @default
+             */
+            project_id: string;
+        };
         /**
          * BurnPoint
          * @description Cumulative logged effort as at one scan of the worklog.
@@ -881,6 +1266,15 @@ export interface components {
              */
             note: string;
         };
+        /** CatalogueBundle */
+        CatalogueBundle: {
+            /** Tiles */
+            tiles: components["schemas"]["TileSpecOut"][];
+            /** Templates */
+            templates: {
+                [key: string]: string[];
+            };
+        };
         /**
          * CausalLink
          * @description Why we believe one change explains another.
@@ -955,6 +1349,99 @@ export interface components {
             ok: boolean;
             /** Error */
             error: string | null;
+        };
+        /**
+         * CustomChartDraft
+         * @description A proposed `{title, chart_type, labels, values}` - not saved yet. The
+         *     person reviews and edits this before it becomes a `CustomTileOut`.
+         */
+        CustomChartDraft: {
+            /** Title */
+            title: string;
+            /**
+             * Chart Type
+             * @enum {string}
+             */
+            chart_type: "bar" | "line" | "pie";
+            /** Labels */
+            labels: string[];
+            /** Values */
+            values: number[];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "ai" | "csv_fallback";
+            /** Fallback Reason */
+            fallback_reason: string | null;
+        };
+        /** CustomTileDraftRequest */
+        CustomTileDraftRequest: {
+            /** Raw Data */
+            raw_data: string;
+            /** Hint */
+            hint?: string | null;
+        };
+        /** CustomTileIn */
+        CustomTileIn: {
+            /** Name */
+            name: string;
+            /**
+             * Chart Type
+             * @enum {string}
+             */
+            chart_type: "bar" | "line" | "pie";
+            /** Labels */
+            labels: string[];
+            /** Values */
+            values: number[];
+            /** Source Note */
+            source_note?: string | null;
+        };
+        /** CustomTileListBundle */
+        CustomTileListBundle: {
+            /** Tiles */
+            tiles: components["schemas"]["CustomTileOut"][];
+        };
+        /** CustomTileOut */
+        CustomTileOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Chart Type
+             * @enum {string}
+             */
+            chart_type: "bar" | "line" | "pie";
+            /** Labels */
+            labels: string[];
+            /** Values */
+            values: number[];
+            /** Source Note */
+            source_note: string | null;
+        };
+        /** DashboardOut */
+        DashboardOut: {
+            /** Id */
+            id: number;
+            /**
+             * Scope Type
+             * @enum {string}
+             */
+            scope_type: "program" | "project";
+            /** Scope Id */
+            scope_id: string;
+            /** Name */
+            name: string;
+            /** Source */
+            source: string;
+            /** Ai Prompt */
+            ai_prompt: string | null;
+            /** Tiles */
+            tiles: components["schemas"]["TileOut"][];
+            /** Fallback Reason */
+            fallback_reason: string | null;
         };
         /**
          * DataQuality
@@ -1368,6 +1855,18 @@ export interface components {
              */
             on_driving_path: boolean;
         };
+        /** GenerateRequest */
+        GenerateRequest: {
+            /**
+             * Scope Type
+             * @enum {string}
+             */
+            scope_type: "program" | "project";
+            /** Scope Id */
+            scope_id: string;
+            /** Prompt */
+            prompt: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1539,6 +2038,57 @@ export interface components {
              * @default
              */
             rule_table: string;
+        };
+        /** ProgramListBundle */
+        ProgramListBundle: {
+            /** Programs */
+            programs: components["schemas"]["ProgramSummary"][];
+            /** Generated At */
+            generated_at: string | null;
+        };
+        /**
+         * ProgramRollupBundle
+         * @description Everything the Program dashboard's cross-project tiles read from.
+         */
+        ProgramRollupBundle: {
+            program: components["schemas"]["ProgramSummary"];
+            /** Projects */
+            projects: components["schemas"]["ProjectRow"][];
+            /** Resources */
+            resources: components["schemas"]["ResourceRow"][];
+            /** Resource Conflicts */
+            resource_conflicts: components["schemas"]["ResourceConflict"][];
+            /** Generated At */
+            generated_at: string | null;
+        };
+        /**
+         * ProgramSummary
+         * @description One row on the Programs list (`Layout_Program` image12).
+         */
+        ProgramSummary: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Owner */
+            owner: string | null;
+            /** Status */
+            status: string | null;
+            /** Start Date */
+            start_date: string | null;
+            /** End Date */
+            end_date: string | null;
+            /**
+             * Project Count
+             * @default 0
+             */
+            project_count: number;
+            /**
+             * Band
+             * @default no_data
+             * @enum {string}
+             */
+            band: "critical" | "watch" | "healthy" | "no_data";
         };
         /**
          * ProjectRow
@@ -1764,6 +2314,38 @@ export interface components {
              * @default true
              */
             available: boolean;
+        };
+        /**
+         * ResourceConflict
+         * @description One person allocated over 100% combined, across this program's projects.
+         *
+         *     This is the "cross-project resource control" a delivery manager cannot see
+         *     from any single project's own page - the whole reason it is a Program-level
+         *     tile rather than a per-project one.
+         */
+        ResourceConflict: {
+            /** Resource Name */
+            resource_name: string;
+            /** Total Allocation Percent */
+            total_allocation_percent: number;
+            /** Projects */
+            projects: string[];
+        };
+        /**
+         * ResourceRow
+         * @description One person's allocation on one project within the program.
+         */
+        ResourceRow: {
+            /** Resource Name */
+            resource_name: string;
+            /** Role */
+            role: string | null;
+            /** Project Id */
+            project_id: string;
+            /** Project Name */
+            project_name: string;
+            /** Allocation Percent */
+            allocation_percent: number | null;
         };
         /**
          * RiskBundle
@@ -2096,6 +2678,75 @@ export interface components {
             has_effort_data: boolean;
         };
         /**
+         * TileIn
+         * @description Create or move/resize one tile. All-optional so a PATCH can send only
+         *     the fields that changed - the same partial-update convention `RiskIn`
+         *     uses via `model_dump(exclude_unset=True)`.
+         */
+        TileIn: {
+            /** Tile Key */
+            tile_key?: string | null;
+            /** X */
+            x?: number | null;
+            /** Y */
+            y?: number | null;
+            /** W */
+            w?: number | null;
+            /** H */
+            h?: number | null;
+            /** Settings */
+            settings?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** TileOut */
+        TileOut: {
+            /** Id */
+            id: number;
+            /** Tile Key */
+            tile_key: string;
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** W */
+            w: number;
+            /** H */
+            h: number;
+            /** Settings */
+            settings: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * TileSpecOut
+         * @description One entry in the catalogue - what "+ Add Tiles" lists.
+         */
+        TileSpecOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Category */
+            category: string;
+            /** Description */
+            description: string;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "program" | "project";
+            /** Default W */
+            default_w: number;
+            /** Default H */
+            default_h: number;
+            /**
+             * Preview
+             * @enum {string}
+             */
+            preview: "stat" | "list" | "heatmap" | "brief" | "chart";
+        };
+        /**
          * TimeInterval
          * @description When something happened, honestly.
          *
@@ -2172,6 +2823,26 @@ export interface components {
 export type $defs = Record<string, never>;
 export interface operations {
     index__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    console_page_console_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2741,6 +3412,77 @@ export interface operations {
             };
         };
     };
+    programs_page_programs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    programs_api_api_programs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramListBundle"];
+                };
+            };
+        };
+    };
+    program_detail_api_api_programs__program_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramRollupBundle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     team_page_team_get: {
         parameters: {
             query?: never;
@@ -2809,6 +3551,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramBundle"];
+                };
+            };
+        };
+    };
+    upload_source_api_sources_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_source_api_sources_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3080,6 +3857,473 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    program_dashboard_page_programs_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    project_dashboard_page_project_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    dashboard_catalogue_api_api_dashboard_catalogue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueBundle"];
+                };
+            };
+        };
+    };
+    get_dashboard_api_api_dashboards_get: {
+        parameters: {
+            query: {
+                scope_type: string;
+                scope_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_dashboard_api_api_dashboards_blank_post: {
+        parameters: {
+            query: {
+                scope_type: string;
+                scope_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_template_api_api_dashboards_apply_template_post: {
+        parameters: {
+            query: {
+                scope_type: string;
+                scope_id: string;
+                template: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_dashboard_api_api_dashboards_generate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    draft_custom_tile_api_api_custom_tiles_draft_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomTileDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomChartDraft"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_custom_tiles_api_api_custom_tiles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomTileListBundle"];
+                };
+            };
+        };
+    };
+    create_custom_tile_api_api_custom_tiles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomTileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomTileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_custom_tile_api_api_custom_tiles__tile_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomTileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_custom_tile_api_api_custom_tiles__tile_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_tile_api_api_dashboards_tiles_post: {
+        parameters: {
+            query: {
+                scope_type: string;
+                scope_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_tile_api_api_dashboards_tiles__tile_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_tile_api_api_dashboards_tiles__tile_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    duplicate_tile_api_api_dashboards_tiles__tile_id__duplicate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TileOut"];
+                };
             };
             /** @description Validation Error */
             422: {

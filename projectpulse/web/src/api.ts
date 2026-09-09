@@ -43,11 +43,132 @@ export type ReportPreview = components["schemas"]["ReportPreview"];
 export type ReportBlock = components["schemas"]["ReportBlock"];
 export type ReportSection = components["schemas"]["ReportSection"];
 
+export type ProgramSummary = components["schemas"]["ProgramSummary"];
+export type ProgramListBundle = components["schemas"]["ProgramListBundle"];
+export type ProgramRollupBundle = components["schemas"]["ProgramRollupBundle"];
+export type ResourceRow = components["schemas"]["ResourceRow"];
+export type ResourceConflict = components["schemas"]["ResourceConflict"];
+
+export type CatalogueBundle = components["schemas"]["CatalogueBundle"];
+export type TileSpecOut = components["schemas"]["TileSpecOut"];
+export type DashboardOut = components["schemas"]["DashboardOut"];
+export type TileOut = components["schemas"]["TileOut"];
+export type TileIn = components["schemas"]["TileIn"];
+export type DashboardScope = "program" | "project";
+
+export type CustomChartDraft = components["schemas"]["CustomChartDraft"];
+export type CustomTileIn = components["schemas"]["CustomTileIn"];
+export type CustomTileOut = components["schemas"]["CustomTileOut"];
+export type CustomTileListBundle = components["schemas"]["CustomTileListBundle"];
+export type ChartType = "bar" | "line" | "pie";
+
 /** What went wrong, in terms a reader can act on rather than a status code. */
 export interface ApiProblem {
   title: string;
   detail: string;
   fix?: string;
+}
+
+/**
+ * Which project every project-scoped page reads, so switching it in one
+ * place (the rail's project picker) carries across a full page navigation -
+ * this app has no client router, each page is its own load.
+ *
+ * `?project=` in the URL wins and is remembered for next time; absent that,
+ * the last remembered choice is used; absent that too, every endpoint's own
+ * server-side default (today, the one demo project) applies untouched - so a
+ * page nobody has pointed a picker at yet behaves exactly as it always did.
+ */
+const STORAGE_KEY = "pulse.project";
+
+export interface ProjectSelection {
+  id: string;
+  also: string[];
+}
+
+export function currentProject(): ProjectSelection | null {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("project");
+  if (fromUrl) {
+    const selection = { id: fromUrl, also: params.getAll("also") };
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selection));
+    } catch {
+      // Private window, cleared storage, or storage blocked - the URL param
+      // still won this page load, which is all correctness requires here.
+    }
+    return selection;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as ProjectSelection;
+    return parsed.id ? { id: parsed.id, also: parsed.also ?? [] } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Append the current project selection, if any, to an API path - so the page
+ * you're already on asks for the project it is showing.
+ */
+export function withProject(path: string): string {
+  const selection = currentProject();
+  if (!selection) return path;
+  return projectLink(path, { project_id: selection.id, source_ids: selection.also });
+}
+
+/**
+ * Which program the Programs list / Program dashboard reads - same
+ * `?program=` + localStorage pattern as `currentProject`, kept as a separate
+ * key and a separate function rather than folded into it: a program and a
+ * project are different axes, and a page can be scoped to either without the
+ * other changing underneath it.
+ */
+const PROGRAM_STORAGE_KEY = "pulse.program";
+
+export function currentProgram(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("program");
+  if (fromUrl) {
+    try {
+      window.localStorage.setItem(PROGRAM_STORAGE_KEY, fromUrl);
+    } catch {
+      // See currentProject - a private window losing the remembered choice
+      // does not change what this page load resolves to.
+    }
+    return fromUrl;
+  }
+  try {
+    return window.localStorage.getItem(PROGRAM_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function programLink(href: string, programId: string): string {
+  const search = new URLSearchParams();
+  search.set("program", programId);
+  return `${href}${href.includes("?") ? "&" : "?"}${search.toString()}`;
+}
+
+/**
+ * A link to a *specific* project's page, from a row that names it - the
+ * Program board's per-project links, which pick a project rather than
+ * reading the ambient one `withProject` uses.
+ */
+export function projectLink(
+  href: string,
+  row: { project_id: string; source_ids: string[] },
+): string {
+  const search = new URLSearchParams();
+  search.set("project", row.project_id);
+  for (const id of row.source_ids) {
+    if (id !== row.project_id) search.append("also", id);
+  }
+  return `${href}${href.includes("?") ? "&" : "?"}${search.toString()}`;
 }
 
 /**
@@ -96,7 +217,7 @@ export async function load<T>(path: string): Promise<T> {
  */
 export async function send<T>(
   path: string,
-  method: "POST" | "PUT" | "DELETE",
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
   body?: unknown,
 ): Promise<T> {
   let response: Response;

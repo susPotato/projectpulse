@@ -382,89 +382,262 @@ def _band_for(severities: list[str]) -> str:
     return "healthy"
 
 
-def portfolio(session) -> "PortfolioBundle":
-    """Every delivery project in the program, ranked worst first.
+def _project_row(session, entry) -> tuple["ProjectRow", str | None]:
+    """One project's `ProjectRow`, plus the `program_id` it resolved to.
 
-    Runs `analyze_project` per project rather than aggregating a shortcut: the
-    program view then cannot disagree with the project view, because it *is*
-    the project view, folded up. It costs one pass per project, and a portfolio
-    of four is not where this becomes a problem.
+    Factored out of `portfolio()` so `program_rollup()` can build the same row
+    a project's own page would show, filtered to one program, without a
+    second and possibly-diverging aggregation. Runs `analyze_project` rather
+    than a shortcut: a rollup then cannot disagree with the project view,
+    because it *is* the project view, folded up.
     """
-    from datetime import date as _date
+    from app.api.schemas.portfolio import DIMENSIONS, ProjectRow
+    from app.models.domain import Project
 
-    from app.api.schemas.portfolio import DIMENSIONS, PortfolioBundle, ProjectRow
-    from app.models.domain import Program
-    from app.scope import PORTFOLIO
+    project_row = session.get(Project, entry.canonical_id)
+    program_id = project_row.program_id if project_row is not None else None
 
-    program = session.scalars(select(Program)).first()
-    rows: list[ProjectRow] = []
-
-    for entry in PORTFOLIO:
-        tasks = load_tasks(session, list(entry.source_ids))
-        if not tasks:
-            # Known to the portfolio, nothing ingested. `no_data`, never green.
-            rows.append(
-                ProjectRow(
-                    project_id=entry.canonical_id,
-                    name=entry.name,
-                    source_ids=list(entry.source_ids),
-                    bands={d: "no_data" for d in DIMENSIONS},
-                )
-            )
-            continue
-
-        bundle = analyze_project(
-            session, project_id=entry.canonical_id, also=list(entry.also)
-        )
-        edges = load_edges(session, list(entry.source_ids))
-        impact = project_schedule(build_graph(tasks, edges))
-        context = bundle.context
-
-        severities = [f.severity for f in bundle.findings]
-        worst = next(
-            (s for s in ("critical", "high", "medium", "low", "info") if s in severities),
-            None,
-        )
-        top = bundle.by_severity()[0] if bundle.findings else None
-
-        rows.append(
+    tasks = load_tasks(session, list(entry.source_ids))
+    if not tasks:
+        # Known to the portfolio, nothing ingested. `no_data`, never green.
+        return (
             ProjectRow(
                 project_id=entry.canonical_id,
                 name=entry.name,
                 source_ids=list(entry.source_ids),
-                band=_band_for(severities),
-                worst_severity=worst,
-                findings=len(bundle.findings),
-                task_count=len(tasks),
-                committed_end=impact.project_end_planned,
-                projected_end=impact.project_end_projected,
-                days_late=impact.project_slip_days or 0,
-                milestones_at_risk=int(context.get("milestones_at_risk") or 0),
-                qa_blocked=int(context.get("qa_blocked") or 0),
-                qa_count=int(context.get("qa_count") or 0),
-                headline=top.headline if top else None,
-                depends_on_inferred_edges=bundle.data_quality.depends_on_inferred_edges,
-                bands={
-                    dimension: _band_for(
-                        [
-                            f.severity
-                            for f in bundle.findings
-                            if f.category in _DIMENSION_CATEGORIES[dimension]
-                        ]
-                    )
-                    for dimension in DIMENSIONS
-                },
-            )
+                bands={d: "no_data" for d in DIMENSIONS},
+            ),
+            program_id,
         )
+
+    bundle = analyze_project(
+        session, project_id=entry.canonical_id, also=list(entry.also)
+    )
+    edges = load_edges(session, list(entry.source_ids))
+    impact = project_schedule(build_graph(tasks, edges))
+    context = bundle.context
+
+    severities = [f.severity for f in bundle.findings]
+    worst = next(
+        (s for s in ("critical", "high", "medium", "low", "info") if s in severities),
+        None,
+    )
+    top = bundle.by_severity()[0] if bundle.findings else None
+
+    row = ProjectRow(
+        project_id=entry.canonical_id,
+        name=entry.name,
+        source_ids=list(entry.source_ids),
+        band=_band_for(severities),
+        worst_severity=worst,
+        findings=len(bundle.findings),
+        task_count=len(tasks),
+        committed_end=impact.project_end_planned,
+        projected_end=impact.project_end_projected,
+        days_late=impact.project_slip_days or 0,
+        milestones_at_risk=int(context.get("milestones_at_risk") or 0),
+        qa_blocked=int(context.get("qa_blocked") or 0),
+        qa_count=int(context.get("qa_count") or 0),
+        headline=top.headline if top else None,
+        depends_on_inferred_edges=bundle.data_quality.depends_on_inferred_edges,
+        bands={
+            dimension: _band_for(
+                [
+                    f.severity
+                    for f in bundle.findings
+                    if f.category in _DIMENSION_CATEGORIES[dimension]
+                ]
+            )
+            for dimension in DIMENSIONS
+        },
+    )
+    return row, program_id
+
+
+def portfolio(session) -> "PortfolioBundle":
+    """Every delivery project in the program, ranked worst first."""
+    from datetime import date as _date
+
+    from app.api.schemas.portfolio import PortfolioBundle, ProjectRow
+    from app.models.domain import Program
+    from app.scope import all_projects
+
+    rows: list[ProjectRow] = []
+    #: Which Program each canonical project actually belongs to, so the
+    #: header can say so honestly instead of picking an arbitrary row -
+    #: `session.scalars(select(Program)).first()` was fine when exactly one
+    #: Program existed; it stopped being fine the moment a second one did.
+    program_names: set[str] = set()
+
+    for entry in all_projects():
+        row, program_id = _project_row(session, entry)
+        rows.append(row)
+        if program_id:
+            program = session.get(Program, program_id)
+            if program is not None:
+                program_names.add(program.name)
 
     # Worst first: the screen exists to answer "where do I look today".
     rank = {"critical": 0, "watch": 1, "healthy": 2, "no_data": 3}
     rows.sort(key=lambda r: (rank.get(r.band, 9), -r.days_late, r.name))
 
+    # Exactly one distinct program among these projects: name it, unchanged
+    # from today's single-program behavior. More than one (or none resolved):
+    # this view is honestly cross-program, so say that rather than guess.
+    program_name = next(iter(program_names)) if len(program_names) == 1 else "Portfolio"
+
     return PortfolioBundle(
-        program_name=program.name if program else "Portfolio",
+        program_name=program_name,
         generated_at=_date.today(),
         projects=rows,
+    )
+
+
+def list_programs(session) -> "ProgramListBundle":
+    """Every Program, with a project count and its worst project's band.
+
+    Backs the Programs list (`Layout_Program` image12). A Program with no
+    projects yet - the deliberately-empty second seed row - is a legitimate
+    `no_data` row, not an error.
+    """
+    from datetime import date as _date
+
+    from app.api.schemas.programs import ProgramListBundle, ProgramSummary
+    from app.models.domain import Program
+    from app.scope import all_projects
+
+    rows_by_program: dict[str, list] = {}
+    for entry in all_projects():
+        row, program_id = _project_row(session, entry)
+        if program_id:
+            rows_by_program.setdefault(program_id, []).append(row)
+
+    # `ensure_project` gives every *connection* its own DEFAULT program row
+    # (invariant 7: Jira and Excel each create their own `projects` row for
+    # HRMS, and each convertor's `ensure_project` creates its own program to
+    # hang it off). HRMS's Jira-side row is folded into its Excel-side
+    # canonical row for the portfolio, but the orphan `jira:Program:1:DEFAULT`
+    # this leaves behind still exists in the table, empty, same name as the
+    # real one. Drop an empty program that shares a name with a non-empty
+    # one - it is that duplicate, not a program worth showing.
+    names_with_projects = {
+        p.name for p in session.scalars(select(Program)).all()
+        if rows_by_program.get(p.id)
+    }
+
+    rank = {"critical": 0, "watch": 1, "healthy": 2, "no_data": 3}
+    summaries: list[ProgramSummary] = []
+    for program in session.scalars(select(Program)).all():
+        rows = rows_by_program.get(program.id, [])
+        if not rows and program.name in names_with_projects:
+            continue
+        band = min((r.band for r in rows), key=lambda b: rank.get(b, 9), default="no_data")
+        summaries.append(
+            ProgramSummary(
+                id=program.id,
+                name=program.name,
+                owner=program.owner,
+                status=program.status,
+                start_date=program.start_date,
+                end_date=program.end_date,
+                project_count=len(rows),
+                band=band,
+            )
+        )
+    summaries.sort(key=lambda p: (-p.project_count, p.name))
+
+    return ProgramListBundle(programs=summaries, generated_at=_date.today())
+
+
+def program_rollup(session, program_id: str) -> "ProgramRollupBundle | None":
+    """One program's cross-project rollup: ranked projects, resources, and
+    where the same person is overallocated across more than one of them.
+
+    Returns `None` for an unknown program id so the route can 404 rather than
+    render an empty screen that looks like a program with no projects.
+    """
+    from collections import defaultdict
+    from datetime import date as _date
+
+    from app.api.schemas.programs import (
+        ProgramRollupBundle,
+        ProgramSummary,
+        ResourceConflict,
+        ResourceRow,
+    )
+    from app.models.domain import Program, Project, Resource
+    from app.scope import all_projects
+
+    program = session.get(Program, program_id)
+    if program is None:
+        return None
+
+    rows = []
+    project_names: dict[str, str] = {}
+    for entry in all_projects():
+        row, resolved_program_id = _project_row(session, entry)
+        if resolved_program_id != program_id:
+            continue
+        rows.append(row)
+        project_names[entry.canonical_id] = entry.name
+
+    rank = {"critical": 0, "watch": 1, "healthy": 2, "no_data": 3}
+    rows.sort(key=lambda r: (rank.get(r.band, 9), -r.days_late, r.name))
+    band = min((r.band for r in rows), key=lambda b: rank.get(b, 9), default="no_data")
+
+    project_ids = list(project_names)
+    resource_rows_db = (
+        session.scalars(
+            select(Resource).where(Resource.project_id.in_(project_ids))
+        ).all()
+        if project_ids
+        else []
+    )
+    resources = [
+        ResourceRow(
+            resource_name=r.resource_name,
+            role=r.role,
+            project_id=r.project_id,
+            project_name=project_names.get(r.project_id, r.project_id),
+            allocation_percent=(
+                float(r.allocation_percent) if r.allocation_percent is not None else None
+            ),
+        )
+        for r in resource_rows_db
+    ]
+
+    by_name: dict[str, list[ResourceRow]] = defaultdict(list)
+    for r in resources:
+        by_name[r.resource_name].append(r)
+
+    conflicts = [
+        ResourceConflict(
+            resource_name=name,
+            total_allocation_percent=round(
+                sum(r.allocation_percent or 0 for r in allocs), 1
+            ),
+            projects=[r.project_name for r in allocs],
+        )
+        for name, allocs in by_name.items()
+        if len(allocs) > 1 and sum(r.allocation_percent or 0 for r in allocs) > 100
+    ]
+    conflicts.sort(key=lambda c: -c.total_allocation_percent)
+
+    return ProgramRollupBundle(
+        program=ProgramSummary(
+            id=program.id,
+            name=program.name,
+            owner=program.owner,
+            status=program.status,
+            start_date=program.start_date,
+            end_date=program.end_date,
+            project_count=len(rows),
+            band=band,
+        ),
+        projects=rows,
+        resources=resources,
+        resource_conflicts=conflicts,
+        generated_at=_date.today(),
     )
 
 
@@ -483,10 +656,10 @@ def program_config(session) -> "ProgramBundle":
     )
     from app.config import settings
     from app.ingest.sources.excel.reader import sha256_file  # noqa: F401
-    from app.ingest.sources.excel.source import WATCHED
+    from app.ingest.sources.excel.source import all_watched
     from app.models.domain import Program
     from app.models.sync import SheetScan
-    from app.scope import PORTFOLIO
+    from app.scope import all_projects
 
     program = session.scalars(select(Program)).first()
     scans = session.scalars(select(SheetScan)).all()
@@ -498,7 +671,7 @@ def program_config(session) -> "ProgramBundle":
             latest[scan.scope] = scan
 
     sources: list[WatchedSource] = []
-    for watched in WATCHED:
+    for watched in all_watched():
         path = Path(settings.data_root) / watched.file_name
         scope = f"{watched.file_name}#{watched.sheet_name}"
         scan = latest.get(scope)
@@ -530,7 +703,7 @@ def program_config(session) -> "ProgramBundle":
         sources=sources,
         scope=[
             ScopeEntry(canonical_id=e.canonical_id, name=e.name, also=list(e.also))
-            for e in PORTFOLIO
+            for e in all_projects()
         ],
         rule_table=DEFAULT_TABLE.name,
         rules=[
