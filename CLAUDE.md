@@ -2,7 +2,18 @@
 
 Read this first. It is the handoff between sessions.
 
-**Last updated:** 2026-09-10 (Program/Project canvas dashboards, AI tile generation, custom charts — deployed and seeded live)
+**Last updated:** 2026-09-10 (Program/Project canvas dashboards, AI tile generation, custom
+charts — deployed and seeded live; navigation fixed and redeployed)
+
+**Resuming on another machine:** `git pull`, then recreate `projectpulse/.env` from
+`.env.example` — it is gitignored on purpose (see the secret-leak note below) and does not
+travel with the repo. Narration is set to `PULSE_NARRATION_PROVIDER=anthropic`; you need
+your own `ANTHROPIC_API_KEY` in `.env` for the AI dashboard generator / custom-tile drafter
+to do more than fall back. `python -m scripts.replay` rebuilds a fresh local SQLite with the
+full demo story (multi-program, multi-project, resource conflicts) in one command. The live
+deploy at `https://projectpulse.fly.dev` already has all of this — `flyctl` on this machine
+is authenticated as `neko4code@gmail.com`; a different machine needs its own `flyctl auth
+login` before `fly deploy` will work from there.
 
 ---
 
@@ -87,14 +98,51 @@ per an explicit request after confirming the full suite (668 tests) passes with 
 included — not otherwise reviewed or verified by this session. Worth reading before
 trusting it further.
 
+**Navigation fixes, same session, four more commits (`2fb9acf`, `81d7cf9`, `7d45c21` —
+check `git log` for the latest, more may follow tonight):**
+
+- The rail had two confusing, overlapping entries ("Program" → `/portfolio`, "Programs" →
+  `/programs`). Consolidated to **one** "Program" tab → `/programs`; `/` now lands there
+  too. `/portfolio` (the old flat cross-program ranking) still renders, just no longer owns
+  a rail slot.
+- **The actual navigation bug:** a Program dashboard's Project Portfolio / Health Heatmap
+  tiles listed projects with nothing clickable — no way to drill from a program into one of
+  its projects. Fixed by linking every project row to `/project/dashboard?project=...`.
+- **A dead end on first visit:** `/project/dashboard` with no `?project=` and no prior
+  `localStorage` selection threw "No project selected", even though the header's
+  `ProjectSwitcher` was already showing a project (it defaults its *display* to
+  `bundle.projects[0]` without setting the actual selection — a real mismatch, not a typo).
+  Now defaults to that same top-ranked project via one `/api/portfolio` call, matching how
+  every other project-scoped page already behaves.
+- **Explicitly rejected: a second "Project" rail tab.** Tried it, asked to redo it — the
+  direction given was to keep the rail at one entry point for the whole hierarchy, not grow
+  it per level. Landed instead on: `GET /api/programs` now returns each program's own ranked
+  `projects`, not just a count, and the Programs page lists them inline under each program
+  card, each linking straight into that project's dashboard. One page, one tab, both levels
+  reachable from it.
+
+**⚠️ Read before touching navigation or the project-scoping mechanism again — this is the
+"put it on the note" ask, and it is a real architectural direction, not a wish:** the
+long-run intent is that **Insight / Risk / Team / Schedule / Calc / Reports stop being
+globally-reachable rail tabs scoped by an ambient `ProjectSwitcher` + `?project=` query
+param, and instead only render once a Program or Project has actually been selected,
+loading only that thing's data.** Today's fix (the Programs page listing projects, the
+`DashboardCanvas` project sub-nav) is a step toward that — entering a project through it
+already carries the selection forward via `withProject()` — but the six pages above are
+**not yet gated on selection**; they still work standalone via the rail with a
+default-project fallback, which is the opposite of the target shape. Whoever picks this up:
+expect it to touch `Shell.tsx`'s `TABS`/`Rail`, `main.tsx`'s path-keyed routing (still
+deliberately router-free), and every one of those six pages' data-fetching. This is a
+genuine redesign, not a quick pass — do not start it without confirming there is time before
+the deadline.
+
 **What is NOT built, and should be weighed against tomorrow's deadline before starting:**
 a per-tile Settings modal beyond the title (`Duplicate`/`Delete`/`Edit Title` exist,
-`settings_json` supports more, no UI for it yet); a `ProgramSwitcher` in the top bar (today
-you reach a program only via `/programs`, not a dropdown like `ProjectSwitcher`); the
-mockup's cross-project phase-gate schedule matrix (the Program rollup has portfolio /
-heatmap / risk / resource-conflict, not that specific grid); per-tile "Edit Data" source
-picker; "Download Tile". None of these are started — picking them up costs real time this
-close to the deadline, so confirm it is worth it before beginning.
+`settings_json` supports more, no UI for it yet); the context-gating redesign directly
+above; the mockup's cross-project phase-gate schedule matrix (the Program rollup has
+portfolio / heatmap / risk / resource-conflict, not that specific grid); per-tile "Edit
+Data" source picker; "Download Tile". None of these are started — picking them up costs
+real time this close to the deadline, so confirm it is worth it before beginning.
 
 **Known pre-existing gap, unrelated to this session:** `npm run smoke` is broken —
 `vite-node` is invoked by `package.json`'s `smoke` script but was never an actual
