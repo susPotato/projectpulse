@@ -663,8 +663,17 @@ For a first version, the product should include:
 - evidence panel
 
 ### Later phases
-- drag-and-drop custom dashboard
-- cross-program portfolio view
+
+> **2026-09-10 update:** the first two rows below shipped this session — a
+> Program → Project widget canvas (drag/resize, AI-built or template-built,
+> plus custom user-data tiles) and a real cross-program portfolio view, both
+> ahead of the MVP list above rather than after it. See `CLAUDE.md` §0
+> (2026-09-10) for what was built and what is still open. Left here, struck
+> through in spirit rather than deleted, so the record of what "later" meant
+> at the time stays legible.
+
+- ~~drag-and-drop custom dashboard~~ — done: `/programs/dashboard`, `/project/dashboard`
+- ~~cross-program portfolio view~~ — done: `GET /api/programs/{id}` (ranked projects, cross-project risk, resource conflicts)
 - alerting and notifications
 - custom workflows
 - role-based permissions

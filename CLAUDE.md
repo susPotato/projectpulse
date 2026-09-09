@@ -2,11 +2,109 @@
 
 Read this first. It is the handoff between sessions.
 
-**Last updated:** 2026-09-09 (report builder, delivery forecast, the FPT AI gateway + all 17 models probed, the journey test, a `.gitignore` repair that unbroke `main`)
+**Last updated:** 2026-09-10 (Program/Project canvas dashboards, AI tile generation, custom charts — deployed and seeded live)
 
 ---
 
-## 0. This session — 2026-09-08, read this before anything else in the file below
+## 0. This session — 2026-09-10, read this before anything else in the file below
+
+**Everything below this point, including the 2026-09-08 section, is superseded where it
+disagrees with this one.** Round 1 code is due **2026-09-11 — tomorrow.**
+
+**The roadmap changed.** §14's "Later phases: drag-and-drop custom dashboard" is done, not
+later — this is now the single biggest feature in the app, and it directly closes the §3/§0
+(2026-09-08) "single-project vs portfolio" gap that was flagged as the #1 P0 miss against
+`PiMSatho_Overview.xlsx`. The product is no longer "one project's insight page"; it is
+**Program → Project**, each with its own AI-buildable widget canvas, matching
+`Layout_Program`'s own mockups (images 17–24) closer than anything built before it.
+
+**What shipped:**
+
+- **Real multi-Program/multi-Project data.** `Program`/`Project` were already modeled but the
+  demo only ever had one project. Now: `excel:Program:1:DEFAULT` ("Digital Transformation
+  2026") holds three — HRMS (the original causal-chain story), plus two new small,
+  single-snapshot projects, **SAIN** and **Example Project** (names lifted from the PM's own
+  cross-project mockup rows) — generated as real workbooks
+  (`scripts/gen_portfolio_data.py`) and run through the same reader/differ/identity-resolver
+  as everything else, never seeded as DB rows directly (invariant 4). A second, empty
+  `Program` ("Cloud-First Initiative") exists so the Programs list is provably not
+  hardcoded to one row. Hand-authored `Resource` allocations (`scripts/seed_extras.py`) —
+  the one table with no source system to fake a collector for — make Tran Quoc B
+  provably 130% allocated across two projects, which is what the new Resource Conflict
+  tile exists to catch.
+- **`GET /api/programs` / `GET /api/programs/{id}`** — the program list and one program's
+  rollup (ranked projects, cross-project risk, resource conflicts). Deliberately a new
+  module (`app/api/schemas/programs.py`, plural) rather than reusing `program.py` /
+  `ProgramBundle`, which already meant something else (watched-sources config) before this
+  session and would have collided.
+- **The canvas.** `app/models/dashboard.py` (`Dashboard`, `DashboardTile`), `app/dashboard/`
+  (`catalogue.py` — 17 P0 tiles pulled straight from the PM's own priority triage in
+  `(Program)Tiles List` / `(Project)Tiles List`, plus 3 real charts: Gantt (reused), Delivery
+  Forecast, Effort Burn; `service.py`; `generator.py`), and on the frontend
+  `DashboardCanvas.tsx` (react-grid-layout, drag/resize **on by default**), `AddTilesModal.tsx`
+  (with preview swatches per tile), `NewDashboardModal.tsx` (Create with AI / Browse
+  Templates / Blank Canvas — matches `Layout_Program` images 17–19 almost exactly),
+  `EditTileModal.tsx`. Routes at `/programs`, `/programs/dashboard`, `/project/dashboard`.
+- **"Create with AI"** picks tiles from the catalogue — it never invents data, only arranges
+  what the app already computes, which is what keeps it compatible with invariant 1. Reuses
+  `narration.providers.drafter_for` (no new plumbing), validated the same way
+  `narration/validator.py` validates a narration draft: an allow-list gate
+  (`app/dashboard/generator.py`), not JSON mode (no adapter here sets a structured-output
+  flag). Falls back to the full P0 set, with the reason recorded, when narration is off, the
+  call fails, or the model returns nothing recognizable — three cases, all tested
+  (`tests/test_dashboard.py`).
+- **Custom tiles** (`app/dashboard/custom.py`, `CustomTile` model) — the one tile type this
+  app's own governing rule does not apply to, and that is stated in the model's docstring
+  rather than glossed over: a person pastes their own data (a table, a CSV selection, prose
+  with numbers in it), the model parses it into `{title, chart_type, labels, values}` — never
+  authors the values — with a plain two-column CSV/TSV reader as a fallback so "paste a
+  label,value table" still works with narration off. Every custom tile is labelled `Custom`
+  on the canvas with the person's own note attached, the same honesty discipline the Risk
+  register and the Agent tab already practice for their own ungoverned surfaces. Saved once
+  (`POST /api/custom-tiles`), reusable on any dashboard after.
+- **Narration provider switched to `anthropic`** (`.env`) at the user's request — verified
+  live, including the AI generator and the custom-tile drafter, both against real Claude
+  calls, not just the fallback path.
+- **Fixed a live secret leak.** A real Anthropic key had been pasted into `.env.example` (the
+  committed template) instead of `.env` — the exact failure mode CLAUDE.md's own
+  pre-commit hook (2026-09-08 section) exists to catch, and it would have: the hook blocked
+  it. Moved to `.env`, template restored to blank, key never appeared in any commit.
+- **Deployed and seeded live.** `git push origin main` (commit `b854200`), then
+  `fly deploy`, then — because a deploy does **not** replay the demo timeline into an
+  already-seeded Postgres (`scripts/serve.py`'s "seed only if empty" rule, 2026-09-08
+  section) — `fly ssh console` ran `sync init` (adds the three new tables) →
+  `gen_portfolio_data` → `sync run --source excel` → `seed_extras` directly against
+  production, so `https://projectpulse.fly.dev/api/programs` shows the real three-project,
+  two-program, resource-conflict story, not just the code for it. ⚠️ **`fly ssh console`
+  exits 1 with "Error: The handle is invalid" after every command on this Windows/Git-Bash
+  setup — that is a local pty artifact, not a remote failure; the command's own stdout above
+  it is the truth.** Bear this in mind before assuming a production script run failed.
+
+**Bundled into the same commit, not authored this session:** an in-progress "upload a
+project" feature already sitting in the working tree (`Shell.tsx`, narration provider
+settings, the Calculation/Insight/Reports/Team pages, `tests/test_upload.py`). Committed
+per an explicit request after confirming the full suite (668 tests) passes with it
+included — not otherwise reviewed or verified by this session. Worth reading before
+trusting it further.
+
+**What is NOT built, and should be weighed against tomorrow's deadline before starting:**
+a per-tile Settings modal beyond the title (`Duplicate`/`Delete`/`Edit Title` exist,
+`settings_json` supports more, no UI for it yet); a `ProgramSwitcher` in the top bar (today
+you reach a program only via `/programs`, not a dropdown like `ProjectSwitcher`); the
+mockup's cross-project phase-gate schedule matrix (the Program rollup has portfolio /
+heatmap / risk / resource-conflict, not that specific grid); per-tile "Edit Data" source
+picker; "Download Tile". None of these are started — picking them up costs real time this
+close to the deadline, so confirm it is worth it before beginning.
+
+**Known pre-existing gap, unrelated to this session:** `npm run smoke` is broken —
+`vite-node` is invoked by `package.json`'s `smoke` script but was never an actual
+dependency (checked both `package.json` and the lockfile). `npm run build` and `pytest`
+are the load-bearing checks and both pass; `smoke` needs `vite-node` added as a devDependency
+before it can run again.
+
+---
+
+## 0a. This session — 2026-09-08, read this before anything else in the file below
 
 Everything in this section happened after the rest of the file was written. Where it
 contradicts something further down (mainly §3's "Not built yet" and §8's "What to do
