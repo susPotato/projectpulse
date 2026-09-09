@@ -10,7 +10,14 @@ data/demo/*.xlsx
 # Trained model artefacts. Downloaded on request by `scripts.fetch_model`, never
 # committed - it is a third-party binary and the app treats its absence as a
 # complete state.
-models/
+#
+# The leading slash is load-bearing. A bare `models/` matches a directory of
+# that name at ANY depth, so it also swallowed `app/models/` - and because git
+# ignores only *untracked* files, the tables committed before this line was
+# added went on working while every new one was silently dropped from the
+# commit. `app/models/narration.py` and `app/models/onedrive.py` were both lost
+# that way, and the pushed tree could not import `app.db` at all.
+/models/
 
 # Runtime state a person edits, including an API key in plaintext.
 .pulse/
