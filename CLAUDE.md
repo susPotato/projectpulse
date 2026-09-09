@@ -174,7 +174,7 @@ in, an `InsightBundle` out.
 203 of 702 pairs orderable
 4 dependency edges: 3 stated, 1 inferred
 9 findings, 3 causal chains (edge / path / project)
-608 tests, ~45s, no Docker + a typechecked front end
+617 tests, ~2min, no Docker + a typechecked front end
 ```
 
 - **Excel path** — header contract, sha256 skip, row-identity resolution, snapshot
@@ -321,10 +321,48 @@ in, an `InsightBundle` out.
   here.
 
   **That test is also the on-premise story.** `/v1/chat/completions` is what vLLM,
-  Ollama, LM Studio and an internal FPT gateway all serve, so a self-hosted open model
+  Ollama, LM Studio and a self-hosted gateway all serve, so a self-hosted open model
   (26B-100B) needs **no code change** - set `OPENAI_BASE_URL` and a dummy
-  `OPENAI_API_KEY`. Nothing leaves the building. ⚠️ **The OpenAI and Gemini model ids in
-  `DEFAULT_MODELS` are placeholders** — confirm against the vendor's current list.
+  `OPENAI_API_KEY`. Nothing leaves the building.
+
+- ✅ **`fpt` — the FPT AI gateway, and it has completed real live calls.** A fourth
+  provider, `PULSE_NARRATION_PROVIDER=fpt`, against `https://token-api.fpt.ai/v1`. It
+  serves a dozen models (DeepSeek-V4-Flash — the default — plus GLM-5.2,
+  Llama-3.3-70B-Instruct, gpt-oss-120b, Qwen3.6-27B and the gemma family); any of them
+  is `--llm-model <name>` with no code change. **Nothing leaves FPT's network**, which
+  is the answer to "can we send delivery data to a model at all".
+
+  Verified end to end on 2026-09-09: `narrate()` returned `source=model, attempts=1` in
+  **61s** against the real gateway, every figure substituted by the server.
+
+  ⚠️ **The on-premise note above was wrong about this gateway, and that is why `fpt` is
+  its own adapter.** The *request* is OpenAI-shaped, so pointing `OPENAI_BASE_URL` at it
+  looks like it should work. The *response* is not: the completion is wrapped in
+  `{"code", "message", "data"}`, so `choices` sits one level down and the OpenAI SDK —
+  which reads it from the root — cannot parse it. The adapter unwraps tolerantly
+  (`payload.get("data", payload)`) because the gateway proxies several upstreams and a
+  bare OpenAI body is the other shape it could return.
+
+  ⚠️ **It sends a real `User-Agent`, and that is load-bearing.** Cloudflare fronts the
+  gateway and rejects `Python-urllib/3.x` with **HTTP 403 "error code: 1010"** — a
+  banned browser signature, which reads exactly like an auth failure and is not one.
+
+  ⚠️ **`DEFAULT_TIMEOUTS["fpt"] = 180`, measured not guessed.** The full brief takes
+  **~60s** there, which is exactly the shared default, so the default produced a
+  coin-flip between a model narrative and a timeout fallback on identical input. And
+  the timeout is **per read, not a total deadline** — one observed call ran 496s before
+  the connection reset. The fence served the template with a reason, which is what
+  matters.
+
+  ✅ **It needs no SDK.** `urllib` from the standard library, so it is absent from
+  `EXTRAS` and is the one provider that cannot fail with "package not installed" — i.e.
+  the one that always works on a judge's machine. `test_fpt_needs_no_sdk_at_all` pins
+  it. Key from `FPT_API_KEY` or the settings page; unlike the SDK-backed adapters
+  nothing resolves it for us, so a missing key is named rather than becoming a puzzling
+  401.
+
+  ⚠️ **The OpenAI and Gemini model ids in `DEFAULT_MODELS` are placeholders** — confirm
+  against the vendor's current list.
 - **`excel/convertor.py`** — tool rows → `tasks`/`qa_items`. Was missing; without it the
   DAG joined ids with no dates on them.
 - **The insight screen** — served at `GET /insight`. **Opens on the delivery-outlook
@@ -781,6 +819,9 @@ def provably_before(a, b) -> bool:
 | A figure interpolated into JSX is **not found** by a smoke assertion | Server-side rendering splits a text node around `{value}` with an HTML comment, so `"planned - 125h of estimates"` never appears contiguously. Assert the halves (`"planned - "`, `"h of estimates"`), not the sentence a reader sees. |
 | **`scripts.shots` photographs the Schedule page as its own "chart component did not load"** | A flake in the screenshot tool, not a broken build - `node --check app/api/static/gantt.js` will pass. Per-shot throwaway profiles fixed most of it and it still happens occasionally when several pages are shot in a row. Re-shoot that page **alone** (`--page /gantt`) before believing it. |
 | Windows file locks on `.venv` | `rm -rf .venv` can fail; move it aside instead. |
+| **`UnicodeEncodeError` printing a *model's* narrative** | The ASCII rule above covers CLI **source**; it cannot cover what a language model writes. FPT's first live narrative came back with an en-dash and `print(bundle.narrative)` died on cp932 — *after* the call was paid for and the whole analysis had printed. `_bootstrap.printable_console()` now sets `errors="replace"` on stdout/stderr, so one character degrades to `?` instead of losing the command. The `.docx`, the page and the API were always UTF-8 and are untouched. |
+| **An LLM gateway 403s with "error code: 1010"** | Not auth — that is **Cloudflare** rejecting the default `Python-urllib/3.x` User-Agent as a banned browser signature. Send a real `User-Agent`. Cost an hour of looking at the key. |
+| **A provider works once, then falls back to the template on identical input** | Its call is landing right on `ModelConfig.timeout_seconds`. The FPT gateway takes ~60s for the full brief and the shared default is 60. `DEFAULT_TIMEOUTS` carries the per-vendor override. ⚠️ Note `urlopen(timeout=)` is **per read, not a total deadline** — a dribbling server can run far past it (496s observed). |
 | **A pushed commit will not `import app.db` — a model file is missing** | `.gitignore` had a bare `models/`, meant for the ML artefact dir. That pattern matches a directory of that name **at any depth**, so it also swallowed `app/models/`. Git ignores only *untracked* files, so every table committed before that line kept working while each new one was dropped from the commit **with no warning** — `app/models/narration.py` and `app/models/onedrive.py` were both lost this way and `origin/main` could not start at all. Fixed by anchoring it to `/models/`. ⚠️ **Any new `app/models/*.py` is the case to check**, and `git status --porcelain --ignored` is what shows it. |
 
 ---
@@ -833,7 +874,7 @@ cd projectpulse
 # Console: edit data/demo files, watch the effect. http://127.0.0.1:8000
 python -m scripts.demo
 
-python -m pytest                      # 608 tests, ~45s, no DB needed
+python -m pytest                      # 617 tests, ~2min, no DB needed
 docker compose up -d                  # postgres+pgvector on :5433 (Docker Desktop must be running)
 python -m scripts.sync init
 
@@ -865,6 +906,10 @@ python -m scripts.sync insight --also jira:Project:1:HRMS --narrative
 python -m scripts.sync insight --narrative --model
 python -m scripts.sync insight --narrative --model --provider openai
 python -m scripts.sync insight --narrative --model --provider gemini --llm-model gemini-2.5-flash
+
+# The FPT gateway. Needs no SDK and no extra - just FPT_API_KEY.
+python -m scripts.sync insight --narrative --model --provider fpt
+python -m scripts.sync insight --narrative --model --provider fpt --llm-model GLM-5.2
 
 # Show the arithmetic behind every number, so it can be checked by hand.
 python -m scripts.sync explain

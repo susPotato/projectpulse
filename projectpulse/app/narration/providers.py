@@ -49,7 +49,7 @@ log = logging.getLogger(__name__)
 
 #: The vendors with an adapter here. `drafter_for` is the only way to pick one,
 #: so an unknown name fails at configuration time rather than mid-request.
-PROVIDERS = ("anthropic", "openai", "gemini")
+PROVIDERS = ("anthropic", "openai", "gemini", "fpt")
 
 #: Default model per vendor, checked against each vendor's current model list
 #: on 2026-09-08. Not placeholders - but model names move, so
@@ -65,14 +65,44 @@ DEFAULT_MODELS = {
     "anthropic": "claude-opus-5",
     "openai": "gpt-5.6-terra",
     "gemini": "gemini-3.8-flash",
+    # The model the gateway's own documentation uses in its example, and a
+    # flash tier - which is the right class for this job, per the note above.
+    # The gateway serves a dozen others (GLM-5.2, Llama-3.3-70B-Instruct,
+    # gpt-oss-120b, the gemma and Qwen families); any of them is
+    # `--llm-model <name>` with no code change.
+    "fpt": "DeepSeek-V4-Flash",
 }
 
 #: What to install for each, quoted in the message a failed import produces.
+#:
+#: `fpt` is deliberately absent: it speaks HTTP from the standard library and
+#: needs no package at all, so it is the one provider that cannot fail with
+#: "SDK not installed" - see `_fpt_drafter`. `_import` is never called for it.
 EXTRAS = {
     "anthropic": 'pip install -e ".[llm]"',
     "openai": 'pip install -e ".[llm-openai]"',
     "gemini": 'pip install -e ".[llm-gemini]"',
 }
+
+#: Per-vendor timeout, where the shared default is wrong. Measured, not guessed:
+#: the full narration brief against the FPT gateway takes **~60 seconds**, which
+#: is exactly `ModelConfig.timeout_seconds` - so the default produced a coin-flip
+#: between a model narrative and a timeout fallback on identical input.
+#:
+#: ⚠️ **This is a per-read timeout, not a total deadline.** `urlopen` restarts
+#: the clock on every chunk, so a gateway dribbling bytes can exceed it by a lot
+#: - one observed call ran 496 seconds before the connection reset. The fence
+#: still served the template with a reason, which is the behaviour that matters,
+#: but do not read this number as a guarantee of when a page will answer. The
+#: real protection for a demo is that narration is off by default and cached per
+#: fact-set once on.
+DEFAULT_TIMEOUTS = {
+    "fpt": 180.0,
+}
+
+#: The FPT AI gateway's own endpoint. `ModelConfig.base_url` overrides it, which
+#: is how a different tenant or a staging host is a setting rather than an edit.
+FPT_BASE_URL = "https://token-api.fpt.ai/v1"
 
 
 @dataclass(frozen=True)
@@ -119,11 +149,16 @@ def drafter_for(provider: str, config: ModelConfig | None = None) -> Drafter:
     cfg = config or ModelConfig()
     if not cfg.model:
         cfg = replace(cfg, model=DEFAULT_MODELS[name])
+    # Only when the caller left the shared default alone - an explicit timeout
+    # is a decision and must not be silently overridden by a vendor table.
+    if name in DEFAULT_TIMEOUTS and cfg.timeout_seconds == ModelConfig().timeout_seconds:
+        cfg = replace(cfg, timeout_seconds=DEFAULT_TIMEOUTS[name])
 
     return {
         "anthropic": _anthropic_drafter,
         "openai": _openai_drafter,
         "gemini": _gemini_drafter,
+        "fpt": _fpt_drafter,
     }[name](cfg)
 
 
@@ -325,5 +360,126 @@ def _gemini_drafter(cfg: ModelConfig) -> Drafter:
                 )
 
         return _nonempty(response.text or "", "gemini")
+
+    return draft
+
+
+# --------------------------------------------------------------------------
+# FPT AI gateway.
+# --------------------------------------------------------------------------
+
+
+def _fpt_drafter(cfg: ModelConfig) -> Drafter:
+    """FPT's internal model gateway, over `/v1/chat/completions`.
+
+    **The request is OpenAI-shaped; the response is not.** The gateway wraps the
+    completion in an envelope::
+
+        {"code": 200, "message": "...", "data": {"choices": [...], ...}}
+
+    so `choices` lives under `data` and the OpenAI SDK - which reads it from the
+    root - cannot parse this. That is the whole reason this is a separate
+    adapter rather than `_openai_drafter` with `base_url` pointed at FPT, which
+    is what the on-premise note in `CLAUDE.md` assumed would be enough. It is
+    enough for vLLM, Ollama and LM Studio; it is not enough for this gateway.
+
+    The envelope is unwrapped tolerantly (`payload.get("data", payload)`)
+    because the gateway proxies several upstreams and a bare OpenAI response is
+    the other shape it could plausibly return. Accepting both costs one call and
+    removes a whole class of "worked in staging" failure.
+
+    **No SDK.** `urllib` from the standard library, so this is the one provider
+    that works with none of the optional extras installed - which matters for a
+    judge running the demo, and means it cannot fail with "package not found".
+
+    Credentials come from `FPT_API_KEY`, or the key saved on the settings page.
+    Unlike the SDK-backed adapters there is nothing to resolve them for us, so
+    an absent key is reported here rather than becoming a puzzling 401.
+    """
+
+    def draft(system: str, user: str) -> str:
+        import json
+        import os
+        import urllib.error
+        import urllib.request
+
+        key = cfg.api_key or os.environ.get("FPT_API_KEY", "")
+        if not key:
+            raise NarrationUnavailable(
+                "no FPT credential; set FPT_API_KEY or save a key on /settings"
+            )
+
+        base = (cfg.base_url or FPT_BASE_URL).rstrip("/")
+        payload = json.dumps(
+            {
+                "model": cfg.model,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                "max_tokens": cfg.max_tokens,
+                # Explicitly false. The gateway's own documented example sets
+                # `stream: true`, which answers with server-sent events - and
+                # this parser would then read the first chunk as a whole
+                # response and quietly narrate a fragment.
+                "stream": False,
+            }
+        ).encode("utf-8")
+
+        request = urllib.request.Request(
+            f"{base}/chat/completions",
+            data=payload,
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {key}",
+                # Cloudflare sits in front of the gateway and rejects
+                # `Python-urllib/3.x` outright - HTTP 403, "error code: 1010",
+                # which is a banned browser signature and not an auth failure.
+                # Naming the application is both what gets through and the
+                # honest thing to send.
+                "User-Agent": "ProjectPulseAI/1.0",
+                "Accept": "application/json",
+            },
+        )
+
+        try:
+            with urllib.request.urlopen(
+                request, timeout=cfg.timeout_seconds
+            ) as answer:
+                body = json.loads(answer.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            # The gateway puts its reason in the body, so read it rather than
+            # reporting a bare status a reader cannot act on.
+            detail = exc.read().decode("utf-8", "replace")[:300]
+            raise NarrationUnavailable(
+                f"fpt returned HTTP {exc.code}: {detail}"
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise NarrationUnavailable(f"fpt was unreachable: {exc.reason}") from exc
+        except (ValueError, UnicodeDecodeError) as exc:
+            raise NarrationUnavailable("fpt returned a body that is not JSON") from exc
+
+        # A failure can arrive as HTTP 200 with a non-200 `code`, which is the
+        # one shape that would otherwise sail past every check above.
+        code = body.get("code")
+        if code is not None and int(code) != 200:
+            raise NarrationUnavailable(
+                f"fpt refused ({code}): {body.get('message') or 'no message given'}"
+            )
+
+        data = body.get("data", body)
+        choices = data.get("choices") or []
+        if not choices:
+            raise NarrationUnavailable("fpt returned no choices")
+
+        choice = choices[0]
+        finish = str(choice.get("finish_reason") or "")
+        if finish == "length":
+            raise NarrationUnavailable("the draft was truncated at max_tokens")
+        if finish == "content_filter":
+            raise NarrationUnavailable("fpt stopped on a content filter")
+
+        return _nonempty(str((choice.get("message") or {}).get("content") or ""), "fpt")
 
     return draft

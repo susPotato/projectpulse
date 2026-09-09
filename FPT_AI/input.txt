@@ -1,0 +1,20 @@
+curl -X POST https://token-api.fpt.ai/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "model": "DeepSeek-V4-Flash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Can you tell me about the creation of blackholes?"
+      }
+    ],
+    "temperature": 1,
+    "max_tokens": 1024,
+    "top_p": 1,
+    "top_k": 40,
+    "presence_penalty": 0,
+    "frequency_penalty": 0,
+    "stop": "END",
+    "stream": true
+  }'

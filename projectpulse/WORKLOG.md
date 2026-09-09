@@ -8,12 +8,12 @@ and must not be hand-edited.
 
 ## Now
 
-**Idle.** Ten screens. `/reports` builds the status report - audience preset,
-per-section tick boxes, a preview that is literally the document, and .docx /
-.xlsx / .md downloads. The Insight board now also carries a **delivery forecast**:
-P50/P80/P95 resampled from this project's own drift against its baselines, which
-**refuses with a reason** when the sample is too small, has no variance, or there
-is nothing left to move.
+**Idle.** Ten screens, plus a **fourth narration provider: the FPT AI gateway**,
+which is the first adapter here to complete a real live call - `source=model` in
+61s, every figure substituted by the server. It needs no SDK, so it is the one
+provider that always works on a judge's machine. `/reports` builds the status
+report in three formats, and the Insight board carries a delivery forecast that
+refuses with a reason when the data cannot support a range.
 
 Also fixed this session: `.gitignore`'s bare `models/` had been silently dropping
 new `app/models/*.py` files from every commit, and the pushed branch could not
@@ -46,6 +46,37 @@ it, and confirm the model id first for OpenAI and Gemini (those defaults are pla
 
 Newest first. Each entry names the functions that changed, so a reader can jump
 straight to them.
+
+### 33 - The FPT AI gateway, and the first live calls it made
+Given a key and the gateway's two-page API doc. It is now a fourth provider, and the
+only one that has completed a real end-to-end call from this machine.
+
+- **The doc's response shape is why this is a separate adapter.** The *request* is
+  OpenAI-shaped, so `OPENAI_BASE_URL` pointed at the gateway looks like it should work -
+  and CLAUDE.md's on-premise note said exactly that. The *response* wraps the completion
+  in `{"code", "message", "data"}`, so `choices` is one level down and the OpenAI SDK,
+  which reads it from the root, cannot parse it. Unwrapped tolerantly, because the
+  gateway proxies several upstreams and a bare OpenAI body is the other plausible shape.
+- **No SDK.** `urllib` from the standard library, so `fpt` is absent from `EXTRAS` and is
+  the one provider that cannot fail with "package not installed" - the one that always
+  works on a judge's machine.
+- **Three things found only by making the call:**
+  - **HTTP 403 "error code: 1010"** on the first attempt. Cloudflare fronts the gateway
+    and bans `Python-urllib/3.x` by User-Agent. It reads exactly like a bad key.
+  - **The full brief takes ~60s**, which is exactly `ModelConfig.timeout_seconds`, so the
+    shared default was a coin-flip between a narrative and a timeout fallback on
+    identical input. `DEFAULT_TIMEOUTS` now carries a measured per-vendor override. One
+    call also ran **496s** before resetting - `urlopen(timeout=)` is per read, not a
+    total deadline.
+  - **A `UnicodeEncodeError` printing the model's own prose.** It wrote an en-dash and
+    cp932 could not encode it - after the call had been paid for and the whole analysis
+    printed. The existing ASCII rule covers CLI *source*; model output is data and cannot
+    be constrained upstream, so `_bootstrap.printable_console()` sets `errors="replace"`
+    on the way out. The .docx, the page and the API were always UTF-8.
+- **Verified live**: `source=model, attempts=1` in 61s, every figure substituted by the
+  server. The model was never shown a digit and the prose it returned is good.
+- 9 more tests, 617 total - including the envelope, the non-200-inside-200 case, the
+  bare-OpenAI fallback shape, `stream: false`, and a digit-writing model still refused.
 
 ### 32 - A forecast that refuses
 Asked for the "sim model - what the project will become". Three things already
@@ -1458,7 +1489,8 @@ _Make every `python -m scripts.*` command work, whatever Python you typed._
 
 - `ensure_venv()` - Re-exec under `.venv` if we are not already there.
 - `default_database(url)` - Choose a database before `app.config` freezes the choice.
-- `bootstrap(url)` - Both fixes, in the order they have to happen.
+- `printable_console()` - Never crash on a character the console cannot encode.
+- `bootstrap(url)` - All three fixes, in the order they have to happen.
 
 ### `scripts/demo.py`
 _Start the retriever console._

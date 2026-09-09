@@ -108,7 +108,35 @@ def default_database(url: str = DEFAULT_SQLITE) -> str:
     return os.environ["DATABASE_URL"]
 
 
+def printable_console() -> None:
+    """Never crash on a character the console cannot encode.
+
+    `tests/test_scripts.py` already guarantees every CLI *source* file is ASCII,
+    because `argparse(description=__doc__)` prints module docstrings and this
+    console is cp932. That rule cannot cover **what a language model writes**:
+    the FPT gateway's first live narrative came back with an en-dash, and
+    `print(bundle.narrative)` died with `UnicodeEncodeError` after the model had
+    already been paid for and the whole analysis printed above it.
+
+    Model output is data, not source, so the fix belongs on the way out rather
+    than in a rule nobody can enforce upstream. `errors="replace"` degrades one
+    character to `?` instead of losing the command - and only on a console that
+    cannot represent it, since a UTF-8 terminal encodes it fine. The `.docx`,
+    the page and the API are untouched: they were always UTF-8.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        # Absent under some launchers, and already replacing under others.
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(errors="replace")
+        except (ValueError, OSError):  # pragma: no cover - stream is not a tty
+            pass
+
+
 def bootstrap(url: str = DEFAULT_SQLITE) -> str:
-    """Both fixes, in the order they have to happen."""
+    """All three fixes, in the order they have to happen."""
     ensure_venv()
+    printable_console()
     return default_database(url)

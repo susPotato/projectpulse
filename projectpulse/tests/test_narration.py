@@ -581,12 +581,19 @@ def test_a_missing_sdk_becomes_a_fallback_with_an_install_hint():
     checking which SDKs happen to be installed here - a test that passes or
     fails on the contents of a venv tells you about the venv.
     """
-    for provider in PROVIDERS:
+    from app.narration.providers import EXTRAS
+
+    for provider in EXTRAS:
         with pytest.raises(NarrationUnavailable) as caught:
             _import("a_vendor_sdk_that_does_not_exist", provider)
 
         assert "not installed" in str(caught.value)
         assert "pip install" in str(caught.value)
+
+    # A provider with no entry needs no package, so there is nothing to be
+    # missing. `fpt` speaks HTTP from the standard library - which makes it the
+    # only one that cannot fail this way, not one that was forgotten.
+    assert set(PROVIDERS) - set(EXTRAS) == {"fpt"}
 
 
 def test_a_vendor_that_cannot_be_reached_still_leaves_a_narrative():
@@ -906,3 +913,214 @@ def test_gemini_writing_a_digit_is_refused_like_any_other_vendor():
     assert outcome.source == "template"
     assert "no_literal_digits" in (outcome.fallback_reason or "")
     assert "41" not in outcome.narrative
+
+
+# --------------------------------------------------------------------------
+# The FPT gateway, against a local server speaking its wire format.
+#
+# The shape being pinned is the one that made this a separate adapter rather
+# than `_openai_drafter` with a `base_url`: the gateway answers with the
+# completion wrapped in `{"code", "message", "data"}`, so `choices` is one
+# level down and the OpenAI SDK cannot read it.
+# --------------------------------------------------------------------------
+
+
+class _FptChat(BaseHTTPRequestHandler):
+    def do_POST(self):  # noqa: N802 - the base class names it
+        length = int(self.headers.get("content-length", "0"))
+        payload = json.loads(self.rfile.read(length) or b"{}")
+        self.server.seen = {
+            "path": self.path,
+            "auth": self.headers.get("authorization"),
+            "agent": self.headers.get("user-agent"),
+            "stream": payload.get("stream"),
+            "roles": [m["role"] for m in payload.get("messages", [])],
+        }
+        user = next(
+            m["content"] for m in payload["messages"] if m["role"] == "user"
+        )
+        body = json.dumps(self.server.compose_envelope(user)).encode()
+        self.send_response(self.server.status)
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+def _fpt_envelope(text: str, *, finish: str = "stop", code: int = 200) -> dict:
+    """The gateway's documented response shape - see `FPT_AI/output.txt`."""
+    return {
+        "code": code,
+        "message": "Chat completion successful",
+        "data": {
+            "id": "chatcmpl-test",
+            "object": "chat.completion",
+            "model": "DeepSeek-V4-Flash",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": text},
+                    "finish_reason": finish,
+                }
+            ],
+            "usage": {"prompt_tokens": 13, "completion_tokens": 10, "total_tokens": 23},
+            "provider": "openai",
+        },
+    }
+
+
+@contextlib.contextmanager
+def _local_fpt_server(compose_envelope=None, status=200):
+    server = HTTPServer(("127.0.0.1", 0), _FptChat)
+    server.compose_envelope = compose_envelope or (
+        lambda user: _fpt_envelope(_well_behaved_draft(user))
+    )
+    server.status = status
+    server.seen = {}
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield server, f"http://127.0.0.1:{server.server_address[1]}/v1"
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+
+def _fpt(base_url: str) -> object:
+    return drafter_for(
+        "fpt", ModelConfig(api_key="not-a-real-key", base_url=base_url)
+    )
+
+
+def test_fpt_completes_the_whole_path():
+    """Request, envelope parsing, the eight-stage gate, substitution."""
+    with _local_fpt_server() as (server, base_url):
+        outcome = narrate(_model_bundle(), drafter=_fpt(base_url))
+
+    assert outcome.source == "model", outcome.fallback_reason
+    assert outcome.attempts == 1
+    assert "34" in outcome.narrative
+    assert "{{" not in outcome.narrative
+
+    # The request as it actually went out, not as we assumed it would.
+    assert server.seen["path"].endswith("/v1/chat/completions")
+    assert server.seen["auth"] == "Bearer not-a-real-key"
+    assert server.seen["roles"] == ["system", "user"]
+
+
+def test_fpt_never_asks_for_a_stream():
+    """The gateway's own example sets `stream: true`.
+
+    Copying that example would answer with server-sent events, and this parser
+    would read the first chunk as a whole response - narrating a fragment that
+    looks complete.
+    """
+    with _local_fpt_server() as (server, base_url):
+        narrate(_model_bundle(), drafter=_fpt(base_url))
+
+    assert server.seen["stream"] is False
+
+
+def test_fpt_sends_a_user_agent_cloudflare_will_accept():
+    """Cloudflare fronts the gateway and 403s `Python-urllib/3.x` outright.
+
+    Observed as HTTP 403 "error code: 1010" - a banned browser signature, which
+    reads exactly like an auth failure and is not one.
+    """
+    with _local_fpt_server() as (server, base_url):
+        narrate(_model_bundle(), drafter=_fpt(base_url))
+
+    agent = server.seen["agent"] or ""
+    assert agent and "urllib" not in agent.lower()
+
+
+def test_fpt_writing_a_digit_is_refused_like_any_other_vendor():
+    def sloppy(user: str) -> dict:
+        return _fpt_envelope(
+            _well_behaved_draft(user).replace(
+                "WBS-108 is at the centre of it", "the slip is 41 days"
+            )
+        )
+
+    with _local_fpt_server(sloppy) as (_server, base_url):
+        outcome = narrate(_model_bundle(), drafter=_fpt(base_url))
+
+    assert outcome.source == "template"
+    assert "no_literal_digits" in (outcome.fallback_reason or "")
+    assert "41" not in outcome.narrative
+
+
+def test_a_non_200_code_inside_a_200_response_is_still_a_failure():
+    """The one shape that sails past every HTTP-level check.
+
+    The gateway can answer 200 OK with `{"code": 500}` in the body, and a
+    parser that trusts the status would read `data` as a successful completion.
+    """
+    with _local_fpt_server(
+        lambda user: {"code": 500, "message": "upstream exploded", "data": {}}
+    ) as (_server, base_url):
+        outcome = narrate(_model_bundle(), drafter=_fpt(base_url))
+
+    assert outcome.source == "template"
+    assert "upstream exploded" in (outcome.fallback_reason or "")
+
+
+def test_a_bare_openai_response_is_also_accepted():
+    """The gateway proxies several upstreams, so the envelope may not be there.
+
+    Unwrapping tolerantly costs one `.get` and removes a whole class of
+    "worked in staging" failure.
+    """
+    with _local_fpt_server(
+        lambda user: {
+            "choices": [
+                {
+                    "message": {"content": _well_behaved_draft(user)},
+                    "finish_reason": "stop",
+                }
+            ]
+        }
+    ) as (_server, base_url):
+        outcome = narrate(_model_bundle(), drafter=_fpt(base_url))
+
+    assert outcome.source == "model", outcome.fallback_reason
+
+
+def test_a_truncated_fpt_draft_is_discarded_rather_than_narrated():
+    with _local_fpt_server(
+        lambda user: _fpt_envelope(_well_behaved_draft(user), finish="length")
+    ) as (_server, base_url):
+        outcome = narrate(_model_bundle(), drafter=_fpt(base_url))
+
+    assert outcome.source == "template"
+    assert "truncated" in (outcome.fallback_reason or "")
+
+
+def test_fpt_needs_no_sdk_at_all():
+    """The only provider that cannot fail with "package not installed".
+
+    It speaks HTTP from the standard library, which is why it is absent from
+    `EXTRAS` - and why it is the one that always works on a judge's machine.
+    """
+    from app.narration.providers import EXTRAS
+
+    assert "fpt" not in EXTRAS
+    assert importlib.util.find_spec("urllib.request") is not None
+
+
+def test_a_missing_fpt_key_is_named_rather_than_becoming_a_401():
+    """Nothing resolves credentials for us here, so an absent key is ours to say."""
+    import os
+
+    saved = os.environ.pop("FPT_API_KEY", None)
+    try:
+        outcome = narrate(_model_bundle(), drafter=drafter_for("fpt"))
+    finally:
+        if saved is not None:
+            os.environ["FPT_API_KEY"] = saved
+
+    assert outcome.source == "template"
+    assert "FPT_API_KEY" in (outcome.fallback_reason or "")

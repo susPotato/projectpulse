@@ -165,6 +165,8 @@ ENV_KEYS = {
     "anthropic": ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"),
     "openai": ("OPENAI_API_KEY",),
     "gemini": ("GOOGLE_API_KEY", "GEMINI_API_KEY"),
+    # Read by our own adapter rather than by an SDK - `fpt` has none.
+    "fpt": ("FPT_API_KEY",),
 }
 
 

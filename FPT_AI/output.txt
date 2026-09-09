@@ -1,0 +1,26 @@
+{
+  "code": 200,
+  "message": "Chat completion successful",
+  "data": {
+    "id": "chatcmpl-ef8435055e3341c596d9bc7b212fe7ee",
+    "object": "chat.completion",
+    "created": 1750390044,
+    "model": "your-model-name",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Hello! How can I help you today?"
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 13,
+      "completion_tokens": 10,
+      "total_tokens": 23
+    },
+    "provider": "openai"
+  }
+}
