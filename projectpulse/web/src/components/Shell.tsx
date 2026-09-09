@@ -21,6 +21,7 @@ const TABS = [
   { href: "/risk", label: "Risk" },
   { href: "/team", label: "Team" },
   { href: "/explain", label: "Calc" },
+  { href: "/reports", label: "Reports" },
   { href: "/agent", label: "Agent" },
   { href: "/settings", label: "Settings" },
 ] as const;
@@ -64,6 +65,12 @@ const ICONS: Record<string, ReactNode> = {
     <>
       <path d="M4 4h16v16H4z" />
       <path d="M8 9h8M8 13h5" />
+    </>
+  ),
+  "/reports": (
+    <>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5M9 13h6M9 17h4" />
     </>
   ),
   "/agent": (

@@ -37,6 +37,11 @@ export type RiskOut = components["schemas"]["RiskOut"];
 export type RiskIn = components["schemas"]["RiskIn"];
 export type RiskMatrixCell = components["schemas"]["RiskMatrixCell"];
 
+export type ReportOptions = components["schemas"]["ReportOptions"];
+export type ReportPreview = components["schemas"]["ReportPreview"];
+export type ReportBlock = components["schemas"]["ReportBlock"];
+export type ReportSection = components["schemas"]["ReportSection"];
+
 /** What went wrong, in terms a reader can act on rather than a status code. */
 export interface ApiProblem {
   title: string;

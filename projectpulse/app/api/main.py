@@ -13,11 +13,13 @@ or `data/demo/jira/*.json` in any editor, press Sync, and look at what changed.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import logging
 import subprocess
 import sys
 from datetime import datetime, timezone
+from io import BytesIO
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -35,6 +37,15 @@ from app.api.schemas.scenario import ScenarioBundle
 from app.api.schemas.agent import ChatRequest, ChatResponse
 from app.api.schemas.insight import InsightBundle
 from app.api.schemas.risk import RiskBundle, RiskIn, RiskOut
+from app.api.schemas.report import (
+    ReportBlock,
+    ReportFormatOption,
+    ReportOptions,
+    ReportPresetOption,
+    ReportPreview,
+    ReportSection,
+    ReportSectionOption,
+)
 from app import scope
 from app.config import settings
 from app.db import check_connection, create_all, drop_all, session_scope
@@ -439,31 +450,86 @@ def template(kind: str) -> Response:
     )
 
 
-@app.get("/api/report.docx")
-def report(
-    project: str = "excel:Project:1:HRMS",
-    also: list[str] | None = Query(default=None),
-) -> Response:
-    """The status report, as a .docx a PM can attach to an email.
+#: The three downloadable formats. Markdown is `text/markdown` with an explicit
+#: charset: task labels and owner names are not ASCII, and a browser that
+#: guesses latin-1 renders them as mojibake in the preview tab.
+MD_TYPE = "text/markdown; charset=utf-8"
 
-    The same findings as `/api/insight` and the same projection as
-    `/api/explain`, so the document cannot disagree with either screen - it
-    renders their bundles rather than recomputing anything.
+
+def _as_block(block) -> ReportBlock:
+    """An `exports.document.Block` as its wire form.
+
+    A hand-written mapping rather than `dataclasses.asdict`: the schema is a
+    contract the front end is generated from, and a field silently appearing on
+    it because someone added one to the dataclass is how a contract stops being
+    reviewed.
     """
+    return ReportBlock(
+        kind=block.kind,
+        text=block.text,
+        level=block.level,
+        items=list(block.items),
+        columns=list(block.columns),
+        rows=[list(row) for row in block.rows],
+        label=block.label,
+    )
+
+
+def _risk_count(session, project: str) -> int:
+    """How many risks this project has, for the section's `available` flag."""
+    from app.risks.service import list_risks
+
+    return len(list_risks(session, project_ids=[project, *scope.also_for(project)]).risks)
+
+
+def _report_doc(
+    project: str,
+    also: list[str] | None,
+    preset: str | None,
+    sections: list[str] | None,
+):
+    """Build the document once, for whichever renderer asked for it.
+
+    Every format route and the preview go through here, so a `.docx` and the
+    `.xlsx` beside it are the same document by construction rather than by two
+    call sites being kept in step.
+
+    Loading is lazy per section: a preview of the executive brief must not pay
+    for the scenario search or a risk query it will not render.
+    """
+    from app.exports.document import build_document, resolve_sections
+
     if also is None:
-        also = ["jira:Project:1:HRMS"]
+        # Invariant 7 lives in `app.scope`, not in a literal here - a second
+        # copy of the pairing is how the portfolio came to list HRMS twice.
+        also = scope.also_for(project)
 
     problem = check_connection()
     if problem is not None:
         raise HTTPException(status_code=503, detail=problem)
 
-    from app.exports.report import ReportUnavailable, report_bytes
+    chosen = resolve_sections(preset_id=preset, sections=sections)
+    found = scope.find(project)
 
     with session_scope() as session:
         bundle = analyze_project(
             session, project_id=project, also=list(also), narrator=_narrator()
         )
-        explain = explain_project(session, project_id=project, also=list(also))
+        explain = (
+            explain_project(session, project_id=project, also=list(also))
+            if "projection" in chosen
+            else None
+        )
+        scenarios = (
+            scenarios_project(session, project_id=project, also=list(also))
+            if "scenarios" in chosen
+            else None
+        )
+        risks = None
+        if "risks" in chosen:
+            from app.risks.service import list_risks
+
+            risks = list_risks(session, project_ids=[project, *also])
 
     if not bundle.findings and not bundle.context.get("task_count"):
         raise HTTPException(
@@ -474,8 +540,184 @@ def report(
             ),
         )
 
+    return build_document(
+        bundle,
+        explain=explain,
+        scenarios=scenarios,
+        risks=risks,
+        sections=chosen,
+        project_name=found.name if found else "",
+    )
+
+
+@app.get("/reports")
+def reports_page() -> FileResponse:
+    """The report builder: choose an audience, see it, download it."""
+    return FileResponse(STATIC / "app" / "index.html")
+
+
+@app.get("/api/report/options", response_model=ReportOptions)
+def report_options(project: str = "excel:Project:1:HRMS") -> ReportOptions:
+    """What the builder screen may offer, straight from the exporter.
+
+    Served rather than hardcoded in the front end so that a section added to
+    `exports/document.py` appears in the UI without a front-end change - and so
+    the UI can never offer one the exporter does not know how to build.
+
+    `available` is computed per project: a tick box for a section this project
+    has no data for would produce a silently empty download, which reads as a
+    broken feature rather than an empty register.
+    """
+    from app.exports.document import DEFAULT_PRESET, PRESETS, SECTIONS
+
+    docx_available = importlib.util.find_spec("docx") is not None
+
+    with session_scope() as session:
+        risk_count = _risk_count(session, project)
+
+    def available(requires: str) -> bool:
+        # `explain` and `scenarios` are computed from the schedule, which any
+        # analysable project has; `risks` is a register a person fills in, and
+        # is genuinely empty until they do.
+        return risk_count > 0 if requires == "risks" else True
+
+    return ReportOptions(
+        project_id=project,
+        default_preset=DEFAULT_PRESET,
+        presets=[
+            ReportPresetOption(
+                id=preset.id,
+                label=preset.label,
+                description=preset.description,
+                sections=list(preset.sections),
+            )
+            for preset in PRESETS
+        ],
+        sections=[
+            ReportSectionOption(
+                id=spec.id,
+                title=spec.title,
+                description=spec.description,
+                requires=spec.requires,
+                available=available(spec.requires),
+            )
+            for spec in SECTIONS
+        ],
+        formats=[
+            ReportFormatOption(
+                id="md",
+                label="Markdown",
+                extension="md",
+                description="Paste into an email, a wiki or a chat. Needs nothing to open.",
+            ),
+            ReportFormatOption(
+                id="xlsx",
+                label="Excel",
+                extension="xlsx",
+                description="Every table on its own sheet, filterable and sortable.",
+            ),
+            ReportFormatOption(
+                id="docx",
+                label="Word",
+                extension="docx",
+                description="The document to attach to an email.",
+                available=docx_available,
+                unavailable_reason=(
+                    ""
+                    if docx_available
+                    else 'python-docx is not installed; pip install -e ".[report]"'
+                ),
+            ),
+        ],
+    )
+
+
+@app.get("/api/report/preview", response_model=ReportPreview)
+def report_preview(
+    project: str = "excel:Project:1:HRMS",
+    also: list[str] | None = Query(default=None),
+    template: str | None = None,
+    section: list[str] | None = Query(default=None),
+) -> ReportPreview:
+    """The document as blocks - what every download will contain.
+
+    Not a summary of the report and not a second rendering of the bundles: it
+    is the same `ReportDoc` the file renderers walk. A preview built any other
+    way is a preview that eventually disagrees with the file.
+    """
+    doc = _report_doc(project, also, template, section)
+    return ReportPreview(
+        title=doc.title,
+        preamble=[_as_block(b) for b in doc.preamble],
+        sections=[
+            ReportSection(
+                id=s.id, title=s.title, blocks=[_as_block(b) for b in s.blocks]
+            )
+            for s in doc.sections
+        ],
+        resolved_sections=[s.id for s in doc.sections],
+    )
+
+
+@app.get("/api/report.md")
+def report_md(
+    project: str = "excel:Project:1:HRMS",
+    also: list[str] | None = Query(default=None),
+    template: str | None = None,
+    section: list[str] | None = Query(default=None),
+) -> Response:
+    """The report as Markdown."""
+    from app.exports.markdown import markdown_bytes
+
+    return Response(
+        content=markdown_bytes(_report_doc(project, also, template, section)),
+        media_type=MD_TYPE,
+        headers={
+            "Content-Disposition": 'attachment; filename="delivery_status.md"'
+        },
+    )
+
+
+@app.get("/api/report.xlsx")
+def report_xlsx(
+    project: str = "excel:Project:1:HRMS",
+    also: list[str] | None = Query(default=None),
+    template: str | None = None,
+    section: list[str] | None = Query(default=None),
+) -> Response:
+    """The report as a workbook, every table on its own filterable sheet."""
+    from app.exports.workbook import workbook_bytes
+
+    return Response(
+        content=workbook_bytes(_report_doc(project, also, template, section)),
+        media_type=XLSX_TYPE,
+        headers={
+            "Content-Disposition": 'attachment; filename="delivery_status.xlsx"'
+        },
+    )
+
+
+@app.get("/api/report.docx")
+def report(
+    project: str = "excel:Project:1:HRMS",
+    also: list[str] | None = Query(default=None),
+    template: str | None = None,
+    section: list[str] | None = Query(default=None),
+) -> Response:
+    """The status report, as a .docx a PM can attach to an email.
+
+    The same findings as `/api/insight` and the same projection as
+    `/api/explain`, so the document cannot disagree with either screen - it
+    renders their bundles rather than recomputing anything.
+    """
+    from app.exports.report import ReportUnavailable, render_docx
+
+    doc = _report_doc(project, also, template, section)
+
     try:
-        content = report_bytes(bundle, explain=explain)
+        buffer = BytesIO()
+        render_docx(doc).save(buffer)
+        content = buffer.getvalue()
     except ReportUnavailable as exc:
         # 501 rather than 500: the server is working, this optional extra is
         # simply not installed, and the message says which.

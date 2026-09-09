@@ -174,7 +174,7 @@ in, an `InsightBundle` out.
 203 of 702 pairs orderable
 4 dependency edges: 3 stated, 1 inferred
 9 findings, 3 causal chains (edge / path / project)
-486 tests, ~40s, no Docker + a typechecked front end
+596 tests, ~20s, no Docker + a typechecked front end
 ```
 
 - **Excel path** — header contract, sha256 skip, row-identity resolution, snapshot
@@ -453,16 +453,39 @@ in, an `InsightBundle` out.
     in. ⚠️ **No example rows** — an example row comes back as a real task and the
     identity resolver cannot know it was decorative. Guidance goes on a `Notes` tab,
     which the reader never opens.
-  - `report.py` — the `.docx` status report: narrative, every finding with its rule
-    trace / chain / source rows, the projection table with the driving path first,
-    and the data-quality caveats. **Formats no number** — headlines are already
-    substituted, everything else goes through `assembler.format_fact`. That is
-    invariant 1 on the artefact that outlives the session, and
-    `test_the_report_formats_a_percentage_the_way_the_assembler_does` pins it.
-    `python-docx` is the optional `report` extra.
-  - Served at `GET /api/template/{schedule|worklog}.xlsx` and `GET /api/report.docx`;
-    CLI `sync template` / `sync report`. **No UI button yet** — the routes exist, the
-    React pages do not link them.
+  - **`document.py` — the report itself, once, in a form no file format has an
+    opinion about.** Headings / paragraphs / notes / bullets / tables, built from the
+    bundles, and **the only place a report formats a number** — every renderer below
+    it receives strings, so a renderer that cannot see a float cannot round one. That
+    is invariant 1 held across three file formats instead of one, and
+    `test_no_renderer_reformats_a_ratio` pins it in all three at once. Adding
+    `.pptx` for the October final is a new walker and no new content.
+    ⚠️ **Do not add content to a renderer.** The moment one of them decides
+    something the other two do not, the `.docx` and the `.xlsx` beside it start
+    disagreeing — which is the whole failure this split exists to prevent.
+  - `report.py` (`.docx`, optional `report` extra), `workbook.py` (`.xlsx`, needs no
+    extra — openpyxl is already core), `markdown.py` (`.md`). The workbook puts
+    **every table on its own sheet** with a frozen header and an autofilter, which is
+    the only reason to choose that format: a forty-row projection sorts by implied
+    slip in one click.
+  - **Sections and presets.** Ten sections, three audiences (`weekly` / `steering` /
+    `exec`). ⚠️ **`data_quality` is in every preset on purpose** and
+    `test_no_preset_drops_the_data_quality_section` says so — it is the section a
+    preset is most tempted to drop for an executive. ⚠️ **`evidence` is a sub-toggle,
+    not a section**: it switches source rows on *under each finding*, so it is never
+    in `resolved_sections`, and a UI that checks membership to mean "was it built"
+    reports it as empty while the rows are visible beside it. That bug shipped once
+    and `section.requires === "findings"` is the guard.
+  - **`/reports` — the builder.** Preset, per-section tick boxes, a live preview and
+    the three downloads. ⚠️ **The preview renders the same `ReportDoc` the file
+    renderers walk**, so it is the file rather than a picture of it. The catalogue is
+    served by `GET /api/report/options` straight from `document.py`, so a section
+    added to the exporter appears in the UI with no front-end change.
+  - Served at `GET /api/template/{schedule|worklog}.xlsx`,
+    `GET /api/report.{docx|xlsx|md}` and `GET /api/report/{options,preview}`;
+    CLI `sync template` / `sync report --format {docx,xlsx,md} --template <preset>`.
+    **The blank templates are linked from `/reports`** — they had routes and nothing
+    pointing at them for a long time.
 - **`app/ml/duration.py` — the advisory duration classifier.** Wraps
   `omaradly/jira-task-duration-classifier` (sklearn pipeline: TF-IDF + one-hot +
   scaled numerics + logistic regression) which sorts a task into `Short` /
@@ -726,6 +749,7 @@ def provably_before(a, b) -> bool:
 | A figure interpolated into JSX is **not found** by a smoke assertion | Server-side rendering splits a text node around `{value}` with an HTML comment, so `"planned - 125h of estimates"` never appears contiguously. Assert the halves (`"planned - "`, `"h of estimates"`), not the sentence a reader sees. |
 | **`scripts.shots` photographs the Schedule page as its own "chart component did not load"** | A flake in the screenshot tool, not a broken build - `node --check app/api/static/gantt.js` will pass. Per-shot throwaway profiles fixed most of it and it still happens occasionally when several pages are shot in a row. Re-shoot that page **alone** (`--page /gantt`) before believing it. |
 | Windows file locks on `.venv` | `rm -rf .venv` can fail; move it aside instead. |
+| **A pushed commit will not `import app.db` — a model file is missing** | `.gitignore` had a bare `models/`, meant for the ML artefact dir. That pattern matches a directory of that name **at any depth**, so it also swallowed `app/models/`. Git ignores only *untracked* files, so every table committed before that line kept working while each new one was dropped from the commit **with no warning** — `app/models/narration.py` and `app/models/onedrive.py` were both lost this way and `origin/main` could not start at all. Fixed by anchoring it to `/models/`. ⚠️ **Any new `app/models/*.py` is the case to check**, and `git status --porcelain --ignored` is what shows it. |
 
 ---
 
@@ -745,6 +769,7 @@ python -m scripts.demo      # serves three tabs on :8000
 | `/gantt` | **Schedule** - read-only Gantt: baseline / plan / projected-overrun bars, milestone diamonds, dependency arrows, driving path highlighted |
 | `/insight` | **Insight** — findings by severity, each with its rule trace, causal chain and evidence |
 | `/explain` | **Calculation** — input → algorithm → output per task, plus the same Gantt |
+| `/reports` | **Reports** — pick an audience and sections, preview the document, download `.docx` / `.xlsx` / `.md`, and take the blank input templates |
 
 **Insight and Calculation are a built React app** (`web/`: Vite 8, React 19, TS,
 Tailwind 4). Schedule and the console are still hand-written HTML.
@@ -776,7 +801,7 @@ cd projectpulse
 # Console: edit data/demo files, watch the effect. http://127.0.0.1:8000
 python -m scripts.demo
 
-python -m pytest                      # 486 tests, ~40s, no DB needed
+python -m pytest                      # 596 tests, ~20s, no DB needed
 docker compose up -d                  # postgres+pgvector on :5433 (Docker Desktop must be running)
 python -m scripts.sync init
 
@@ -820,6 +845,13 @@ cd .. && npx wrangler pages deploy    # publishes to arch.mintteas.org
 # The two files the product hands back.
 python -m scripts.sync template --out templates       # blank .xlsx a PM fills in
 python -m scripts.sync report --also jira:Project:1:HRMS --out status.docx
+
+# The same report for a different audience, in a different format. The format
+# follows the --out extension unless --format overrides it, and --section
+# (repeatable) overrides the preset entirely.
+python -m scripts.sync report --template exec --out brief.md
+python -m scripts.sync report --template steering --out status.xlsx
+python -m scripts.sync report --section summary --section projection --out short.md
 
 # The advisory duration band per task. Prints how to get the model if absent.
 python -m scripts.fetch_model          # downloads the artefact (needs ml-fetch)
@@ -866,9 +898,11 @@ The intelligence layer and the insight screen are done. What remains is polish.
 3. ✅ **Done — see §0.** Deployed to Fly + Neon, both `projectpulse.fly.dev` and
    `app.mintteas.org` verified live. The FK-ordering bug this item predicted
    ("expect to fix something on the first `fly deploy`") was real — see §0 for the fix.
-4. ✅ **Already done** as of this note — the Insight page's action slot links
-   `/api/report.docx` ("Download report"). Confirm the `.xlsx` template is linked
-   somewhere too before assuming it; that one was not specifically checked this session.
+4. ✅ **Done, and then some.** The `.xlsx` template was *not* linked — that suspicion
+   was right. It is now, from **`/reports`**, the report builder: pick an audience,
+   tick sections, read the live preview, download `.docx` / `.xlsx` / `.md`, and take
+   the blank input templates from the same panel. See §3 for the design (one
+   `ReportDoc`, three renderers, and why no renderer is allowed to format a number).
 5. **Decide the duration classifier's fate.** It is wired, tested and inert on 3.14.
    Three options, in order of how much they cost: leave it advisory-and-absent (the
    product is complete without it, and this is the round-1 answer); run it on a

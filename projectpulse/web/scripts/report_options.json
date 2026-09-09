@@ -1,0 +1,118 @@
+{
+  "project_id": "excel:Project:1:HRMS",
+  "presets": [
+    {
+      "id": "weekly",
+      "label": "Weekly status",
+      "description": "For the delivery team. Everything, including the source rows.",
+      "sections": [
+        "summary",
+        "findings",
+        "evidence",
+        "projection",
+        "data_quality"
+      ]
+    },
+    {
+      "id": "steering",
+      "label": "Steering committee",
+      "description": "For the people who decide. Findings and the options, without the record-level appendix.",
+      "sections": [
+        "summary",
+        "findings",
+        "projection",
+        "scenarios",
+        "risks",
+        "data_quality"
+      ]
+    },
+    {
+      "id": "exec",
+      "label": "Executive brief",
+      "description": "One page. The outlook and what is driving it, nothing to work through.",
+      "sections": [
+        "summary",
+        "projection",
+        "data_quality"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "id": "summary",
+      "title": "Summary",
+      "description": "The four questions, in prose: what is at risk, why, what it impacts, what to do next.",
+      "requires": "",
+      "available": true
+    },
+    {
+      "id": "findings",
+      "title": "Findings",
+      "description": "Every finding with its recommendation, the rule that fired and the causal chain behind it.",
+      "requires": "",
+      "available": true
+    },
+    {
+      "id": "evidence",
+      "title": "Source rows",
+      "description": "The spreadsheet and Jira records each finding rests on. Switch off for an audience that will not check them.",
+      "requires": "findings",
+      "available": true
+    },
+    {
+      "id": "projection",
+      "title": "Schedule projection",
+      "description": "The slip the dependency chain implies but the sheet does not yet show, driving path first.",
+      "requires": "explain",
+      "available": true
+    },
+    {
+      "id": "scenarios",
+      "title": "Recovery scenarios",
+      "description": "What shortening a task or overlapping a dependency would recover, measured against the original commitment.",
+      "requires": "scenarios",
+      "available": true
+    },
+    {
+      "id": "risks",
+      "title": "Risk register",
+      "description": "The risks a PM has recorded, with their pre- and post-mitigation ratings.",
+      "requires": "risks",
+      "available": false
+    },
+    {
+      "id": "data_quality",
+      "title": "What this analysis could not use",
+      "description": "Rejected rows, uncertain identities and inferred dependencies. Kept in every preset on purpose.",
+      "requires": "",
+      "available": true
+    }
+  ],
+  "formats": [
+    {
+      "id": "md",
+      "label": "Markdown",
+      "extension": "md",
+      "description": "Paste into an email, a wiki or a chat. Needs nothing to open.",
+      "available": true,
+      "unavailable_reason": ""
+    },
+    {
+      "id": "xlsx",
+      "label": "Excel",
+      "extension": "xlsx",
+      "description": "Every table on its own sheet, filterable and sortable.",
+      "available": true,
+      "unavailable_reason": ""
+    },
+    {
+      "id": "docx",
+      "label": "Word",
+      "extension": "docx",
+      "description": "The document to attach to an email.",
+      "available": true,
+      "unavailable_reason": ""
+    }
+  ],
+  "default_preset": "weekly"
+}

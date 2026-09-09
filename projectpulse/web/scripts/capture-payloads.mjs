@@ -41,6 +41,17 @@ const BUNDLES = [
   ["portfolio", "portfolio"],
 ];
 
+// The report builder's two payloads are assembled by the route rather than by
+// a pipeline function - the catalogue is the exporter's own, and the preview
+// is a `ReportDoc`, not a bundle. Fetched through FastAPI's in-process test
+// client rather than by calling the functions: a route's `Query(default=None)`
+// is a sentinel object until FastAPI resolves it, so a direct call captures
+// something no request would ever produce. Still no server, and still no port.
+const ROUTES = [
+  ["report_options", "/api/report/options"],
+  ["report_preview", "/api/report/preview"],
+];
+
 const script = `
 import json
 from app.db import SessionLocal
@@ -58,6 +69,15 @@ with SessionLocal() as session:
         else:
             bundle = call(session, project_id=project, also=also_for(project))
         out[name] = bundle.model_dump(mode="json")
+
+from fastapi.testclient import TestClient
+from app.api.main import app
+
+with TestClient(app) as client:
+    for name, url in ${JSON.stringify(ROUTES)}:
+        response = client.get(url)
+        response.raise_for_status()
+        out[name] = response.json()
 print(json.dumps(out))
 `;
 
@@ -69,9 +89,10 @@ const raw = execFileSync(PYTHON, ["-c", script], {
 });
 
 const captured = JSON.parse(raw);
-for (const [name] of BUNDLES) {
+const written = [...BUNDLES, ...ROUTES];
+for (const [name] of written) {
   const path = join(HERE, `${name}.json`);
   writeFileSync(path, `${JSON.stringify(captured[name], null, 2)}\n`, "utf-8");
   console.log(`  ${name}.json`);
 }
-console.log(`\n${BUNDLES.length} payload(s) captured. Run \`npm run smoke\` next.`);
+console.log(`\n${written.length} payload(s) captured. Run \`npm run smoke\` next.`);

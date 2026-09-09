@@ -19,6 +19,8 @@ import type {
   GanttBundle,
   InsightBundle,
   PortfolioBundle,
+  ReportOptions,
+  ReportPreview,
   ScenarioBundle,
   TeamBundle,
 } from "../src/api";
@@ -26,6 +28,7 @@ import { CalculationView } from "../src/pages/Calculation";
 import { InsightView } from "../src/pages/Insight";
 import { PortfolioView } from "../src/pages/Portfolio";
 import { TeamView } from "../src/pages/Team";
+import { ReportsView } from "../src/pages/Reports";
 
 function read<T>(name: string): T {
   const path = new URL(`./${name}.json`, import.meta.url);
@@ -38,6 +41,8 @@ const gantt = read<GanttBundle>("gantt");
 const scenarios = read<ScenarioBundle>("scenarios");
 const portfolio = read<PortfolioBundle>("portfolio");
 const team = read<TeamBundle>("team");
+const reportOptions = read<ReportOptions>("report_options");
+const reportPreview = read<ReportPreview>("report_preview");
 
 const cases: Array<[string, string, string[]]> = [
   [
@@ -167,6 +172,44 @@ const cases: Array<[string, string, string[]]> = [
       "Overview",
       "Rule inputs",
       "max_propagated_days",
+    ],
+  ],
+  [
+    "Reports",
+    renderToString(
+      <ReportsView
+        options={reportOptions}
+        preview={reportPreview}
+        chosen={reportPreview.resolved_sections}
+        presetId={reportOptions.default_preset}
+      />,
+    ),
+    [
+      // The rail, as on every other page.
+      "Console",
+      "Insight",
+      "Reports",
+      // The three audiences, served from `exports/document.py` rather than
+      // hardcoded here - so this fails if the catalogue stops being served.
+      "Weekly status",
+      "Steering committee",
+      "Executive brief",
+      // All three formats are offered. Word may be greyed out where the extra
+      // is missing, but it must still be listed with its reason.
+      "Markdown",
+      "Excel",
+      "Word",
+      // The blank input templates, which had routes and no link for a long time.
+      "Blank input templates",
+      "Schedule",
+      "Worklog",
+      // The preview is the document: its own title, the provenance line that no
+      // preset can switch off, and real finding text from the bundle.
+      "Delivery status",
+      "Reflects the project as at",
+      "The plan cannot hold",
+      // A section the preset includes, proving the block walker ran.
+      "What this analysis could not use",
     ],
   ],
 ];

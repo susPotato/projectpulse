@@ -19,6 +19,7 @@ bootstrap()
 import argparse  # noqa: E402
 import logging  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
+from io import BytesIO  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 from sqlalchemy import select  # noqa: E402
@@ -269,22 +270,43 @@ def cmd_template(args) -> None:
 
 
 def cmd_report(args) -> None:
-    """Write the .docx status report.
+    """Write the status report, in whichever format was asked for.
 
     Renders the same two bundles the screens render, so the document cannot
-    disagree with the app. No figure is formatted here.
+    disagree with the app. No figure is formatted here - or in any of the three
+    renderers; see `app/exports/document.py`.
     """
-    from app.exports.report import ReportUnavailable, report_bytes
-    from app.intelligence.pipeline import analyze_project, explain_project
+    from app.exports.document import build_document, resolve_sections
+    from app.intelligence.pipeline import (
+        analyze_project,
+        explain_project,
+        scenarios_project,
+    )
 
     project_ids = [args.project, *(args.also or [])]
+    chosen = resolve_sections(
+        preset_id=args.template, sections=args.section or None
+    )
+
     with session_scope() as session:
         bundle = analyze_project(
             session, project_id=args.project, also=args.also or []
         )
-        explain = explain_project(
-            session, project_id=args.project, also=args.also or []
+        explain = (
+            explain_project(session, project_id=args.project, also=args.also or [])
+            if "projection" in chosen
+            else None
         )
+        scenarios = (
+            scenarios_project(session, project_id=args.project, also=args.also or [])
+            if "scenarios" in chosen
+            else None
+        )
+        risks = None
+        if "risks" in chosen:
+            from app.risks.service import list_risks
+
+            risks = list_risks(session, project_ids=project_ids)
 
     if not bundle.findings and not bundle.context.get("task_count"):
         print(
@@ -293,19 +315,47 @@ def cmd_report(args) -> None:
         )
         return
 
-    try:
-        content = report_bytes(bundle, explain=explain, project_name=args.name)
-    except ReportUnavailable as exc:
-        print(f"{exc}")
-        return
+    doc = build_document(
+        bundle,
+        explain=explain,
+        scenarios=scenarios,
+        risks=risks,
+        sections=chosen,
+        project_name=args.name,
+    )
 
-    path = Path(args.out)
+    # The extension picks the renderer unless --format overrides it, so
+    # `--out status.md` does the obvious thing.
+    suffix = Path(args.out).suffix.lstrip(".").lower()
+    fmt = args.format or (suffix if suffix in ("docx", "xlsx", "md") else "docx")
+
+    if fmt == "md":
+        from app.exports.markdown import markdown_bytes
+
+        content = markdown_bytes(doc)
+    elif fmt == "xlsx":
+        from app.exports.workbook import workbook_bytes
+
+        content = workbook_bytes(doc)
+    else:
+        from app.exports.report import ReportUnavailable, render_docx
+
+        try:
+            buffer = BytesIO()
+            render_docx(doc).save(buffer)
+            content = buffer.getvalue()
+        except ReportUnavailable as exc:
+            print(f"{exc}")
+            return
+
+    path = Path(args.out).with_suffix(f".{fmt}")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(content)
     print(
         f"{path}  ({len(content)} bytes)  "
-        f"{len(bundle.findings)} finding(s), {len(explain.steps)} projection row(s)"
+        f"{len(bundle.findings)} finding(s), {len(doc.sections)} section(s)"
     )
+    print(f"  sections: {', '.join(s.id for s in doc.sections) or '(none)'}")
     print(f"  narration: {bundle.narration_source}")
     print(f"  covers {len(project_ids)} source project id(s)")
 
@@ -581,11 +631,26 @@ def main() -> None:
     )
     template.set_defaults(func=cmd_template)
 
-    report = sub.add_parser("report", help="write the .docx status report")
+    report = sub.add_parser("report", help="write the status report")
     report.add_argument("--project", default="excel:Project:1:HRMS")
     report.add_argument("--also", action="append")
     report.add_argument("--out", default="delivery_status.docx")
     report.add_argument("--name", default="", help="project name for the title")
+    report.add_argument(
+        "--format",
+        choices=("docx", "xlsx", "md"),
+        help="output format (default: from the --out extension, else docx)",
+    )
+    report.add_argument(
+        "--template",
+        default=None,
+        help="audience preset: weekly, steering or exec (default: weekly)",
+    )
+    report.add_argument(
+        "--section",
+        action="append",
+        help="include only this section (repeatable); overrides --template",
+    )
     report.set_defaults(func=cmd_report)
 
     advise = sub.add_parser(

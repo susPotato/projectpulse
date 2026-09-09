@@ -1,0 +1,893 @@
+{
+  "title": "Delivery status - HRMS Platform",
+  "preamble": [
+    {
+      "kind": "note",
+      "text": "Reflects the project as at 2026-03-22. Report generated 2026-09-09.",
+      "level": 1,
+      "items": [],
+      "columns": [],
+      "rows": [],
+      "label": ""
+    },
+    {
+      "kind": "note",
+      "text": "Summary written by the deterministic template.",
+      "level": 1,
+      "items": [],
+      "columns": [],
+      "rows": [],
+      "label": ""
+    }
+  ],
+  "sections": [
+    {
+      "id": "summary",
+      "title": "Summary",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "What is at risk",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "There is significant delivery risk in this project. The plan cannot hold: 3 task(s) are dated earlier than their own dependencies allow, by up to 34 days. 3 milestone(s) sit behind work that cannot finish on its planned date. QA has stalled: 17 of 17 test items are blocked.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "Why it is happening",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "WBS-108 moved from 2026-03-04 to 2026-03-16; between 4 and 12 days later WBS-114 moved from 2026-03-20 to 2026-04-01. This is reported because a dependency stated in the schedule sheet connects the two tasks. The later event was observed by comparing two spreadsheet snapshots, so its timing is a range rather than a point - the order is still provable because the ranges do not overlap.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "What it will impact",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "The downstream impact is described above. Note that this projection depends on dependency edges inferred from the schedule's own dates rather than stated by a person; it should be confirmed before being quoted externally.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "What to do next",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "1. Re-baseline the affected tasks or compress the driving path before the next steering review. 2. Raise the milestone date now, or move scope out of it - the current date is not supported by the schedule underneath it. 3. Clear the blocking dependency before adding more test scope - additional cases will queue behind the same cause.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "What this analysis could not use",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "The schedule conclusion changes if inferred dependencies are removed - 1 of 4 edges were derived from dates rather than stated by a person. 8 row(s) could not be read and were quarantined.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        }
+      ]
+    },
+    {
+      "id": "findings",
+      "title": "Findings",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "1. [HIGH] schedule_risk",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "The plan cannot hold: 3 task(s) are dated earlier than their own dependencies allow, by up to 34 days.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "Re-baseline the affected tasks or compress the driving path before the next steering review.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Rule schedule_inconsistent_major fired because:"
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "max_propagated_days >= 5 (was 34)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "note",
+          "text": "Why this threshold: Five days is a working week - past that the inconsistency will surface as a missed commitment rather than a schedule edit.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Source rows: "
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "{\"row_key\": \"WBS-121\", \"row_index\": 9}  (record 45)",
+            "{\"row_key\": \"WBS-118\", \"row_index\": 7}  (record 43)",
+            "{\"row_key\": \"WBS-114\", \"row_index\": 6}  (record 42)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "2. [HIGH] milestone_risk",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "3 milestone(s) sit behind work that cannot finish on its planned date.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "Raise the milestone date now, or move scope out of it - the current date is not supported by the schedule underneath it.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Rule milestone_at_risk fired because:"
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "milestones_at_risk >= 1 (was 3)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "note",
+          "text": "Why this threshold: A milestone is a commitment to someone outside the team, so it is escalated a level above an ordinary task slip.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Source rows: "
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "{\"row_key\": \"WBS-121\", \"row_index\": 9}  (record 45)",
+            "{\"row_key\": \"WBS-118\", \"row_index\": 7}  (record 43)",
+            "{\"row_key\": \"WBS-114\", \"row_index\": 6}  (record 42)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "3. [HIGH] quality_risk",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "QA has stalled: 17 of 17 test items are blocked.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "Clear the blocking dependency before adding more test scope - additional cases will queue behind the same cause.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Rule qa_queue_stalled fired because:"
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "qa_blocked_ratio > 0.6 (was 1.0)",
+            "qa_count >= 5 (was 17)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "note",
+          "text": "Why this threshold: Above roughly two thirds blocked, the queue is no longer absorbing work and testing has effectively stopped.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "4. [HIGH] root_cause",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "WBS-108 moved from 2026-03-04 to 2026-03-16; between 4 and 12 days later WBS-114 moved from 2026-03-20 to 2026-04-01.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "Which of my tasks slipped because something upstream slipped?",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "WBS-108 (planned_end) explains WBS-114 (planned_end), 4 to 12 days later. Established on a dependency stated in the schedule sheet.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Cause: "
+        },
+        {
+          "kind": "note",
+          "text": "The later change was seen by comparing two spreadsheet snapshots, so its timing is a range rather than a point. The order still holds because the two ranges do not overlap.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Source rows: "
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "{\"row_key\": \"WBS-108\", \"row_index\": 5}  (record 15)",
+            "{\"row_key\": \"WBS-114\", \"row_index\": 6}  (record 29)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "5. [MEDIUM] evidence_quality",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "The schedule conclusion changes if inferred dependencies are removed - 1 of 4 edges were derived from dates rather than stated by a person.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "Add the missing predecessors to the schedule sheet to convert this into a stated conclusion.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Rule conclusion_rests_on_inferred_edges fired because:"
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "depends_on_inferred_edges == True (was True)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "note",
+          "text": "Why this threshold: An inferred edge is a reasonable guess, not a fact. A date presented to a steering committee should say which it rests on.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "6. [MEDIUM] root_cause",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "WBS-108 moved from 2026-03-04 to 2026-03-16; between 4 and 12 days later WBS-118 moved from 2026-05-14 to 2026-05-26.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "How far downstream has this delay actually spread?",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "WBS-108 (planned_end) explains WBS-118 (planned_end), 4 to 12 days later. Established on a chain of dependencies, not a direct link.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Cause: "
+        },
+        {
+          "kind": "note",
+          "text": "The later change was seen by comparing two spreadsheet snapshots, so its timing is a range rather than a point. The order still holds because the two ranges do not overlap.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Source rows: "
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "{\"row_key\": \"WBS-108\", \"row_index\": 5}  (record 15)",
+            "{\"row_key\": \"WBS-118\", \"row_index\": 7}  (record 30)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "7. [MEDIUM] root_cause",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "WBS-114 moved from Not Started to Blocked; between 4 and 12 days later 6 other items moved in step, starting with QA-001.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "Why has my QA queue stopped moving?",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "WBS-114 (status) explains QA-001 (status), 4 to 12 days later. Established on only that both belong to this project - the weakest link the system reports.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Cause: "
+        },
+        {
+          "kind": "note",
+          "text": "The later change was seen by comparing two spreadsheet snapshots, so its timing is a range rather than a point. The order still holds because the two ranges do not overlap.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Source rows: "
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "{\"row_key\": \"WBS-114\", \"row_index\": 6}  (record 29)",
+            "{\"row_key\": \"QA-001\", \"row_index\": 4}  (record 46)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "8. [LOW] data_quality",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "8 row(s) could not be read and were quarantined.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "Review the rejected rows - each names its own reason.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Rule rows_rejected fired because:"
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "rows_rejected >= 1 (was 8)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "note",
+          "text": "Why this threshold: Silent partial data is how a PM ends up trusting a health score computed on 60% of their project.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "heading",
+          "text": "9. [INFO] root_cause",
+          "level": 2,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "2 of 50 finding(s) trace to a stated dependency, not just a coincidence in timing.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "Open the evidence panel to see the source rows.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Recommended action: "
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Rule root_cause_available fired because:"
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "chains_dependency_backed >= 1 (was 2)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "note",
+          "text": "Why this threshold: Surfaced as information rather than risk: it describes how well evidenced the other findings are, not a problem of its own.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "WBS-108 (planned_end) explains WBS-114 (planned_end), 4 to 12 days later. Established on a dependency stated in the schedule sheet.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Cause: "
+        },
+        {
+          "kind": "note",
+          "text": "The later change was seen by comparing two spreadsheet snapshots, so its timing is a range rather than a point. The order still holds because the two ranges do not overlap.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "paragraph",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Source rows: "
+        },
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "{\"row_key\": \"WBS-108\", \"row_index\": 5}  (record 15)",
+            "{\"row_key\": \"WBS-114\", \"row_index\": 6}  (record 29)"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        }
+      ]
+    },
+    {
+      "id": "projection",
+      "title": "Schedule projection",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": "34 days",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": "Projected slip against the plan: "
+        },
+        {
+          "kind": "note",
+          "text": "This projection depends on dependency edges inferred from the schedule's own dates rather than stated by a person. Confirm them before quoting this figure outside the team.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "table",
+          "text": "",
+          "level": 1,
+          "items": [],
+          "columns": [
+            "Task",
+            "Planned finish",
+            "Projected finish",
+            "Implied slip",
+            "On driving path"
+          ],
+          "rows": [
+            [
+              "WBS-108",
+              "2026-03-16",
+              "2026-03-16",
+              "-",
+              "yes"
+            ],
+            [
+              "WBS-114",
+              "2026-04-01",
+              "2026-04-12",
+              "11",
+              "yes"
+            ],
+            [
+              "WBS-118",
+              "2026-05-26",
+              "2026-06-17",
+              "22",
+              "yes"
+            ],
+            [
+              "WBS-121",
+              "2026-05-29",
+              "2026-07-02",
+              "34",
+              "yes"
+            ],
+            [
+              "WBS-101",
+              "2026-01-30",
+              "2026-01-30",
+              "-",
+              "no"
+            ],
+            [
+              "~anon-ef0576ffa2b2a0f2",
+              "2026-03-27",
+              "2026-03-27",
+              "-",
+              "no"
+            ],
+            [
+              "10101",
+              "2026-01-30",
+              "2026-01-30",
+              "-",
+              "no"
+            ],
+            [
+              "10108",
+              "2026-03-16",
+              "2026-03-16",
+              "-",
+              "no"
+            ],
+            [
+              "10114",
+              "2026-04-01",
+              "2026-04-01",
+              "-",
+              "no"
+            ],
+            [
+              "10118",
+              "2026-05-26",
+              "2026-05-26",
+              "-",
+              "no"
+            ]
+          ],
+          "label": ""
+        }
+      ]
+    },
+    {
+      "id": "data_quality",
+      "title": "What this analysis could not use",
+      "blocks": [
+        {
+          "kind": "bullets",
+          "text": "",
+          "level": 1,
+          "items": [
+            "Source rows that could not be parsed: 8",
+            "Changes whose row identity is uncertain: 0",
+            "State changes observed: 33",
+            "Tasks with a baseline to compare against: 60%",
+            "Dependency edges stated by a person: 3",
+            "Dependency edges inferred from dates: 1",
+            "Dependency edges dropped as unusable: 0"
+          ],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        },
+        {
+          "kind": "note",
+          "text": "The schedule conclusion changes if the inferred edges are removed. It is a derived claim, not a stated one.",
+          "level": 1,
+          "items": [],
+          "columns": [],
+          "rows": [],
+          "label": ""
+        }
+      ]
+    }
+  ],
+  "resolved_sections": [
+    "summary",
+    "findings",
+    "projection",
+    "data_quality"
+  ]
+}

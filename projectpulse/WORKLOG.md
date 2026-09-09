@@ -8,12 +8,20 @@ and must not be hand-edited.
 
 ## Now
 
-**Idle.** Seven screens live over HTTP behind the design's app shell - a left rail, an app
-bar with one real action per page, and within-project views on Insight. `/portfolio` is
-the Program screen. Insight opens on the delivery-outlook figure. Narration wired for three vendors behind one
-`Drafter` seam. Exports (blank .xlsx template, .docx status report), the advisory
-duration classifier, and container/Fly files all added. Next per CLAUDE.md section 8:
-one live model call, then deploy, then link the exports from the UI.
+**Idle.** Ten screens live over HTTP behind the design's app shell. `/reports` is
+new: the report builder - an audience preset, per-section tick boxes, a live
+preview that is literally the document, and `.docx` / `.xlsx` / `.md` downloads,
+with the blank input templates on the same panel. One `ReportDoc` feeds all three
+renderers and formats every number, so the formats cannot disagree and none of
+them can round anything.
+
+Also fixed this session: `.gitignore`'s bare `models/` had been silently dropping
+new `app/models/*.py` files from every commit, and the pushed branch could not
+`import app.db` at all. See entry 31 - check `git status --porcelain --ignored`
+after adding a table.
+
+Next per CLAUDE.md section 8: **reconcile the pitch deck with the product** - the
+one big item left, and it is not in the code.
 
 Three things not verifiable here: **no vendor has completed a live model call** (no
 credentials), **the image has never been built** (no Docker daemon, and the host server
@@ -38,6 +46,49 @@ it, and confirm the model id first for OpenAI and Gemini (those defaults are pla
 
 Newest first. Each entry names the functions that changed, so a reader can jump
 straight to them.
+
+### 31 - The report builder, and a .gitignore that was eating model files
+Asked for a feature that helps make report templates. Built `/reports`; found on the
+way there that the branch it was being built on could not start.
+
+- **`origin/main` did not import.** `app/db.py` imports `app.models.narration` and
+  `app.models.onedrive` and neither file was in the repo. `.gitignore` carried a bare
+  `models/` for the ML artefact directory, which matches a directory of that name **at
+  any depth** - so it covered `app/models/` too. Git ignores only *untracked* files, so
+  the tables committed before that line kept working while each new one was dropped
+  from the commit silently. Anchored to `/models/`, both tables reconstructed from
+  their consumers and tests. This is the worst kind of bug for a competition: a judge
+  cloning the repo gets an ImportError on every command, and it is invisible locally.
+- **`exports/document.py` - the report built once, as blocks.** Three formats were
+  asked for and three exporters is how three documents start disagreeing. Headings,
+  paragraphs, notes, bullets and tables; each renderer only walks them. It is also
+  **the only place a report formats a number** - the renderers receive strings, so a
+  renderer that cannot see a float cannot round one. `test_no_renderer_reformats_a_ratio`
+  checks all three at once, which is invariant 1 held across three file formats.
+- **The other two formats.** `workbook.py` puts every table on its own sheet with a
+  frozen header and an autofilter - the only reason to pick a spreadsheet over a
+  document, because a forty-row projection then sorts by implied slip in one click.
+  `markdown.py` is the one that needs nothing to open. Neither needs an optional extra;
+  openpyxl is already core, which is why the builder does not offer Word alone.
+- **Sections and three audiences.** `data_quality` is in every preset on purpose and a
+  test says so. `evidence` is a sub-toggle rather than a section - source rows belong
+  under the finding they support.
+- **`/reports`,** with a live preview that renders *the same `ReportDoc` the files do*,
+  and the blank `.xlsx` templates linked from the same panel. Those routes had existed
+  with nothing pointing at them since they were written; CLAUDE.md section 8 item 4 is
+  now actually closed rather than half closed.
+- **Three things the screenshot check caught, one of them mine:**
+  - "Source rows" reported *"nothing to show"* while the source rows were visible in
+    the preview beside it. `evidence` is deliberately never in `resolved_sections`, so
+    membership was the wrong test for "was it built".
+  - The report's evidence fallback ended at `raw_table` while the screen's ended at
+    `label`, so one row could be named two ways in two places meant to be one claim.
+  - `scripts.shots` had never been given `/risk` or `/agent`, so the one check that
+    looks at a rendered page had quietly stopped covering two of them.
+- **The scenario table was rewritten to match the Recovery panel word for word.** It
+  had been printing a bare task label for a move (which does not say what is being done
+  to it) and `-3` under a column headed "still late by".
+- 23 more tests, 596 total.
 
 ### 30 - Program settings, the Team screen, and what the sheets cannot show
 Asked for a program settings tab, plus a burn chart, member calendar, productivity and
@@ -764,6 +815,20 @@ Ingestion complete for both sources plus `provably_before()`. 56 tests.
 
 _Generated by `python -m scripts.index_code`. Do not edit below the marker._
 
+### `app/agent/chat.py`
+_Multi-turn chat, via the same vendor already configured for narration._
+
+- **`class ChatUnavailable`** - The model could not be reached, or answered with nothing usable.
+- **`class ChatTurn`** - 
+- `gemini_chat(turns, *, model, api_key)` - One reply, given the whole conversation so far.
+
+### `app/agent/link_fetch.py`
+_Best-effort URL reading, so a pasted link behaves like an attachment._
+
+- `find_first_url(text)` - 
+- **`class _TextCollector`** - The crudest HTML-to-text there is: drop tags, keep what a reader sees. - methods: `handle_starttag`, `handle_endtag`, `handle_data`
+- `fetch_and_extract(url)` - The text at `url`, or a one-line note explaining why there isn't any.
+
 ### `app/api/main.py`
 _A small local console for watching the retriever work._
 
@@ -781,7 +846,12 @@ _A small local console for watching the retriever work._
 - `explain_page()` - The arithmetic behind every number.
 - `api_explain(project, also)` - The forward pass, with the working, for one project.
 - `template(kind)` - A blank input workbook, generated from the sheet contract itself.
-- `report(project, also)` - The status report, as a .docx a PM can attach to an email.
+- `reports_page()` - The report builder: choose an audience, see it, download it.
+- `report_options(project)` - What the builder screen may offer, straight from the exporter.
+- `report_preview(project, also, template, section)` - The document as blocks - what every download will contain.
+- `report_md(project, also, template, section)` - The report as Markdown.
+- `report_xlsx(project, also, template, section)` - The report as a workbook, every table on its own filterable sheet.
+- `report(project, also, template, section)` - The status report, as a .docx a PM can attach to an email.
 - `portfolio_page()` - The program screen. Same bundle as /insight; the app picks by path.
 - `portfolio_api()` - Every delivery project in the program, ranked worst first.
 - `team_page()` - Who is carrying what, and what moved.
@@ -793,7 +863,21 @@ _A small local console for watching the retriever work._
 - `read_settings()` - Current narration settings. Never includes the key itself.
 - `write_settings(request, body)` - 
 - `test_settings(request)` - Ask the configured model for a narrative, and report exactly what happened.
+- `risk_page()` - The risk register: what a PM tracks by hand, not what the engine finds.
+- `read_risks(project)` - Every risk, program-wide by default - `Layout/fpt-pm-risk.html` lists
+- `create_risk_route(body)` - 
+- `update_risk_route(risk_id, body)` - 
+- `delete_risk_route(risk_id)` - 
+- `agent_page()` - Free-form chat - the one page with no deterministic engine behind it.
+- `agent_chat(body)` - One reply, given the whole conversation so far.
 - `insight(project, also)` - The whole intelligence layer for one project, as one object.
+
+### `app/api/schemas/agent.py`
+_The Agent chat contract - free-form, unlike every other bundle here._
+
+- **`class ChatMessage`** - 
+- **`class ChatRequest`** - 
+- **`class ChatResponse`** - 
 
 ### `app/api/schemas/base.py`
 _The base every response model uses._
@@ -826,6 +910,7 @@ _The contract between the intelligence layer and everything that displays it._
 - **`class RuleTrace`** - Why a rule fired, in terms a PM can challenge.
 - **`class Finding`** - One thing worth a PM's attention, with everything needed to defend it. - methods: `is_defensible`
 - **`class DataQuality`** - What the analysis could not use.
+- **`class DeliveryConfidence`** - How much to trust the delivery-outlook figure.
 - **`class InsightBundle`** - Everything the insight screen renders, for one project at one moment. - methods: `top_severity`, `by_severity`
 
 ### `app/api/schemas/portfolio.py`
@@ -841,6 +926,25 @@ _Program-level configuration, read-only._
 - **`class ScopeEntry`** - Which source ids are one delivery project (invariant 7).
 - **`class RuleRow`** - One row of the decision table, as a reader would challenge it.
 - **`class ProgramBundle`** - 
+
+### `app/api/schemas/report.py`
+_The report builder's contract: what can be chosen, and what it will produce._
+
+- **`class ReportBlock`** - One block. Mirrors `exports.document.Block` exactly.
+- **`class ReportSection`** - A part of the report that was actually built.
+- **`class ReportPreview`** - The whole document, exactly as every downloadable format will render it.
+- **`class ReportSectionOption`** - One section a PM can switch on or off.
+- **`class ReportPresetOption`** - A named audience and the sections it selects.
+- **`class ReportFormatOption`** - One downloadable format.
+- **`class ReportOptions`** - Everything the builder screen needs to draw itself.
+
+### `app/api/schemas/risk.py`
+_The risk register contract._
+
+- **`class RiskIn`** - What a PM may set when creating or editing a risk.
+- **`class RiskOut`** - One risk, as served. `pre_rating` / `post_rating` are computed, never stored.
+- **`class RiskMatrixCell`** - One cell of the 5x5 heat-map: its rating, and how many risks sit in it.
+- **`class RiskBundle`** - Everything the risk register screen renders.
 
 ### `app/api/schemas/scenario.py`
 _What the schedule would do if one thing changed, ready to serve._
@@ -872,18 +976,43 @@ _Engine, session, and schema creation._
 - `create_all()` - 
 - `drop_all()` - 
 
+### `app/exports/document.py`
+_The report, once, in a form no file format has an opinion about._
+
+- **`class Block`** - One piece of a report, in the smallest vocabulary all three formats share.
+- **`class Section`** - A part of the report a PM can switch off.
+- **`class ReportDoc`** - A whole report, ready for any renderer. - methods: `section`
+- **`class SectionSpec`** - One switchable section, and what it needs to say anything.
+- **`class Preset`** - A named audience, and the sections it wants.
+- `preset(preset_id)` - 
+- `resolve_sections(*, preset_id, sections)` - Which sections to build, from either a preset name or an explicit list.
+- `build_document(bundle, *, explain, scenarios, risks, sections, project_name, generated_at)` - The whole report as blocks, for any renderer to walk.
+
+### `app/exports/markdown.py`
+_A `ReportDoc` as Markdown, for the email or the wiki page._
+
+- `render_markdown(doc)` - The whole report as one Markdown string.
+- `markdown_bytes(doc)` - UTF-8, because task labels and owner names are not ASCII.
+
 ### `app/exports/report.py`
-_The status report a project manager circulates._
+_The status report a project manager circulates, as a Word document._
 
 - **`class ReportUnavailable`** - `python-docx` is not installed.
-- `build_report(bundle, *, explain, project_name, generated_at)` - The whole report as a `docx.Document`, ready to save.
-- `report_bytes(bundle, *, explain, project_name, generated_at)` - The report as bytes, for an HTTP response or a file write.
+- `render_docx(doc)` - A built `ReportDoc` as a `docx.Document`, ready to save.
+- `build_report(bundle, *, explain, scenarios, risks, sections, project_name, generated_at)` - The whole report as a `docx.Document`, ready to save.
+- `report_bytes(bundle, *, explain, scenarios, risks, sections, project_name, generated_at)` - The report as bytes, for an HTTP response or a file write.
 
 ### `app/exports/template.py`
 _The blank workbook we ask a project manager to fill in._
 
 - `template_workbook(kind)` - One blank workbook, ready to ingest once someone types in it.
 - `template_bytes(kind)` - The workbook as bytes, for an HTTP response or a file write.
+
+### `app/exports/workbook.py`
+_A `ReportDoc` as a workbook, for the PM who wants to sort and filter it._
+
+- `build_workbook(doc)` - The whole report as an openpyxl workbook.
+- `workbook_bytes(doc)` - The workbook as bytes, for an HTTP response or a file write.
 
 ### `app/ids.py`
 _Deterministic domain identifiers._
@@ -915,6 +1044,22 @@ _Turn a schedule sheet into the edges of a DAG._
 - **`class EdgeResolution`** -  - methods: `stated`, `inferred`
 - `parse_predecessor_cell(value, index)` - Split one ``Predecessor`` cell into resolved refs plus per-token errors.
 - `resolve_edges(rows, *, predecessor_field, start_field, end_fields, infer_wbs)` - Build the edge set for one schedule sheet.
+
+### `app/ingest/sources/excel/graph_auth.py`
+_Sign-in for Microsoft Graph, the OneDrive source's auth._
+
+- **`class GraphAuthError`** - Sign-in failed, or nobody has signed in yet.
+- `signed_in_account(session)` - The cached account, if any - a local cache lookup, no network call.
+- `signed_in_identity(session)` - 
+- `sign_in_device_code(session, on_code)` - Blocking device-code sign-in. Call from a script, never from a request.
+- `sign_out(session)` - 
+- `get_access_token(session)` - Silently reuse the cached sign-in, refreshing if needed.
+
+### `app/ingest/sources/excel/graph_source.py`
+_OneDrive via Microsoft Graph - the production `SheetSource` `transport.py`_
+
+- **`class _GraphFetchedSheet`** - `FetchedSheet` whose `release()` deletes the temp file it downloaded. - methods: `release`
+- **`class GraphSheetSource`** - Reads watched sheets from one person's OneDrive, under `folder`. - methods: `fetch`
 
 ### `app/ingest/sources/excel/identity.py`
 _Decide which spreadsheet row is which, across scans._
@@ -996,11 +1141,17 @@ _Where every number in the product is born, and the only place it is formatted._
 - `causal_link_of(chain)` - 
 - `build_bundle(*, project_id, as_of, generated_at, context, hits, chains, impact, evidence_for, narrative, narration_source, narration_fallback_reason, max_chain_findings)` - Turn everything the intelligence layer produced into one served object.
 
+### `app/intelligence/confidence.py`
+_How much to trust the delivery-outlook figure._
+
+- **`class DeliveryConfidence`** - How much of the outlook figure rests on known, recent data.
+- `compute(*, coverage, hours_since_sync)` - The confidence band for one project's outlook figure.
+
 ### `app/intelligence/context.py`
 _Everything the rules engine is allowed to see, flattened to scalars._
 
 - **`class DeliveryContext`** - ~30 scalars describing one project at one moment. - methods: `as_record`
-- `build_context(*, project_id, as_of, schedule, impact, chains, changes, qa_items, edges, rows_rejected, stated_only_impact, newly_blocked_qa)` - Aggregate one project into the scalars the rules compare.
+- `build_context(*, project_id, as_of, schedule, impact, chains, changes, qa_items, edges, rows_rejected, stated_only_impact, newly_blocked_qa, data_age_hours)` - Aggregate one project into the scalars the rules compare.
 
 ### `app/intelligence/effort.py`
 _Cumulative logged effort over time, from what the differ actually saw._
@@ -1145,6 +1296,17 @@ _The domain layer: one vendor-neutral model, whatever the source system was._
 - **`class Resource`** - 
 - **`class QaItem`** - 
 - **`class StateChange`** - One field of one entity changing value, with honest bounds on *when*.
+- **`class Risk`** - A risk a PM tracks by hand - probability, impact, cost and delay
+
+### `app/models/narration.py`
+_Where a model's phrasing is remembered, so the same facts are paid for once._
+
+- **`class NarrationCacheEntry`** - One model-written narrative, keyed by the facts that produced it.
+
+### `app/models/onedrive.py`
+_Where the Microsoft Graph sign-in is kept between runs._
+
+- **`class OneDriveTokenCache`** - MSAL's serialised token cache, as one row.
 
 ### `app/models/raw.py`
 _The raw layer: immutable, append-only records of what a source actually returned._
@@ -1166,6 +1328,11 @@ _The tool layer: parsed into each source's own shape, before normalization._
 - **`class ToolExcelRow`** - One spreadsheet row as last observed, keyed by its resolved identity.
 - **`class ToolJiraIssue`** - 
 - **`class ToolJiraChangelog`** - One field transition from a Jira changelog.
+
+### `app/narration/cache.py`
+_Caches a model's phrasing so the same facts are never asked for twice._
+
+- `cached_narrate(session, bundle, *, project_id, drafter)` - `narrate`, but a model is asked at most once per unique set of facts.
 
 ### `app/narration/client.py`
 _The language model, fenced in on every side._
@@ -1205,6 +1372,21 @@ _The gate every model draft passes before a reader sees it._
 - **`class ValidationResult`** -  - methods: `add`, `summary`
 - `contains_quantity(text)` - Whether `text` states a figure that must have come from the server.
 - `validate_draft(draft, *, facts, allowed_entities, required_tokens, has_causal_link)` - Run all eight stages against one model draft.
+
+### `app/risks/matrix.py`
+_The probability x impact heat-map a risk's rating is read off._
+
+- `rating_for(likelihood, impact)` - The rating for one (likelihood, impact) pair, or `None` if either is unset.
+- `cells()` - Every (likelihood, impact, rating) triple, in the grid's own row-major order.
+
+### `app/risks/service.py`
+_CRUD for the risk register, and the heat-map built from it._
+
+- `build_matrix(session, project_ids)` - The 5x5 heat-map: every cell's rating, and how many risks (by their
+- `list_risks(session, project_ids)` - Every risk, program-wide by default - the register is a program-level
+- `create_risk(session, data)` - 
+- `update_risk(session, risk_id, data)` - Merge only the fields the request actually set. `None` on the model
+- `delete_risk(session, risk_id)` - 
 
 ### `app/scope.py`
 _Which source ids are one delivery project._
@@ -1286,13 +1468,16 @@ _Screenshot every page, so "does it still look right?" is a command._
 _Drive the ingestion pipeline from the command line._
 
 - `cmd_init(_args)` - 
+- `cmd_onedrive_login(_args)` - Device-code sign-in, cached in the database - see `graph_auth.py`.
+- `cmd_onedrive_status(_args)` - 
+- `cmd_onedrive_logout(_args)` - 
 - `cmd_run(args)` - 
 - `cmd_changes(_args)` - 
 - `cmd_rejects(_args)` - 
 - `cmd_runs(_args)` - 
 - `cmd_order(_args)` - Which orderings the data actually supports.
 - `cmd_template(args)` - Write the blank input workbooks a PM fills in.
-- `cmd_report(args)` - Write the .docx status report.
+- `cmd_report(args)` - Write the status report, in whichever format was asked for.
 - `cmd_advise(args)` - Show the advisory duration band for each task, if the model is present.
 - `cmd_insight(args)` - The whole intelligence layer, printed.
 - `cmd_explain(args)` - Show the arithmetic behind every number, so it can be checked by hand.

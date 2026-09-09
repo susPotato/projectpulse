@@ -255,6 +255,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reports Page
+         * @description The report builder: choose an audience, see it, download it.
+         */
+        get: operations["reports_page_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/report/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report Options
+         * @description What the builder screen may offer, straight from the exporter.
+         *
+         *     Served rather than hardcoded in the front end so that a section added to
+         *     `exports/document.py` appears in the UI without a front-end change - and so
+         *     the UI can never offer one the exporter does not know how to build.
+         *
+         *     `available` is computed per project: a tick box for a section this project
+         *     has no data for would produce a silently empty download, which reads as a
+         *     broken feature rather than an empty register.
+         */
+        get: operations["report_options_api_report_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/report/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report Preview
+         * @description The document as blocks - what every download will contain.
+         *
+         *     Not a summary of the report and not a second rendering of the bundles: it
+         *     is the same `ReportDoc` the file renderers walk. A preview built any other
+         *     way is a preview that eventually disagrees with the file.
+         */
+        get: operations["report_preview_api_report_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/report.md": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report Md
+         * @description The report as Markdown.
+         */
+        get: operations["report_md_api_report_md_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/report.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report Xlsx
+         * @description The report as a workbook, every table on its own filterable sheet.
+         */
+        get: operations["report_xlsx_api_report_xlsx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/report.docx": {
         parameters: {
             query?: never;
@@ -583,6 +695,12 @@ export interface paths {
          *     transcript each turn - see `app/agent/chat.py`. Reuses whichever key
          *     narration is already configured with, so a working `/insight` narrative
          *     means this works too, with no second setup.
+         *
+         *     A link in the *latest* user turn is fetched and its text folded into
+         *     that turn before the model sees it - see `link_fetch.py`. Only the
+         *     latest turn, not the whole history: re-fetching every link on every
+         *     reply would repeat both the latency and the token cost for no new
+         *     information.
          */
         post: operations["agent_chat_api_agent_chat_post"];
         delete?: never;
@@ -1386,6 +1504,151 @@ export interface components {
             reason: string;
         };
         /**
+         * ReportBlock
+         * @description One block. Mirrors `exports.document.Block` exactly.
+         *
+         *     Every value is already a string: the document module formatted them through
+         *     `assembler.format_fact` before they reached this schema, so no number
+         *     crosses the wire as a float for a browser's locale to re-render its own way.
+         */
+        ReportBlock: {
+            /** Kind */
+            kind: string;
+            /**
+             * Text
+             * @default
+             */
+            text: string;
+            /**
+             * Level
+             * @default 1
+             */
+            level: number;
+            /** Items */
+            items: string[];
+            /** Columns */
+            columns: string[];
+            /** Rows */
+            rows: string[][];
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+        };
+        /**
+         * ReportFormatOption
+         * @description One downloadable format.
+         *
+         *     `available` is not decoration: `.docx` needs the optional `python-docx`
+         *     extra, and a download button that 500s at a demo is worse than a button
+         *     that says why it is greyed out.
+         */
+        ReportFormatOption: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Extension */
+            extension: string;
+            /** Description */
+            description: string;
+            /**
+             * Available
+             * @default true
+             */
+            available: boolean;
+            /**
+             * Unavailable Reason
+             * @default
+             */
+            unavailable_reason: string;
+        };
+        /**
+         * ReportOptions
+         * @description Everything the builder screen needs to draw itself.
+         */
+        ReportOptions: {
+            /** Project Id */
+            project_id: string;
+            /** Presets */
+            presets: components["schemas"]["ReportPresetOption"][];
+            /** Sections */
+            sections: components["schemas"]["ReportSectionOption"][];
+            /** Formats */
+            formats: components["schemas"]["ReportFormatOption"][];
+            /**
+             * Default Preset
+             * @default
+             */
+            default_preset: string;
+        };
+        /**
+         * ReportPresetOption
+         * @description A named audience and the sections it selects.
+         */
+        ReportPresetOption: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
+            /** Sections */
+            sections: string[];
+        };
+        /**
+         * ReportPreview
+         * @description The whole document, exactly as every downloadable format will render it.
+         */
+        ReportPreview: {
+            /** Title */
+            title: string;
+            /** Preamble */
+            preamble: components["schemas"]["ReportBlock"][];
+            /** Sections */
+            sections: components["schemas"]["ReportSection"][];
+            /** Resolved Sections */
+            resolved_sections: string[];
+        };
+        /**
+         * ReportSection
+         * @description A part of the report that was actually built.
+         *
+         *     A section the PM ticked but which had no data to fill it is absent here
+         *     rather than present and empty - the same rule `build_document` follows.
+         */
+        ReportSection: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Blocks */
+            blocks: components["schemas"]["ReportBlock"][];
+        };
+        /**
+         * ReportSectionOption
+         * @description One section a PM can switch on or off.
+         */
+        ReportSectionOption: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /**
+             * Requires
+             * @default
+             */
+            requires: string;
+            /**
+             * Available
+             * @default true
+             */
+            available: boolean;
+        };
+        /**
          * RiskBundle
          * @description Everything the risk register screen renders.
          */
@@ -2102,11 +2365,166 @@ export interface operations {
             };
         };
     };
+    reports_page_reports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    report_options_api_report_options_get: {
+        parameters: {
+            query?: {
+                project?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOptions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_preview_api_report_preview_get: {
+        parameters: {
+            query?: {
+                project?: string;
+                also?: string[] | null;
+                template?: string | null;
+                section?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_md_api_report_md_get: {
+        parameters: {
+            query?: {
+                project?: string;
+                also?: string[] | null;
+                template?: string | null;
+                section?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_xlsx_api_report_xlsx_get: {
+        parameters: {
+            query?: {
+                project?: string;
+                also?: string[] | null;
+                template?: string | null;
+                section?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     report_api_report_docx_get: {
         parameters: {
             query?: {
                 project?: string;
                 also?: string[] | null;
+                template?: string | null;
+                section?: string[] | null;
             };
             header?: never;
             path?: never;

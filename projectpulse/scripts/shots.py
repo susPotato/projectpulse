@@ -53,13 +53,21 @@ HOST, PORT = "127.0.0.1", 8000
 #: reads exactly like a duplicate-render bug and is not one. Each entry is
 #: sized to its own content: enough to avoid cutting a panel in half, not so
 #: much that the capture invents things.
+#:
+#: Every entry in `Shell.tsx`'s TABS belongs here. `/risk` and `/agent` were
+#: added to the app and not to this list, so the one check that looks at the
+#: rendered page had stopped covering them - which is the same silence the
+#: check exists to break.
 PAGES = (
     ("/portfolio", "program", 1200),
     ("/", "console", 1500),
     ("/gantt", "schedule", 1100),
     ("/insight", "insight", 2400),
+    ("/risk", "risk", 1600),
     ("/team", "team", 1500),
     ("/explain", "calculation", 2400),
+    ("/reports", "reports", 1800),
+    ("/agent", "agent", 1100),
     ("/settings", "settings", 950),
 )
 

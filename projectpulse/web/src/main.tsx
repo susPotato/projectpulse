@@ -7,6 +7,7 @@ import { Portfolio } from "./pages/Portfolio";
 import { Team } from "./pages/Team";
 import { Risk } from "./pages/Risk";
 import { Agent } from "./pages/Agent";
+import { Reports } from "./pages/Reports";
 
 /*
   Four routes, so no router dependency.
@@ -26,6 +27,7 @@ const PAGES: Record<string, React.ReactElement> = {
   "/team": <Team />,
   "/risk": <Risk />,
   "/agent": <Agent />,
+  "/reports": <Reports />,
 };
 const page = PAGES[path] ?? <Insight />;
 
