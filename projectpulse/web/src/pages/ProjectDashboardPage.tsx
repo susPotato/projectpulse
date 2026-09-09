@@ -10,7 +10,7 @@ export function ProjectDashboardPage() {
 
   if (!selection) {
     return (
-      <Page current="/portfolio" title="Project Dashboard" subtitle="No project selected">
+      <Page current="/programs" title="Project Dashboard" subtitle="No project selected">
         <Problem
           title="No project selected"
           detail="Pick a project from the switcher in the top bar, or open one from the Portfolio."

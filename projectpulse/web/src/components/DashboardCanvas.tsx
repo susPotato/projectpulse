@@ -11,6 +11,7 @@ import "react-grid-layout/css/styles.css";
 import {
   load,
   send,
+  withProject,
   type ApiProblem,
   type CatalogueBundle,
   type DashboardOut,
@@ -30,6 +31,45 @@ const ROW_HEIGHT = 32;
 
 function toLayoutItem(tile: TileOut): LayoutItem {
   return { i: String(tile.id), x: tile.x, y: tile.y, w: tile.w, h: tile.h };
+}
+
+/* Everything this project has, one click away - the point being made visible:
+   entering a project is entering a real workspace, not just this one canvas.
+   Every link carries the project forward via `withProject` (the same
+   ambient-selection mechanism the rail's own `ProjectSwitcher` sets), so
+   Schedule/Insight/Risk/Team/Calc/Reports open already scoped to it. */
+const PROJECT_LINKS = [
+  { href: "/project/dashboard", label: "Dashboard" },
+  { href: "/gantt", label: "Schedule" },
+  { href: "/insight", label: "Insight" },
+  { href: "/risk", label: "Risk" },
+  { href: "/team", label: "Team" },
+  { href: "/explain", label: "Calc" },
+  { href: "/reports", label: "Reports" },
+] as const;
+
+function ProjectSubNav() {
+  return (
+    <nav className="mb-4 flex flex-wrap gap-1.5" aria-label="This project">
+      {PROJECT_LINKS.map((link) => {
+        const active = link.href === "/project/dashboard";
+        return (
+          <a
+            key={link.href}
+            href={withProject(link.href)}
+            aria-current={active ? "page" : undefined}
+            className={`rounded-md border px-2.5 py-1 text-[12px] font-semibold no-underline ${
+              active
+                ? "border-navy bg-navy text-surface"
+                : "border-rule bg-surface text-ink hover:bg-bg"
+            }`}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+    </nav>
+  );
 }
 
 function TileMenu({
@@ -166,14 +206,14 @@ export function DashboardCanvas({
 
   if (problem) {
     return (
-      <Page current={scopeType === "program" ? "/programs" : "/portfolio"} title={title} subtitle={problem.title}>
+      <Page current="/programs" title={title} subtitle={problem.title}>
         <Problem {...problem} />
       </Page>
     );
   }
   if (!dashboard) {
     return (
-      <Page current={scopeType === "program" ? "/programs" : "/portfolio"} title={title} subtitle="Loading..." children={null} />
+      <Page current="/programs" title={title} subtitle="Loading..." children={null} />
     );
   }
 
@@ -184,7 +224,7 @@ export function DashboardCanvas({
 
   return (
     <Page
-      current={scopeType === "program" ? "/programs" : "/portfolio"}
+      current="/programs"
       title={title}
       scope={scopeLabel}
       wide
@@ -224,6 +264,7 @@ export function DashboardCanvas({
         </div>
       }
     >
+      {scopeType === "project" && <ProjectSubNav />}
       {dashboard.tiles.length === 0 ? (
         <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-rule text-center">
           <p className="m-0 text-[13px] text-ink-3">Click Add Tiles to start building your dashboard.</p>

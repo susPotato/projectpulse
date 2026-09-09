@@ -21,8 +21,7 @@ import {
    Label text is free to change: `publish.py` matches the console link by
    `href`, not by what it is called. */
 const TABS = [
-  { href: "/portfolio", label: "Program" },
-  { href: "/programs", label: "Programs" },
+  { href: "/programs", label: "Program" },
   { href: "/console", label: "Console" },
   { href: "/gantt", label: "Schedule" },
   { href: "/insight", label: "Insight" },
@@ -38,12 +37,6 @@ const TABS = [
    follows the link's state. Never emoji: they render differently on every
    machine and the theme cannot recolour them. */
 const ICONS: Record<string, ReactNode> = {
-  "/portfolio": (
-    <>
-      <path d="M3 3v18h18" />
-      <path d="m7 15 4-4 3 3 5-6" />
-    </>
-  ),
   "/programs": (
     <>
       <rect x="3" y="3" width="7" height="7" rx="1" />

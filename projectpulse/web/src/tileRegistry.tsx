@@ -10,6 +10,7 @@
 import { useEffect, useState, type ComponentType } from "react";
 import {
   load,
+  projectLink,
   type ApiProblem,
   type ChartType,
   type CustomTileOut,
@@ -236,11 +237,16 @@ const ProjectPortfolio: ComponentType<TileProps> = ({ scopeId }) => {
       {bundle && (
         <div className="grid gap-1.5">
           {bundle.projects.map((row) => (
-            <div key={row.project_id} className="flex items-center gap-2 text-[12.5px]">
+            <a
+              key={row.project_id}
+              href={projectLink("/project/dashboard", row)}
+              className="flex items-center gap-2 rounded px-1 py-0.5 text-[12.5px] no-underline hover:bg-bg"
+              title={`Open ${row.name}'s dashboard`}
+            >
               <span className={`h-2 w-2 shrink-0 rounded-full ${(BAND_STYLE[row.band] ?? "bg-rule").split(" ")[0]}`} />
-              <span className="min-w-0 flex-1 truncate">{row.name}</span>
+              <span className="min-w-0 flex-1 truncate text-ink">{row.name}</span>
               <span className="text-ink-3">{row.days_late > 0 ? `+${row.days_late}d` : "on plan"}</span>
-            </div>
+            </a>
           ))}
           {bundle.projects.length === 0 && (
             <p className="m-0 text-[12.5px] text-ink-3">No projects yet.</p>
@@ -260,8 +266,13 @@ const ProjectHealthHeatmap: ComponentType<TileProps> = ({ scopeId }) => {
       {bundle && (
         <div className="grid gap-1.5">
           {bundle.projects.map((row) => (
-            <div key={row.project_id} className="grid grid-cols-[1fr_repeat(4,20px)] items-center gap-1.5">
-              <span className="truncate text-[12px]">{row.name}</span>
+            <a
+              key={row.project_id}
+              href={projectLink("/project/dashboard", row)}
+              title={`Open ${row.name}'s dashboard`}
+              className="grid grid-cols-[1fr_repeat(4,20px)] items-center gap-1.5 rounded px-1 py-0.5 no-underline hover:bg-bg"
+            >
+              <span className="truncate text-[12px] text-ink">{row.name}</span>
               {DIMENSIONS.map((d) => (
                 <span
                   key={d}
@@ -269,7 +280,7 @@ const ProjectHealthHeatmap: ComponentType<TileProps> = ({ scopeId }) => {
                   className={`h-3.5 rounded-sm ${(BAND_STYLE[row.bands[d] ?? "no_data"] ?? "bg-rule").split(" ")[0]}`}
                 />
               ))}
-            </div>
+            </a>
           ))}
         </div>
       )}

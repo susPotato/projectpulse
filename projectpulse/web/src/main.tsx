@@ -20,16 +20,18 @@ import { ProjectDashboardPage } from "./pages/ProjectDashboardPage";
   and a second source of truth about which URLs exist - the rail in
   Shell.tsx already declares them.
 
-  "/" is the Program board - a PM opening the app should see which projects
-  are in trouble, not the retriever console (moved to /console, a
-  hand-written page outside this bundle).
+  "/" is the Programs list - a PM opening the app should land at the top of
+  the Program -> Project hierarchy, not a flat cross-program ranking.
+  `/portfolio` still renders the old flat "every project, ranked" view (kept
+  for anyone who has it bookmarked, or wants the whole-portfolio cut) - it
+  just no longer owns the rail's one "Program" tab, which now opens `/programs`.
 */
 const root = document.getElementById("root");
 if (!root) throw new Error("#root is missing from index.html");
 
 const path = window.location.pathname.replace(/\/+$/, "");
 const PAGES: Record<string, React.ReactElement> = {
-  "": <Portfolio />,
+  "": <Programs />,
   "/explain": <Calculation />,
   "/portfolio": <Portfolio />,
   "/team": <Team />,
