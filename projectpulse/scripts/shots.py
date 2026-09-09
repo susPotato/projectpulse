@@ -62,7 +62,7 @@ PAGES = (
     ("/portfolio", "program", 1200),
     ("/", "console", 1500),
     ("/gantt", "schedule", 1100),
-    ("/insight", "insight", 2400),
+    ("/insight", "insight", 2500),
     ("/risk", "risk", 1600),
     ("/team", "team", 1500),
     ("/explain", "calculation", 2400),
@@ -210,8 +210,15 @@ def main(argv: list[str] | None = None) -> int:
 
     out_dir = REPO / args.out
     out_dir.mkdir(parents=True, exist_ok=True)
+    # `--page` looks the path up in PAGES rather than inventing an entry, so
+    # re-shooting one page gives the SAME picture the full run gives. It used
+    # to fall straight to DEFAULT_HEIGHT, which quietly cropped a tall page
+    # differently from the full run - and re-shooting a page alone is exactly
+    # what the flaky-Schedule note above tells you to do, so the one workflow
+    # meant to confirm a doubt was the one that changed the evidence.
+    known = {path: entry for entry in PAGES for path in (entry[0],)}
     wanted = (
-        [(p, p.strip("/") or "console", DEFAULT_HEIGHT) for p in args.page]
+        [known.get(p, (p, p.strip("/") or "console", DEFAULT_HEIGHT)) for p in args.page]
         if args.page
         else list(PAGES)
     )

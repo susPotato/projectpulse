@@ -8,12 +8,12 @@ and must not be hand-edited.
 
 ## Now
 
-**Idle.** Ten screens live over HTTP behind the design's app shell. `/reports` is
-new: the report builder - an audience preset, per-section tick boxes, a live
-preview that is literally the document, and `.docx` / `.xlsx` / `.md` downloads,
-with the blank input templates on the same panel. One `ReportDoc` feeds all three
-renderers and formats every number, so the formats cannot disagree and none of
-them can round anything.
+**Idle.** Ten screens. `/reports` builds the status report - audience preset,
+per-section tick boxes, a preview that is literally the document, and .docx /
+.xlsx / .md downloads. The Insight board now also carries a **delivery forecast**:
+P50/P80/P95 resampled from this project's own drift against its baselines, which
+**refuses with a reason** when the sample is too small, has no variance, or there
+is nothing left to move.
 
 Also fixed this session: `.gitignore`'s bare `models/` had been silently dropping
 new `app/models/*.py` files from every commit, and the pushed branch could not
@@ -46,6 +46,46 @@ it, and confirm the model id first for OpenAI and Gemini (those defaults are pla
 
 Newest first. Each entry names the functions that changed, so a reader can jump
 straight to them.
+
+### 32 - A forecast that refuses
+Asked for the "sim model - what the project will become". Three things already
+answered part of it (the forward pass, the what-if scenarios, the confidence band) and
+none of them gave a *range*, so that is what this adds.
+
+- **The blocker was found before the feature.** The obvious sample - the observed
+  `planned_end` state changes - is six moves, **all of them exactly +12 days**. A
+  percentile over a repeated value is a single date wearing a distribution's clothes.
+  The usable sample turned out to be `baseline_end` vs `planned_end` per task, which has
+  real spread (`0, 12, 12, 12, 0, 0`) and needed **no change to `gen_demo_data`** - the
+  demo spine is untouched.
+- **`intelligence/schedule/forecast.py`.** Drift measured per task, resampled with
+  replacement onto the still-open tasks, forward pass re-run per trial, P50/P80/P95.
+  Nothing is fitted: a Monte Carlo over assumed lognormal durations would let the
+  modeller pick the shape of the answer, which is the invented number the whole product
+  argues against and precisely what the deck's "89% confidence" is.
+- **Three refusals, and they are the feature.** Too few baselined tasks; **no variance**
+  in the sample; nothing left to move. Each returns a reason that reaches the page, the
+  CLI and the .docx verbatim. `available=False` is a 200 - a 4xx would make the page
+  render an error where the honest answer belongs.
+- **The one assumption is served, not buried.** Drift so far is resampled as drift still
+  to come, so a task that already slipped gets another draw. `method` and `assumption`
+  are fields on the bundle so three surfaces cannot describe them three ways, or one of
+  them quietly drop the caveat.
+- **Deterministic**, seeded by hashing the sample - hashed rather than summed, because
+  two different samples can share a total and a forecast that silently stops moving when
+  the data does is worse than one that never moved.
+- **The report section came free.** `document.py` already existed, so `.docx`, `.xlsx`,
+  Markdown and the builder preview all gained the forecast with one block builder - the
+  first real payoff from that split.
+- **A bug in `scripts.shots`, found by using it.** `--page /insight` invented an entry
+  at `DEFAULT_HEIGHT` instead of looking the path up in `PAGES`, so re-shooting one page
+  cropped it differently from the full run. That is the workflow the flaky-Schedule note
+  tells you to use to confirm a doubt, so the one check meant to settle a question was
+  the one changing the evidence. It cost a wrong conclusion here first: the forecast
+  panel looked cut off at "2400" when the picture was actually 1400 tall.
+- On the demo data: committed 2026-05-29, chain alone 2026-07-02, **P50 2026-07-26,
+  P95 2026-08-19**, off six observations - and the panel says "six" beside them.
+- 12 more tests, 608 total.
 
 ### 31 - The report builder, and a .gitignore that was eating model files
 Asked for a feature that helps make report templates. Built `/reports`; found on the
@@ -846,6 +886,7 @@ _A small local console for watching the retriever work._
 - `explain_page()` - The arithmetic behind every number.
 - `api_explain(project, also)` - The forward pass, with the working, for one project.
 - `template(kind)` - A blank input workbook, generated from the sheet contract itself.
+- `forecast(project, also)` - A range of finish dates, resampled from this project's observed drift.
 - `reports_page()` - The report builder: choose an audience, see it, download it.
 - `report_options(project)` - What the builder screen may offer, straight from the exporter.
 - `report_preview(project, also, template, section)` - The document as blocks - what every download will contain.
@@ -892,6 +933,13 @@ _The contract for "show me the arithmetic"._
 - **`class ForwardStep`** - One task's forward pass, derived as input -> algorithm -> output.
 - **`class RefusedEdge`** - A dependency the graph would not accept, and why.
 - **`class ExplainBundle`** - Everything needed to check the schedule arithmetic by hand. - methods: `inconsistent_count`
+
+### `app/api/schemas/forecast.py`
+_The delivery forecast contract: a range, and everything needed to doubt it._
+
+- **`class ForecastObservation`** - One measured drift, so the sample can be read rather than trusted.
+- **`class ForecastPoint`** - One percentile of the resampled finish date.
+- **`class ForecastBundle`** - The delivery forecast for one project.
 
 ### `app/api/schemas/gantt.py`
 _The contract for the schedule view._
@@ -986,7 +1034,7 @@ _The report, once, in a form no file format has an opinion about._
 - **`class Preset`** - A named audience, and the sections it wants.
 - `preset(preset_id)` - 
 - `resolve_sections(*, preset_id, sections)` - Which sections to build, from either a preset name or an explicit list.
-- `build_document(bundle, *, explain, scenarios, risks, sections, project_name, generated_at)` - The whole report as blocks, for any renderer to walk.
+- `build_document(bundle, *, explain, scenarios, forecast, risks, sections, project_name, generated_at)` - The whole report as blocks, for any renderer to walk.
 
 ### `app/exports/markdown.py`
 _A `ReportDoc` as Markdown, for the email or the wiki page._
@@ -1187,6 +1235,7 @@ _Run the whole intelligence layer for one project and return one bundle._
 - `program_config(session)` - What the retriever reads, how projects are paired, and the rule table.
 - `team_project(session, *, project_id, also)` - Who is carrying what, and what moved - from real sheet columns only.
 - `scenarios_project(session, *, project_id, also)` - Recovery scenarios for one project.
+- `forecast_project(session, *, project_id, also)` - A range of finish dates, resampled from this project's observed drift.
 - `gantt_project(session, *, project_id, also)` - The schedule view for one project.
 
 ### `app/intelligence/rules/engine.py`
@@ -1205,6 +1254,15 @@ _The rules, in a form both ZEN and a plain Python loop can evaluate._
 - **`class Rule`** - One row of the decision table. - methods: `tokens`, `holds`
 - **`class RuleTable`** -  - methods: `by_id`
 - `validate_table(table, known_fields)` - Problems that would make a rule silently wrong. Empty list means healthy.
+
+### `app/intelligence/schedule/forecast.py`
+_A range of finish dates, resampled from how this plan has already drifted._
+
+- **`class Observation`** - One measured drift: what a task committed to, against what it plans now. - methods: `days`
+- **`class ForecastPoint`** - One percentile of the resampled finish date.
+- **`class Forecast`** - The range, and everything needed to argue with it. - methods: `point`
+- `observed_drift(tasks)` - How far each task's plan has moved from what it committed to.
+- `forecast_project(tasks, edges, *, trials)` - Resample this project's own drift onto the work that is still open.
 
 ### `app/intelligence/schedule/graph.py`
 _The dependency DAG, and what connects any two entities._
@@ -1477,6 +1535,7 @@ _Drive the ingestion pipeline from the command line._
 - `cmd_runs(_args)` - 
 - `cmd_order(_args)` - Which orderings the data actually supports.
 - `cmd_template(args)` - Write the blank input workbooks a PM fills in.
+- `cmd_forecast(args)` - Print the delivery forecast, or the reason there is not one.
 - `cmd_report(args)` - Write the status report, in whichever format was asked for.
 - `cmd_advise(args)` - Show the advisory duration band for each task, if the model is present.
 - `cmd_insight(args)` - The whole intelligence layer, printed.

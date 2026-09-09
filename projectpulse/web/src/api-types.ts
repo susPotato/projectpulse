@@ -255,6 +255,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Forecast
+         * @description A range of finish dates, resampled from this project's observed drift.
+         *
+         *     Answers the question the forward pass deliberately does not: that one says
+         *     where the chain lands if nothing else moves, and nothing else moving is the
+         *     single assumption a delivery plan has never satisfied.
+         *
+         *     **A refusal is a 200, not an error.** When the data cannot support a range
+         *     the bundle comes back with `available: false` and a reason - too few
+         *     baselined tasks, no variation between them, or nothing left to move. A 4xx
+         *     would make the page render an error where the honest answer belongs.
+         */
+        get: operations["forecast_api_forecast_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports": {
         parameters: {
             query?: never;
@@ -1112,6 +1141,94 @@ export interface components {
              * @enum {string}
              */
             evidence_basis: "same_entity" | "dependency_edge" | "dependency_path" | "same_project" | "none";
+        };
+        /**
+         * ForecastBundle
+         * @description The delivery forecast for one project.
+         */
+        ForecastBundle: {
+            /** Project Id */
+            project_id: string;
+            /**
+             * Available
+             * @default false
+             */
+            available: boolean;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+            /** Committed End */
+            committed_end: string | null;
+            /** Projected End */
+            projected_end: string | null;
+            /** Points */
+            points: components["schemas"]["ForecastPoint"][];
+            /**
+             * Observations
+             * @default 0
+             */
+            observations: number;
+            /** Sample */
+            sample: components["schemas"]["ForecastObservation"][];
+            /**
+             * Open Tasks
+             * @default 0
+             */
+            open_tasks: number;
+            /**
+             * Trials
+             * @default 0
+             */
+            trials: number;
+            /**
+             * Method
+             * @default
+             */
+            method: string;
+            /**
+             * Assumption
+             * @default
+             */
+            assumption: string;
+        };
+        /**
+         * ForecastObservation
+         * @description One measured drift, so the sample can be read rather than trusted.
+         */
+        ForecastObservation: {
+            /** Entity Id */
+            entity_id: string;
+            /** Label */
+            label: string;
+            /**
+             * Committed
+             * Format: date
+             */
+            committed: string;
+            /**
+             * Planned
+             * Format: date
+             */
+            planned: string;
+            /** Days */
+            days: number;
+        };
+        /**
+         * ForecastPoint
+         * @description One percentile of the resampled finish date.
+         */
+        ForecastPoint: {
+            /** Percentile */
+            percentile: number;
+            /**
+             * Finish
+             * Format: date
+             */
+            finish: string;
+            /** Days Late */
+            days_late: number;
         };
         /**
          * ForwardStep
@@ -2352,6 +2469,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    forecast_api_forecast_get: {
+        parameters: {
+            query?: {
+                project?: string;
+                also?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForecastBundle"];
                 };
             };
             /** @description Validation Error */

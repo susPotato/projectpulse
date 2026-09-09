@@ -149,6 +149,13 @@ SECTIONS: tuple[SectionSpec, ...] = (
         requires="scenarios",
     ),
     SectionSpec(
+        "forecast",
+        "Delivery forecast",
+        "A range of finish dates, resampled from how far this plan has already "
+        "drifted from its own baselines.",
+        requires="forecast",
+    ),
+    SectionSpec(
         "risks",
         "Risk register",
         "The risks a PM has recorded, with their pre- and post-mitigation "
@@ -199,13 +206,21 @@ PRESETS: tuple[Preset, ...] = (
         "Steering committee",
         "For the people who decide. Findings and the options, without the "
         "record-level appendix.",
-        ("summary", "findings", "projection", "scenarios", "risks", "data_quality"),
+        (
+            "summary",
+            "findings",
+            "projection",
+            "forecast",
+            "scenarios",
+            "risks",
+            "data_quality",
+        ),
     ),
     Preset(
         "exec",
         "Executive brief",
         "One page. The outlook and what is driving it, nothing to work through.",
-        ("summary", "projection", "data_quality"),
+        ("summary", "projection", "forecast", "data_quality"),
     ),
 )
 
@@ -519,6 +534,65 @@ def _scenario_blocks(scenarios) -> tuple[Block, ...]:
     return tuple(blocks)
 
 
+def _forecast_blocks(forecast) -> tuple[Block, ...]:
+    """The range, or the reason there is not one.
+
+    A refusal is rendered rather than skipped. `build_document` drops a section
+    with no blocks, so returning nothing here would make an unsupported forecast
+    look like a section nobody asked for - and the reason is the most useful
+    sentence in it.
+    """
+    if not forecast.available:
+        return (
+            Block("paragraph", forecast.reason),
+            Block(
+                "note",
+                "No range is shown because the data does not support one. That "
+                "is the honest answer, not a missing section.",
+            ),
+        )
+
+    return (
+        Block(
+            "table",
+            columns=("Confidence", "Finish", "Against the commitment"),
+            rows=tuple(
+                (
+                    f"P{point.percentile}",
+                    format_fact("finish", point.finish),
+                    f"+{format_fact('days_late', point.days_late)} days"
+                    if point.days_late > 0
+                    else "meets the commitment",
+                )
+                for point in forecast.points
+            ),
+        ),
+        Block(
+            "paragraph",
+            f"{format_fact('trials', forecast.trials)} trials, resampling "
+            f"{format_fact('observations', forecast.observations)} observed "
+            f"drift(s) onto {format_fact('open_tasks', forecast.open_tasks)} "
+            "open task(s). The forward pass alone, with nothing else moving, "
+            f"says {format_fact('projected_end', forecast.projected_end)}.",
+            label="Basis: ",
+        ),
+        # The sample itself. Six observations is thin, and printing them is what
+        # lets a reader see that it is thin rather than take the percentiles on
+        # faith - the same argument as the evidence rows under a finding.
+        Block(
+            "bullets",
+            items=tuple(
+                f"{observation.label}: committed "
+                f"{format_fact('committed', observation.committed)}, now "
+                f"{format_fact('planned', observation.planned)} "
+                f"({format_fact('drift', observation.days)} days)"
+                for observation in forecast.sample
+            ),
+        ),
+        Block("note", f"{forecast.method} {forecast.assumption}"),
+    )
+
+
 def _risk_blocks(risks) -> tuple[Block, ...]:
     """The risks a PM recorded, as against the ones the engine detected.
 
@@ -619,6 +693,7 @@ def build_document(
     *,
     explain: ExplainBundle | None = None,
     scenarios=None,
+    forecast=None,
     risks=None,
     sections: Sequence[str] | None = None,
     project_name: str = "",
@@ -670,6 +745,8 @@ def build_document(
             blocks = _projection_blocks(explain) if explain is not None else ()
         elif spec.id == "scenarios":
             blocks = _scenario_blocks(scenarios) if scenarios is not None else ()
+        elif spec.id == "forecast":
+            blocks = _forecast_blocks(forecast) if forecast is not None else ()
         elif spec.id == "risks":
             blocks = _risk_blocks(risks) if risks is not None else ()
         elif spec.id == "data_quality":

@@ -18,6 +18,7 @@ import type {
   ExplainBundle,
   GanttBundle,
   InsightBundle,
+  ForecastBundle,
   PortfolioBundle,
   ReportOptions,
   ReportPreview,
@@ -39,6 +40,7 @@ const insight = read<InsightBundle>("insight");
 const explain = read<ExplainBundle>("explain");
 const gantt = read<GanttBundle>("gantt");
 const scenarios = read<ScenarioBundle>("scenarios");
+const forecast = read<ForecastBundle>("forecast");
 const portfolio = read<PortfolioBundle>("portfolio");
 const team = read<TeamBundle>("team");
 const reportOptions = read<ReportOptions>("report_options");
@@ -48,7 +50,12 @@ const cases: Array<[string, string, string[]]> = [
   [
     "Insight",
     renderToString(
-      <InsightView bundle={insight} explain={explain} scenarios={scenarios} />,
+      <InsightView
+        bundle={insight}
+        explain={explain}
+        scenarios={scenarios}
+        forecast={forecast}
+      />,
     ),
     [
       // The rail must agree with the static pages - `tests/test_api.py`
@@ -77,6 +84,19 @@ const cases: Array<[string, string, string[]]> = [
       "Doing nothing",
       "best available",
       "What this cannot tell you",
+      // The forecast panel. The three figures a reader would quote, and - just
+      // as load-bearing - the three things that must never leave the panel
+      // with them: the sample size, the sample, and the assumption.
+      "Delivery forecast",
+      // The percentile labels are `P{point.percentile}`, which server-side
+      // rendering splits with an HTML comment - see the JSX gotcha in
+      // CLAUDE.md section 6. The finish dates are whole interpolations, and
+      // the forecast is seeded from its own sample, so they are stable.
+      "2026-07-26",
+      "2026-08-19",
+      "observed drift(s)",
+      "What the range is built from",
+      "keeps drifting the way it has been drifting",
       // The within-project views exist and the default one is Overview.
       "Overview",
       "Risk",

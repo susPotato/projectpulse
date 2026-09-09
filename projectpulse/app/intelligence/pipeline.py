@@ -836,6 +836,77 @@ def scenarios_project(
     )
 
 
+#: Served on the bundle rather than written into each surface, so the page, the
+#: CLI and the .docx cannot end up describing the method three ways - or one of
+#: them quietly dropping the assumption.
+FORECAST_METHOD = (
+    "Each task's drift from its own baseline is resampled with replacement onto "
+    "the tasks still open, and the same forward pass is re-run per trial. The "
+    "empirical distribution is used directly - none is fitted or assumed."
+)
+FORECAST_ASSUMPTION = (
+    "This assumes the project keeps drifting the way it has been drifting: a "
+    "task that has already slipped is given another draw rather than excused "
+    "from one. That is the conservative direction, and it is an assumption "
+    "about the method, not a number from the sheet."
+)
+
+
+def forecast_project(
+    session,
+    *,
+    project_id: str,
+    also: Sequence[str] = (),
+) -> "ForecastBundle":
+    """A range of finish dates, resampled from this project's observed drift.
+
+    Shares `load_tasks` / `load_edges` with `analyze_project` and
+    `scenarios_project`, so the forecast, the outlook and the recovery options
+    are all measured against one baseline. Computing it from a second load would
+    let the three disagree about what "the plan" is.
+    """
+    from app.api.schemas.forecast import (
+        ForecastBundle,
+        ForecastObservation,
+        ForecastPoint,
+    )
+    from app.intelligence.schedule.forecast import forecast_project as run
+
+    project_ids = [project_id, *also]
+    result = run(load_tasks(session, project_ids), load_edges(session, project_ids))
+
+    return ForecastBundle(
+        project_id=project_id,
+        available=result.available,
+        reason=result.reason,
+        committed_end=result.committed_end,
+        projected_end=result.projected_end,
+        points=[
+            ForecastPoint(
+                percentile=point.percentile,
+                finish=point.finish,
+                days_late=point.days_late,
+            )
+            for point in result.points
+        ],
+        observations=result.observations,
+        sample=[
+            ForecastObservation(
+                entity_id=observation.entity_id,
+                label=observation.label,
+                committed=observation.committed,
+                planned=observation.planned,
+                days=observation.days,
+            )
+            for observation in result.sample
+        ],
+        open_tasks=result.open_tasks,
+        trials=result.trials,
+        method=FORECAST_METHOD,
+        assumption=FORECAST_ASSUMPTION,
+    )
+
+
 def gantt_project(
     session,
     *,

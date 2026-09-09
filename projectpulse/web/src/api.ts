@@ -17,6 +17,7 @@ export type DeliveryConfidence = components["schemas"]["DeliveryConfidence"];
 export type ExplainBundle = components["schemas"]["ExplainBundle"];
 export type ForwardStep = components["schemas"]["ForwardStep"];
 export type ScenarioBundle = components["schemas"]["ScenarioBundle"];
+export type ForecastBundle = components["schemas"]["ForecastBundle"];
 export type Scenario = components["schemas"]["Scenario"];
 export type PortfolioBundle = components["schemas"]["PortfolioBundle"];
 export type ProjectRow = components["schemas"]["ProjectRow"];

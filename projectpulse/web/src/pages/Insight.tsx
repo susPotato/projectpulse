@@ -8,6 +8,7 @@ import {
   type EvidenceRef,
   type ExplainBundle,
   type Finding,
+  type ForecastBundle,
   type InsightBundle,
   type Scenario,
   type ScenarioBundle,
@@ -473,6 +474,86 @@ function AiAnalysis({ finding }: { finding: Finding }) {
   );
 }
 
+/* The delivery forecast: a range, from this project's own drift.
+
+   Deliberately shown *beside* the forward pass and never instead of it. They
+   answer different questions - the forward pass is "where does the chain land
+   if nothing else moves", which is arithmetic and certain; this is "how has
+   this plan actually behaved", which is a range and rests on a sample. A page
+   that showed only the range would be quoting a probability where it has a
+   proof.
+
+   Three things must never leave this panel: the sample size, the sample
+   itself, and the assumption. They are served on the bundle rather than
+   written here so that the page, the CLI and the .docx cannot drift apart -
+   and so a well-meaning edit cannot quietly drop the caveat. */
+function Forecast({ bundle }: { bundle: ForecastBundle }) {
+  if (!bundle.available) {
+    return (
+      <Panel caption="Delivery forecast" span={12}>
+        <div className="text-[12.5px] leading-[1.65] text-ink-2">{bundle.reason}</div>
+        <div className="mt-2 text-[11.5px] text-ink-3 italic">
+          No range is shown because the data does not support one. That is the
+          honest answer, not a missing feature.
+        </div>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel caption="Delivery forecast" span={12}>
+      <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+        {bundle.points.map((point) => (
+          <div key={point.percentile}>
+            <div className="text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+              P{point.percentile}
+            </div>
+            <div className="mt-0.5 text-[19px] leading-none font-bold tabular-nums">
+              {point.finish}
+            </div>
+            <div className="mt-1 text-[11.5px] text-ink-3 tabular-nums">
+              {point.days_late > 0
+                ? `+${point.days_late}d vs the commitment`
+                : "meets the commitment"}
+            </div>
+          </div>
+        ))}
+
+        <div className="ml-auto max-w-[300px] text-[11.5px] leading-[1.5] text-ink-3">
+          In {bundle.trials.toLocaleString()} trials, resampling{" "}
+          <b className="font-semibold text-ink-2">
+            {bundle.observations} observed drift(s)
+          </b>{" "}
+          onto {bundle.open_tasks} open task(s). The forward pass alone says{" "}
+          <b className="font-semibold text-ink-2">{bundle.projected_end}</b>.
+        </div>
+      </div>
+
+      {/* The sample, so a reader can check the basis instead of trusting it.
+          Six observations is thin, and showing them is what lets a judge see
+          that it is thin rather than take the percentiles on faith. */}
+      <div className="mt-4 border-t border-rule pt-3">
+        <div className="mb-2 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+          What the range is built from
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          {bundle.sample.map((observation) => (
+            <span key={observation.entity_id} className="text-[11.5px] text-ink-3">
+              {observation.label}{" "}
+              <b className="font-semibold text-ink-2 tabular-nums">
+                {observation.days > 0 ? `+${observation.days}d` : `${observation.days}d`}
+              </b>
+            </span>
+          ))}
+        </div>
+        <p className="mt-2.5 text-[11.5px] leading-[1.55] text-ink-3 italic">
+          {bundle.method} {bundle.assumption}
+        </p>
+      </div>
+    </Panel>
+  );
+}
+
 /* Recovery scenarios: the design's "what if" screen.
 
    Every figure is the forward pass re-run over modified rows, so a scenario is
@@ -581,6 +662,7 @@ export function InsightView({
   bundle,
   explain = null,
   scenarios = null,
+  forecast = null,
   view: initialView = "Overview",
 }: {
   bundle: InsightBundle;
@@ -591,6 +673,9 @@ export function InsightView({
   /* Optional for the same reason as `explain`: a failure to load the scenarios
      drops one panel, never the findings. */
   scenarios?: ScenarioBundle | null;
+  /* Optional for the same reason again. A forecast that fails to load must
+     never take the proven figures down with it. */
+  forecast?: ForecastBundle | null;
   /* Overridable so the smoke render can assert every view without driving a
      click, and so a caller can deep-link a reader to the findings. */
   view?: (typeof VIEWS)[number];
@@ -639,6 +724,7 @@ export function InsightView({
             {explain && <DrivingPath explain={explain} />}
             {cause && <AiAnalysis finding={cause} />}
             {scenarios && <Scenarios bundle={scenarios} />}
+            {forecast && <Forecast bundle={forecast} />}
           </Board>
 
           <Section title={`Summary — ${bundle.narration_source}`}>
@@ -715,6 +801,7 @@ export function Insight() {
   const [bundle, setBundle] = useState<InsightBundle | null>(null);
   const [explain, setExplain] = useState<ExplainBundle | null>(null);
   const [scenarios, setScenarios] = useState<ScenarioBundle | null>(null);
+  const [forecast, setForecast] = useState<ForecastBundle | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
 
   useEffect(() => {
@@ -723,6 +810,7 @@ export function Insight() {
     // thing on the page, and still not worth the findings for.
     load<ExplainBundle>("/api/explain").then(setExplain, () => setExplain(null));
     load<ScenarioBundle>("/api/scenarios").then(setScenarios, () => setScenarios(null));
+    load<ForecastBundle>("/api/forecast").then(setForecast, () => setForecast(null));
   }, []);
 
   if (problem) {
@@ -735,5 +823,12 @@ export function Insight() {
   if (!bundle) {
     return <Page current="/insight" title="Insight" subtitle="Loading..." children={null} />;
   }
-  return <InsightView bundle={bundle} explain={explain} scenarios={scenarios} />;
+  return (
+    <InsightView
+      bundle={bundle}
+      explain={explain}
+      scenarios={scenarios}
+      forecast={forecast}
+    />
+  );
 }

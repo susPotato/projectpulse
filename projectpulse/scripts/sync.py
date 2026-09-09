@@ -269,6 +269,56 @@ def cmd_template(args) -> None:
         print(f"{path}  sheet={sheet_name}  columns={len(contract.template_headers)}")
 
 
+def cmd_forecast(args) -> None:
+    """Print the delivery forecast, or the reason there is not one.
+
+    A refusal is the normal path when the sheets are thin, and it prints the
+    reason rather than an empty table - see
+    `app/intelligence/schedule/forecast.py`.
+    """
+    from app.intelligence.pipeline import forecast_project
+
+    with session_scope() as session:
+        bundle = forecast_project(
+            session, project_id=args.project, also=args.also or []
+        )
+
+    print(f"committed  {bundle.committed_end}")
+    print(f"chain says {bundle.projected_end}   (nothing else moves)")
+    print()
+
+    if not bundle.available:
+        print("no range:")
+        for line in _wrap(bundle.reason):
+            print(f"  {line}")
+        return
+
+    for point in bundle.points:
+        late = f"+{point.days_late}d vs the commitment" if point.days_late > 0 else "on time"
+        print(f"  P{point.percentile:<3} {point.finish}   {late}")
+
+    print()
+    print(
+        f"  {bundle.trials} trials over {bundle.observations} observed drift(s), "
+        f"onto {bundle.open_tasks} open task(s)"
+    )
+    for observation in bundle.sample:
+        print(
+            f"    {observation.label[:34]:<36} "
+            f"{observation.committed} -> {observation.planned}  "
+            f"{observation.days:+d}d"
+        )
+    print()
+    for line in _wrap(bundle.assumption):
+        print(f"  {line}")
+
+
+def _wrap(text: str, width: int = 74) -> list[str]:
+    import textwrap
+
+    return textwrap.wrap(text, width)
+
+
 def cmd_report(args) -> None:
     """Write the status report, in whichever format was asked for.
 
@@ -280,6 +330,7 @@ def cmd_report(args) -> None:
     from app.intelligence.pipeline import (
         analyze_project,
         explain_project,
+        forecast_project,
         scenarios_project,
     )
 
@@ -302,6 +353,13 @@ def cmd_report(args) -> None:
             if "scenarios" in chosen
             else None
         )
+        forecast = (
+            forecast_project(
+                session, project_id=args.project, also=args.also or []
+            )
+            if "forecast" in chosen
+            else None
+        )
         risks = None
         if "risks" in chosen:
             from app.risks.service import list_risks
@@ -319,6 +377,7 @@ def cmd_report(args) -> None:
         bundle,
         explain=explain,
         scenarios=scenarios,
+        forecast=forecast,
         risks=risks,
         sections=chosen,
         project_name=args.name,
@@ -630,6 +689,11 @@ def main() -> None:
         "--kind", choices=("schedule", "worklog"), help="just one of them"
     )
     template.set_defaults(func=cmd_template)
+
+    fc = sub.add_parser("forecast", help="a range of finish dates, from observed drift")
+    fc.add_argument("--project", default="excel:Project:1:HRMS")
+    fc.add_argument("--also", action="append")
+    fc.set_defaults(func=cmd_forecast)
 
     report = sub.add_parser("report", help="write the status report")
     report.add_argument("--project", default="excel:Project:1:HRMS")

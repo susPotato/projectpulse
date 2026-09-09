@@ -34,6 +34,7 @@ from app.api.schemas.portfolio import PortfolioBundle
 from app.api.schemas.program import ProgramBundle
 from app.api.schemas.team import TeamBundle
 from app.api.schemas.scenario import ScenarioBundle
+from app.api.schemas.forecast import ForecastBundle
 from app.api.schemas.agent import ChatRequest, ChatResponse
 from app.api.schemas.insight import InsightBundle
 from app.api.schemas.risk import RiskBundle, RiskIn, RiskOut
@@ -54,6 +55,7 @@ from app.intelligence.pipeline import (
     analyze_project,
     explain_project,
     gantt_project,
+    forecast_project,
     portfolio,
     program_config,
     scenarios_project,
@@ -525,6 +527,11 @@ def _report_doc(
             if "scenarios" in chosen
             else None
         )
+        forecast = (
+            forecast_project(session, project_id=project, also=list(also))
+            if "forecast" in chosen
+            else None
+        )
         risks = None
         if "risks" in chosen:
             from app.risks.service import list_risks
@@ -544,11 +551,39 @@ def _report_doc(
         bundle,
         explain=explain,
         scenarios=scenarios,
+        forecast=forecast,
         risks=risks,
         sections=chosen,
         project_name=found.name if found else "",
     )
 
+
+
+@app.get("/api/forecast", response_model=ForecastBundle)
+def forecast(
+    project: str = "excel:Project:1:HRMS",
+    also: list[str] | None = Query(default=None),
+) -> ForecastBundle:
+    """A range of finish dates, resampled from this project's observed drift.
+
+    Answers the question the forward pass deliberately does not: that one says
+    where the chain lands if nothing else moves, and nothing else moving is the
+    single assumption a delivery plan has never satisfied.
+
+    **A refusal is a 200, not an error.** When the data cannot support a range
+    the bundle comes back with `available: false` and a reason - too few
+    baselined tasks, no variation between them, or nothing left to move. A 4xx
+    would make the page render an error where the honest answer belongs.
+    """
+    if also is None:
+        also = scope.also_for(project)
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        return forecast_project(session, project_id=project, also=list(also))
 
 @app.get("/reports")
 def reports_page() -> FileResponse:

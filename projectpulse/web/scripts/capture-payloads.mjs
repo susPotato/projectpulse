@@ -38,6 +38,7 @@ const BUNDLES = [
   ["gantt", "gantt_project"],
   ["team", "team_project"],
   ["scenarios", "scenarios_project"],
+  ["forecast", "forecast_project"],
   ["portfolio", "portfolio"],
 ];
 

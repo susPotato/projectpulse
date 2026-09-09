@@ -1,0 +1,73 @@
+{
+  "project_id": "excel:Project:1:HRMS",
+  "available": true,
+  "reason": "",
+  "committed_end": "2026-05-29",
+  "projected_end": "2026-07-02",
+  "points": [
+    {
+      "percentile": 50,
+      "finish": "2026-07-26",
+      "days_late": 58
+    },
+    {
+      "percentile": 80,
+      "finish": "2026-08-07",
+      "days_late": 70
+    },
+    {
+      "percentile": 95,
+      "finish": "2026-08-19",
+      "days_late": 82
+    }
+  ],
+  "observations": 6,
+  "sample": [
+    {
+      "entity_id": "excel:Task:1:WBS-101",
+      "label": "Requirements sign-off",
+      "committed": "2026-01-30",
+      "planned": "2026-01-30",
+      "days": 0
+    },
+    {
+      "entity_id": "excel:Task:1:WBS-108",
+      "label": "Environment Setup",
+      "committed": "2026-03-04",
+      "planned": "2026-03-16",
+      "days": 12
+    },
+    {
+      "entity_id": "excel:Task:1:WBS-114",
+      "label": "Integration build",
+      "committed": "2026-03-20",
+      "planned": "2026-04-01",
+      "days": 12
+    },
+    {
+      "entity_id": "excel:Task:1:WBS-118",
+      "label": "UAT preparation",
+      "committed": "2026-05-14",
+      "planned": "2026-05-26",
+      "days": 12
+    },
+    {
+      "entity_id": "excel:Task:1:WBS-121",
+      "label": "Cutover rehearsal",
+      "committed": "2026-05-29",
+      "planned": "2026-05-29",
+      "days": 0
+    },
+    {
+      "entity_id": "excel:Task:1:~anon-ef0576ffa2b2a0f2",
+      "label": "Data migration dry-run",
+      "committed": "2026-03-27",
+      "planned": "2026-03-27",
+      "days": 0
+    }
+  ],
+  "open_tasks": 8,
+  "trials": 2000,
+  "method": "Each task's drift from its own baseline is resampled with replacement onto the tasks still open, and the same forward pass is re-run per trial. The empirical distribution is used directly - none is fitted or assumed.",
+  "assumption": "This assumes the project keeps drifting the way it has been drifting: a task that has already slipped is given another draw rather than excused from one. That is the conservative direction, and it is an assumption about the method, not a number from the sheet."
+}

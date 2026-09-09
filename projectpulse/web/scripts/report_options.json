@@ -21,6 +21,7 @@
         "summary",
         "findings",
         "projection",
+        "forecast",
         "scenarios",
         "risks",
         "data_quality"
@@ -33,6 +34,7 @@
       "sections": [
         "summary",
         "projection",
+        "forecast",
         "data_quality"
       ]
     }
@@ -71,6 +73,13 @@
       "title": "Recovery scenarios",
       "description": "What shortening a task or overlapping a dependency would recover, measured against the original commitment.",
       "requires": "scenarios",
+      "available": true
+    },
+    {
+      "id": "forecast",
+      "title": "Delivery forecast",
+      "description": "A range of finish dates, resampled from how far this plan has already drifted from its own baselines.",
+      "requires": "forecast",
       "available": true
     },
     {

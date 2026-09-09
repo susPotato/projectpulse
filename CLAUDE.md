@@ -174,7 +174,7 @@ in, an `InsightBundle` out.
 203 of 702 pairs orderable
 4 dependency edges: 3 stated, 1 inferred
 9 findings, 3 causal chains (edge / path / project)
-596 tests, ~20s, no Docker + a typechecked front end
+608 tests, ~45s, no Docker + a typechecked front end
 ```
 
 - **Excel path** — header contract, sha256 skip, row-identity resolution, snapshot
@@ -443,6 +443,38 @@ in, an `InsightBundle` out.
   declaring their own `:root`; one file stops that recurring and makes the round-2 token
   reconciliation a single edit. `insight.html` keeps the FPT palette and aliases the
   shell's names onto it.
+- **`intelligence/schedule/forecast.py` — a range of finish dates, and three ways it
+  refuses.** The forward pass answers "where does the chain land if nothing else moves",
+  and nothing else moving is the one assumption a delivery plan has never satisfied.
+  This resamples **measured** drift: for every task carrying both a `baseline_end` and a
+  `planned_end`, the difference is one observation of how far this plan moves, and those
+  observations are drawn with replacement onto the still-open tasks with the forward pass
+  re-run per trial. P50 / P80 / P95.
+  - ⚠️ **No distribution is fitted or assumed.** A Monte Carlo over lognormal/PERT task
+    durations is the textbook answer and is **forbidden here** — it lets the modeller
+    choose the shape of the output, which is exactly the invented number §4.1 forbids and
+    exactly what the deck's "89% confidence" was. The empirical sample is used directly.
+  - ⚠️ **It refuses, and that is the feature.** Fewer than `MIN_OBSERVATIONS` baselined
+    tasks; **zero variance** in the sample (every trial then returns the same date, and
+    one date presented as a distribution is a lie that looks like a measurement); or
+    nothing left to move. Each returns `available=False` and a reason that surfaces
+    verbatim on the page, in the CLI and in the report. Same discipline as
+    `provably_before` dropping an ordering it cannot prove.
+  - ⚠️ **`available=False` is a 200, not a 4xx.** The refusal is the answer; an error
+    status makes the page render a failure where the honest result belongs.
+  - ⚠️ **The one assumption is stated, not buried:** drift observed *so far* is resampled
+    as drift *still to come*, so a task that already slipped gets another draw. That is
+    "this project keeps drifting the way it has been drifting" — the conservative
+    direction, and served on the bundle as `assumption` so the page, the CLI and the
+    `.docx` cannot each describe it differently or quietly drop it.
+  - **Deterministic**, seeded by hashing the sample — a range that moves on refresh with
+    no new data destroys the screen, and the three surfaces must agree to the day.
+  - **Never omit `observations` beside `points`.** A percentile without its sample size
+    is the thing this product exists to argue against; the panel prints the sample rows
+    too, for the same reason a finding prints its evidence.
+  - Served at `GET /api/forecast`, on the Insight Overview board, as the `forecast`
+    report section, and `sync forecast`. On the demo data: commitment 2026-05-29, chain
+    alone 2026-07-02, **P50 2026-07-26 / P95 2026-08-19** off six observations.
 - **Exports — the two files the product hands back.** `app/exports/`.
   - `template.py` — the blank `.xlsx` a PM fills in, generated from
     `SheetContract.template_headers` rather than written by hand. `gen_demo_data`
@@ -801,7 +833,7 @@ cd projectpulse
 # Console: edit data/demo files, watch the effect. http://127.0.0.1:8000
 python -m scripts.demo
 
-python -m pytest                      # 596 tests, ~20s, no DB needed
+python -m pytest                      # 608 tests, ~45s, no DB needed
 docker compose up -d                  # postgres+pgvector on :5433 (Docker Desktop must be running)
 python -m scripts.sync init
 
@@ -836,6 +868,9 @@ python -m scripts.sync insight --narrative --model --provider gemini --llm-model
 
 # Show the arithmetic behind every number, so it can be checked by hand.
 python -m scripts.sync explain
+
+# The range, and the sample it rests on - or the reason there is not one.
+python -m scripts.sync forecast --also jira:Project:1:HRMS
 python -m scripts.sync explain --task WBS-114 --scalars
 
 # Freeze a public snapshot of the two screens into site/ (does not deploy).
