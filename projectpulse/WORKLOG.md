@@ -8,37 +8,39 @@ and must not be hand-edited.
 
 ## Now
 
-**Idle.** Ten screens, plus a **fourth narration provider: the FPT AI gateway**,
-which is the first adapter here to complete a real live call - `source=model` in
-61s, every figure substituted by the server. It needs no SDK, so it is the one
-provider that always works on a judge's machine. `/reports` builds the status
-report in three formats, and the Insight board carries a delivery forecast that
-refuses with a reason when the data cannot support a range.
+**Idle.** Ten screens over HTTP behind the design's app shell, four narration
+providers, and a test suite of 634 in ~70s.
 
-Also fixed this session: `.gitignore`'s bare `models/` had been silently dropping
-new `app/models/*.py` files from every commit, and the pushed branch could not
-`import app.db` at all. See entry 31 - check `git status --porcelain --ignored`
-after adding a table.
+Landed this session, newest first:
 
-Next per CLAUDE.md section 8: **reconcile the pitch deck with the product** - the
-one big item left, and it is not in the code.
+- **`tests/test_scenario.py`** - the journey a PM actually takes (Program, Insight,
+  Calculation, Schedule, Recovery, Forecast, a report they send) asserting that the
+  **surfaces agree with each other**. Mutation-checked.
+- **The FPT AI gateway** as a fourth provider, and **the first live model calls made
+  from this machine**: `source=model` end to end. All 17 models on the permission
+  screen were probed - 9 chat, 8 of those pass the eight-stage gate. The default is
+  `gemma-4-31B-it` on measurement (2.3-3.1s against DeepSeek-V4-Flash's 73.6s).
+- **A delivery forecast** that resamples this project's own drift and **refuses with a
+  reason** when the data cannot support a range.
+- **`/reports`** - the report builder, one `ReportDoc` behind `.docx` / `.xlsx` / `.md`
+  and a live preview.
+- **A `.gitignore` repair.** A bare `models/` had been silently dropping new
+  `app/models/*.py` files from every commit, and the pushed branch could not
+  `import app.db` at all. Check `git status --porcelain --ignored` after adding a table.
 
-Three things not verifiable here: **no vendor has completed a live model call** (no
-credentials), **the image has never been built** (no Docker daemon, and the host server
-is where it will be tested), and **the duration classifier cannot load on this machine**
-- it needs Python 3.12/3.13 and 3.14 is the only Python installed. See entry 21.
-The container *logic* is verified - `python -m scripts.serve --check` seeds an empty
-database and leaves a populated one alone. The classifier's feature frame is transcribed from the model's own
-serving code and round-tripped through a real sklearn pipeline built over those exact
-columns, which proves our contract and not theirs.
+Next per CLAUDE.md section 8: **reconcile the pitch deck with the product** - the one
+big item left, and it is not in the code.
 
-Outstanding on the model path: **no vendor has completed a live call.** No credentials on
-this machine. Verified for all three: every kwarg is accepted by the installed SDK and the
-call reaches the network layer (dead local port, so nothing was sent anywhere). Unverified:
-response parsing, which a 401 never reaches. The *failure* path is verified end to end for
-all three - the template is served and the reason prints. Run
-`python -m scripts.sync insight --narrative --model --provider <name>` with a key to close
-it, and confirm the model id first for OpenAI and Gemini (those defaults are placeholders).
+**Still not verifiable here:** the image has never been built (no Docker daemon), and
+the duration classifier cannot load on Python 3.14 - it needs 3.12/3.13. See entry 21.
+The container *logic* is verified: `python -m scripts.serve --check` seeds an empty
+database and leaves a populated one alone.
+
+**On the model path**, what remains unproven is now narrow. Anthropic's and OpenAI's
+*response parsing* has still never run against their own endpoints - no credentials
+here for either. Everything else is closed: FPT is verified live end to end, Gemini ran
+in production (see CLAUDE.md section 0), and the failure path is verified for all four
+- the template is served and the reason prints.
 
 ---
 
@@ -46,6 +48,46 @@ it, and confirm the model id first for OpenAI and Gemini (those defaults are pla
 
 Newest first. Each entry names the functions that changed, so a reader can jump
 straight to them.
+
+### 34 - Which of the gateway's models we can actually use, and a journey test
+Asked to check every model, and to test a normal scenario through the app.
+
+- **`scripts/probe_fpt.py`** asks the gateway two questions per model: can it hold a
+  chat, and does its prose survive the eight-stage gate. Deliberately a script and not
+  a pytest test - it makes real network calls with a real credential, and the suite has
+  to run offline on a judge's machine.
+- **All 17 models on the permission screen probed. 9 chat; 8 of those 9 pass the
+  gate.** The other 8 are not chat models at all - two TTS, three Whisper, a reranker,
+  two embedding models - and answer 404/502. Worth knowing, so nobody points
+  `PULSE_NARRATION_MODEL` at an embedding model and reads the fallback as a bug.
+  `Qwen2.5-VL-7B-Instruct` is the one chat model refused, on `required_tokens` - it left
+  out a figure the finding needed, which is the fence working.
+- **The default moved to `gemma-4-31B-it`, on measurement.** 2.3-3.1s over four runs,
+  against DeepSeek-V4-Flash's **73.6s** for an equally accepted narrative. The gateway's
+  reasoning models spend the budget thinking before writing a word, and this job is
+  phrasing findings the engine already computed under a rule the validator enforces -
+  the instruction-following work `DEFAULT_MODELS`' own comment says to buy.
+- **A tight `max_tokens` makes a reasoning model look broken.** At 120 tokens all three
+  reasoning models returned "truncated at max_tokens" in under two seconds, which reads
+  exactly like a model that cannot chat. The probe uses 3000.
+- **The IP question, answered with evidence.** `token-api.fpt.ai` is Cloudflare anycast
+  and an unauthenticated request returns **401, not 403** - it reached the origin's auth
+  layer, so the gateway is gated by API key rather than by source address and a deployed
+  host should reach it. The residual risk is bot rules on a datacenter ASN, which
+  `DEPLOY.md` now says how to test in one command.
+- **`tests/test_scenario.py`** - Program, Insight, Calculation, Schedule, Recovery,
+  Forecast, report, over one replayed timeline. The assertions are **cross-surface**:
+  not "is this figure right" but "is it the same figure everywhere it appears". That is
+  the claim no unit test can see and that one careless commit can falsify.
+  - **Mutation-checked**: subtracting 1 from `portfolio()`'s finding count fails it.
+  - The fixture is **module-scoped**, and not only for the ~35s: tests that assert
+    agreement have to be looking at one timeline, or a real disagreement can hide
+    behind two loads that happened to match.
+- **My own ASCII rule caught me** - a warning emoji in `probe_fpt.py` failed
+  `test_no_cli_source_contains_a_character_the_console_cannot_print`.
+- One false alarm worth recording: a full-suite run reported **26 minutes**. It was
+  contention with the probe jobs hammering the gateway, not a regression. It is 70s.
+- 17 more tests, 634 total.
 
 ### 33 - The FPT AI gateway, and the first live calls it made
 Given a key and the gateway's two-page API doc. It is now a fourth provider, and the

@@ -2,7 +2,7 @@
 
 Read this first. It is the handoff between sessions.
 
-**Last updated:** 2026-09-08 (live deploy, delivery confidence, risk register, OneDrive connector, Agent chat tab)
+**Last updated:** 2026-09-09 (report builder, delivery forecast, the FPT AI gateway + all 17 models probed, the journey test, a `.gitignore` repair that unbroke `main`)
 
 ---
 
@@ -132,7 +132,7 @@ Built for **PiMSathon**, an internal FPT competition.
 | **Round 2** | ≈2 weeks after round 1. |
 | **Final** | October 2026, offline. Judged on **PM/management capability and presentation**, not only the system. |
 | **Team** | **Solo.** Never plan work that assumes more than one developer. |
-| **Days left** | ~4 to round 1. |
+| **Days left** | **~2 to round 1** (code due Fri 2026-09-11; today is 2026-09-09). |
 
 Because judges *run* the code, a one-command runnable stack and readable structure are
 worth more than an extra feature.
