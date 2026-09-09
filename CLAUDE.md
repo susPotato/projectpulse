@@ -174,7 +174,7 @@ in, an `InsightBundle` out.
 203 of 702 pairs orderable
 4 dependency edges: 3 stated, 1 inferred
 9 findings, 3 causal chains (edge / path / project)
-617 tests, ~2min, no Docker + a typechecked front end
+634 tests, ~70s, no Docker + a typechecked front end
 ```
 
 - **Excel path** — header contract, sha256 skip, row-identity resolution, snapshot
@@ -327,9 +327,9 @@ in, an `InsightBundle` out.
 
 - ✅ **`fpt` — the FPT AI gateway, and it has completed real live calls.** A fourth
   provider, `PULSE_NARRATION_PROVIDER=fpt`, against `https://token-api.fpt.ai/v1`. It
-  serves a dozen models (DeepSeek-V4-Flash — the default — plus GLM-5.2,
-  Llama-3.3-70B-Instruct, gpt-oss-120b, Qwen3.6-27B and the gemma family); any of them
-  is `--llm-model <name>` with no code change. **Nothing leaves FPT's network**, which
+  serves a dozen models (**`gemma-4-31B-it` is the default, chosen by measurement** —
+  plus GLM-5.2, Llama-3.3-70B-Instruct, gpt-oss-120b, DeepSeek-V4-Flash, Qwen3.6-27B and
+  the rest of the gemma family); any of them is `--llm-model <name>` with no code change. **Nothing leaves FPT's network**, which
   is the answer to "can we send delivery data to a model at all".
 
   Verified end to end on 2026-09-09: `narrate()` returned `source=model, attempts=1` in
@@ -353,6 +353,40 @@ in, an `InsightBundle` out.
   the timeout is **per read, not a total deadline** — one observed call ran 496s before
   the connection reset. The fence served the template with a reason, which is what
   matters.
+
+  ✅ **All 17 models on the permission screen were probed on 2026-09-09**
+  (`python -m scripts.probe_fpt --full`). **9 hold a chat; 8 of those 9 produce a
+  narrative the eight-stage validator accepts.** The other 8 entries are not chat
+  models at all — two TTS, three Whisper, a reranker and two embedding models — and
+  answer 404/502, which is worth knowing so nobody sets `PULSE_NARRATION_MODEL` to an
+  embedding model and reads the fallback as a broken feature.
+
+  | model | gate | secs |
+  |---|---|---|
+  | `gemma-4-31B-it` | accepted | **3.0** (now the default; 2.3-3.1 over four runs) |
+  | `gpt-oss-120b` | accepted | 5.4 |
+  | `gemma-3-27b-it` | accepted | 7.0 |
+  | `Llama-3.3-70B-Instruct` | accepted | 10.4 |
+  | `GLM-5.2` | accepted | 11.5 |
+  | `gemma-4-26B-A4B-it` | accepted | 12.9 |
+  | `Qwen3.6-27B` | accepted | 28.7 |
+  | `DeepSeek-V4-Flash` | accepted | **73.6** (was the default) |
+  | `Qwen2.5-VL-7B-Instruct` | **refused** — `required_tokens`, the draft omitted a figure the finding needs | 4.2 |
+
+  ⚠️ **The reasoning models are 10-24x slower for no better outcome.**
+  DeepSeek-V4-Flash, GLM-5.2 and Qwen3.6-27B spend the budget on thinking tokens before
+  writing a word — and this job is phrasing findings the engine already computed, under
+  a rule the validator enforces. It rewards instruction-following, not reasoning depth,
+  which is what `DEFAULT_MODELS`' own comment already said. Same accepted narrative,
+  24x the wait.
+
+  ⚠️ **A tight `max_tokens` makes a reasoning model look broken.** At 120 tokens all
+  three returned "truncated at max_tokens" in under two seconds, which reads exactly
+  like a model that cannot chat. `probe_fpt` uses 3000 for that reason.
+
+  **Qwen2.5-VL's refusal is the fence working**, not a bad model: it wrote prose that
+  left out a `{{token}}` the finding required, and the validator would rather serve the
+  template than a sentence missing a figure.
 
   ✅ **It needs no SDK.** `urllib` from the standard library, so it is absent from
   `EXTRAS` and is the one provider that cannot fail with "package not installed" — i.e.
@@ -513,6 +547,20 @@ in, an `InsightBundle` out.
   - Served at `GET /api/forecast`, on the Insight Overview board, as the `forecast`
     report section, and `sync forecast`. On the demo data: commitment 2026-05-29, chain
     alone 2026-07-02, **P50 2026-07-26 / P95 2026-08-19** off six observations.
+- **`tests/test_scenario.py` — the journey, and the claim it keeps.** Program → Insight
+  → Calculation → Schedule → Recovery → Forecast → a report a PM sends, over one
+  replayed timeline. Every other test file checks a component; this one asserts the
+  **surfaces agree with each other**, which is the product's central architectural claim
+  and the one no unit test can see: the program view folds the project view rather than
+  aggregating a shortcut, the Gantt and the Calculation tab draw one projection, the
+  scenarios and the forecast are measured against the same baseline, and the report says
+  what the screen said. Each of those is a sentence in a docstring somewhere and one
+  careless commit from being false — at which point two numbers a judge can see on two
+  screens disagree, and every other number stops being believable.
+  ⚠️ **The fixture is module-scoped on purpose.** Not only for the ~35s it saves: these
+  tests assert agreement, so they must look at *one* timeline. A per-test replay would
+  let a real disagreement hide behind two loads that happened to match.
+  ✅ Mutation-checked — subtracting 1 from `portfolio()`'s finding count fails it.
 - **Exports — the two files the product hands back.** `app/exports/`.
   - `template.py` — the blank `.xlsx` a PM fills in, generated from
     `SheetContract.template_headers` rather than written by hand. `gen_demo_data`
@@ -874,7 +922,7 @@ cd projectpulse
 # Console: edit data/demo files, watch the effect. http://127.0.0.1:8000
 python -m scripts.demo
 
-python -m pytest                      # 617 tests, ~2min, no DB needed
+python -m pytest                      # 634 tests, ~70s, no DB needed
 docker compose up -d                  # postgres+pgvector on :5433 (Docker Desktop must be running)
 python -m scripts.sync init
 
@@ -934,6 +982,11 @@ python -m scripts.sync report --template steering --out status.xlsx
 python -m scripts.sync report --section summary --section projection --out short.md
 
 # The advisory duration band per task. Prints how to get the model if absent.
+# Which FPT models can this product actually use. Live network calls, so it is
+# a script and not a pytest test - the suite has to run offline.
+python -m scripts.probe_fpt            # can each model hold a chat?
+python -m scripts.probe_fpt --full     # ...and does it survive the gate? (slow)
+
 python -m scripts.fetch_model          # downloads the artefact (needs ml-fetch)
 python -m scripts.sync advise
 

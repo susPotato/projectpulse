@@ -19,7 +19,35 @@ fix something on the first `fly deploy`.
 | Insight, Schedule, Calculation, the Gantt, evidence, rule traces, chains | **Live.** All of it, on real generated history. |
 | The `.docx` report and the `.xlsx` templates | **Live.** |
 | Narration by a language model | Live once a key is set. Off by default. |
+| Narration via the **FPT gateway** (`PULSE_NARRATION_PROVIDER=fpt`) | **Should be live** - see the note below before relying on it. |
 | The **Sync** button and `sync run` | **Not live.** See below. |
+
+### Will the FPT gateway answer from a deployed host?
+
+Almost certainly yes, and here is the evidence rather than an assumption.
+`token-api.fpt.ai` resolves to **Cloudflare anycast addresses**
+(`104.26.12.64`, `104.26.13.64`, `172.67.74.9`), and an unauthenticated request
+from here comes back **`401 Unauthorized`, not `403`**. A 401 means the request
+reached the origin's auth layer and was turned away for having no credential -
+if the gateway were allowlisted to the FPT corporate network, the edge would
+have refused it before that. So it is a public endpoint gated by API key, not
+by source address, and `FPT_API_KEY` is all a Fly machine should need.
+
+⚠️ **The residual risk is Cloudflare's bot rules, not an IP allowlist.** We
+already know this edge rejects `Python-urllib/3.x` with `403 "error code:
+1010"`, which is why the adapter sends a real `User-Agent`. Those rules can be
+stricter for a datacenter ASN than for a corporate one, so a Fly machine could
+still be challenged where this laptop was not. **Test it in one command after
+the first deploy** - it is cheap, and the failure is a fallback rather than an
+outage:
+
+```bash
+fly ssh console -C "python -m scripts.probe_fpt --model DeepSeek-V4-Flash"
+```
+
+If it is challenged, narration falls back to the deterministic template with a
+reason - the demo does not break - and the fix is an allowlist request for the
+egress IP rather than a code change.
 
 The Sync path reads `settings.data_root`, which on a laptop is a OneDrive-synced
 folder. A server has none, and Microsoft Graph needs FPT tenant admin consent -

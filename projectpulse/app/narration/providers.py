@@ -65,12 +65,19 @@ DEFAULT_MODELS = {
     "anthropic": "claude-opus-5",
     "openai": "gpt-5.6-terra",
     "gemini": "gemini-3.8-flash",
-    # The model the gateway's own documentation uses in its example, and a
-    # flash tier - which is the right class for this job, per the note above.
-    # The gateway serves a dozen others (GLM-5.2, Llama-3.3-70B-Instruct,
-    # gpt-oss-120b, the gemma and Qwen families); any of them is
-    # `--llm-model <name>` with no code change.
-    "fpt": "DeepSeek-V4-Flash",
+    # Chosen by measurement, not by reputation - `python -m scripts.probe_fpt
+    # --full` on 2026-09-09. Nine of the gateway's models hold a chat and eight
+    # of those produce a narrative the validator accepts; this one does it in
+    # **2.3-3.1s across four runs**, the fastest and by far the most consistent.
+    #
+    # It replaced DeepSeek-V4-Flash, which the gateway's own example uses and
+    # which took **73.6s** for an equally-accepted narrative. The reasoning
+    # models there (DeepSeek-V4-Flash, GLM-5.2, Qwen3.6-27B) spend the budget
+    # thinking before writing a word, and this job is phrasing findings the
+    # engine already computed under a rule the validator enforces - exactly the
+    # instruction-following work the note above says to buy. 24x the wait for
+    # the same accepted output is not a trade.
+    "fpt": "gemma-4-31B-it",
 }
 
 #: What to install for each, quoted in the message a failed import produces.

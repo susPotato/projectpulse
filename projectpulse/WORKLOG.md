@@ -1523,6 +1523,13 @@ _Regenerate the function index in WORKLOG.md._
 - `render()` - 
 - `main()` - 
 
+### `scripts/probe_fpt.py`
+_Ask the FPT gateway which of its models this product can actually use._
+
+- `probe_chat(model, timeout)` - One tiny call. Returns (answered, seconds, what came back or why not).
+- `probe_narration(bundle, model, timeout)` - The real path. Returns (source, seconds, fallback reason or '').
+- `main()` - 
+
 ### `scripts/publish.py`
 _Bake a static snapshot of the app into `site/`._
 
