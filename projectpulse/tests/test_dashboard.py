@@ -506,23 +506,25 @@ def test_each_tool_returns_the_expected_shape_against_an_empty_project(session):
     }
 
 
-def test_agentic_turn_returns_none_none_without_a_usable_client():
+def test_agentic_turn_reports_a_real_provider_failure_instead_of_going_silent():
     """No SDK / no key / any client-construction failure degrades to
     (None, None) - chat_turn's contract is that this never raises, only
-    falls back."""
+    falls back. But an empty api_key with no ambient credential still
+    constructs a client (the SDK defers auth to request time), so the
+    failure actually surfaces from the API call itself - and that one is
+    worth telling the person about rather than silently discarding, so it
+    comes back as (None, note) instead."""
     from app.dashboard.agent import agentic_turn
     from app.narration.providers import ModelConfig
 
-    result = agentic_turn(
+    draft, note = agentic_turn(
         _msgs("track each employee's effort and compare them"),
         session=None,
         project_id=PROJECT,
         cfg=ModelConfig(model="claude-opus-5", api_key=""),
     )
-    # An empty api_key with no ambient credential should fail client
-    # construction or the API call itself - either way, (None, None), not a
-    # crash.
-    assert result == (None, None)
+    assert draft is None
+    assert note is not None
 
 
 class _FakeAgentResponse:

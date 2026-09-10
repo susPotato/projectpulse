@@ -45,12 +45,15 @@ generality CLAUDE.md's own style notes argue against.
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from app.api.schemas.agent import ChatMessage
 from app.api.schemas.dashboard import CustomChartDraft
 from app.dashboard.custom import _draft_json, _parse_model_json, _validate_draft
 from app.narration.providers import ModelConfig, _base, _import, _key
+
+log = logging.getLogger(__name__)
 
 MAX_TOOL_ROUNDS = 4
 
@@ -226,14 +229,18 @@ def agentic_turn(
     - `(None, note)` - the model looked (tools included) and answered in
       plain text instead of JSON: a real answer, just not a chart. The
       caller shows `note` as the reply rather than treating it as a failure.
-    - `(None, None)` - nothing usable came back (no key, no SDK, a dead
-      round budget, an answer that was neither valid JSON nor real prose).
-      The caller falls back further.
+    - `(None, note)` - the model itself was unreachable (a real API error -
+      bad key, no credit, rate limited, network) rather than declining to
+      answer. Worth telling the person outright rather than quietly serving
+      the generic "unchanged" fallback as if nothing had gone wrong.
+    - `(None, None)` - no client at all (no key configured, SDK not
+      installed) or a dead round budget: the caller falls back further.
     """
     try:
         anthropic = _import("anthropic", "anthropic")
         client = anthropic.Anthropic(timeout=cfg.timeout_seconds, **_key(cfg), **_base(cfg))
-    except Exception:  # noqa: BLE001 - no SDK, no key, any of it: fall back quietly
+    except Exception as exc:  # noqa: BLE001 - no SDK, no key, any of it: fall back quietly
+        log.warning("tile agent client unavailable: %s", exc)
         return None, None
 
     system = REVISE_SYSTEM_PROMPT if current_draft is not None else DRAFT_SYSTEM_PROMPT
@@ -282,7 +289,8 @@ def agentic_turn(
             # Not valid JSON - real prose (the model explaining itself, per
             # the system prompt) is a usable answer on its own.
             return (None, text) if text else (None, None)
-    except Exception:  # noqa: BLE001 - any provider failure falls back, never 500s
-        return None, None
+    except Exception as exc:  # noqa: BLE001 - never 500s, but this is worth saying plainly
+        log.exception("tile agent call failed for project %s", project_id)
+        return None, f"The AI agent hit an error talking to the model ({exc}) - try again in a moment."
 
     return None, None  # exhausted MAX_TOOL_ROUNDS without a final answer
