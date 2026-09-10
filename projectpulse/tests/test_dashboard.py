@@ -3,6 +3,9 @@ generator's allow-list gate and fallback."""
 
 from __future__ import annotations
 
+import sys
+import types
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -503,21 +506,140 @@ def test_each_tool_returns_the_expected_shape_against_an_empty_project(session):
     }
 
 
-def test_agentic_draft_returns_none_without_a_usable_client():
-    """No SDK / no key / any client-construction failure degrades to None -
-    chat_turn's contract is that this never raises, only falls back."""
-    from app.dashboard.agent import agentic_draft
+def test_agentic_turn_returns_none_none_without_a_usable_client():
+    """No SDK / no key / any client-construction failure degrades to
+    (None, None) - chat_turn's contract is that this never raises, only
+    falls back."""
+    from app.dashboard.agent import agentic_turn
     from app.narration.providers import ModelConfig
 
-    result = agentic_draft(
+    result = agentic_turn(
         _msgs("track each employee's effort and compare them"),
         session=None,
         project_id=PROJECT,
         cfg=ModelConfig(model="claude-opus-5", api_key=""),
     )
     # An empty api_key with no ambient credential should fail client
-    # construction or the API call itself - either way, None, not a crash.
-    assert result is None
+    # construction or the API call itself - either way, (None, None), not a
+    # crash.
+    assert result == (None, None)
+
+
+class _FakeAgentResponse:
+    def __init__(self, *, text=None, tool_calls=None):
+        content = []
+        if tool_calls:
+            content.extend(tool_calls)
+        if text is not None:
+            content.append(types.SimpleNamespace(type="text", text=text))
+        self.content = content
+        self.stop_reason = "tool_use" if tool_calls else "end_turn"
+
+
+def _install_fake_agent_anthropic(monkeypatch, responses: list):
+    """One fake response per call to `.messages.create`, in order."""
+    calls = list(responses)
+
+    class _FakeMessages:
+        def create(self, **_kw):
+            return calls.pop(0)
+
+    class _FakeClient:
+        def __init__(self, **_kw):
+            self.messages = _FakeMessages()
+
+    fake_module = types.SimpleNamespace(Anthropic=lambda **kw: _FakeClient(**kw))
+    monkeypatch.setitem(sys.modules, "anthropic", fake_module)
+
+
+def test_agentic_turn_explains_when_the_request_cannot_become_a_chart(monkeypatch, session):
+    from app.dashboard.agent import agentic_turn
+    from app.narration.providers import ModelConfig
+
+    explanation = "A bar chart is one hue by design - there's no per-bar color field to set."
+    _install_fake_agent_anthropic(
+        monkeypatch, [_FakeAgentResponse(text=explanation)]
+    )
+
+    draft, note = agentic_turn(
+        _msgs("give each bar its own color"),
+        session,
+        PROJECT,
+        cfg=ModelConfig(model="claude-opus-5", api_key="x"),
+        current_draft=_draft(),
+    )
+
+    assert draft is None
+    assert note == explanation
+
+
+def test_agentic_turn_returns_a_draft_from_the_models_final_json(monkeypatch, session):
+    from app.dashboard.agent import agentic_turn
+    from app.narration.providers import ModelConfig
+
+    body = (
+        '{"title": "Hours Logged", "chart_type": "bar", '
+        '"labels": ["A", "B"], "values": [1, 2]}'
+    )
+    _install_fake_agent_anthropic(monkeypatch, [_FakeAgentResponse(text=body)])
+
+    draft, note = agentic_turn(
+        _msgs("chart hours logged"),
+        session, PROJECT,
+        cfg=ModelConfig(model="claude-opus-5", api_key="x"),
+    )
+
+    assert note is None
+    assert draft is not None
+    assert draft.title == "Hours Logged"
+
+
+def test_agentic_turn_executes_a_tool_call_before_answering(monkeypatch, session):
+    from app.dashboard.agent import agentic_turn
+    from app.narration.providers import ModelConfig
+
+    tool_call = types.SimpleNamespace(type="tool_use", id="t1", name="get_team_effort", input={})
+    final = (
+        '{"title": "Team Effort", "chart_type": "bar", '
+        '"labels": ["A", "B"], "values": [1, 2]}'
+    )
+    _install_fake_agent_anthropic(
+        monkeypatch,
+        [_FakeAgentResponse(tool_calls=[tool_call]), _FakeAgentResponse(text=final)],
+    )
+
+    draft, note = agentic_turn(
+        _msgs("compare team effort"),
+        session, PROJECT,
+        cfg=ModelConfig(model="claude-opus-5", api_key="x"),
+    )
+
+    assert note is None
+    assert draft is not None and draft.title == "Team Effort"
+
+
+def test_chat_turn_surfaces_the_agents_explanation_as_an_ok_reply_on_a_revision(monkeypatch, session):
+    """The gap this closes: a request the schema cannot express used to come
+    back as a scripted 'unchanged' - now the model's own reasoning, when it
+    has any, becomes the reply instead."""
+    from app.narration.providers import ModelConfig
+
+    explanation = "There's no per-bar color field on this chart type."
+    _install_fake_agent_anthropic(monkeypatch, [_FakeAgentResponse(text=explanation)])
+
+    result = chat_turn(
+        _msgs("give each bar its own color"),
+        _draft(),
+        None,
+        drafter=None,
+        session=session,
+        project_id=PROJECT,
+        agent_cfg=ModelConfig(model="claude-opus-5", api_key="x"),
+    )
+
+    assert result.ok is True
+    assert result.reply == explanation
+    assert result.draft == _draft()  # unchanged, not blanked
 
 
 def test_chat_turn_falls_back_to_the_plain_error_when_the_agent_finds_nothing(session):

@@ -43,15 +43,29 @@ const CATEGORICAL_ORDER = ["navy", "blue", "orange", "green", "red", "amber", "p
 const MAX_PIE_SLICES = CATEGORICAL_ORDER.length;
 
 /* label/value only - a custom tile's whole chart, one hue for a magnitude
-   series (bar/line), the fixed categorical order for a pie's slice identity. */
+   series (bar/line), the fixed categorical order for a pie's slice identity.
+
+   `compact`: the ~64x22px version chip in the tile builder's transcript
+   (`TileBuilder.tsx`) is too small for a label next to every bar to mean
+   anything - it stays the plain sparkline, no labels, same as `line`. Every
+   other place this renders (the stage, a saved tile's card, the tile as it
+   actually sits on a dashboard) uses the labelled version by default: a bar
+   chart with no visible label next to each bar is the actual bug behind
+   "everyone has the same color so I can't tell who is who" - color was never
+   going to fix that, since a magnitude comparison like this should carry
+   identity in its labels, not in a hue nothing else here uses that way
+   (dataviz skill: color follows the entity's role, not a bar's rank, and a
+   sequential/magnitude series is one hue by design). */
 export function MiniChart({
   chartType,
   labels,
   values,
+  compact = false,
 }: {
   chartType: ChartType;
   labels: string[];
   values: number[];
+  compact?: boolean;
 }) {
   if (chartType === "pie") {
     const overflow = values.length > MAX_PIE_SLICES;
@@ -135,29 +149,54 @@ export function MiniChart({
     );
   }
 
-  // bar
-  const barW = values.length > 0 ? (w / values.length) * 0.6 : 0;
-  const gap = values.length > 0 ? w / values.length : 0;
+  // bar, compact: the old unlabelled sparkline - only for the transcript's
+  // 64x22px version chips, where a label next to each bar could not be read
+  // anyway.
+  if (compact) {
+    const barW = values.length > 0 ? (w / values.length) * 0.6 : 0;
+    const gap = values.length > 0 ? w / values.length : 0;
+    return (
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full text-navy" preserveAspectRatio="none">
+        <line x1={0} y1={h} x2={w} y2={h} stroke="var(--rule)" strokeWidth={1} />
+        {values.map((v, i) => {
+          const barH = (Math.max(0, v) / maxY) * h;
+          return (
+            <rect
+              key={i}
+              x={i * gap + (gap - barW) / 2}
+              y={h - barH}
+              width={barW}
+              height={barH}
+              rx={2}
+              fill="currentColor"
+            >
+              <title>{`${labels[i]}: ${v}`}</title>
+            </rect>
+          );
+        })}
+      </svg>
+    );
+  }
+
+  // bar, full: horizontal, one row per label - the label sits right next to
+  // its own bar, so telling rows apart never depended on color.
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full text-navy" preserveAspectRatio="none">
-      <line x1={0} y1={h} x2={w} y2={h} stroke="var(--rule)" strokeWidth={1} />
-      {values.map((v, i) => {
-        const barH = (Math.max(0, v) / maxY) * h;
-        return (
-          <rect
-            key={i}
-            x={i * gap + (gap - barW) / 2}
-            y={h - barH}
-            width={barW}
-            height={barH}
-            rx={2}
-            fill="currentColor"
-          >
-            <title>{`${labels[i]}: ${v}`}</title>
-          </rect>
-        );
-      })}
-    </svg>
+    <div className="grid gap-1.5">
+      {values.map((v, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="w-[92px] shrink-0 truncate text-[11px] text-ink-2" title={labels[i]}>
+            {labels[i]}
+          </span>
+          <div className="h-[9px] flex-1 overflow-hidden rounded-sm bg-rule-2">
+            <div
+              className="h-full rounded-sm bg-navy"
+              style={{ width: `${Math.min(100, (Math.max(0, v) / maxY) * 100)}%` }}
+            />
+          </div>
+          <span className="w-[46px] shrink-0 text-right text-[11px] text-ink-3">{v}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 

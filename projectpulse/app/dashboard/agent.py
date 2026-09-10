@@ -1,28 +1,39 @@
 """The tile-building agent, with tools: real project data instead of a paste box.
 
-`custom.draft_chart` only ever parses data already on the wire - pasted text,
-or the CSV fallback. That is the right default (no session, no scope, works
-from the Custom Tile dialog on any dashboard, and demos with no API key at
-all - see `custom.py`'s module docstring). But a request like "track each
-employee's effort and compare them" names a report over data the app already
-has, and asking a person to paste hours they would have to go find in Jira
-first is the wrong answer when this product's whole job is knowing that
-number already.
+`custom.draft_chart` / `custom.chat_turn`'s plain path only ever parses data
+already on the wire - pasted text, the CSV fallback, or a single-shot
+revision prompt with no memory beyond the transcript. That stays the right
+default (no session, no scope, works from the Custom Tile dialog on any
+dashboard, and demos with no API key at all - see `custom.py`'s module
+docstring). But a request like "track each employee's effort and compare
+them" names a report over data the app already has, and asking a person to
+paste hours they would have to go find in Jira first is the wrong answer
+when this product's whole job is knowing that number already. And a request
+the chart format genuinely cannot express - "give each bar its own color" on
+a single-measure bar chart - deserves an answer that says so, not a silent
+no-op.
 
-So this is a second path, tried first on the opening turn when nobody pasted
-anything and the project this conversation is happening in front of is
-known: give the model a small set of **read-only** tools, each a thin
-wrapper over a function `app/intelligence/pipeline.py` already exports
-(`team_project`, `analyze_project`, `forecast_project`) or `app/risks/`
-already computes. A tool call is a lookup against a deterministic bundle,
-never a second calculation - the same governing rule (CLAUDE.md invariant 1)
-survives contact with tool use because of what the tool is, not because of
-an extra check bolted on afterward. The model still only chooses what to
-look at and how to chart it; the final answer still goes through the exact
-same `_parse_model_json` / `_validate_draft` gate `custom.py` uses for every
-other turn; a model that never calls a tool, or never lands on valid JSON,
-returns `None` and the caller falls back to `custom.py`'s "paste it instead"
-message.
+So this is a second path: give the model a small set of **read-only** tools,
+each a thin wrapper over a function `app/intelligence/pipeline.py` already
+exports (`team_project`, `analyze_project`, `forecast_project`) or
+`app/risks/` already computes. A tool call is a lookup against a
+deterministic bundle, never a second calculation - the same governing rule
+(CLAUDE.md invariant 1) survives contact with tool use because of what the
+tool is, not because of an extra check bolted on afterward. The model still
+only chooses what to look at and how to chart it; a final JSON answer still
+goes through the exact same `_parse_model_json` / `_validate_draft` gate
+`custom.py` uses for every other turn.
+
+Tried on **every** turn - `custom.chat_turn` calls this after its own
+deterministic `_local_revision` returns nothing (which stays first always:
+an exact whole-message command needs no model and cannot drift a number on
+its way through one), and only when nobody pasted raw data for this turn.
+`current_draft`, when given, means this is a revision: the model sees what
+is on screen now and either returns a full replacement chart or explains in
+plain text why the request cannot become one - see `agentic_turn`'s return
+shape. Any failure at any point (no key, no SDK, an unparseable and
+non-explanatory final answer, exhausted tool rounds) returns `(None, None)`
+and the caller falls back further, same as before this path existed.
 
 Anthropic-only, deliberately, unlike `narration/providers.py`'s multi-vendor
 `Drafter`. Tool calling is a genuinely different wire shape per vendor, this
@@ -38,15 +49,16 @@ from typing import Any
 
 from app.api.schemas.agent import ChatMessage
 from app.api.schemas.dashboard import CustomChartDraft
-from app.dashboard.custom import _parse_model_json, _validate_draft
+from app.dashboard.custom import _draft_json, _parse_model_json, _validate_draft
 from app.narration.providers import ModelConfig, _base, _import, _key
 
 MAX_TOOL_ROUNDS = 4
 
-SYSTEM_PROMPT = """You are helping a project manager build one chart tile for \
-their dashboard. You have tools that return real, already-computed data from \
-their current project - use them rather than asking the person to paste \
-anything, and never invent a number that did not come from a tool result.
+DRAFT_SYSTEM_PROMPT = """You are helping a project manager build one chart tile \
+for their dashboard. You have tools that return real, already-computed data \
+from their current project - use them rather than asking the person to \
+paste anything, and never invent a number that did not come from a tool \
+result.
 
 Call as many tools as you need to answer their request, then respond with \
 ONLY a single JSON object - no prose, no markdown fences - shaped exactly \
@@ -60,9 +72,36 @@ is a short chart title only (four to six words) - put caveats, data-quality \
 notes, or anything else worth saying in plain text BEFORE the JSON object, \
 never inside the title string itself. Prefer "line" for a time series, \
 "bar" for comparing categories, "pie" only for parts of one whole that sum \
-to something meaningful. If no tool call turned \
-up data that answers the request, call another tool or ask a clarifying \
-question in plain text instead of guessing at a chart."""
+to something meaningful.
+
+If, after checking whatever tools are relevant, nothing answers the \
+request, do not return JSON at all - reply in plain text, one or two short \
+sentences, saying so and suggesting what you could chart instead."""
+
+REVISE_SYSTEM_PROMPT = """You are helping a project manager refine one chart \
+tile on their dashboard. You have tools that return real, already-computed \
+data from their current project, if the revision calls for data you have \
+not already seen - use them rather than guessing.
+
+You will be given the chart they are looking at now and the conversation so \
+far. If you can make the change, respond with ONLY a single JSON object - no \
+prose, no markdown fences - shaped exactly like this:
+
+{"title": "...", "chart_type": "bar" | "line" | "pie", "labels": ["...", ...], "values": [1.0, ...]}
+
+Return the WHOLE chart every time, including the parts they did not ask you \
+to change - carry those through untouched. `labels` and `values` must be \
+the same length and drawn only from tool results, the current chart, or a \
+number the person stated themselves - never invent, extrapolate, or round \
+to a "nicer" number.
+
+If the request cannot be expressed in this format - it names something this \
+schema has no field for (per-item color, a second measure alongside the \
+first, an annotation), or no tool has data that would answer it - do not \
+return JSON. Reply in plain text instead: one or two short sentences saying \
+plainly why not, and naming a concrete alternative if there is one (a \
+different chart_type, a tile already on the catalogue, or what data you \
+would need). Never apologize at length or restate the request back to them."""
 
 TOOLS: list[dict[str, Any]] = [
     {
@@ -171,28 +210,47 @@ def _execute_tool(name: str, session, project_id: str) -> dict:
     return {"error": f"unknown tool {name!r}"}
 
 
-def agentic_draft(
-    messages: list[ChatMessage], session, project_id: str, *, cfg: ModelConfig
-) -> CustomChartDraft | None:
-    """Run the tool loop for one opening turn. `None` means the caller should
-    fall back to `custom.py`'s plain paste-and-parse path - a provider error,
-    an exhausted round budget, or a final answer that never validates."""
+def agentic_turn(
+    messages: list[ChatMessage],
+    session,
+    project_id: str,
+    *,
+    cfg: ModelConfig,
+    current_draft: CustomChartDraft | None = None,
+) -> tuple[CustomChartDraft | None, str | None]:
+    """Run the tool loop for one turn - the opening draft when `current_draft`
+    is `None`, a revision when it is not. Returns `(draft, note)`, exactly one
+    populated:
+
+    - `(draft, None)` - a full chart, validated, ready to show.
+    - `(None, note)` - the model looked (tools included) and answered in
+      plain text instead of JSON: a real answer, just not a chart. The
+      caller shows `note` as the reply rather than treating it as a failure.
+    - `(None, None)` - nothing usable came back (no key, no SDK, a dead
+      round budget, an answer that was neither valid JSON nor real prose).
+      The caller falls back further.
+    """
     try:
         anthropic = _import("anthropic", "anthropic")
         client = anthropic.Anthropic(timeout=cfg.timeout_seconds, **_key(cfg), **_base(cfg))
     except Exception:  # noqa: BLE001 - no SDK, no key, any of it: fall back quietly
-        return None
+        return None, None
 
-    conversation: list[dict] = [
-        {"role": m.role, "content": m.content} for m in messages
-    ]
+    system = REVISE_SYSTEM_PROMPT if current_draft is not None else DRAFT_SYSTEM_PROMPT
+    conversation: list[dict] = []
+    if current_draft is not None:
+        conversation.append(
+            {"role": "user", "content": f"The chart on screen now:\n{_draft_json(current_draft)}"}
+        )
+        conversation.append({"role": "assistant", "content": "Understood - what would you like changed?"})
+    conversation.extend({"role": m.role, "content": m.content} for m in messages)
 
     try:
         for _ in range(MAX_TOOL_ROUNDS):
             response = client.messages.create(
                 model=cfg.model,
                 max_tokens=cfg.max_tokens,
-                system=SYSTEM_PROMPT,
+                system=system,
                 tools=TOOLS,
                 messages=conversation,
             )
@@ -216,10 +274,15 @@ def agentic_draft(
                 conversation.append({"role": "user", "content": results})
                 continue
 
-            text = "".join(b.text for b in response.content if b.type == "text")
+            text = "".join(b.text for b in response.content if b.type == "text").strip()
             parsed = _parse_model_json(text)
-            return _validate_draft(parsed) if parsed is not None else None
+            draft = _validate_draft(parsed) if parsed is not None else None
+            if draft is not None:
+                return draft, None
+            # Not valid JSON - real prose (the model explaining itself, per
+            # the system prompt) is a usable answer on its own.
+            return (None, text) if text else (None, None)
     except Exception:  # noqa: BLE001 - any provider failure falls back, never 500s
-        return None
+        return None, None
 
-    return None  # exhausted MAX_TOOL_ROUNDS without a final answer
+    return None, None  # exhausted MAX_TOOL_ROUNDS without a final answer

@@ -417,37 +417,49 @@ def chat_turn(
     model could not parse.
 
     `session` / `project_id` / `agent_cfg` are optional and only ever used
-    together, on the opening turn, when nobody pasted data - see
-    `app/dashboard/agent.py`. Any one missing (no project in view, no
-    Anthropic key, tool use itself failing) falls straight through to the
-    plain parse-what-was-pasted path below, unchanged."""
+    together - see `app/dashboard/agent.py`. Any one missing (no project in
+    view, no Anthropic key, tool use itself failing) falls straight through
+    to the plain paths below, unchanged. Tried on every turn now, not only
+    the opening one: a revision can need fresh data just as much as a first
+    draft can, and a request the schema cannot express deserves the model's
+    own explanation rather than a scripted "unchanged"."""
     asked = _last_user_message(messages).strip()
     if not asked:
         raise ValueError("say what you want the tile to show")
+
+    agentic_available = session is not None and project_id and agent_cfg is not None
 
     if draft is None:
         # Nothing on screen yet - this is the one-shot path, reused whole.
         # Their message is the hint when they also pasted data, and is itself
         # the data when they did not.
         has_data = bool(raw_data and raw_data.strip())
+        agentic_note: str | None = None
 
-        if not has_data and session is not None and project_id and agent_cfg is not None:
-            from app.dashboard.agent import agentic_draft
+        if not has_data and agentic_available:
+            from app.dashboard.agent import agentic_turn
 
-            agentic = agentic_draft(messages, session, project_id, cfg=agent_cfg)
+            agentic, agentic_note = agentic_turn(
+                messages, session, project_id, cfg=agent_cfg
+            )
             if agentic is not None:
                 return TileChatResponse(
                     draft=agentic, changes=[], reply=_opening_reply(agentic), ok=True
                 )
-            # Tools found nothing usable - fall through to the plain path,
-            # which raises its own "paste a table" ValueError if that also
-            # cannot make sense of `asked`.
+            # A note with no chart still needs *some* draft on the opening
+            # turn (the response schema requires one) - try the plain path
+            # next, and only surface the note if that fails too, below.
 
-        opening = draft_chart(
-            raw_data if has_data else asked,
-            asked if has_data else None,
-            drafter=drafter,
-        )
+        try:
+            opening = draft_chart(
+                raw_data if has_data else asked,
+                asked if has_data else None,
+                drafter=drafter,
+            )
+        except ValueError:
+            if agentic_note:
+                raise ValueError(agentic_note) from None
+            raise
         return TileChatResponse(
             draft=opening, changes=[], reply=_opening_reply(opening), ok=True
         )
@@ -455,6 +467,20 @@ def chat_turn(
     # Deterministic first: an exact command needs no model, and cannot drift
     # a number on its way through one.
     revised = _local_revision(asked, draft)
+
+    if revised is None and agentic_available:
+        from app.dashboard.agent import agentic_turn
+
+        candidate, note = agentic_turn(
+            messages, session, project_id, cfg=agent_cfg, current_draft=draft
+        )
+        if candidate is not None:
+            revised = candidate
+        elif note:
+            # The model looked - tools included - and answered in plain text
+            # instead of silently leaving the chart unchanged. That is a real
+            # answer, not a failure.
+            return TileChatResponse(draft=draft, changes=[], reply=note, ok=True)
 
     if revised is None and drafter is not None:
         try:

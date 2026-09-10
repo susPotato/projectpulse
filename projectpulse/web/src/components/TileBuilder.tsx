@@ -135,14 +135,16 @@ function sourceBadge(draft: CustomChartDraft): { label: string; tone: string } {
 }
 
 /*
-  `MiniChart` is a 260x64 sparkline with `preserveAspectRatio="none"`, so it
-  grows to whatever height its box allows - ~150px at this width, which is
-  why every height here is pinned rather than left to the intrinsic ratio.
-  Never applied to a pie: that branch returns a fixed square plus a legend
-  rather than a stretchable svg, and a fixed height would only clip it.
+  `MiniChart` for "line" is a 260x64 sparkline with `preserveAspectRatio=
+  "none"`, so it grows to whatever height its box allows - ~150px at this
+  width, which is why its height is pinned rather than left to the intrinsic
+  ratio. Never applied to "pie" or the non-compact "bar": both return a
+  variable-height list (a legend, or one row per label) rather than a
+  stretchable svg, and a fixed height would only clip them - see
+  `MiniChart`'s own docstring for why "bar" is a row list at all now.
 */
 function chartBox(chartType: ChartType, height: string) {
-  return chartType === "pie" ? "" : `${height} [&>svg]:h-full`;
+  return chartType === "line" ? `${height} [&>svg]:h-full` : "";
 }
 
 /**
@@ -509,11 +511,15 @@ export function TileBuilder({
                           v{turn.version}
                         </span>
                         <span className="w-[64px] shrink-0">
-                          <span className={`block ${chartBox(turn.draft.chart_type, "h-[22px]")}`}>
+                          {/* Always the small fixed box here, regardless of
+                              chart type - this chip is 64x22px full stop,
+                              unlike the stage which grows for "bar"/"pie". */}
+                          <span className="block h-[22px] [&>svg]:h-full">
                             <MiniChart
                               chartType={turn.draft.chart_type}
                               labels={turn.draft.labels}
                               values={turn.draft.values}
+                              compact
                             />
                           </span>
                         </span>
