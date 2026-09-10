@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.api.schemas.agent import ChatMessage
 from app.api.schemas.dashboard import CustomChartDraft, CustomTileIn, TileIn
-from app.dashboard.catalogue import CATALOGUE, for_scope
+from app.dashboard.catalogue import BY_KEY, CATALOGUE, TEMPLATES, for_scope
 from app.dashboard.custom import (
     _local_revision,
     chat_turn,
@@ -23,6 +23,7 @@ from app.dashboard.custom import (
 from app.dashboard.generator import generate_layout
 from app.dashboard.service import (
     add_tile,
+    seed_default_dashboard,
     apply_template,
     delete_tile,
     duplicate_tile,
@@ -102,6 +103,41 @@ def test_apply_template_only_places_tiles_for_this_scope(session):
     # No overlap at the same (x, y) - the auto-layout packer's whole job.
     starts = [(t.x, t.y) for t in out.tiles]
     assert len(starts) == len(set(starts))
+
+
+def test_every_template_places_tiles_for_the_scope_it_names(session):
+    """A template whose keys are all for the other scope would silently apply
+    as an empty dashboard - which is exactly the blank canvas the seeding
+    below exists to prevent, arriving by a different route."""
+    for name in TEMPLATES:
+        for scope, scope_id in (("program", PROGRAM), ("project", PROJECT)):
+            keys = [k for k in TEMPLATES[name] if BY_KEY[k].scope == scope]
+            if not keys:
+                continue
+            out = apply_template(session, scope, scope_id, name)
+            assert out is not None
+            assert len(out.tiles) == len(keys), f"{name} on {scope}"
+
+
+def test_seeding_gives_an_empty_dashboard_a_starting_layout(session):
+    """The gap this closes: `get_dashboard` auto-creates a *blank* canvas, so
+    a freshly-replayed demo database opened the app's biggest feature on
+    "Click Add Tiles"."""
+    assert get_dashboard(session, "project", PROJECT).tiles == []
+    assert seed_default_dashboard(session, "project", PROJECT, "project_delivery_review")
+    assert len(get_dashboard(session, "project", PROJECT).tiles) > 0
+
+
+def test_seeding_never_overwrites_a_layout_somebody_arranged(session):
+    """Idempotent *and* non-destructive - `scripts.seed_extras` is re-runnable,
+    and a PM's own arrangement outranks the demo default."""
+    add_tile(session, "project", PROJECT, TileIn(tile_key="schedule_gantt", x=0, y=0, w=4, h=3))
+    before = get_dashboard(session, "project", PROJECT).tiles
+
+    assert seed_default_dashboard(session, "project", PROJECT, "project_delivery_review") is False
+
+    after = get_dashboard(session, "project", PROJECT).tiles
+    assert [t.tile_key for t in after] == [t.tile_key for t in before]
 
 
 def test_apply_template_unknown_name_is_none(session):

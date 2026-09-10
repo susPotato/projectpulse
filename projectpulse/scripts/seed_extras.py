@@ -1,5 +1,5 @@
-"""Seed the two things no source system produces: a second Program, and
-resource allocation.
+"""Seed the things no source system produces: a second Program, resource
+allocation, and a starting dashboard layout.
 
     python -m scripts.seed_extras
 
@@ -24,6 +24,7 @@ from scripts._bootstrap import bootstrap
 
 bootstrap()
 
+from app.dashboard.service import seed_default_dashboard  # noqa: E402
 from app.db import session_scope  # noqa: E402
 from app.ids import domain_id  # noqa: E402
 from app.models.domain import Program, Project, Resource  # noqa: E402
@@ -49,6 +50,18 @@ ALLOCATIONS: tuple[tuple[str, str, str, float], ...] = (
     ("My Nguyen", "QA Lead", "excel:Project:1:HRMS", 50.0),
     ("My Nguyen", "QA Lead", "excel:Project:1:SAIN", 40.0),
     ("Hoach Bach", "Delivery Lead", "excel:Project:1:SAIN", 70.0),
+)
+
+
+#: The canvas each demo scope opens on. Without this a fresh `scripts.replay`
+#: leaves both dashboards blank - `get_dashboard` auto-creates an *empty* one
+#: on first look, which is correct for a new scope in a real deployment and
+#: means the biggest feature in the app opens as "Click Add Tiles" for anyone
+#: who just built the demo database. Only applied to a dashboard that has no
+#: tiles, so this never overwrites a layout somebody arranged.
+DASHBOARDS: tuple[tuple[str, str, str], ...] = (
+    ("program", "excel:Program:1:DEFAULT", "it_portfolio_dashboard"),
+    ("project", "excel:Project:1:HRMS", "project_delivery_review"),
 )
 
 
@@ -78,7 +91,17 @@ def main() -> None:
             )
             written += 1
 
+        boards = []
+        for scope_type, scope_id, template in DASHBOARDS:
+            if scope_type == "project" and session.get(Project, scope_id) is None:
+                skipped.append(scope_id)
+                continue
+            if seed_default_dashboard(session, scope_type, scope_id, template):
+                boards.append(f"{scope_type} {template}")
+
     print(f"seeded program {EXTRA_PROGRAM_NAME!r} and {written} resource allocation(s)")
+    for board in boards:
+        print(f"  dashboard: {board}")
     if skipped:
         print(f"  skipped (project not synced yet): {sorted(set(skipped))}")
 

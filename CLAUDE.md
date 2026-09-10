@@ -179,16 +179,33 @@ chips **fill the box rather than send**, the same choice the Agent tab made.
   model paths from here. `flyctl` is **not installed** on this machine, so no
   deploy from here without `fly auth login` first.
 
-⚠️ **Open, and the best-value fix left in the code: a fresh `scripts.replay`
-leaves both canvas dashboards empty.** `service.get_dashboard` auto-creates a
-*blank* one on first look, which is right for a new scope in production and
-wrong for a seeded demo. The live Fly deploy is fine - its dashboards were
-built interactively and persist in Neon (`/api/dashboards?scope_type=program
-&scope_id=excel:Program:1:DEFAULT` returns the `it_portfolio_dashboard`
-layout) - but **a judge who clones and runs the documented path sees the app's
-biggest feature as a blank canvas.** Fix belongs in `replay` (apply
-`it_portfolio_dashboard` to the program and a layout to HRMS), not in
-`get_dashboard`, so production behaviour stays honest. Perhaps 20 minutes.
+✅ **Fixed: a fresh `scripts.replay` used to leave both canvas dashboards
+empty.** `service.get_dashboard` auto-creates a *blank* one on first look,
+which is right for a new scope in production and was wrong for a seeded demo -
+**a judge who cloned and ran the documented path saw the app's biggest feature
+as "Click Add Tiles".** Now `scripts/seed_extras.py` seeds a starting layout
+alongside the second Program and the resource allocations, which is exactly
+the category that file already owns ("the things no source system produces").
+- `service.seed_default_dashboard()` holds the rule, so it is tested rather
+  than living in a script. ⚠️ **It skips any dashboard that already has
+  tiles** - that is what makes `seed_extras` re-runnable *and* keeps it from
+  overwriting a layout somebody arranged. Guarded by
+  `test_seeding_never_overwrites_a_layout_somebody_arranged`.
+- ⚠️ **The rule stays out of `get_dashboard`.** A brand-new scope in a real
+  deployment must still open blank; only the demo database is seeded.
+- New template `project_delivery_review` in `catalogue.py` - the product's
+  four questions in order on one canvas (brief, root cause, the stat row,
+  Gantt, forecast, burn), ordered so `auto_layout`'s 12-column wrap fills
+  6+6 / 4+4+4 / 8 / 5+5 with no gaps. It shows up in "Browse Templates" for
+  free. The program scope gets `it_portfolio_dashboard`.
+- The project `ai_management_brief` tile is **`default_h=4`, not 3**: at 3 it
+  clipped its own last sentence, and the PM's own triage calls that tile the
+  entry point.
+- Verified by a clean `scripts.replay` then `scripts.shots`: the program
+  dashboard opens on CRITICAL / the three-project portfolio / the heatmap /
+  Tran Quoc B at 130%, and the project dashboard on the brief, root cause,
+  3 milestones at risk, 17/17 QA blocked, the Gantt with its +11d overrun,
+  P50/P80/P95 and the burn.
 
 
 ---

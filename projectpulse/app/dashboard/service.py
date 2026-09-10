@@ -181,6 +181,26 @@ def apply_template(
     )
 
 
+def seed_default_dashboard(
+    session, scope_type: str, scope_id: str, template: str
+) -> bool:
+    """Give a scope a starting layout, but only if it has none.
+
+    `get_dashboard` auto-creates an *empty* canvas on first look, which is
+    right for a new scope in a real deployment - the PM builds it - and wrong
+    for a seeded demo database, where it means the biggest feature in the app
+    opens blank for anyone who just ran `scripts.replay`. This is the demo's
+    answer, kept out of `get_dashboard` so production behaviour stays honest.
+
+    Returns whether it placed anything. Skipping a dashboard that already has
+    tiles is what makes this safe to re-run and non-destructive: seeding must
+    never overwrite a layout somebody arranged by hand.
+    """
+    if get_dashboard(session, scope_type, scope_id).tiles:
+        return False
+    return apply_template(session, scope_type, scope_id, template) is not None
+
+
 def generate(
     session, scope_type: str, scope_id: str, prompt: str, drafter
 ) -> DashboardOut:

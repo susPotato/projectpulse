@@ -104,7 +104,11 @@ CATALOGUE: tuple[TileSpec, ...] = (
     TileSpec(
         "ai_management_brief", "AI Management Brief", "AI Intelligence",
         "The narrated summary: what is at risk, why, and what to do next.",
-        "project", "insight", default_w=6, default_h=3, preview="brief",
+        # 4 rows, not 3: the brief runs to several sentences and at h=3 the
+        # tile clipped its own last one. The PM's triage calls this the entry
+        # point, so a truncated first impression is the one place not to save
+        # 32px.
+        "project", "insight", default_w=6, default_h=4, preview="brief",
     ),
     TileSpec(
         "ai_detected_risks", "AI Detected Risks", "AI Intelligence",
@@ -151,5 +155,16 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
     "sprint_delivery_report": (
         "milestones_at_risk", "blocking_qa", "quality_health",
         "ai_management_brief",
+    ),
+    #: The four questions this product answers, in order, on one canvas:
+    #: what is wrong (brief), why (root cause), what it will cost (Gantt,
+    #: forecast), and what corroborates it (burn). Ordered for `auto_layout`
+    #: too - it packs left to right and wraps at 12 columns, so 6+6 / 4+4+4 /
+    #: 8 / 5+5 fills four tidy rows rather than leaving gaps.
+    "project_delivery_review": (
+        "ai_management_brief", "ai_root_cause_impact",
+        "milestones_at_risk", "blocking_qa", "quality_health",
+        "schedule_gantt",
+        "delivery_forecast", "effort_burn",
     ),
 }
