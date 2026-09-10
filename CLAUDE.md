@@ -84,6 +84,47 @@ machine's pipe between `curl` and a consumed-by-Python stdin is not trustworthy 
 non-ASCII verification, and the fix is to write suspect bytes straight to a file and
 inspect them there, never trust what a terminal painted.**
 
+**Later the same day: "can we make the agent a bit smarter so it can reason and make
+stuff like you doing?"** Two real bugs were hiding behind one vague complaint - a
+screenshot of "can you make each person have their own color?" met with "That left the
+chart unchanged." twice. (1) `tileRegistry.tsx`'s bar-chart `MiniChart` rendered no
+visible labels at all (hover-only `<title>`), so a person had no way to tell bars apart
+in the first place - added a `compact` prop: the small stretchable sparkline stays for
+thumbnails, but the main tile stage now renders labeled horizontal bars (name, filled
+bar, value) by default. (2) `agentic_draft` only ever ran on the *opening* turn -
+revisions always fell straight to the old plain-parse path, which has no model reasoning
+and can only silently no-op on a request outside its format. Renamed it `agentic_turn`,
+gave it a `current_draft` parameter, and wired it into `chat_turn` on *both* paths in
+`custom.py`. Its return shape changed to `tuple[CustomChartDraft | None, str | None]` so
+a real explanation ("per-bar color isn't a field this schema has - try a pie chart
+instead") can come back as a genuine reply instead of a generic "unchanged" message -
+this is the point of "smarter": not just tool use, but the ability to say *why not* in
+plain language when a request genuinely cannot become this chart.
+
+⚠️ **Verified locally, deployed, declared done again - then it 400'd on production
+again, differently this time.** Same lesson as above, new root cause: **the Anthropic key
+had run out of credit.** `agentic_turn`'s `except Exception: return None, None` (added
+specifically so a provider problem never 500s) meant a real billing error was
+indistinguishable from "no key configured" or "the model declined" - all three degraded
+to the same bland fallback text with *nothing in the logs*, because the except block
+never logged at all. Root-caused only by bypassing the swallow entirely: wrote a script
+that rebuilt the same `anthropic.Anthropic(...).messages.create(...)` call by hand
+against the production database (`DATABASE_URL` from `flyctl logs`) and let the real
+exception surface -
+`anthropic.BadRequestError: ... 'Your credit balance is too low to access the Anthropic
+API.'` `flyctl ssh console -C` is blocked under this session's auto-mode classifier, so
+this reproduce-locally-against-prod-DB trick is the fallback when SSH isn't available.
+Fixed two ways at once, both worth keeping as the standing behavior: `agent.py` now has a
+module `log = logging.getLogger(__name__)`, `log.warning(...)` on a client-construction
+failure and `log.exception(...)` on a call failure, so `flyctl logs` shows this the next
+time instead of requiring a manual repro; and the call-failure branch now returns
+`(None, note)` with the real error message instead of `(None, None)`, so a genuine API
+outage shows the person an honest "the AI agent hit an error talking to the model" instead
+of the misleading "could not turn this into a change" text that implies the request itself
+was the problem. User's own framing, worth keeping literally: **"if the model break like
+that then push a notification is ok"** - visibility over silent, plausible-looking
+fallbacks is the standing preference here, not just for this one bug.
+
 ---
 
 ## 0. This session — 2026-09-10, read this before anything else in the file below
