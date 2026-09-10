@@ -7,17 +7,22 @@
   `app/models/dashboard.py` for why that is a deliberate, labelled exception
   rather than an oversight.
 
-  Two things here are deliberate and worth not undoing:
+  Three things here are deliberate and worth not undoing:
 
-  * **The assistant's lines are not written by the model.** Every reply in
-    the transcript is composed server-side from a diff of the two drafts
+  * **Every turn shows its own chart, in the transcript.** Not one preview
+    panel that silently mutates: each answer carries the chart as it stood
+    after that instruction, so the conversation is a visual history and a PM
+    can see which sentence caused which change. The newest one is live (hand
+    edits flow into it); the ones above it are the record.
+  * **The assistant's lines are not written by the model.** Every reply is
+    composed server-side from a diff of the two drafts
     (`custom.diff_drafts`), so a turn cannot claim a rename while quietly
-    having moved a value. The chat and the preview are the same fact.
+    having moved a value. The chat and the chart under it are one fact.
   * **The preview never blanks out.** A turn that could not be applied comes
     back carrying the previous draft with `ok: false`, so the chart on screen
     survives a model that returned nonsense.
 */
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   load,
   send,
@@ -35,6 +40,17 @@ import {
 import { MiniChart } from "../tileRegistry";
 
 type Tab = "build" | "saved";
+
+/** One line of the transcript, plus - on an answer - the chart it produced. */
+interface Turn {
+  role: "user" | "assistant";
+  content: string;
+  /** The chart as it stood after this turn. Answers only. */
+  draft?: CustomChartDraft;
+  changes?: DraftChange[];
+  /** False when the turn was understood but could not be applied. */
+  ok?: boolean;
+}
 
 /* Fill the box, never send - the same choice the Agent tab's presets make,
    so a click is a starting point a PM edits rather than a turn they did not
@@ -66,12 +82,99 @@ function nextSlot(existing: TileOut[], w: number, h: number) {
   return { x: 0, y, w, h };
 }
 
-/* What produced the draft on screen, said plainly. A table read by the plain
-   CSV parser must never be presented as the model's own read of the data. */
+/* What produced the draft, said plainly. A table read by the plain CSV
+   parser must never be presented as the model's own read of the data. */
 function sourceBadge(draft: CustomChartDraft): { label: string; tone: string } {
   if (draft.source === "ai") return { label: "AI draft", tone: "text-purple bg-purple/15" };
   if (draft.source === "local_edit") return { label: "Applied directly", tone: "text-navy bg-navy/15" };
   return { label: "Read as a table", tone: "text-amber bg-amber/15" };
+}
+
+/**
+ * The chart one turn produced, rendered inside the transcript.
+ *
+ * `current` marks the newest one: it gets a live border and reflects hand
+ * edits, while the ones above it stay as they were, so the history is a
+ * record rather than several copies of the latest state.
+ */
+function TurnPreview({
+  draft,
+  changes,
+  current,
+}: {
+  draft: CustomChartDraft;
+  changes?: DraftChange[];
+  current: boolean;
+}) {
+  const badge = sourceBadge(draft);
+  return (
+    <div
+      className={`mt-1 rounded-lg border p-3 ${
+        current ? "border-navy/50 bg-bg/60" : "border-rule bg-bg/25"
+      }`}
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="min-w-0 truncate text-[12.5px] font-semibold text-ink">
+          {draft.title}
+        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {current && (
+            <span className="rounded bg-navy/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] text-navy uppercase">
+              Current
+            </span>
+          )}
+          <span
+            className={`rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] uppercase ${badge.tone}`}
+          >
+            {badge.label}
+          </span>
+        </div>
+      </div>
+      <div className="rounded-md border border-rule bg-surface p-2.5">
+        {/* `MiniChart` draws a 260x64 sparkline with
+            `preserveAspectRatio="none"`, so at full modal width it grows to
+            ~150px tall and two turns fill the screen - the history this
+            layout exists for then scrolls out of reach. Pinning the height
+            keeps a turn compact; a superseded one shrinks further, because
+            its job is to show the shape it had, not to be re-checked.
+            Not applied to a pie, which returns a fixed square plus a legend
+            rather than a stretchable svg, and would simply be clipped. */}
+        <div
+          className={
+            draft.chart_type === "pie"
+              ? ""
+              : current
+                ? "h-[76px] [&>svg]:h-full"
+                : "h-[40px] [&>svg]:h-full"
+          }
+        >
+          <MiniChart chartType={draft.chart_type} labels={draft.labels} values={draft.values} />
+        </div>
+        {/* The rows, spelled out under the chart - on the current turn only.
+            `MiniChart` carries no axis, so a line with no labels cannot be
+            checked, and this is the chart a PM checks before saving. An
+            earlier turn already has its `Changed` line saying what moved. */}
+        {current && (
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-rule pt-2">
+            {draft.labels.map((label, i) => (
+              <span key={i} className="text-[11px] text-ink-3">
+                {label}{" "}
+                <span className="font-semibold text-ink-2">
+                  {NUMBER.format(draft.values[i] ?? 0)}
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      {changes && changes.length > 0 && (
+        <p className="mt-2 mb-0 text-[11px] text-ink-3">
+          <span className="font-bold tracking-[0.06em] uppercase">Changed</span>{" "}
+          {changes.map((c) => c.summary).join("; ")}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function CustomTileModal({
@@ -89,9 +192,8 @@ export function CustomTileModal({
 }) {
   const [tab, setTab] = useState<Tab>("build");
 
-  const [messages, setMessages] = useState<TileChatMessage[]>([]);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState<CustomChartDraft | null>(null);
-  const [changes, setChanges] = useState<DraftChange[]>([]);
   const [rawData, setRawData] = useState("");
   const [showData, setShowData] = useState(false);
   const [input, setInput] = useState("");
@@ -116,41 +218,66 @@ export function CustomTileModal({
 
   useEffect(() => {
     transcriptEnd.current?.scrollIntoView({ block: "nearest" });
-  }, [messages.length]);
+  }, [turns.length, sending]);
+
+  /* The newest answer. Its preview is the live one - so a hand edit shows up
+     where the PM is already looking, rather than in a fourth place. */
+  const lastAnswer = turns.reduce(
+    (found, turn, i) => (turn.role === "assistant" && turn.draft ? i : found),
+    -1,
+  );
 
   async function sendTurn(text: string) {
     const asked = text.trim();
     if (!asked || sending) return;
 
-    const withUser: TileChatMessage[] = [...messages, { role: "user", content: asked }];
-    setMessages(withUser);
+    const withUser: Turn[] = [...turns, { role: "user", content: asked }];
+    setTurns(withUser);
     setInput("");
     setSending(true);
     setTurnError(null);
     try {
+      // Only role and content go on the wire - the drafts hanging off each
+      // turn are for this screen, and the current one is sent once, below.
+      const messages: TileChatMessage[] = withUser.map(({ role, content }) => ({
+        role,
+        content,
+      }));
       const result = await send<TileChatResponse>("/api/custom-tiles/chat", "POST", {
-        messages: withUser,
+        messages,
         draft,
         raw_data: rawData.trim() ? rawData : null,
       });
       setDraft(result.draft);
-      setChanges(result.changes);
-      setMessages([...withUser, { role: "assistant", content: result.reply }]);
+      setTurns([
+        ...withUser,
+        {
+          role: "assistant",
+          content: result.reply,
+          draft: result.draft,
+          changes: result.changes,
+          ok: result.ok,
+        },
+      ]);
       if (!result.ok) setTurnError(result.error ?? null);
     } catch (err) {
-      const detail =
-        (err as ApiProblem).detail ?? "Could not build a chart from that.";
-      setMessages([...withUser, { role: "assistant", content: detail }]);
+      const detail = (err as ApiProblem).detail ?? "Could not build a chart from that.";
+      setTurns([...withUser, { role: "assistant", content: detail, ok: false }]);
       setTurnError(detail);
     } finally {
       setSending(false);
     }
   }
 
+  /* A hand edit changes the live draft, so it changes what the newest preview
+     shows - and it clears that turn's `changes` line, which described the
+     model's edit and no longer describes what is on screen. */
   function patchDraft(update: Partial<CustomChartDraft>) {
     if (!draft) return;
     setDraft({ ...draft, ...update });
-    setChanges([]);
+    setTurns((prev) =>
+      prev.map((turn, i) => (i === lastAnswer ? { ...turn, changes: [] } : turn)),
+    );
   }
 
   function updateRow(i: number, field: "label" | "value", value: string) {
@@ -177,8 +304,7 @@ export function CustomTileModal({
 
   function startOver() {
     setDraft(null);
-    setMessages([]);
-    setChanges([]);
+    setTurns([]);
     setTurnError(null);
     setInput("");
     setShowRows(false);
@@ -213,15 +339,13 @@ export function CustomTileModal({
         values: draft.values,
         // What they asked for, kept verbatim - the only provenance a pasted
         // number has, and what the canvas labels the tile with.
-        source_note: messages.find((m) => m.role === "user")?.content ?? null,
+        source_note: turns.find((t) => t.role === "user")?.content ?? null,
       });
       await addExistingToDashboard(created);
     } finally {
       setSaving(false);
     }
   }
-
-  const badge = draft ? sourceBadge(draft) : null;
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-6" onClick={onClose}>
@@ -260,56 +384,8 @@ export function CustomTileModal({
 
         {tab === "build" && (
           <>
-            {/* The preview. Pinned above the conversation so a refinement and
-                its effect are on screen at the same time. */}
-            {draft && (
-              <div className="shrink-0 border-b border-rule bg-bg/40 p-4">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <span className="min-w-0 truncate text-[13px] font-semibold text-ink">
-                    {draft.title}
-                  </span>
-                  {badge && (
-                    <span
-                      className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] uppercase ${badge.tone}`}
-                    >
-                      {badge.label}
-                    </span>
-                  )}
-                </div>
-                <div className="rounded-lg border border-rule bg-surface p-3">
-                  <MiniChart
-                    chartType={draft.chart_type}
-                    labels={draft.labels}
-                    values={draft.values}
-                  />
-                  {/* The rows, spelled out under the chart. `MiniChart` is a
-                      sparkline sized for a canvas tile - it carries no axis,
-                      and a line with no labels cannot be checked. This panel
-                      exists to be checked before the tile is saved, so it
-                      prints what it is drawing, the same reason the forecast
-                      panel prints its sample beside its percentiles. */}
-                  <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 border-t border-rule pt-2">
-                    {draft.labels.map((label, i) => (
-                      <span key={i} className="text-[11px] text-ink-3">
-                        {label}{" "}
-                        <span className="font-semibold text-ink-2">
-                          {NUMBER.format(draft.values[i] ?? 0)}
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                {changes.length > 0 && (
-                  <p className="mt-2 mb-0 text-[11px] text-ink-3">
-                    <span className="font-bold tracking-[0.06em] uppercase">Changed</span>{" "}
-                    {changes.map((c) => c.summary).join("; ")}
-                  </p>
-                )}
-              </div>
-            )}
-
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              {!draft && (
+              {!draft && turns.length === 0 && (
                 <>
                   <label className="mb-1 block text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
                     Paste your data (optional)
@@ -322,27 +398,46 @@ export function CustomTileModal({
                     className="w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-[12px] text-ink"
                   />
                   <p className="mt-2 mb-0 text-[11.5px] text-ink-3">
-                    Then say what you want below. The numbers stay yours - this
-                    builder only ever reads and rearranges what you give it.
+                    Then say what you want below. Every answer comes back with
+                    the chart it made, so you can see what changed before you
+                    keep going. The numbers stay yours - this builder only ever
+                    reads and rearranges what you give it.
                   </p>
                 </>
               )}
 
-              {/* The transcript. */}
-              {messages.length > 0 && (
+              {/* The conversation: each answer carries the chart it produced. */}
+              {turns.length > 0 && (
                 <div className="grid gap-2">
-                  {messages.map((message, i) => (
-                    <div
-                      key={i}
-                      className={
-                        message.role === "user"
-                          ? "justify-self-end rounded-lg rounded-br-sm border border-navy/40 bg-navy/10 px-2.5 py-1.5 text-[12.5px] text-ink max-w-[85%]"
-                          : "justify-self-start rounded-lg rounded-bl-sm border border-rule bg-bg px-2.5 py-1.5 text-[12.5px] text-ink-2 max-w-[85%]"
-                      }
-                    >
-                      {message.content}
-                    </div>
-                  ))}
+                  {turns.map((turn, i) =>
+                    turn.role === "user" ? (
+                      <div
+                        key={i}
+                        className="max-w-[85%] justify-self-end rounded-lg rounded-br-sm border border-navy/40 bg-navy/10 px-2.5 py-1.5 text-[12.5px] text-ink"
+                      >
+                        {turn.content}
+                      </div>
+                    ) : (
+                      <Fragment key={i}>
+                        <div
+                          className={`max-w-[85%] justify-self-start rounded-lg rounded-bl-sm border px-2.5 py-1.5 text-[12.5px] ${
+                            turn.ok === false
+                              ? "border-amber/40 bg-amber/10 text-ink-2"
+                              : "border-rule bg-bg text-ink-2"
+                          }`}
+                        >
+                          {turn.content}
+                        </div>
+                        {turn.draft && (
+                          <TurnPreview
+                            draft={i === lastAnswer && draft ? draft : turn.draft}
+                            changes={turn.changes}
+                            current={i === lastAnswer}
+                          />
+                        )}
+                      </Fragment>
+                    ),
+                  )}
                   <div ref={transcriptEnd} />
                 </div>
               )}
@@ -352,7 +447,8 @@ export function CustomTileModal({
               )}
 
               {/* Hand editing, beside the conversation rather than instead of
-                  it: changing one number is faster typed than described. */}
+                  it: changing one number is faster typed than described. What
+                  it changes shows up in the newest preview above. */}
               {draft && (
                 <div className="mt-3 border-t border-rule pt-3">
                   <button
@@ -454,11 +550,7 @@ export function CustomTileModal({
                       sendTurn(input);
                     }
                   }}
-                  placeholder={
-                    draft
-                      ? "What should change?"
-                      : "e.g. monthly spend as a bar chart"
-                  }
+                  placeholder={draft ? "What should change?" : "e.g. monthly spend as a bar chart"}
                   className="min-w-0 flex-1 rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[12.5px] text-ink"
                 />
                 <button

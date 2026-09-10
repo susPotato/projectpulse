@@ -28,11 +28,27 @@ section 0.**
 **The tile builder is now a conversation, not one shot.** `Custom Tile` used
 to be: paste data, get one draft, edit the rows by hand, save. It is now
 describe -> preview -> "make it a line chart" -> preview -> "rename it to Q3
-Burn" -> save, with the chart on screen the whole time. `POST
-/api/custom-tiles/chat` (`custom.chat_turn`), stateless like
-`/api/agent/chat` - the conversation and the draft on screen both ride in the
-request. Verified end to end in a real browser: three turns, save, and the
-tile lands on the canvas.
+Burn" -> save. `POST /api/custom-tiles/chat` (`custom.chat_turn`), stateless
+like `/api/agent/chat` - the conversation and the draft on screen both ride in
+the request. Verified end to end in a real browser: three turns, save, and the
+tile lands on the canvas with the right title, type, data and note.
+
+⚠️ **Every answer carries its own chart, inline in the transcript** - this is
+the shape that was asked for, and the first attempt got it wrong. A single
+preview panel pinned above the conversation was the obvious build and it
+means the chart silently mutates: a PM sees the latest state and cannot see
+which sentence caused which change. Each answer now renders the chart as it
+stood after that instruction, so the conversation is a visual history. The
+newest is marked `Current`, takes the live draft (so a hand edit shows up
+where the PM is already looking) and prints its rows; the ones above it are
+the record, shrunk to a thumbnail with just their `Changed` line.
+**Do not consolidate them back into one panel.**
+- ⚠️ The heights in `TurnPreview` are load-bearing, not styling. `MiniChart`
+  is a 260x64 sparkline with `preserveAspectRatio="none"`, so at modal width
+  it grows to ~150px and **two turns fill the screen** - the history the
+  layout exists for then scrolls out of reach. Hence `h-[76px]` current /
+  `h-[40px]` superseded, and **not on a pie**, which returns a fixed square
+  plus a legend rather than a stretchable svg and would just be clipped.
 
 Three rules hold it to the same standard as the rest of the app, and each has
 a test:
@@ -82,11 +98,11 @@ is the only thing that could have found it. The tile also now carries the
 person's own first message as `source_note`, so the provenance
 `CustomTile`'s docstring promises is actually populated rather than `None`.
 
-Smaller, deliberate: the preview prints its rows as `Jan 12,000  Feb 15,500`
-under the chart, because `MiniChart` is a sparkline with no axis and a line
-with no labels cannot be checked - and this panel exists to be checked before
-the tile is saved. Preset chips **fill the box rather than send**, the same
-choice the Agent tab made.
+Smaller, deliberate: the current preview prints its rows as `Jan 12,000  Feb
+15,500` under the chart, because `MiniChart` carries no axis and a line with
+no labels cannot be checked - and this is the chart a PM checks before saving.
+Preset chips **fill the box rather than send**, the same choice the Agent tab
+made.
 
 **Environment repairs on this machine, all of which had to come first:**
 
