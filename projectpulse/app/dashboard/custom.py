@@ -54,6 +54,7 @@ from app.api.schemas.dashboard import (
 )
 from app.models.dashboard import CustomTile
 from app.narration.client import Drafter
+from app.narration.providers import ModelConfig
 
 _CHART_TYPES: tuple[ChartType, ...] = ("bar", "line", "pie")
 
@@ -403,6 +404,9 @@ def chat_turn(
     raw_data: str | None,
     *,
     drafter: Drafter | None,
+    session=None,
+    project_id: str | None = None,
+    agent_cfg: ModelConfig | None = None,
 ) -> TileChatResponse:
     """One turn: draft a chart if there isn't one, otherwise revise it.
 
@@ -410,7 +414,13 @@ def chat_turn(
     build a chart from - the route turns that into a 400. Every later turn
     returns a response carrying at worst the draft it was given, because
     blanking someone's chart is never the right answer to a sentence the
-    model could not parse."""
+    model could not parse.
+
+    `session` / `project_id` / `agent_cfg` are optional and only ever used
+    together, on the opening turn, when nobody pasted data - see
+    `app/dashboard/agent.py`. Any one missing (no project in view, no
+    Anthropic key, tool use itself failing) falls straight through to the
+    plain parse-what-was-pasted path below, unchanged."""
     asked = _last_user_message(messages).strip()
     if not asked:
         raise ValueError("say what you want the tile to show")
@@ -420,6 +430,19 @@ def chat_turn(
         # Their message is the hint when they also pasted data, and is itself
         # the data when they did not.
         has_data = bool(raw_data and raw_data.strip())
+
+        if not has_data and session is not None and project_id and agent_cfg is not None:
+            from app.dashboard.agent import agentic_draft
+
+            agentic = agentic_draft(messages, session, project_id, cfg=agent_cfg)
+            if agentic is not None:
+                return TileChatResponse(
+                    draft=agentic, changes=[], reply=_opening_reply(agentic), ok=True
+                )
+            # Tools found nothing usable - fall through to the plain path,
+            # which raises its own "paste a table" ValueError if that also
+            # cannot make sense of `asked`.
+
         opening = draft_chart(
             raw_data if has_data else asked,
             asked if has_data else None,

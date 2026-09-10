@@ -162,6 +162,13 @@ class TileChatRequest(Response):
     #: The data they pasted, if any - kept out of the message list so it stays
     #: the source of truth for every later turn, not just the first.
     raw_data: str | None = None
+    #: The project this conversation is happening in front of, if any - the
+    #: Agent page and the canvas's Custom Tile dialog both know their ambient
+    #: project. Only meaningful on the opening turn, and only when nobody
+    #: pasted data: it is what lets the agent tool-path fetch this project's
+    #: own already-computed numbers (team effort, findings, risks, forecast)
+    #: instead of asking a person to paste something the app already knows.
+    scope_id: str | None = None
 
 
 class TileChatResponse(Response):

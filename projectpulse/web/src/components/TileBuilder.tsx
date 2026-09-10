@@ -320,6 +320,11 @@ export function TileBuilder({
         messages,
         draft,
         raw_data: rawData.trim() ? rawData : null,
+        // Lets the opening turn reach for this project's own real data
+        // (effort, findings, risks, forecast) instead of asking for a paste
+        // - see app/dashboard/agent.py. Program-scoped targets have no
+        // single project to query, so this stays unset for those.
+        scope_id: target?.scopeType === "project" ? target.scopeId : null,
       });
       const version = withUser.filter((t) => t.version !== undefined).length + 1;
       setDraft(result.draft);

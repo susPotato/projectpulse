@@ -2778,6 +2778,8 @@ export interface components {
             draft?: components["schemas"]["CustomChartDraftIn"] | null;
             /** Raw Data */
             raw_data?: string | null;
+            /** Scope Id */
+            scope_id?: string | null;
         };
         /** TileChatResponse */
         TileChatResponse: {

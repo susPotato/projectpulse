@@ -464,3 +464,68 @@ def test_a_reorder_is_not_counted_as_every_value_changing():
 def test_the_diff_is_empty_for_two_identical_drafts():
     assert diff_drafts(_draft(), _draft()) == []
     assert summarize([]) == "That left the chart unchanged."
+
+
+# --------------------------------------------------------------------------
+# The tool-use tile agent (app/dashboard/agent.py): the opening turn can
+# reach for a project's own real data instead of demanding a paste.
+# --------------------------------------------------------------------------
+
+
+def test_each_tool_returns_the_expected_shape_against_an_empty_project(session):
+    from app.dashboard.agent import TOOLS, _execute_tool
+
+    # Every tool is declared with a name that dispatches, and vice versa -
+    # a renamed tool that _execute_tool forgot about would silently return
+    # the "unknown tool" branch instead of failing at import time.
+    names = {t["name"] for t in TOOLS}
+    assert names == {
+        "get_team_effort", "get_project_findings",
+        "get_risk_register", "get_delivery_forecast",
+    }
+
+    team = _execute_tool("get_team_effort", session, PROJECT)
+    assert team == {"members": []}
+
+    findings = _execute_tool("get_project_findings", session, PROJECT)
+    assert findings["findings"] == []
+    assert findings["task_count"] in (None, 0)
+
+    risks = _execute_tool("get_risk_register", session, PROJECT)
+    assert risks == {"risks": []}
+
+    forecast = _execute_tool("get_delivery_forecast", session, PROJECT)
+    assert forecast["available"] is False
+    assert "reason" in forecast
+
+    assert _execute_tool("not_a_real_tool", session, PROJECT) == {
+        "error": "unknown tool 'not_a_real_tool'"
+    }
+
+
+def test_agentic_draft_returns_none_without_a_usable_client():
+    """No SDK / no key / any client-construction failure degrades to None -
+    chat_turn's contract is that this never raises, only falls back."""
+    from app.dashboard.agent import agentic_draft
+    from app.narration.providers import ModelConfig
+
+    result = agentic_draft(
+        _msgs("track each employee's effort and compare them"),
+        session=None,
+        project_id=PROJECT,
+        cfg=ModelConfig(model="claude-opus-5", api_key=""),
+    )
+    # An empty api_key with no ambient credential should fail client
+    # construction or the API call itself - either way, None, not a crash.
+    assert result is None
+
+
+def test_chat_turn_falls_back_to_the_plain_error_when_the_agent_finds_nothing(session):
+    """No agent_cfg (e.g. narration off, or a non-Anthropic provider) means
+    the opening turn behaves exactly as it did before this feature existed."""
+    with pytest.raises(ValueError):
+        chat_turn(
+            _msgs("track each employee's effort and compare them"),
+            None, None, drafter=None,
+            session=session, project_id=PROJECT, agent_cfg=None,
+        )

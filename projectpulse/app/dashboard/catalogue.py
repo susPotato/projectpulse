@@ -136,6 +136,12 @@ CATALOGUE: tuple[TileSpec, ...] = (
         "Cumulative hours logged over time, against the planned total.",
         "project", "team", default_w=5, default_h=4, preview="chart",
     ),
+    TileSpec(
+        "team_effort", "Team Effort by Person", "Effort",
+        "Hours logged against hours planned, one bar per person - real "
+        "logged time, never a productivity figure nobody measured.",
+        "project", "team", default_w=6, default_h=4, preview="chart",
+    ),
 )
 
 BY_KEY: dict[str, TileSpec] = {tile.key: tile for tile in CATALOGUE}

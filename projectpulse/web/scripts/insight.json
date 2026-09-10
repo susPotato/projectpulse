@@ -1,6 +1,6 @@
 {
   "project_id": "excel:Project:1:HRMS",
-  "generated_at": "2026-09-09T14:09:56.228093Z",
+  "generated_at": "2026-09-10T15:05:14.733205Z",
   "as_of": "2026-03-22T09:00:00",
   "findings": [
     {
@@ -101,8 +101,8 @@
       "headline_template": "QA has stalled: {{qa_blocked}} of {{qa_count}} test items are blocked.",
       "recommendation_template": "Clear the blocking dependency before adding more test scope - additional cases will queue behind the same cause.",
       "facts": {
-        "qa_count": "17",
-        "qa_blocked": "17"
+        "qa_blocked": "17",
+        "qa_count": "17"
       },
       "evidence": [],
       "causal_link": null,
@@ -460,10 +460,10 @@
   },
   "delivery_confidence": {
     "band": "medium",
-    "score": 0.6,
+    "score": 0.5234,
     "coverage": 0.6,
-    "freshness": 1,
-    "data_age_hours": 0,
+    "freshness": 0.8724,
+    "data_age_hours": 24.9,
     "precedent_available": false
   },
   "narrative": "What is at risk\nThere is significant delivery risk in this project. The plan cannot hold: 3 task(s) are dated earlier than their own dependencies allow, by up to 34 days. 3 milestone(s) sit behind work that cannot finish on its planned date. QA has stalled: 17 of 17 test items are blocked.\n\nWhy it is happening\nWBS-108 moved from 2026-03-04 to 2026-03-16; between 4 and 12 days later WBS-114 moved from 2026-03-20 to 2026-04-01. This is reported because a dependency stated in the schedule sheet connects the two tasks. The later event was observed by comparing two spreadsheet snapshots, so its timing is a range rather than a point - the order is still provable because the ranges do not overlap.\n\nWhat it will impact\nThe downstream impact is described above. Note that this projection depends on dependency edges inferred from the schedule's own dates rather than stated by a person; it should be confirmed before being quoted externally.\n\nWhat to do next\n1. Re-baseline the affected tasks or compress the driving path before the next steering review. 2. Raise the milestone date now, or move scope out of it - the current date is not supported by the schedule underneath it. 3. Clear the blocking dependency before adding more test scope - additional cases will queue behind the same cause.\n\nWhat this analysis could not use\nThe schedule conclusion changes if inferred dependencies are removed - 1 of 4 edges were derived from dates rather than stated by a person. 8 row(s) could not be read and were quarantined.",
@@ -478,7 +478,7 @@
     "tasks_not_started": 0,
     "tasks_with_baseline": 6,
     "baseline_coverage": 0.6,
-    "data_age_hours": 0.0013613377777777777,
+    "data_age_hours": 24.92316831333333,
     "tasks_inconsistent": 3,
     "max_propagated_days": 34,
     "max_recorded_slip_days": 12,

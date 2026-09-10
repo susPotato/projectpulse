@@ -1313,10 +1313,41 @@ def chat_custom_tile_api(body: TileChatRequest) -> TileChatResponse:
     on_screen = (
         CustomChartDraft(**body.draft.model_dump()) if body.draft is not None else None
     )
-    try:
-        return chat_turn(body.messages, on_screen, body.raw_data, drafter=_narrator())
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+    # The tool-use path (app/dashboard/agent.py) needs a raw ModelConfig, not
+    # just the Drafter closure _narrator() returns - and it is Anthropic-only,
+    # so it is only built when that is the configured provider. Any other
+    # provider, or no key at all, leaves agent_cfg None and chat_turn falls
+    # straight through to its existing plain-parse path. Model default
+    # resolved the same way drafter_for() resolves it - an empty cfg.model
+    # would otherwise reach the Anthropic SDK as model="".
+    from app.narration.providers import DEFAULT_MODELS, ModelConfig
+    from app.narration.store import load as load_narration
+
+    current = load_narration()
+    agent_cfg = (
+        ModelConfig(
+            model=current.model or DEFAULT_MODELS["anthropic"],
+            api_key=current.api_key,
+            base_url=current.base_url,
+        )
+        if current.enabled and current.provider == "anthropic"
+        else None
+    )
+
+    with session_scope() as session:
+        try:
+            return chat_turn(
+                body.messages,
+                on_screen,
+                body.raw_data,
+                drafter=_narrator(),
+                session=session,
+                project_id=body.scope_id,
+                agent_cfg=agent_cfg,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from None
 
 
 @app.get("/api/custom-tiles", response_model=CustomTileListBundle)

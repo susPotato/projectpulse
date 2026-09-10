@@ -635,6 +635,59 @@ const EffortBurnTile: ComponentType<TileProps> = ({ scopeId }) => {
   );
 };
 
+/* Real logged hours per person, compared against what was planned for them -
+   the answer to "track each employee's productivity" that does not require
+   anyone to paste a number: `/api/team` already computes `hours_logged` /
+   `hours_planned` per member from the worklog. One hue for the bar
+   (magnitude, `hours_logged`), a dashed reference tick at `hours_planned` -
+   not a second bar, which would read as a second series needing its own
+   legend for what is really one comparison per person. */
+const TeamEffortTile: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useBundle<TeamBundle>(
+    `/api/team?project=${encodeURIComponent(scopeId)}`,
+  );
+  const members = (bundle?.members ?? [])
+    .slice()
+    .sort((a, b) => b.hours_logged - a.hours_logged)
+    .slice(0, 8);
+  const maxHours = Math.max(1, ...members.map((m) => Math.max(m.hours_logged, m.hours_planned)));
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {members.length > 0 ? (
+        <div className="grid gap-2">
+          {members.map((m) => (
+            <div key={m.name} className="flex items-center gap-2">
+              <span className="w-[84px] shrink-0 truncate text-[11.5px] text-ink-2" title={m.name}>
+                {m.name}
+              </span>
+              <div className="relative h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
+                <div
+                  className="h-full rounded-sm bg-navy"
+                  style={{ width: `${Math.min(100, (m.hours_logged / maxHours) * 100)}%` }}
+                />
+                {m.hours_planned > 0 && (
+                  <div
+                    className="absolute top-0 h-full w-px bg-ink-3"
+                    style={{ left: `${Math.min(100, (m.hours_planned / maxHours) * 100)}%` }}
+                    title={`planned ${m.hours_planned}h`}
+                  />
+                )}
+              </div>
+              <span className="w-[70px] shrink-0 text-right text-[11px] text-ink-3">
+                {m.hours_logged}h / {m.hours_planned}h
+              </span>
+            </div>
+          ))}
+          <p className="m-0 text-[10.5px] text-ink-3">bar = logged, tick = planned</p>
+        </div>
+      ) : (
+        <p className="m-0 text-[12.5px] text-ink-3">No logged hours yet.</p>
+      )}
+    </TileShell>
+  );
+};
+
 /* ---- Custom tiles -------------------------------------------------------
    Keyed `custom:<id>`, not a fixed catalogue entry - `DashboardCanvas`
    special-cases the prefix and renders this directly rather than looking the
@@ -685,4 +738,5 @@ export const TILE_REGISTRY: Record<string, ComponentType<TileProps>> = {
   schedule_gantt: ScheduleGanttTile,
   delivery_forecast: DeliveryForecastTile,
   effort_burn: EffortBurnTile,
+  team_effort: TeamEffortTile,
 };
