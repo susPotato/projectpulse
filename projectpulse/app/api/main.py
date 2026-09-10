@@ -45,6 +45,8 @@ from app.api.schemas.dashboard import (
     GenerateRequest,
     TileIn,
     TileOut,
+    TileChatRequest,
+    TileChatResponse,
 )
 from app.api.schemas.team import TeamBundle
 from app.api.schemas.scenario import ScenarioBundle
@@ -1290,6 +1292,29 @@ def draft_custom_tile_api(body: CustomTileDraftRequest) -> CustomChartDraft:
 
     try:
         return draft_chart(body.raw_data, body.hint, drafter=_narrator())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+
+@app.post("/api/custom-tiles/chat", response_model=TileChatResponse)
+def chat_custom_tile_api(body: TileChatRequest) -> TileChatResponse:
+    """The tile builder, one turn at a time: describe a chart, look at it, say
+    what is wrong, look again.
+
+    Stateless - the conversation and the draft on screen both arrive in the
+    request, the same as `/api/agent/chat`. Unlike that route this one is not
+    free-form: the model only ever returns a `{title, chart_type, labels,
+    values}` object, validated before it reaches the response, and what the
+    transcript says about a turn is computed by diffing the two drafts rather
+    than taken from the model's own account of what it did."""
+    from app.api.schemas.dashboard import CustomChartDraft
+    from app.dashboard.custom import chat_turn
+
+    on_screen = (
+        CustomChartDraft(**body.draft.model_dump()) if body.draft is not None else None
+    )
+    try:
+        return chat_turn(body.messages, on_screen, body.raw_data, drafter=_narrator())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from None
 

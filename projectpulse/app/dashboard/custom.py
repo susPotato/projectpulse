@@ -16,6 +16,22 @@ Two parsers, tried in order:
 Both are parsers over data the person supplied. Neither computes a number -
 see `CustomTile`'s docstring for why this module is allowed to exist at all
 next to a codebase whose rule is "the model never produces a number."
+
+`chat_turn` then makes that a conversation rather than one shot: draft, look
+at it, say what is wrong, look again. Three rules hold it to the same
+standard as the one-shot path:
+
+* **The deterministic path goes first.** "make it a line chart" and "rename
+  it to Q3 spend" are exact operations, so `_local_revision` applies them
+  with no model and no network - the governing rule ("deterministic where
+  possible") reaching one layer further in. Only what it cannot match is
+  worth a call.
+* **The server diffs, the model does not narrate.** A revision regenerates
+  the whole chart, so a rename can come back having also moved a value.
+  `diff_drafts` compares the two drafts and `summarize` words the result, so
+  the transcript line cannot claim something the preview does not show.
+* **A failed turn keeps the previous draft.** The preview never blanks out
+  because a model returned nonsense; the turn is reported as not applied.
 """
 
 from __future__ import annotations
@@ -27,11 +43,14 @@ import re
 
 from sqlalchemy import select
 
+from app.api.schemas.agent import ChatMessage
 from app.api.schemas.dashboard import (
     ChartType,
     CustomChartDraft,
     CustomTileIn,
     CustomTileOut,
+    DraftChange,
+    TileChatResponse,
 )
 from app.models.dashboard import CustomTile
 from app.narration.client import Drafter
@@ -170,6 +189,276 @@ def draft_chart(
     raise ValueError(
         "narration is off, and this isn't a simple two-column table - "
         "paste 'label, value' pairs one per line, or turn narration on"
+    )
+
+
+# ---------------------------------------------------------------------------
+# The conversation: refine a draft by talking to it.
+# ---------------------------------------------------------------------------
+
+REVISE_SYSTEM_PROMPT = """You are helping a project manager refine one small \
+chart. You will be given the chart they are looking at now, the data it came \
+from, and what they have asked for.
+
+Respond with ONLY a single JSON object - no prose, no markdown fences - \
+shaped exactly like this:
+
+{"title": "...", "chart_type": "bar" | "line" | "pie", "labels": ["...", ...], "values": [1.0, ...]}
+
+Return the WHOLE chart every time, including the parts they did not ask you \
+to change - carry those through untouched.
+
+`labels` and `values` must be the same length. Every value must come from \
+the data given, from the current chart, or be a number the person stated \
+themselves in the conversation. Never invent a data point, never \
+extrapolate, never forecast, and never round to a "nicer" number - if they \
+ask for something the data cannot support, return the chart unchanged."""
+
+
+def _draft_json(draft: CustomChartDraft) -> str:
+    return json.dumps(
+        {
+            "title": draft.title,
+            "chart_type": draft.chart_type,
+            "labels": draft.labels,
+            "values": draft.values,
+        }
+    )
+
+
+def _revise_user_prompt(
+    messages: list[ChatMessage], draft: CustomChartDraft, raw_data: str | None
+) -> str:
+    parts = ["The chart they are looking at now:\n" + _draft_json(draft)]
+    if raw_data and raw_data.strip():
+        parts.append("\nThe data it was built from:\n" + raw_data.strip())
+    transcript = "\n".join(
+        ("PM: " if m.role == "user" else "You: ") + m.content.strip()
+        for m in messages
+        if m.content.strip()
+    )
+    parts.append("\nThe conversation so far:\n" + transcript)
+    return "\n".join(parts)
+
+
+#: Whole-message patterns only. A message that is *exactly* one of these is
+#: unambiguous, so it needs no model. Anything longer ("make it a line chart
+#: and drop February") deliberately falls through to the model rather than
+#: being half-applied here, which would silently ignore the rest of the ask.
+_CHART_TYPE_ONLY = re.compile(
+    r"^(?:please\s+)?"
+    r"(?:(?:make|change|switch|turn|set|show)\s+(?:it|this|the\s+chart)?\s*)?"
+    r"(?:(?:in)?to\s+|as\s+)?"
+    r"(?:a\s+|an\s+)?"
+    r"(bar|line|pie)"
+    r"(?:\s+chart|\s+graph)?"
+    r"\s*[.!]?\s*$",
+    re.IGNORECASE,
+)
+#: A rename needs an explicit target - "to X", "call it X", "title: X".
+#: Without that requirement "rename this please" reads as a rename to
+#: "please", which is worse than not matching at all: the fast path would
+#: confidently apply a title nobody asked for and never consult the model.
+_RENAME_ONLY = re.compile(
+    r"^(?:please\s+)?(?:rename|retitle)\s+(?:it|this|the\s+tile|the\s+chart)?"
+    r"\s*to\s+(.+?)\s*[.!]?\s*$"
+    r"|^(?:please\s+)?call\s+(?:it|this|the\s+tile|the\s+chart)\s+(.+?)\s*[.!]?\s*$"
+    r"|^title\s*[:=]\s*(.+?)\s*[.!]?\s*$",
+    re.IGNORECASE,
+)
+
+
+def _local_revision(message: str, draft: CustomChartDraft) -> CustomChartDraft | None:
+    """Apply an unambiguous whole-message command with no model at all.
+
+    Returns None when the message is anything else, which is most of the
+    time - this is a fast path for the two refinements people actually
+    repeat, not an attempt at parsing English."""
+    text = message.strip()
+    if not text:
+        return None
+
+    match = _CHART_TYPE_ONLY.match(text)
+    if match:
+        chart_type = match.group(1).lower()
+        if chart_type == draft.chart_type:
+            # Matched, but it is already that chart. Hand back the draft
+            # itself rather than None: the ask was understood, so the honest
+            # answer is "that changed nothing", not a model call that will
+            # arrive at the same place more slowly.
+            return draft
+        return draft.model_copy(
+            update={
+                "chart_type": chart_type,
+                "source": "local_edit",
+                "fallback_reason": None,
+            }
+        )
+
+    match = _RENAME_ONLY.match(text)
+    if match:
+        groups = [g for g in match.groups() if g]
+        title = (groups[0] if groups else "").strip().strip('"').strip("'")
+        if title:
+            return draft.model_copy(
+                update={
+                    "title": title,
+                    "source": "local_edit",
+                    "fallback_reason": None,
+                }
+            )
+        return None
+
+    return None
+
+
+def _join(labels: list[str]) -> str:
+    shown = labels[:3]
+    text = ", ".join(shown)
+    extra = len(labels) - len(shown)
+    return text + " and " + str(extra) + " more" if extra > 0 else text
+
+
+def _values_changed(before: CustomChartDraft, after: CustomChartDraft) -> int:
+    """How many rows present in both drafts carry a different value.
+
+    Positional when the label lists match exactly, which is the common case
+    and the only one where duplicate labels are unambiguous; by label
+    otherwise, so a reorder is not miscounted as every value moving."""
+    if before.labels == after.labels:
+        return sum(1 for old, new in zip(before.values, after.values) if old != new)
+    old_by_label = dict(zip(before.labels, before.values))
+    return sum(
+        1
+        for label, value in zip(after.labels, after.values)
+        if label in old_by_label and old_by_label[label] != value
+    )
+
+
+def diff_drafts(before: CustomChartDraft, after: CustomChartDraft) -> list[DraftChange]:
+    """What actually changed between two drafts, by comparison.
+
+    The only place a revision is put into words. Nothing here asks the model
+    what it did - see `DraftChange` for why that distinction is the point."""
+    changes: list[DraftChange] = []
+
+    if before.title != after.title:
+        changes.append(DraftChange(field="title", summary='renamed to "' + after.title + '"'))
+
+    if before.chart_type != after.chart_type:
+        changes.append(
+            DraftChange(
+                field="chart_type",
+                summary="chart type " + before.chart_type + " -> " + after.chart_type,
+            )
+        )
+
+    added = [label for label in after.labels if label not in before.labels]
+    removed = [label for label in before.labels if label not in after.labels]
+    if added:
+        changes.append(DraftChange(field="labels", summary="added " + _join(added)))
+    if removed:
+        changes.append(DraftChange(field="labels", summary="removed " + _join(removed)))
+    if not added and not removed and before.labels != after.labels:
+        changes.append(
+            DraftChange(
+                field="labels", summary="reordered " + str(len(after.labels)) + " rows"
+            )
+        )
+
+    moved = _values_changed(before, after)
+    if moved:
+        word = "1 value" if moved == 1 else str(moved) + " values"
+        changes.append(DraftChange(field="values", summary="changed " + word))
+
+    return changes
+
+
+def summarize(changes: list[DraftChange]) -> str:
+    """The assistant's transcript line, built from the computed diff."""
+    if not changes:
+        return "That left the chart unchanged."
+    return "Done - " + "; ".join(change.summary for change in changes) + "."
+
+
+def _opening_reply(draft: CustomChartDraft) -> str:
+    rows = "1 row" if len(draft.labels) == 1 else str(len(draft.labels)) + " rows"
+    lead = 'Drafted "' + draft.title + '" as a ' + draft.chart_type + " chart from " + rows + "."
+    if draft.source == "csv_fallback":
+        reason = " (" + draft.fallback_reason + ")" if draft.fallback_reason else ""
+        return "Read your data as a plain table" + reason + ", so check the numbers. " + lead
+    return lead + " Tell me what to change."
+
+
+def _last_user_message(messages: list[ChatMessage]) -> str:
+    for message in reversed(messages):
+        if message.role == "user":
+            return message.content
+    return ""
+
+
+def chat_turn(
+    messages: list[ChatMessage],
+    draft: CustomChartDraft | None,
+    raw_data: str | None,
+    *,
+    drafter: Drafter | None,
+) -> TileChatResponse:
+    """One turn: draft a chart if there isn't one, otherwise revise it.
+
+    Raises `ValueError` only on the opening turn, when there is nothing to
+    build a chart from - the route turns that into a 400. Every later turn
+    returns a response carrying at worst the draft it was given, because
+    blanking someone's chart is never the right answer to a sentence the
+    model could not parse."""
+    asked = _last_user_message(messages).strip()
+    if not asked:
+        raise ValueError("say what you want the tile to show")
+
+    if draft is None:
+        # Nothing on screen yet - this is the one-shot path, reused whole.
+        # Their message is the hint when they also pasted data, and is itself
+        # the data when they did not.
+        has_data = bool(raw_data and raw_data.strip())
+        opening = draft_chart(
+            raw_data if has_data else asked,
+            asked if has_data else None,
+            drafter=drafter,
+        )
+        return TileChatResponse(
+            draft=opening, changes=[], reply=_opening_reply(opening), ok=True
+        )
+
+    # Deterministic first: an exact command needs no model, and cannot drift
+    # a number on its way through one.
+    revised = _local_revision(asked, draft)
+
+    if revised is None and drafter is not None:
+        try:
+            raw = drafter(
+                REVISE_SYSTEM_PROMPT, _revise_user_prompt(messages, draft, raw_data)
+            )
+            parsed = _parse_model_json(raw)
+            candidate = _validate_draft(parsed) if parsed is not None else None
+        except Exception:  # noqa: BLE001 - any provider failure is a failed turn
+            candidate = None
+        if candidate is not None:
+            revised = candidate
+
+    if revised is None:
+        reason = (
+            "I could not turn that into a change to this chart. Try naming the "
+            "row you mean, or edit the numbers directly below."
+            if drafter is not None
+            else "Narration is off, so I can only switch the chart type or "
+            "rename the tile. Edit the rows directly below, or turn narration "
+            "on in Settings."
+        )
+        return TileChatResponse(draft=draft, changes=[], reply=reason, ok=False, error=reason)
+
+    changes = diff_drafts(draft, revised)
+    return TileChatResponse(
+        draft=revised, changes=changes, reply=summarize(changes), ok=True
     )
 
 

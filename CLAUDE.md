@@ -2,7 +2,9 @@
 
 Read this first. It is the handoff between sessions.
 
-**Last updated:** 2026-09-10 (Program/Project canvas dashboards, AI tile generation, custom
+**Last updated:** 2026-09-10 (the AI tile builder - a conversational custom-tile
+chat with live preview; the venv/smoke/hook repairs that unblocked it; Program/Project
+canvas dashboards, AI tile generation, custom
 charts — deployed and seeded live; navigation fixed and redeployed)
 
 **Resuming on another machine:** `git pull`, then recreate `projectpulse/.env` from
@@ -18,6 +20,115 @@ login` before `fly deploy` will work from there.
 ---
 
 ## 0. This session — 2026-09-10, read this before anything else in the file below
+
+**Later the same day, on a second machine - the AI tile builder, plus the
+environment repairs that had to happen first. Read this before the rest of
+section 0.**
+
+**The tile builder is now a conversation, not one shot.** `Custom Tile` used
+to be: paste data, get one draft, edit the rows by hand, save. It is now
+describe -> preview -> "make it a line chart" -> preview -> "rename it to Q3
+Burn" -> save, with the chart on screen the whole time. `POST
+/api/custom-tiles/chat` (`custom.chat_turn`), stateless like
+`/api/agent/chat` - the conversation and the draft on screen both ride in the
+request. Verified end to end in a real browser: three turns, save, and the
+tile lands on the canvas.
+
+Three rules hold it to the same standard as the rest of the app, and each has
+a test:
+
+- **The deterministic path runs first.** `_local_revision` applies an exact
+  whole-message command ("make it a line chart", "rename it to X",
+  "title: X") with **no model and no network** - the governing rule reaching
+  one layer further in. `test_a_chart_type_switch_never_reaches_the_model`
+  passes a drafter that raises if called. Consequence worth knowing: **the
+  whole builder demos with no API key at all** - draft from a pasted table,
+  switch chart type, rename, save. Only open-ended asks ("sort highest
+  first", "drop February") need a model.
+  - The patterns are **whole-message only**, on purpose. "make it a line
+    chart and drop February" deliberately falls through to the model:
+    applying the half a regex understands would silently ignore the rest.
+- **The server diffs; the model does not narrate.** Every assistant line in
+  the transcript is composed by `diff_drafts` + `summarize` from a comparison
+  of the two drafts. A revision regenerates the *whole* chart, so a rename
+  can come back with a value quietly altered - and a model saying "renamed
+  it" would hide exactly that. The transcript instead reads `Done - renamed
+  to "Q3 Spend"; changed 1 value.` This is `assembler.py`'s discipline
+  (structure in, one place words it) applied to a generative surface, and it
+  is the thing to demo to a judge.
+  `test_the_transcript_reports_a_value_the_model_moved_without_being_asked`
+  is the one to keep.
+- **A failed turn keeps the draft that was on screen.** Bad JSON, a mismatched
+  length, an unknown chart type, a dead socket - all return the *previous*
+  draft with `ok: false` and a reason. `narration/fallback.py`'s "never a
+  blank page", applied here.
+
+⚠️ **`CustomChartDraftIn` exists to stop an `-Input`/`-Output` schema split.**
+Reusing `CustomChartDraft` (a `base.Response`, which marks defaulted fields
+required on the way out) as a *request* field makes FastAPI emit two schemas
+for it, and `openapi-typescript` then writes them quoted as
+`"CustomChartDraft-Input"`. That was the only such split in the whole API and
+`test_the_generated_types_match_the_live_schema` failed on it - correctly.
+The fix is the `In`/`Out` split `schemas/dashboard.py`'s own docstring already
+names. **Do not "simplify" it back into one model.**
+
+⚠️ **A saved custom tile's `Custom` badge was invisible, and that is the
+honesty label, not decoration.** The modal added tiles at `h: 3` = 124px of
+body; the badge and the person's source note sit under the chart and landed
+~49px below the fold of the tile's own scroll area - present in the DOM,
+unreadable on the canvas, and `pytest` plus `npm run smoke` both green.
+`CUSTOM_SLOT` is now `{w: 4, h: 5}`. Found by driving a real browser, which
+is the only thing that could have found it. The tile also now carries the
+person's own first message as `source_note`, so the provenance
+`CustomTile`'s docstring promises is actually populated rather than `None`.
+
+Smaller, deliberate: the preview prints its rows as `Jan 12,000  Feb 15,500`
+under the chart, because `MiniChart` is a sparkline with no axis and a line
+with no labels cannot be checked - and this panel exists to be checked before
+the tile is saved. Preset chips **fill the box rather than send**, the same
+choice the Agent tab made.
+
+**Environment repairs on this machine, all of which had to come first:**
+
+- ⚠️ **The suite was 14 failed / 29 errors on arrival, from one missing
+  package.** `python-multipart` was absent from the venv. FastAPI needs it at
+  *app construction* when any route uses `File`/`Form` (the upload feature),
+  so every `TestClient` test errored, not just the upload ones. It **is**
+  declared in `pyproject.toml` with a comment predicting this - it was venv
+  drift, the "check `pip list` against `pyproject.toml` after any rebuild"
+  gotcha. A judge running `pip install -e .` was never affected.
+- ⚠️ **`npm run smoke` was broken two ways, and the second was a real
+  defect.** `vite-node` was invoked by the script and had never been a
+  dependency (now added). Once it ran, it failed on `api.ts` reading
+  `window.location.search` unguarded - so **no page calling `withProject()`
+  could render server-side and the entire check had been dead**, not merely
+  unrunnable. `searchParams()` / `storage()` now degrade to "nothing
+  selected" without a DOM, which every caller already handles. All three
+  load-bearing checks (`pytest`, `npm run build`, `npm run smoke`) are green
+  again: **678 passed, 1 skipped**.
+- **The secret-leak `pre-commit` hook was reinstalled.** Hooks are not tracked
+  by git, so it does not survive a clone - and a live key has been pasted into
+  `.env.example` twice now, in two different sessions. Verified against both
+  a fake leak (blocked) and a clean template (passed). **Recreate it on any
+  new machine**; the source is in `.git/hooks/pre-commit`.
+- `.env` was recreated from the template with `PULSE_NARRATION_PROVIDER=
+  anthropic` and **a blank `ANTHROPIC_API_KEY`** - fill it in to exercise the
+  model paths from here. `flyctl` is **not installed** on this machine, so no
+  deploy from here without `fly auth login` first.
+
+⚠️ **Open, and the best-value fix left in the code: a fresh `scripts.replay`
+leaves both canvas dashboards empty.** `service.get_dashboard` auto-creates a
+*blank* one on first look, which is right for a new scope in production and
+wrong for a seeded demo. The live Fly deploy is fine - its dashboards were
+built interactively and persist in Neon (`/api/dashboards?scope_type=program
+&scope_id=excel:Program:1:DEFAULT` returns the `it_portfolio_dashboard`
+layout) - but **a judge who clones and runs the documented path sees the app's
+biggest feature as a blank canvas.** Fix belongs in `replay` (apply
+`it_portfolio_dashboard` to the program and a layout to HRMS), not in
+`get_dashboard`, so production behaviour stays honest. Perhaps 20 minutes.
+
+
+---
 
 **Everything below this point, including the 2026-09-08 section, is superseded where it
 disagrees with this one.** Round 1 code is due **2026-09-11 — tomorrow.**

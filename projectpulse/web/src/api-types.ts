@@ -967,6 +967,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/custom-tiles/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Chat Custom Tile Api
+         * @description The tile builder, one turn at a time: describe a chart, look at it, say
+         *     what is wrong, look again.
+         *
+         *     Stateless - the conversation and the draft on screen both arrive in the
+         *     request, the same as `/api/agent/chat`. Unlike that route this one is not
+         *     free-form: the model only ever returns a `{title, chart_type, labels,
+         *     values}` object, validated before it reaches the response, and what the
+         *     transcript says about a turn is computed by diffing the two drafts rather
+         *     than taken from the model's own account of what it did.
+         */
+        post: operations["chat_custom_tile_api_api_custom_tiles_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/custom-tiles": {
         parameters: {
             query?: never;
@@ -1371,9 +1399,42 @@ export interface components {
              * Source
              * @enum {string}
              */
-            source: "ai" | "csv_fallback";
+            source: "ai" | "csv_fallback" | "local_edit";
             /** Fallback Reason */
             fallback_reason: string | null;
+        };
+        /**
+         * CustomChartDraftIn
+         * @description The draft as it arrives from the browser, echoed back with each turn.
+         *
+         *     A near-copy of `CustomChartDraft` on purpose, and the `In`/`Out` split
+         *     this module's docstring already names. Reusing the response model as a
+         *     request field would be shorter by five lines and would make FastAPI emit
+         *     two schemas for it (`-Input` / `-Output`, since `base.Response` marks
+         *     defaulted fields required on the way out) - the only such split in the
+         *     whole API. It also draws a line worth drawing: this one is untrusted
+         *     input a person's browser sent, the other is what the server computed.
+         */
+        CustomChartDraftIn: {
+            /** Title */
+            title: string;
+            /**
+             * Chart Type
+             * @enum {string}
+             */
+            chart_type: "bar" | "line" | "pie";
+            /** Labels */
+            labels?: string[];
+            /** Values */
+            values?: number[];
+            /**
+             * Source
+             * @default ai
+             * @enum {string}
+             */
+            source: "ai" | "csv_fallback" | "local_edit";
+            /** Fallback Reason */
+            fallback_reason?: string | null;
         };
         /** CustomTileDraftRequest */
         CustomTileDraftRequest: {
@@ -1520,6 +1581,27 @@ export interface components {
              * @default false
              */
             precedent_available: boolean;
+        };
+        /**
+         * DraftChange
+         * @description One difference between the draft a person was looking at and the one
+         *     they got back.
+         *
+         *     Computed by comparing the two drafts - never reported by the model. That
+         *     is the whole point: a revision regenerates the entire chart, so a request
+         *     to rename the tile can come back having also moved a value, and prose
+         *     from the model saying "renamed it" would hide that. The transcript line
+         *     the person reads is composed from these, so what the chat says and what
+         *     the preview shows cannot disagree.
+         */
+        DraftChange: {
+            /**
+             * Field
+             * @enum {string}
+             */
+            field: "title" | "chart_type" | "labels" | "values";
+            /** Summary */
+            summary: string;
         };
         /**
          * EvidenceRef
@@ -2684,6 +2766,36 @@ export interface components {
              * @default false
              */
             has_effort_data: boolean;
+        };
+        /**
+         * TileChatRequest
+         * @description One turn of the tile-builder conversation. Stateless server-side: the
+         *     whole exchange rides on the wire, the same as `agent.ChatRequest`.
+         */
+        TileChatRequest: {
+            /** Messages */
+            messages?: components["schemas"]["ChatMessage"][];
+            draft?: components["schemas"]["CustomChartDraftIn"] | null;
+            /** Raw Data */
+            raw_data?: string | null;
+        };
+        /** TileChatResponse */
+        TileChatResponse: {
+            draft: components["schemas"]["CustomChartDraft"];
+            /** Changes */
+            changes: components["schemas"]["DraftChange"][];
+            /**
+             * Reply
+             * @default
+             */
+            reply: string;
+            /**
+             * Ok
+             * @default true
+             */
+            ok: boolean;
+            /** Error */
+            error: string | null;
         };
         /**
          * TileIn
@@ -4087,6 +4199,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CustomChartDraft"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chat_custom_tile_api_api_custom_tiles_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TileChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TileChatResponse"];
                 };
             };
             /** @description Validation Error */

@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from app.api.schemas.agent import ChatMessage
 from app.api.schemas.base import Response
 
 Scope = Literal["program", "project"]
@@ -104,10 +105,78 @@ class CustomChartDraft(Response):
     values: list[float] = Field(default_factory=list)
     #: How the draft was produced - shown so a fallback parse (no model, or
     #: the model's JSON didn't validate) is never presented as the model's
-    #: own read of the data.
-    source: Literal["ai", "csv_fallback"]
-    #: Set only when `source == "csv_fallback"`: why the model wasn't used.
+    #: own read of the data. `local_edit` is a refinement applied by
+    #: `custom._local_revision` without asking a model at all.
+    source: Literal["ai", "csv_fallback", "local_edit"]
+    #: Set only when the model was not what produced this: why not.
     fallback_reason: str | None = None
+
+
+class DraftChange(Response):
+    """One difference between the draft a person was looking at and the one
+    they got back.
+
+    Computed by comparing the two drafts - never reported by the model. That
+    is the whole point: a revision regenerates the entire chart, so a request
+    to rename the tile can come back having also moved a value, and prose
+    from the model saying "renamed it" would hide that. The transcript line
+    the person reads is composed from these, so what the chat says and what
+    the preview shows cannot disagree.
+    """
+
+    field: Literal["title", "chart_type", "labels", "values"]
+    #: Already formatted for display - one clause, e.g. `chart type bar ->
+    #: line`. Built in `custom.diff_drafts`, the only place that words these.
+    summary: str
+
+
+class CustomChartDraftIn(Response):
+    """The draft as it arrives from the browser, echoed back with each turn.
+
+    A near-copy of `CustomChartDraft` on purpose, and the `In`/`Out` split
+    this module's docstring already names. Reusing the response model as a
+    request field would be shorter by five lines and would make FastAPI emit
+    two schemas for it (`-Input` / `-Output`, since `base.Response` marks
+    defaulted fields required on the way out) - the only such split in the
+    whole API. It also draws a line worth drawing: this one is untrusted
+    input a person's browser sent, the other is what the server computed.
+    """
+
+    title: str
+    chart_type: ChartType
+    labels: list[str] = Field(default_factory=list)
+    values: list[float] = Field(default_factory=list)
+    source: Literal["ai", "csv_fallback", "local_edit"] = "ai"
+    fallback_reason: str | None = None
+
+
+class TileChatRequest(Response):
+    """One turn of the tile-builder conversation. Stateless server-side: the
+    whole exchange rides on the wire, the same as `agent.ChatRequest`."""
+
+    messages: list[ChatMessage] = Field(default_factory=list)
+    #: What the person is currently looking at, echoed back so a revision is
+    #: applied to the draft on their screen rather than to one the server
+    #: guessed at. `None` on the opening turn.
+    draft: CustomChartDraftIn | None = None
+    #: The data they pasted, if any - kept out of the message list so it stays
+    #: the source of truth for every later turn, not just the first.
+    raw_data: str | None = None
+
+
+class TileChatResponse(Response):
+    #: Always populated. A revision that cannot be applied returns the
+    #: PREVIOUS draft rather than nothing, so the preview never blanks out
+    #: mid-conversation - `narration/fallback.py`'s "never a blank page" rule
+    #: applied to this surface.
+    draft: CustomChartDraft
+    changes: list[DraftChange] = Field(default_factory=list)
+    #: The assistant's line in the transcript, composed from `changes`.
+    reply: str = ""
+    #: False when the turn changed nothing because it could not be applied -
+    #: `error` then says why, and `draft` is unchanged.
+    ok: bool = True
+    error: str | None = None
 
 
 class CustomTileIn(Response):

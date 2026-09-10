@@ -30,6 +30,7 @@ import { InsightView } from "../src/pages/Insight";
 import { PortfolioView } from "../src/pages/Portfolio";
 import { TeamView } from "../src/pages/Team";
 import { ReportsView } from "../src/pages/Reports";
+import { CustomTileModal } from "../src/components/CustomTileModal";
 
 function read<T>(name: string): T {
   const path = new URL(`./${name}.json`, import.meta.url);
@@ -232,6 +233,34 @@ const cases: Array<[string, string, string[]]> = [
       "What this analysis could not use",
     ],
   ],
+  [
+    // The AI tile builder, in the state it opens in. It holds its draft and
+    // transcript in component state, so what this can reach is the opening
+    // screen - enough to catch the crash-on-mount and missing-copy class of
+    // bug, which is what has actually bitten these pages before. The turn
+    // logic itself is covered where it lives, in `tests/test_dashboard.py`.
+    "CustomTileModal",
+    renderToString(
+      <CustomTileModal
+        scopeType="project"
+        scopeId="excel:Project:1:HRMS"
+        existingTiles={[]}
+        onClose={() => {}}
+        onAdded={() => {}}
+      />,
+    ),
+    [
+      "Custom Tile",
+      "Build with AI",
+      "My Custom Tiles",
+      "Paste your data",
+      // The honesty line: this surface reads and rearranges, it does not
+      // author numbers. If it disappears, the exception stops being labelled.
+      "The numbers stay yours",
+      // The composer, in its pre-draft wording.
+      "Draft it",
+    ],
+  ],
 ];
 
 let failed = 0;
@@ -244,7 +273,9 @@ for (const [name, html, needles] of cases) {
     console.log(`  ${found ? "FOUND   " : "MISSING "}${needle}`);
   }
   // A view that renders an empty shell is a silent failure, not a pass.
-  if (html.length < 2000) {
+  // The modal is a dialog rather than a page, so it clears a lower bar.
+  const floor = name === "CustomTileModal" ? 1200 : 2000;
+  if (html.length < floor) {
     failed += 1;
     console.log("  TOO SHORT - the view rendered almost nothing");
   }

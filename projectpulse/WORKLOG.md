@@ -947,7 +947,8 @@ _A small local console for watching the retriever work._
 
 - **`class SyncRequest`** - 
 - **`class StepRequest`** - 
-- `index()` - 
+- `index()` - The landing page: the Program board, worst project first.
+- `console_page()` - The retriever console: what was read, what was refused, what changed.
 - `state()` - Everything the console renders, in one round trip.
 - `sync(request)` - The same call the scheduler and the PM's button make.
 - `write_step(request)` - Overwrite the demo workbooks at a given point in their story.
@@ -968,9 +969,13 @@ _A small local console for watching the retriever work._
 - `report(project, also, template, section)` - The status report, as a .docx a PM can attach to an email.
 - `portfolio_page()` - The program screen. Same bundle as /insight; the app picks by path.
 - `portfolio_api()` - Every delivery project in the program, ranked worst first.
+- `programs_page()` - The Programs list. Same shell as every other page; the app picks by path.
+- `programs_api()` - Every Program, with a project count and its worst project's band.
+- `program_detail_api(program_id)` - One program's cross-project rollup: ranked projects, resources, and
 - `team_page()` - Who is carrying what, and what moved.
 - `team(project, also)` - Workload, effort and activity, from columns the sheets actually carry.
 - `program()` - Program configuration: watched sources, project pairing, the rule table.
+- `upload_source(file, sheet_kind, project_name, project_id)` - Ingest one Excel sheet for a project, from a file picked in the browser.
 - `scenarios(project, also)` - What the schedule would do if one thing changed.
 - **`class NarrationSettingsIn`** - What the settings page may change.
 - `settings_page()` - Where a person turns narration on and pastes a key.
@@ -982,6 +987,23 @@ _A small local console for watching the retriever work._
 - `create_risk_route(body)` - 
 - `update_risk_route(risk_id, body)` - 
 - `delete_risk_route(risk_id)` - 
+- `program_dashboard_page()` - The Program canvas. Same shell as every other page; picked by path.
+- `project_dashboard_page()` - The Project canvas. Same shell as every other page; picked by path.
+- `dashboard_catalogue_api()` - 
+- `get_dashboard_api(scope_type, scope_id)` - 
+- `reset_dashboard_api(scope_type, scope_id)` - 
+- `apply_template_api(scope_type, scope_id, template)` - 
+- `generate_dashboard_api(body)` - Create with AI: the model picks tiles from the catalogue, never data.
+- `draft_custom_tile_api(body)` - Parse pasted data into a chart - not saved yet. Reuses whichever
+- `chat_custom_tile_api(body)` - The tile builder, one turn at a time: describe a chart, look at it, say
+- `list_custom_tiles_api()` - 
+- `create_custom_tile_api(body)` - 
+- `get_custom_tile_api(tile_id)` - 
+- `delete_custom_tile_api(tile_id)` - 
+- `add_tile_api(scope_type, scope_id, data)` - 
+- `update_tile_api(tile_id, data)` - 
+- `duplicate_tile_api(tile_id)` - 
+- `delete_tile_api(tile_id)` - 
 - `agent_page()` - Free-form chat - the one page with no deterministic engine behind it.
 - `agent_chat(body)` - One reply, given the whole conversation so far.
 - `insight(project, also)` - The whole intelligence layer for one project, as one object.
@@ -997,6 +1019,26 @@ _The Agent chat contract - free-form, unlike every other bundle here._
 _The base every response model uses._
 
 - **`class Response`** - A model that is only ever serialised outward.
+
+### `app/api/schemas/dashboard.py`
+_The dashboard canvas: the tile catalogue, and saved layouts._
+
+- **`class TileSpecOut`** - One entry in the catalogue - what "+ Add Tiles" lists.
+- **`class CatalogueBundle`** - 
+- **`class TileIn`** - Create or move/resize one tile. All-optional so a PATCH can send only
+- **`class TileOut`** - 
+- **`class DashboardIn`** - 
+- **`class DashboardOut`** - 
+- **`class GenerateRequest`** - 
+- **`class CustomTileDraftRequest`** - 
+- **`class CustomChartDraft`** - A proposed `{title, chart_type, labels, values}` - not saved yet. The
+- **`class DraftChange`** - One difference between the draft a person was looking at and the one
+- **`class CustomChartDraftIn`** - The draft as it arrives from the browser, echoed back with each turn.
+- **`class TileChatRequest`** - One turn of the tile-builder conversation. Stateless server-side: the
+- **`class TileChatResponse`** - 
+- **`class CustomTileIn`** - 
+- **`class CustomTileOut`** - 
+- **`class CustomTileListBundle`** - 
 
 ### `app/api/schemas/explain.py`
 _The contract for "show me the arithmetic"._
@@ -1048,6 +1090,15 @@ _Program-level configuration, read-only._
 - **`class RuleRow`** - One row of the decision table, as a reader would challenge it.
 - **`class ProgramBundle`** - 
 
+### `app/api/schemas/programs.py`
+_The Program level: the list of programs, and one program's rollup._
+
+- **`class ProgramSummary`** - One row on the Programs list (`Layout_Program` image12).
+- **`class ProgramListBundle`** - 
+- **`class ResourceRow`** - One person's allocation on one project within the program.
+- **`class ResourceConflict`** - One person allocated over 100% combined, across this program's projects.
+- **`class ProgramRollupBundle`** - Everything the Program dashboard's cross-project tiles read from.
+
 ### `app/api/schemas/report.py`
 _The report builder's contract: what can be chosen, and what it will produce._
 
@@ -1088,6 +1139,44 @@ _Who is carrying what, and what has moved - from data the sheets actually have._
 _Runtime configuration._
 
 - **`class Settings`** - 
+
+### `app/dashboard/catalogue.py`
+_The tile catalogue: what a Program or Project dashboard can be built from._
+
+- **`class TileSpec`** - 
+- `for_scope(scope)` - 
+
+### `app/dashboard/custom.py`
+_Custom tiles: parse a person's own pasted data into a chart, never invent one._
+
+- `draft_chart(raw_data, hint, *, drafter)` - Returns a draft, or raises `ValueError` when nothing could make sense
+- `diff_drafts(before, after)` - What actually changed between two drafts, by comparison.
+- `summarize(changes)` - The assistant's transcript line, built from the computed diff.
+- `chat_turn(messages, draft, raw_data, *, drafter)` - One turn: draft a chart if there isn't one, otherwise revise it.
+- `create_custom_tile(session, data)` - 
+- `list_custom_tiles(session)` - 
+- `get_custom_tile(session, tile_id)` - 
+- `delete_custom_tile(session, tile_id)` - 
+
+### `app/dashboard/generator.py`
+_The AI Dashboard Generator: a prompt selects tiles, it never invents them._
+
+- `generate_layout(prompt, scope_type, scope_id, *, drafter)` - Returns `(tile_keys, fallback_reason)`. `fallback_reason` is `""` when
+
+### `app/dashboard/service.py`
+_CRUD for dashboard layouts and tiles, and the catalogue they draw from._
+
+- `auto_layout(tile_keys)` - Pack tiles left-to-right, wrapping at `GRID_COLS` - used by Blank/
+- `get_catalogue()` - 
+- `get_dashboard(session, scope_type, scope_id)` - 
+- `replace_dashboard(session, scope_type, scope_id, *, name, source, ai_prompt, tiles)` - Reset this scope's dashboard: new name/source, and a fresh tile set.
+- `reset_blank(session, scope_type, scope_id)` - Blank Canvas: an empty dashboard, ready for "+ Add Tiles".
+- `apply_template(session, scope_type, scope_id, template)` - Browse Templates: one of the canned starter sets in `catalogue.TEMPLATES`.
+- `generate(session, scope_type, scope_id, prompt, drafter)` - Create with AI: the generator picks tiles, this places and saves them.
+- `add_tile(session, scope_type, scope_id, data)` - 
+- `update_tile(session, tile_id, data)` - Merge only the fields the request actually set - move, resize, or
+- `duplicate_tile(session, tile_id)` - 
+- `delete_tile(session, tile_id)` - 
 
 ### `app/db.py`
 _Engine, session, and schema creation._
@@ -1217,6 +1306,8 @@ _Turn two spreadsheet snapshots into state changes._
 ### `app/ingest/sources/excel/source.py`
 _The Excel source: which workbooks we watch, and what each sheet means._
 
+- `all_watched()` - Every sheet this source reads: the demo seed, plus anything uploaded
+- `register_watched(file_name, kind, project_id)` - Start watching one more sheet, keyed by its logical file name.
 - `run_excel_sync(session, *, connection_id, now, sync_run_id, data_root, sheet_source)` - Ingest every watched sheet that is present.
 
 ### `app/ingest/sources/excel/transport.py`
@@ -1305,6 +1396,8 @@ _Run the whole intelligence layer for one project and return one bundle._
 - `analyze_project(session, *, project_id, also, as_of, generated_at, table, engine, narrator)` - Everything the insight screen needs for one project.
 - `explain_project(session, *, project_id, also)` - The schedule arithmetic for one project, ready to serve.
 - `portfolio(session)` - Every delivery project in the program, ranked worst first.
+- `list_programs(session)` - Every Program, each with its own ranked projects.
+- `program_rollup(session, program_id)` - One program's cross-project rollup: ranked projects, resources, and
 - `program_config(session)` - What the retriever reads, how projects are paired, and the rule table.
 - `team_project(session, *, project_id, also)` - Who is carrying what, and what moved - from real sheet columns only.
 - `scenarios_project(session, *, project_id, also)` - Recovery scenarios for one project.
@@ -1416,6 +1509,13 @@ _Declarative base and the audit/provenance mixins every table inherits._
 - **`class Timestamped`** - 
 - **`class DomainEntity`** - A vendor-neutral row keyed by :func:`app.ids.domain_id`.
 
+### `app/models/dashboard.py`
+_A saved canvas layout: which tiles, where, on a Program or Project dashboard._
+
+- **`class Dashboard`** - 
+- **`class DashboardTile`** - 
+- **`class CustomTile`** - A person's own chart, drafted from data they pasted in - never from
+
 ### `app/models/domain.py`
 _The domain layer: one vendor-neutral model, whatever the source system was._
 
@@ -1523,6 +1623,8 @@ _CRUD for the risk register, and the heat-map built from it._
 _Which source ids are one delivery project._
 
 - **`class DeliveryProject`** - One project as a delivery manager thinks of it, whatever fed it. - methods: `source_ids`
+- `all_projects()` - Every delivery project: the built-in demo, plus anything registered
+- `register(canonical_id, name, also)` - Add a project, or update its pairing/name if the id already exists.
 - `find(canonical_id)` - 
 - `also_for(canonical_id)` - The other source ids for this project, for `analyze_project(also=...)`.
 
@@ -1556,6 +1658,11 @@ _Generate Jira-shaped JSON for the demo, in place of a live Jira connection._
 - `build_search_response()` - The HRMS board, with the change history that makes ordering possible.
 - `main()` - 
 
+### `scripts/gen_portfolio_data.py`
+_Write the two supporting delivery projects that make the portfolio real._
+
+- `main()` - 
+
 ### `scripts/index_code.py`
 _Regenerate the function index in WORKLOG.md._
 
@@ -1583,6 +1690,11 @@ _Build the whole demo from nothing, in one command._
 
 - `sqlite_file_to_remove(target, *, postgres)` - The SQLite file this run is about to rebuild, if any.
 - `run(args, env)` - 
+- `main()` - 
+
+### `scripts/seed_extras.py`
+_Seed the two things no source system produces: a second Program, and_
+
 - `main()` - 
 
 ### `scripts/serve.py`
