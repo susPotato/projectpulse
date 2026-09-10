@@ -7,19 +7,22 @@
   `app/models/dashboard.py` for why that is a deliberate, labelled exception
   rather than an oversight.
 
-  Three things here are deliberate and worth not undoing:
+  The layout: **conversation on the left, one stage on the right.** The stage
+  is sticky and shows the tile inside a mock window frame, so what a PM is
+  approving looks like the thing that will land on their dashboard rather
+  than a chart floating in a form. Every answer still leaves a numbered
+  version in the transcript, and clicking one shows it on the stage - so the
+  history is navigable instead of merely visible, and a PM can compare v1
+  against v3 before saving.
 
-  * **Every turn shows its own chart, in the transcript.** Not one preview
-    panel that silently mutates: each answer carries the chart as it stood
-    after that instruction, so the conversation is a visual history and a PM
-    can see which sentence caused which change. The newest one is live (hand
-    edits flow into it); the ones above it are the record.
+  Two things are deliberate and worth not undoing:
+
   * **The assistant's lines are not written by the model.** Every reply is
     composed server-side from a diff of the two drafts
     (`custom.diff_drafts`), so a turn cannot claim a rename while quietly
-    having moved a value. The chat and the chart under it are one fact.
-  * **The preview never blanks out.** A turn that could not be applied comes
-    back carrying the previous draft with `ok: false`, so the chart on screen
+    having moved a value. The chat and the stage are one fact.
+  * **The stage never blanks out.** A turn that could not be applied comes
+    back carrying the previous draft with `ok: false`, so the tile on screen
     survives a model that returned nonsense.
 */
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -48,6 +51,8 @@ interface Turn {
   /** The chart as it stood after this turn. Answers only. */
   draft?: CustomChartDraft;
   changes?: DraftChange[];
+  /** 1-based, counting only answers that produced a chart. */
+  version?: number;
   /** False when the turn was understood but could not be applied. */
   ok?: boolean;
 }
@@ -90,72 +95,89 @@ function sourceBadge(draft: CustomChartDraft): { label: string; tone: string } {
   return { label: "Read as a table", tone: "text-amber bg-amber/15" };
 }
 
+/*
+  `MiniChart` is a 260x64 sparkline with `preserveAspectRatio="none"`, so it
+  grows to whatever height its box allows - ~150px at this width, which is
+  why every height here is pinned rather than left to the intrinsic ratio.
+  Never applied to a pie: that branch returns a fixed square plus a legend
+  rather than a stretchable svg, and a fixed height would only clip it.
+*/
+function chartBox(chartType: ChartType, height: string) {
+  return chartType === "pie" ? "" : `${height} [&>svg]:h-full`;
+}
+
 /**
- * The chart one turn produced, rendered inside the transcript.
+ * The stage: the tile as it will appear on the dashboard, in a mock window.
  *
- * `current` marks the newest one: it gets a live border and reflects hand
- * edits, while the ones above it stay as they were, so the history is a
- * record rather than several copies of the latest state.
+ * The frame is not decoration. A PM approving a tile is approving a thing
+ * that will sit on a canvas beside the computed tiles, so the preview shows
+ * it with the chrome and the `Custom` label it will actually carry there -
+ * including the label, because a custom tile's numbers are the person's own
+ * and the canvas says so.
  */
-function TurnPreview({
+function TileStage({
   draft,
   changes,
-  current,
+  note,
+  version,
+  isCurrent,
+  onBackToCurrent,
 }: {
   draft: CustomChartDraft;
   changes?: DraftChange[];
-  current: boolean;
+  note: string | null;
+  version?: number;
+  isCurrent: boolean;
+  onBackToCurrent: () => void;
 }) {
   const badge = sourceBadge(draft);
   return (
-    <div
-      className={`mt-1 rounded-lg border p-3 ${
-        current ? "border-navy/50 bg-bg/60" : "border-rule bg-bg/25"
-      }`}
-    >
+    <div>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="min-w-0 truncate text-[12.5px] font-semibold text-ink">
-          {draft.title}
+        <span className="text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+          {isCurrent ? "Preview" : `Version ${version}`}
         </span>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {current && (
-            <span className="rounded bg-navy/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] text-navy uppercase">
-              Current
-            </span>
-          )}
+        {!isCurrent && (
+          <button
+            type="button"
+            onClick={onBackToCurrent}
+            className="cursor-pointer rounded border-0 bg-transparent p-0 text-[11.5px] font-semibold text-navy hover:underline"
+          >
+            Back to current
+          </button>
+        )}
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-rule bg-surface shadow-lg">
+        {/* Window chrome, so this reads as the tile rather than as a form field. */}
+        <div className="flex items-center gap-2 border-b border-rule bg-bg/60 px-3 py-2">
+          <span className="flex gap-1">
+            <span className="h-2 w-2 rounded-full bg-rule" />
+            <span className="h-2 w-2 rounded-full bg-rule" />
+            <span className="h-2 w-2 rounded-full bg-rule" />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[10px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+            On your dashboard
+          </span>
           <span
-            className={`rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] uppercase ${badge.tone}`}
+            className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] uppercase ${badge.tone}`}
           >
             {badge.label}
           </span>
         </div>
-      </div>
-      <div className="rounded-md border border-rule bg-surface p-2.5">
-        {/* `MiniChart` draws a 260x64 sparkline with
-            `preserveAspectRatio="none"`, so at full modal width it grows to
-            ~150px tall and two turns fill the screen - the history this
-            layout exists for then scrolls out of reach. Pinning the height
-            keeps a turn compact; a superseded one shrinks further, because
-            its job is to show the shape it had, not to be re-checked.
-            Not applied to a pie, which returns a fixed square plus a legend
-            rather than a stretchable svg, and would simply be clipped. */}
-        <div
-          className={
-            draft.chart_type === "pie"
-              ? ""
-              : current
-                ? "h-[76px] [&>svg]:h-full"
-                : "h-[40px] [&>svg]:h-full"
-          }
-        >
-          <MiniChart chartType={draft.chart_type} labels={draft.labels} values={draft.values} />
-        </div>
-        {/* The rows, spelled out under the chart - on the current turn only.
-            `MiniChart` carries no axis, so a line with no labels cannot be
-            checked, and this is the chart a PM checks before saving. An
-            earlier turn already has its `Changed` line saying what moved. */}
-        {current && (
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-rule pt-2">
+
+        <div className="p-3">
+          <div className="mb-2 truncate text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+            {draft.title}
+          </div>
+          <div className={chartBox(draft.chart_type, "h-[132px]")}>
+            <MiniChart chartType={draft.chart_type} labels={draft.labels} values={draft.values} />
+          </div>
+          {/* The rows, spelled out. `MiniChart` carries no axis, so a line
+              with no labels cannot be checked - and being checked before it
+              is saved is the whole job of this panel. Same reason the
+              forecast panel prints its sample beside its percentiles. */}
+          <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 border-t border-rule pt-2">
             {draft.labels.map((label, i) => (
               <span key={i} className="text-[11px] text-ink-3">
                 {label}{" "}
@@ -165,8 +187,20 @@ function TurnPreview({
               </span>
             ))}
           </div>
-        )}
+          {/* Exactly what the canvas will render under the chart. */}
+          <div className="mt-2.5 flex items-center gap-1.5 border-t border-rule pt-2">
+            <span className="rounded bg-purple/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] text-purple uppercase">
+              Custom
+            </span>
+            {note && (
+              <span className="min-w-0 flex-1 truncate text-[10.5px] text-ink-3" title={note}>
+                {note}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
+
       {changes && changes.length > 0 && (
         <p className="mt-2 mb-0 text-[11px] text-ink-3">
           <span className="font-bold tracking-[0.06em] uppercase">Changed</span>{" "}
@@ -194,6 +228,9 @@ export function CustomTileModal({
 
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState<CustomChartDraft | null>(null);
+  const [changes, setChanges] = useState<DraftChange[]>([]);
+  /** Which earlier version the stage is showing; null means the current one. */
+  const [viewing, setViewing] = useState<number | null>(null);
   const [rawData, setRawData] = useState("");
   const [showData, setShowData] = useState(false);
   const [input, setInput] = useState("");
@@ -220,12 +257,19 @@ export function CustomTileModal({
     transcriptEnd.current?.scrollIntoView({ block: "nearest" });
   }, [turns.length, sending]);
 
-  /* The newest answer. Its preview is the live one - so a hand edit shows up
-     where the PM is already looking, rather than in a fourth place. */
-  const lastAnswer = turns.reduce(
-    (found, turn, i) => (turn.role === "assistant" && turn.draft ? i : found),
-    -1,
+  /* What the PM said first, which is the provenance a pasted number gets and
+     the note the canvas prints under the tile. */
+  const note = turns.find((t) => t.role === "user")?.content ?? null;
+
+  /* The newest version produced so far. `viewing === null` means "the
+     current draft", which is the newest version plus any hand edits since. */
+  const latest = turns.reduce(
+    (max, t) => (t.version !== undefined && t.version > max ? t.version : max),
+    0,
   );
+  const viewed = viewing === null ? null : turns.find((t) => t.version === viewing);
+  const stageDraft = viewed?.draft ?? draft;
+  const stageChanges = viewed ? viewed.changes : changes;
 
   async function sendTurn(text: string) {
     const asked = text.trim();
@@ -236,6 +280,7 @@ export function CustomTileModal({
     setInput("");
     setSending(true);
     setTurnError(null);
+    setViewing(null); // a new answer is what you want to be looking at
     try {
       // Only role and content go on the wire - the drafts hanging off each
       // turn are for this screen, and the current one is sent once, below.
@@ -248,7 +293,9 @@ export function CustomTileModal({
         draft,
         raw_data: rawData.trim() ? rawData : null,
       });
+      const version = withUser.filter((t) => t.version !== undefined).length + 1;
       setDraft(result.draft);
+      setChanges(result.changes);
       setTurns([
         ...withUser,
         {
@@ -256,6 +303,7 @@ export function CustomTileModal({
           content: result.reply,
           draft: result.draft,
           changes: result.changes,
+          version,
           ok: result.ok,
         },
       ]);
@@ -269,15 +317,14 @@ export function CustomTileModal({
     }
   }
 
-  /* A hand edit changes the live draft, so it changes what the newest preview
-     shows - and it clears that turn's `changes` line, which described the
-     model's edit and no longer describes what is on screen. */
+  /* A hand edit changes the current draft, so it changes the stage - and it
+     clears the `Changed` line, which described the model's edit and no longer
+     describes what is on screen. */
   function patchDraft(update: Partial<CustomChartDraft>) {
     if (!draft) return;
     setDraft({ ...draft, ...update });
-    setTurns((prev) =>
-      prev.map((turn, i) => (i === lastAnswer ? { ...turn, changes: [] } : turn)),
-    );
+    setChanges([]);
+    setViewing(null);
   }
 
   function updateRow(i: number, field: "label" | "value", value: string) {
@@ -302,9 +349,22 @@ export function CustomTileModal({
     patchDraft({ labels: [...draft.labels, "New"], values: [...draft.values, 0] });
   }
 
+  /* Adopt the version being looked at. Without this, the stage can show v1
+     while `Save` writes the current draft - the one mismatch between what is
+     on screen and what happens that this whole screen exists to prevent. So
+     `Save` is not offered at all while an older version is up; this is. */
+  function useThisVersion() {
+    if (!viewed?.draft) return;
+    setDraft(viewed.draft);
+    setChanges([]);
+    setViewing(null);
+  }
+
   function startOver() {
     setDraft(null);
     setTurns([]);
+    setChanges([]);
+    setViewing(null);
     setTurnError(null);
     setInput("");
     setShowRows(false);
@@ -329,6 +389,9 @@ export function CustomTileModal({
   }
 
   async function saveAndAdd() {
+    // Always the current draft, never the version being looked at - saving
+    // something other than what "Preview" says would be the one confusion
+    // this whole screen exists to avoid.
     if (!draft || draft.labels.length === 0) return;
     setSaving(true);
     try {
@@ -337,9 +400,7 @@ export function CustomTileModal({
         chart_type: draft.chart_type,
         labels: draft.labels,
         values: draft.values,
-        // What they asked for, kept verbatim - the only provenance a pasted
-        // number has, and what the canvas labels the tile with.
-        source_note: turns.find((t) => t.role === "user")?.content ?? null,
+        source_note: note,
       });
       await addExistingToDashboard(created);
     } finally {
@@ -350,7 +411,7 @@ export function CustomTileModal({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-6" onClick={onClose}>
       <div
-        className="flex max-h-[88vh] w-full max-w-[680px] flex-col overflow-hidden rounded-lg border border-rule bg-surface shadow-xl"
+        className="flex max-h-[88vh] w-full max-w-[1040px] flex-col overflow-hidden rounded-lg border border-rule bg-surface shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-rule p-4 pb-0">
@@ -383,74 +444,161 @@ export function CustomTileModal({
         </div>
 
         {tab === "build" && (
-          <>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              {!draft && turns.length === 0 && (
-                <>
-                  <label className="mb-1 block text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
-                    Paste your data (optional)
-                  </label>
-                  <textarea
-                    value={rawData}
-                    onChange={(e) => setRawData(e.target.value)}
-                    placeholder={"Jan, 12000\nFeb, 15500\nMar, 14200\n\nor any table, list, or a sentence with numbers in it"}
-                    rows={5}
-                    className="w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-[12px] text-ink"
-                  />
-                  <p className="mt-2 mb-0 text-[11.5px] text-ink-3">
-                    Then say what you want below. Every answer comes back with
-                    the chart it made, so you can see what changed before you
-                    keep going. The numbers stay yours - this builder only ever
-                    reads and rearranges what you give it.
-                  </p>
-                </>
-              )}
+          /* Two columns once there is room; stacked below that, because a
+             stage narrower than its chart is worse than a stage underneath. */
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+            <div className="flex min-h-0 flex-1 flex-col lg:border-r lg:border-rule">
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                {!draft && turns.length === 0 && (
+                  <>
+                    <label className="mb-1 block text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+                      Paste your data (optional)
+                    </label>
+                    <textarea
+                      value={rawData}
+                      onChange={(e) => setRawData(e.target.value)}
+                      placeholder={"Jan, 12000\nFeb, 15500\nMar, 14200\n\nor any table, list, or a sentence with numbers in it"}
+                      rows={5}
+                      className="w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-[12px] text-ink"
+                    />
+                    <p className="mt-2 mb-0 text-[11.5px] text-ink-3">
+                      Then say what you want below. The tile appears beside
+                      this conversation and changes as you refine it, so you
+                      can see what each instruction did before you keep going.
+                      The numbers stay yours - this builder only ever reads and
+                      rearranges what you give it.
+                    </p>
+                  </>
+                )}
 
-              {/* The conversation: each answer carries the chart it produced. */}
-              {turns.length > 0 && (
-                <div className="grid gap-2">
-                  {turns.map((turn, i) =>
-                    turn.role === "user" ? (
-                      <div
-                        key={i}
-                        className="max-w-[85%] justify-self-end rounded-lg rounded-br-sm border border-navy/40 bg-navy/10 px-2.5 py-1.5 text-[12.5px] text-ink"
-                      >
-                        {turn.content}
-                      </div>
-                    ) : (
-                      <Fragment key={i}>
+                {turns.length > 0 && (
+                  <div className="grid gap-2">
+                    {turns.map((turn, i) =>
+                      turn.role === "user" ? (
                         <div
-                          className={`max-w-[85%] justify-self-start rounded-lg rounded-bl-sm border px-2.5 py-1.5 text-[12.5px] ${
-                            turn.ok === false
-                              ? "border-amber/40 bg-amber/10 text-ink-2"
-                              : "border-rule bg-bg text-ink-2"
-                          }`}
+                          key={i}
+                          className="max-w-[85%] justify-self-end rounded-lg rounded-br-sm border border-navy/40 bg-navy/10 px-2.5 py-1.5 text-[12.5px] text-ink"
                         >
                           {turn.content}
                         </div>
-                        {turn.draft && (
-                          <TurnPreview
-                            draft={i === lastAnswer && draft ? draft : turn.draft}
-                            changes={turn.changes}
-                            current={i === lastAnswer}
-                          />
-                        )}
-                      </Fragment>
-                    ),
-                  )}
-                  <div ref={transcriptEnd} />
+                      ) : (
+                        <Fragment key={i}>
+                          <div
+                            className={`max-w-[85%] justify-self-start rounded-lg rounded-bl-sm border px-2.5 py-1.5 text-[12.5px] ${
+                              turn.ok === false
+                                ? "border-amber/40 bg-amber/10 text-ink-2"
+                                : "border-rule bg-bg text-ink-2"
+                            }`}
+                          >
+                            {turn.content}
+                          </div>
+                          {/* The version this answer produced. Clicking it puts
+                              that chart on the stage, so the history is
+                              navigable rather than only visible - a PM can put
+                              v1 next to v3 before committing to either. */}
+                          {turn.draft && turn.version !== undefined && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setViewing(turn.version === latest ? null : turn.version ?? null)
+                              }
+                              className={`flex max-w-[85%] cursor-pointer items-center gap-2 justify-self-start rounded-md border px-2 py-1 text-left ${
+                                (viewing === null && turn.version === latest) ||
+                                viewing === turn.version
+                                  ? "border-navy/50 bg-navy/10"
+                                  : "border-rule bg-bg hover:border-navy/40"
+                              }`}
+                            >
+                              <span className="shrink-0 text-[10px] font-extrabold tracking-[0.05em] text-navy uppercase">
+                                v{turn.version}
+                              </span>
+                              <span className="w-[64px] shrink-0">
+                                <span className={`block ${chartBox(turn.draft.chart_type, "h-[22px]")}`}>
+                                  <MiniChart
+                                    chartType={turn.draft.chart_type}
+                                    labels={turn.draft.labels}
+                                    values={turn.draft.values}
+                                  />
+                                </span>
+                              </span>
+                              <span className="min-w-0 flex-1 truncate text-[10.5px] text-ink-3">
+                                {turn.changes && turn.changes.length > 0
+                                  ? turn.changes.map((c) => c.summary).join("; ")
+                                  : turn.draft.title}
+                              </span>
+                            </button>
+                          )}
+                        </Fragment>
+                      ),
+                    )}
+                    <div ref={transcriptEnd} />
+                  </div>
+                )}
+
+                {sending && (
+                  <p className="mt-2 mb-0 text-[11.5px] text-ink-3">Working on it...</p>
+                )}
+              </div>
+
+              {/* The composer. */}
+              <div className="shrink-0 border-t border-rule p-4">
+                {turnError && <p className="mt-0 mb-2 text-[11.5px] text-amber">{turnError}</p>}
+                {draft && (
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {REFINEMENTS.map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setInput(preset)}
+                        className="cursor-pointer rounded-full border border-rule bg-bg px-2 py-0.5 text-[11px] text-ink-2 hover:text-ink"
+                      >
+                        {preset.trim()}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendTurn(input);
+                      }
+                    }}
+                    placeholder={draft ? "What should change?" : "e.g. monthly spend as a bar chart"}
+                    className="min-w-0 flex-1 rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[12.5px] text-ink"
+                  />
+                  <button
+                    type="button"
+                    disabled={sending || !input.trim()}
+                    onClick={() => sendTurn(input)}
+                    className="cursor-pointer rounded-md border border-purple/60 bg-purple/15 px-3 py-1.5 text-[12.5px] font-semibold text-purple disabled:opacity-50"
+                  >
+                    {sending ? "..." : draft ? "Send" : "Draft it"}
+                  </button>
                 </div>
-              )}
+              </div>
+            </div>
 
-              {sending && (
-                <p className="mt-2 mb-0 text-[11.5px] text-ink-3">Working on it...</p>
-              )}
+            {/* The stage. */}
+            {draft && stageDraft && (
+              <aside className="w-full shrink-0 overflow-y-auto border-t border-rule bg-bg/30 p-4 lg:w-[400px] lg:border-t-0">
+                <TileStage
+                  draft={stageDraft}
+                  changes={stageChanges ?? []}
+                  note={note}
+                  version={viewing ?? undefined}
+                  isCurrent={viewing === null}
+                  onBackToCurrent={() => setViewing(null)}
+                />
 
-              {/* Hand editing, beside the conversation rather than instead of
-                  it: changing one number is faster typed than described. What
-                  it changes shows up in the newest preview above. */}
-              {draft && (
-                <div className="mt-3 border-t border-rule pt-3">
+                {/* Hand editing, under the stage it edits: changing one number
+                    is faster typed than described. Hidden while an older
+                    version is up, because it edits the current draft and not
+                    the one on screen. */}
+                <div className={`mt-3 border-t border-rule pt-3 ${viewing === null ? "" : "hidden"}`}>
                   <button
                     type="button"
                     onClick={() => setShowRows((v) => !v)}
@@ -495,7 +643,7 @@ export function CustomTileModal({
                               type="number"
                               value={draft.values[i]}
                               onChange={(e) => updateRow(i, "value", e.target.value)}
-                              className="w-[90px] rounded-md border border-rule bg-bg px-2 py-1 text-[12px] text-ink"
+                              className="w-[80px] rounded-md border border-rule bg-bg px-2 py-1 text-[12px] text-ink"
                             />
                             <button
                               type="button"
@@ -518,92 +666,60 @@ export function CustomTileModal({
                     </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* The composer. */}
-            <div className="shrink-0 border-t border-rule p-4">
-              {turnError && (
-                <p className="mt-0 mb-2 text-[11.5px] text-amber">{turnError}</p>
-              )}
-              {draft && (
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  {REFINEMENTS.map((preset) => (
+                <div className="mt-3 grid gap-2 border-t border-rule pt-3">
+                  {viewing === null ? (
                     <button
-                      key={preset}
                       type="button"
-                      onClick={() => setInput(preset)}
-                      className="cursor-pointer rounded-full border border-rule bg-bg px-2 py-0.5 text-[11px] text-ink-2 hover:text-ink"
+                      disabled={saving || draft.labels.length === 0}
+                      onClick={saveAndAdd}
+                      className="w-full cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-surface disabled:opacity-50"
                     >
-                      {preset.trim()}
+                      {saving ? "Saving..." : "Save & Add to Dashboard"}
                     </button>
-                  ))}
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={useThisVersion}
+                      className="w-full cursor-pointer rounded-md border border-navy bg-navy/15 px-3 py-1.5 text-[12.5px] font-semibold text-navy"
+                    >
+                      Use version {viewing}
+                    </button>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={startOver}
+                      className="flex-1 cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
+                    >
+                      Start over
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowData((v) => !v)}
+                      className="flex-1 cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
+                    >
+                      {showData ? "Hide data" : "Source data"}
+                    </button>
+                  </div>
+                  {showData && (
+                    <textarea
+                      value={rawData}
+                      onChange={(e) => setRawData(e.target.value)}
+                      placeholder="The data this chart was built from - every later turn is held to it."
+                      rows={4}
+                      className="w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-[12px] text-ink"
+                    />
+                  )}
                 </div>
-              )}
-              <div className="flex gap-2">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendTurn(input);
-                    }
-                  }}
-                  placeholder={draft ? "What should change?" : "e.g. monthly spend as a bar chart"}
-                  className="min-w-0 flex-1 rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[12.5px] text-ink"
-                />
-                <button
-                  type="button"
-                  disabled={sending || !input.trim()}
-                  onClick={() => sendTurn(input)}
-                  className="cursor-pointer rounded-md border border-purple/60 bg-purple/15 px-3 py-1.5 text-[12.5px] font-semibold text-purple disabled:opacity-50"
-                >
-                  {sending ? "..." : draft ? "Send" : "Draft it"}
-                </button>
-              </div>
-              {draft && (
-                <div className="mt-2.5 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={startOver}
-                    className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
-                  >
-                    Start over
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowData((v) => !v)}
-                    className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
-                  >
-                    {showData ? "Hide data" : "Source data"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={saving || draft.labels.length === 0}
-                    onClick={saveAndAdd}
-                    className="flex-1 cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-surface disabled:opacity-50"
-                  >
-                    {saving ? "Saving..." : "Save & Add to Dashboard"}
-                  </button>
-                </div>
-              )}
-              {draft && showData && (
-                <textarea
-                  value={rawData}
-                  onChange={(e) => setRawData(e.target.value)}
-                  placeholder="The data this chart was built from - every later turn is held to it."
-                  rows={4}
-                  className="mt-2 w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-[12px] text-ink"
-                />
-              )}
-            </div>
-          </>
+              </aside>
+            )}
+          </div>
         )}
 
         {tab === "saved" && (
           <div className="overflow-y-auto p-4">
-            <div className="grid gap-2.5">
+            <div className="grid gap-2.5 sm:grid-cols-2">
               {savedProblem && <p className="m-0 text-[12.5px] text-red">{savedProblem.title}</p>}
               {saved && saved.length === 0 && (
                 <p className="m-0 text-[12.5px] text-ink-3">No custom tiles saved yet.</p>

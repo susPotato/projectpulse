@@ -33,22 +33,37 @@ like `/api/agent/chat` - the conversation and the draft on screen both ride in
 the request. Verified end to end in a real browser: three turns, save, and the
 tile lands on the canvas with the right title, type, data and note.
 
-⚠️ **Every answer carries its own chart, inline in the transcript** - this is
-the shape that was asked for, and the first attempt got it wrong. A single
-preview panel pinned above the conversation was the obvious build and it
-means the chart silently mutates: a PM sees the latest state and cannot see
-which sentence caused which change. Each answer now renders the chart as it
-stood after that instruction, so the conversation is a visual history. The
-newest is marked `Current`, takes the live draft (so a hand edit shows up
-where the PM is already looking) and prints its rows; the ones above it are
-the record, shrunk to a thumbnail with just their `Changed` line.
-**Do not consolidate them back into one panel.**
-- ⚠️ The heights in `TurnPreview` are load-bearing, not styling. `MiniChart`
-  is a 260x64 sparkline with `preserveAspectRatio="none"`, so at modal width
-  it grows to ~150px and **two turns fill the screen** - the history the
-  layout exists for then scrolls out of reach. Hence `h-[76px]` current /
-  `h-[40px]` superseded, and **not on a pie**, which returns a fixed square
-  plus a legend rather than a stretchable svg and would just be clipped.
+**The layout took three passes, and the last one is the one to keep:
+conversation on the left, one sticky stage on the right.** The modal is
+`max-w-[1040px]`, two columns above `lg` and stacked below it. Worth knowing
+what was rejected, because both wrong turns look like the obvious build:
+1. **A preview panel pinned above the chat.** The chart silently mutates - a
+   PM sees only the latest state and cannot tell which sentence caused which
+   change.
+2. **A full preview under every answer.** Honest, but `MiniChart` is a 260x64
+   sparkline with `preserveAspectRatio="none"`, so at modal width it grows to
+   ~150px and **two turns filled the screen** - the history the layout existed
+   for scrolled out of reach.
+
+What it does now:
+- **The stage** shows the tile inside a mock window frame (`TileStage`) -
+  chrome, the title, the chart, the rows, and the **`Custom` badge and source
+  note the canvas will actually print under it**. A PM is approving a thing
+  that will sit beside the computed tiles, so the preview looks like that
+  thing rather than a chart in a form.
+- **Each answer leaves a numbered version chip** (`v1`, `v2`, ...) in the
+  transcript carrying a 22px thumbnail and its `Changed` line. Clicking one
+  puts that chart on the stage, so the history is **navigable**, not just
+  visible - v1 next to v3 before committing.
+- ⚠️ **`Save` is not offered while an older version is up.** It writes the
+  *current* draft, so a stage showing v1 beside a live `Save` button is the
+  one on-screen/actual mismatch this entire screen exists to prevent. Viewing
+  an older version replaces it with **`Use version N`**, and hides the
+  hand-edit panel (which edits the current draft, not the one displayed).
+  **Do not re-enable `Save` there.**
+- ⚠️ Every chart height is pinned via `chartBox()` for the sparkline reason
+  above, and **never on a pie** - that branch returns a fixed square plus a
+  legend rather than a stretchable svg, so a fixed height would only clip it.
 
 Three rules hold it to the same standard as the rest of the app, and each has
 a test:
@@ -98,11 +113,10 @@ is the only thing that could have found it. The tile also now carries the
 person's own first message as `source_note`, so the provenance
 `CustomTile`'s docstring promises is actually populated rather than `None`.
 
-Smaller, deliberate: the current preview prints its rows as `Jan 12,000  Feb
-15,500` under the chart, because `MiniChart` carries no axis and a line with
-no labels cannot be checked - and this is the chart a PM checks before saving.
-Preset chips **fill the box rather than send**, the same choice the Agent tab
-made.
+Smaller, deliberate: the stage prints its rows as `Jan 12,000  Feb 15,500`
+under the chart, because `MiniChart` carries no axis and a line with no labels
+cannot be checked - and this is the chart a PM checks before saving. Preset
+chips **fill the box rather than send**, the same choice the Agent tab made.
 
 **Environment repairs on this machine, all of which had to come first:**
 
