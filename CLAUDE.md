@@ -2,10 +2,11 @@
 
 Read this first. It is the handoff between sessions.
 
-**Last updated:** 2026-09-10 (the AI tile builder - a conversational custom-tile
-chat with live preview; the venv/smoke/hook repairs that unblocked it; Program/Project
-canvas dashboards, AI tile generation, custom
-charts — deployed and seeded live; navigation fixed and redeployed)
+**Last updated:** 2026-09-11 (round-1 due today) — the tile-building agent got tools:
+real project data (team effort, findings, risks, forecast) instead of only pasted text;
+fixed production never having the `anthropic` SDK installed at all, which made both that
+and regular narration silently fall back to gemini/template on the live site while working
+fine locally. See §-1 below before §0.
 
 **Resuming on another machine:** `git pull`, then recreate `projectpulse/.env` from
 `.env.example` — it is gitignored on purpose (see the secret-leak note below) and does not
@@ -16,6 +17,72 @@ full demo story (multi-program, multi-project, resource conflicts) in one comman
 deploy at `https://projectpulse.fly.dev` already has all of this — `flyctl` on this machine
 is authenticated as `neko4code@gmail.com`; a different machine needs its own `flyctl auth
 login` before `fly deploy` will work from there.
+
+⚠️ **Local and production can silently diverge on which provider actually works, and the
+local venv will not tell you.** This session's local venv already had every `llm-*` extra
+installed from earlier work, so switching `.env`'s `PULSE_NARRATION_PROVIDER` there always
+worked no matter what the Dockerfile installed - the exact gap that let production run for
+a day genuinely unable to `import anthropic` while every local test passed. **Before
+trusting a provider switch, check `pip show anthropic` (or whichever vendor) inside the
+container image, not just the dev venv** - `flyctl ssh console -C "python -c 'import
+anthropic'"` is the fast check, or just hit the deployed endpoint directly, which is what
+actually caught this (see §-1).
+
+---
+
+## -1. This session — 2026-09-11 (round 1 due today), read before §0
+
+**Pulled a second machine's session forward** (the AI tile builder chat - see §0 below,
+already committed there as `51b9a9f`) and was asked two things: make the web deployment
+match it, and check whether "the tile-making agent" actually works. It did, locally,
+against a real Claude call - opening draft, a deterministic chart-type switch with no model
+call, an open-ended sort+rename that correctly reached the model, save. All verified by
+direct API calls, not just reading the code.
+
+**Then asked for more: give it tools, like a real agent, instead of only parsing pasted
+text.** The prompting case that exposed the gap: *"I need a way to track each employee's
+productivity and compare them"* - a completely reasonable ask with no data to paste, since
+the app already computes exactly that. Built `app/dashboard/agent.py`: four read-only
+tools (`get_team_effort`, `get_project_findings`, `get_risk_register`,
+`get_delivery_forecast`), each a thin wrapper over a function `app/intelligence/pipeline.py`
+/ `app/risks/` already exports - a tool call is a lookup against a deterministic bundle,
+never a second calculation, which is *why* invariant 1 (the model never produces a number)
+survives contact with tool use here rather than needing a bolted-on exception. Tried first
+on the opening turn, only when nobody pasted data and a project is known
+(`TileChatRequest.scope_id`, wired from `TileBuilder.tsx`'s `target`); any failure at all
+- no key, no SDK, an unparseable final answer, exhausted tool rounds - falls straight
+through to `custom.py`'s existing plain-parse path unchanged. Also added a proper **"Team
+Effort by Person"** catalogue tile (hours logged vs. planned, real data, one bar + a
+reference tick rather than a second series) for the same request when someone wants it
+pinned to a dashboard rather than asked for once in chat.
+
+⚠️ **Verifying "does it work" against a locally-installed venv is not the same claim as
+"does it work deployed", and conflating them cost real time here.** The tool loop passed
+every local test and every direct local API call. Deployed, committed, declared done - then
+the exact same request 400'd on the live site. Root cause: **the Dockerfile installed
+`.[llm-gemini,report]`, never `.[llm]` (Anthropic)** - a leftover from before this project
+switched provider, invisible locally because the dev venv already had `anthropic` installed
+from earlier unrelated work. `agentic_draft`'s own `except Exception: return None` (correct
+behavior - never 500 on a provider problem) meant the failure was silent instead of loud,
+and it degraded to the *pre-existing* "could not turn this into a chart" message, which
+reads as a plausible, unrelated failure rather than a misconfigured deployment - the worst
+kind to debug from the outside. Two separate fixes, both required: `fly secrets set
+PULSE_NARRATION_PROVIDER=anthropic ANTHROPIC_API_KEY=...` (the provider was still `gemini`
+in production the whole time despite `.env` saying `anthropic` locally - **`.env` never
+reaches Fly**, only `fly secrets` does), *and* the Dockerfile fix above, redeployed after
+each. Re-verified against the live URL directly (not curl through this machine's shell -
+see below) before calling it done.
+
+⚠️ **A Windows Git-Bash console will convince you the API is mangling UTF-8 when it is
+not.** `curl ... | python -m json.tool` rendered an en dash as `â€”` (three
+wrong codepoints, not a display glitch - `json.tool`'s `ensure_ascii` output is pure ASCII
+regardless of console encoding, so this looked like real corruption in the payload).
+Fetching the same response via `urllib.request` and writing the raw bytes straight to a
+file with an explicit `encoding="utf-8"` - never through `print()` or a pipe - showed the
+correct `U+2013` throughout. The lesson isn't about en dashes: **it's that this
+machine's pipe between `curl` and a consumed-by-Python stdin is not trustworthy for
+non-ASCII verification, and the fix is to write suspect bytes straight to a file and
+inspect them there, never trust what a terminal painted.**
 
 ---
 
