@@ -33,6 +33,39 @@ like `/api/agent/chat` - the conversation and the draft on screen both ride in
 the request. Verified end to end in a real browser: three turns, save, and the
 tile lands on the canvas with the right title, type, data and note.
 
+**It is also a mode of the Agent tab, and the builder lives in one place.**
+`/agent` now has two modes - **`Chat`** and **`Build a tile`** - and
+`web/src/components/TileBuilder.tsx` is the single implementation, used by
+that mode *and* by the `Custom Tile` dialog on a canvas. Two copies would
+eventually draw two different charts from one conversation, the same reason
+`gantt.js` was never ported twice. `CustomTileModal.tsx` is now dialog chrome
+plus the saved-tile library, nothing more.
+
+⚠️ **The two Agent modes have deliberately different guarantees, and each
+carries its own banner saying so.** Chat is still the one surface in this app
+with no engine behind it; the builder is the opposite (validated JSON only, an
+exact instruction never reaching a model, every change reported from a
+server-side diff). Putting them one click apart is the point - a PM can see
+the difference between asking a model for prose and asking it to arrange
+their own figures. **Do not merge the banners or give tile mode the chat
+warning.**
+- **Where a tile goes is named, never assumed.** The Agent page has no canvas
+  in front of it, so it resolves a target from the ambient project selection,
+  falling back to the top-ranked project, and prints it *on the button* -
+  `Save & Add to HRMS Platform`. Adding a tile writes to someone's dashboard,
+  and a silent target is the wrong default for a write. With no project
+  loaded, `target` is `null` and the tile is saved to the library instead,
+  which the button and the banner both say.
+- ⚠️ `addCustomTileToDashboard` **fetches the dashboard when the caller has no
+  `existingTiles`**. The dialog passes the canvas it is showing; the Agent
+  page cannot, and placing a tile at `y=0` would drop it on top of what is
+  already there. Verified: saved from `/agent` onto a 4-tile dashboard, the
+  tile landed at `y=6` = `max(y+h)`.
+- `Note` in `Shell.tsx` takes **only** `children` and carries its own `mt-3`;
+  `Card` hardcodes `p-4` before the passed `className`, so tile mode uses a
+  plain bordered flex column rather than fighting it (Tailwind does not
+  promise a later class in the string wins).
+
 **The layout took three passes, and the last one is the one to keep:
 conversation on the left, one sticky stage on the right.** The modal is
 `max-w-[1040px]`, two columns above `lg` and stacked below it. Worth knowing

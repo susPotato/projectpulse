@@ -31,6 +31,7 @@ import { PortfolioView } from "../src/pages/Portfolio";
 import { TeamView } from "../src/pages/Team";
 import { ReportsView } from "../src/pages/Reports";
 import { CustomTileModal } from "../src/components/CustomTileModal";
+import { Agent } from "../src/pages/Agent";
 
 function read<T>(name: string): T {
   const path = new URL(`./${name}.json`, import.meta.url);
@@ -259,6 +260,25 @@ const cases: Array<[string, string, string[]]> = [
       "The numbers stay yours",
       // The composer, in its pre-draft wording.
       "Draft it",
+    ],
+  ],
+  [
+    // The Agent tab, which now has two modes with deliberately different
+    // guarantees. It opens on Chat, so what this reaches is that mode plus
+    // the switch - enough to catch the crash-on-mount and missing-copy class
+    // of bug. The builder's own turn logic is covered in
+    // `tests/test_dashboard.py`, and the modal case above renders it.
+    "Agent",
+    renderToString(<Agent />),
+    [
+      // Both modes are named and reachable.
+      "Chat",
+      "Build a tile",
+      // The chat-mode banner: the honesty label on the one surface in this
+      // app with no engine behind it. If it goes, so does the warning.
+      "nothing here is checked against a rule or a graph",
+      // A preset, proving the list rendered rather than being empty.
+      "Draft a status update",
     ],
   ],
 ];
