@@ -33,13 +33,18 @@ COPY scripts ./scripts
 # writable tree. A normal install puts them under site-packages, where the demo
 # generator would be writing spreadsheets into the interpreter's own directory.
 #
-# `llm-gemini` is in because narration is configured against Gemini (see
-# .env.example, docker-compose.yml). Switching provider is a one-word change
-# in `.env` (PULSE_NARRATION_PROVIDER) plus swapping the extra here to `.[llm]`
-# (Anthropic) or `.[llm-openai]`.
+# `llm` (Anthropic) is in because narration and the tool-use tile builder
+# (app/dashboard/agent.py, Anthropic-only) are both configured against Claude
+# - PULSE_NARRATION_PROVIDER=anthropic is a Fly secret, and the agent's tool
+# loop calls the `anthropic` SDK directly, so it needs the package present
+# regardless of which provider narration itself is pointed at. Switching
+# narration's *own* provider is still a one-word change in `.env`
+# (PULSE_NARRATION_PROVIDER) plus swapping this extra to `.[llm-gemini]` or
+# `.[llm-openai]` - but the tile builder would then fall back to its
+# plain-parse path, since it does not follow that switch.
 # `report` is in because DEPLOY.md lists the .docx status report as always
 # live, not gated behind a key - python-docx has no fallback otherwise.
-RUN pip install -e ".[llm-gemini,report]"
+RUN pip install -e ".[llm,report]"
 
 # The demo generator writes here. Created up front and owned by the runtime user
 # so the container does not need to run as root to seed itself.
