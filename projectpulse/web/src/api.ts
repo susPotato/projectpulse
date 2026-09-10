@@ -60,6 +60,9 @@ export type CustomChartDraft = components["schemas"]["CustomChartDraft"];
 export type CustomTileIn = components["schemas"]["CustomTileIn"];
 export type CustomTileOut = components["schemas"]["CustomTileOut"];
 export type CustomTileListBundle = components["schemas"]["CustomTileListBundle"];
+export type DraftChange = components["schemas"]["DraftChange"];
+export type TileChatResponse = components["schemas"]["TileChatResponse"];
+export type TileChatMessage = components["schemas"]["ChatMessage"];
 export type ChartType = "bar" | "line" | "pie";
 
 /** What went wrong, in terms a reader can act on rather than a status code. */
@@ -79,6 +82,26 @@ export interface ApiProblem {
  * server-side default (today, the one demo project) applies untouched - so a
  * page nobody has pointed a picker at yet behaves exactly as it always did.
  */
+/*
+  Query params, or none at all when there is no DOM.
+
+  `web/scripts/smoke.tsx` renders every view server-side, where `window` does
+  not exist - so reaching straight for `window.location` there throws before a
+  page renders a single node, and the check that exists to catch layout and
+  data bugs cannot run at all. Absent a DOM there is no URL and no storage, so
+  "nothing is selected" is the honest answer and every caller already handles
+  it. Same reasoning as the try/catch around localStorage below.
+*/
+function searchParams(): URLSearchParams {
+  if (typeof window === "undefined") return new URLSearchParams();
+  return new URLSearchParams(window.location.search);
+}
+
+function storage(): Storage | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage;
+}
+
 const STORAGE_KEY = "pulse.project";
 
 export interface ProjectSelection {
@@ -87,12 +110,12 @@ export interface ProjectSelection {
 }
 
 export function currentProject(): ProjectSelection | null {
-  const params = new URLSearchParams(window.location.search);
+  const params = searchParams();
   const fromUrl = params.get("project");
   if (fromUrl) {
     const selection = { id: fromUrl, also: params.getAll("also") };
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selection));
+      storage()?.setItem(STORAGE_KEY, JSON.stringify(selection));
     } catch {
       // Private window, cleared storage, or storage blocked - the URL param
       // still won this page load, which is all correctness requires here.
@@ -101,7 +124,7 @@ export function currentProject(): ProjectSelection | null {
   }
 
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = storage()?.getItem(STORAGE_KEY);
     if (!stored) return null;
     const parsed = JSON.parse(stored) as ProjectSelection;
     return parsed.id ? { id: parsed.id, also: parsed.also ?? [] } : null;
@@ -130,11 +153,11 @@ export function withProject(path: string): string {
 const PROGRAM_STORAGE_KEY = "pulse.program";
 
 export function currentProgram(): string | null {
-  const params = new URLSearchParams(window.location.search);
+  const params = searchParams();
   const fromUrl = params.get("program");
   if (fromUrl) {
     try {
-      window.localStorage.setItem(PROGRAM_STORAGE_KEY, fromUrl);
+      storage()?.setItem(PROGRAM_STORAGE_KEY, fromUrl);
     } catch {
       // See currentProject - a private window losing the remembered choice
       // does not change what this page load resolves to.
@@ -142,7 +165,7 @@ export function currentProgram(): string | null {
     return fromUrl;
   }
   try {
-    return window.localStorage.getItem(PROGRAM_STORAGE_KEY);
+    return storage()?.getItem(PROGRAM_STORAGE_KEY) ?? null;
   } catch {
     return null;
   }
@@ -183,7 +206,7 @@ export async function load<T>(path: string): Promise<T> {
   try {
     response = await fetch(path);
   } catch (error) {
-    const offline = window.location.protocol === "file:";
+    const offline = typeof window !== "undefined" && window.location.protocol === "file:";
     throw {
       title: offline ? "Opened as a file, not served" : "Could not reach the server",
       detail: offline
