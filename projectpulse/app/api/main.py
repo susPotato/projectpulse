@@ -1455,7 +1455,7 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
     reply would repeat both the latency and the token cost for no new
     information.
     """
-    from app.agent.chat import ChatTurn, ChatUnavailable, gemini_chat
+    from app.agent.chat import ChatTurn, ChatUnavailable, chat as run_chat
     from app.agent.link_fetch import fetch_and_extract, find_first_url
     from app.narration.store import load as load_narration_settings
 
@@ -1479,10 +1479,12 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
             )
 
     try:
-        reply = gemini_chat(
+        reply = run_chat(
             turns,
-            model=settings_.model or "gemini-3.8-flash",
+            provider=settings_.provider,
+            model=settings_.model,
             api_key=settings_.api_key or None,
+            base_url=settings_.base_url or None,
         )
     except ChatUnavailable as exc:
         return ChatResponse(reply="", ok=False, error=str(exc))

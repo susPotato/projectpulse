@@ -439,11 +439,11 @@ def test_agent_chat_reports_unavailable_rather_than_a_500(client, monkeypatch):
 
 
 def test_agent_chat_returns_the_model_s_reply_when_available(client, monkeypatch):
-    def fake_gemini_chat(turns, *, model, api_key):
+    def fake_chat(turns, *, provider, model, api_key, base_url):
         assert turns[-1].content == "hi"
         return "hello yourself"
 
-    monkeypatch.setattr("app.agent.chat.gemini_chat", fake_gemini_chat)
+    monkeypatch.setattr("app.agent.chat.chat", fake_chat)
 
     response = client.post(
         "/api/agent/chat", json={"messages": [{"role": "user", "content": "hi"}]}
