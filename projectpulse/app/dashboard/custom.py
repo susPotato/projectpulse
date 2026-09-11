@@ -50,6 +50,7 @@ from app.api.schemas.dashboard import (
     CustomTileIn,
     CustomTileOut,
     DraftChange,
+    LiveSource,
     TileChatResponse,
 )
 from app.models.dashboard import CustomTile
@@ -511,14 +512,63 @@ def chat_turn(
     )
 
 
-def _to_out(tile: CustomTile) -> CustomTileOut:
+def _resolve_live(session, live_source: LiveSource) -> tuple[list[str], list[float]] | None:
+    """Fresh `(labels, values)` for a live tile, read straight from the same
+    tool `app/dashboard/agent.py` exposes to the chat - or `None` if the tool
+    call itself fails (project deleted, database hiccup) or no longer
+    returns the field this tile was built from (a tool's shape changed since
+    this tile was saved). Either way the caller falls back to the frozen
+    snapshot rather than a tile with no data, or a 500 taking the rest of the
+    dashboard down with it - a live tile degrading to its last known values
+    beats a broken canvas.
+    """
+    from app.dashboard.agent import _execute_tool
+
+    try:
+        data = _execute_tool(live_source.tool, session, live_source.project_id)
+    except Exception:  # noqa: BLE001 - degrade to the snapshot, never raise into a render
+        return None
+
+    rows = data.get(live_source.list_field)
+    if not isinstance(rows, list):
+        return None
+
+    labels: list[str] = []
+    values: list[float] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        label = row.get(live_source.label_field)
+        value = row.get(live_source.value_field)
+        if label is None or value is None:
+            continue
+        try:
+            values.append(float(value))
+        except (TypeError, ValueError):
+            continue
+        labels.append(str(label))
+
+    return (labels, values) if labels else None
+
+
+def _to_out(tile: CustomTile, session=None) -> CustomTileOut:
+    live_source = (
+        LiveSource(**json.loads(tile.live_source_json)) if tile.live_source_json else None
+    )
+    labels = json.loads(tile.labels_json)
+    values = json.loads(tile.values_json)
+    if live_source is not None and session is not None:
+        fresh = _resolve_live(session, live_source)
+        if fresh is not None:
+            labels, values = fresh
     return CustomTileOut(
         id=tile.id,
         name=tile.name,
         chart_type=tile.chart_type,  # type: ignore[arg-type]
-        labels=json.loads(tile.labels_json),
-        values=json.loads(tile.values_json),
+        labels=labels,
+        values=values,
         source_note=tile.source_note,
+        live_source=live_source,
     )
 
 
@@ -531,20 +581,23 @@ def create_custom_tile(session, data: CustomTileIn) -> CustomTileOut:
         labels_json=json.dumps(data.labels),
         values_json=json.dumps(data.values),
         source_note=data.source_note,
+        live_source_json=(
+            json.dumps(data.live_source.model_dump()) if data.live_source else None
+        ),
     )
     session.add(tile)
     session.flush()
-    return _to_out(tile)
+    return _to_out(tile, session)
 
 
 def list_custom_tiles(session) -> list[CustomTileOut]:
     rows = session.scalars(select(CustomTile).order_by(CustomTile.id.desc())).all()
-    return [_to_out(t) for t in rows]
+    return [_to_out(t, session) for t in rows]
 
 
 def get_custom_tile(session, tile_id: int) -> CustomTileOut | None:
     tile = session.get(CustomTile, tile_id)
-    return _to_out(tile) if tile is not None else None
+    return _to_out(tile, session) if tile is not None else None
 
 
 def delete_custom_tile(session, tile_id: int) -> bool:

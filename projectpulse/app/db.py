@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
@@ -95,8 +95,37 @@ def session_scope() -> Iterator[Session]:
         session.close()
 
 
+#: A column added to a model after its table already exists somewhere
+#: deployed. `create_all()` only creates *missing* tables - that is
+#: SQLAlchemy's contract, not a bug - so it never picks these up on its own,
+#: and the alternative is a manual migration step someone has to remember to
+#: run against production, which is exactly the failure this project has
+#: already hit twice (CLAUDE.md's deploy history). Every entry here must
+#: stay genuinely additive - nullable, no default that rewrites existing
+#: rows - so running this against a database that already has the column is
+#: a no-op rather than a hazard. A rename or a NOT NULL still needs a real
+#: migration script (see `scripts/migrate_ids.py`), not an entry here.
+_ADDITIVE_COLUMNS: tuple[tuple[str, str, str], ...] = (
+    ("custom_tiles", "live_source_json", "TEXT"),
+)
+
+
+def _ensure_additive_columns() -> None:
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+    with engine.begin() as conn:
+        for table, column, ddl_type in _ADDITIVE_COLUMNS:
+            if table not in existing_tables:
+                continue  # create_all() just made it, column and all
+            columns = {c["name"] for c in inspector.get_columns(table)}
+            if column in columns:
+                continue
+            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}"))
+
+
 def create_all() -> None:
     Base.metadata.create_all(engine)
+    _ensure_additive_columns()
 
 
 def drop_all() -> None:

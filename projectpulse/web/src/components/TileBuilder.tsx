@@ -182,12 +182,22 @@ export function SavedTiles({
         )}
         {saved?.map((tile) => (
           <div key={tile.id} className="rounded-lg border border-rule p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-[12.5px] font-semibold text-ink">{tile.name}</span>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-ink">
+                {tile.name}
+              </span>
+              {tile.live_source && (
+                <span
+                  className="shrink-0 rounded bg-green/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] text-green uppercase"
+                  title="Refreshes from the project's own data every time this tile is viewed"
+                >
+                  Live
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => deleteSaved(tile.id)}
-                className="cursor-pointer rounded border-0 bg-transparent text-[11.5px] text-ink-3 hover:text-red"
+                className="shrink-0 cursor-pointer rounded border-0 bg-transparent text-[11.5px] text-ink-3 hover:text-red"
               >
                 Delete
               </button>
@@ -283,6 +293,14 @@ function TileStage({
           <span className="min-w-0 flex-1 truncate text-[10px] font-bold tracking-[0.06em] text-ink-3 uppercase">
             On your dashboard
           </span>
+          {draft.live_source && (
+            <span
+              className="shrink-0 rounded bg-green/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] text-green uppercase"
+              title="Read straight from the project's own data - refreshes every time this tile is viewed, not frozen at save"
+            >
+              Live
+            </span>
+          )}
           <span
             className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] uppercase ${badge.tone}`}
           >
@@ -446,13 +464,18 @@ export function TileBuilder({
     setSavedMessage(null);
   }
 
+  /* A hand-edited row is no longer a pure read of the tool it came from -
+     `live_source` describes exactly that read, so it stops being true the
+     moment a row is typed, added, or removed here. Title and chart-type
+     edits (`patchDraft` calls elsewhere) do not touch this: neither changes
+     what the rows mean. */
   function updateRow(i: number, field: "label" | "value", value: string) {
     if (!draft) return;
     const labels = [...draft.labels];
     const values = [...draft.values];
     if (field === "label") labels[i] = value;
     else values[i] = Number(value) || 0;
-    patchDraft({ labels, values });
+    patchDraft({ labels, values, live_source: null });
   }
 
   function removeRow(i: number) {
@@ -460,12 +483,13 @@ export function TileBuilder({
     patchDraft({
       labels: draft.labels.filter((_, idx) => idx !== i),
       values: draft.values.filter((_, idx) => idx !== i),
+      live_source: null,
     });
   }
 
   function addRow() {
     if (!draft) return;
-    patchDraft({ labels: [...draft.labels, "New"], values: [...draft.values, 0] });
+    patchDraft({ labels: [...draft.labels, "New"], values: [...draft.values, 0], live_source: null });
   }
 
   /* Adopt the version being looked at, so `Save` is never a surprise. */
@@ -501,6 +525,7 @@ export function TileBuilder({
         labels: draft.labels,
         values: draft.values,
         source_note: note,
+        live_source: draft.live_source,
       });
       if (target) {
         await addCustomTileToDashboard(target, created, existingTiles);

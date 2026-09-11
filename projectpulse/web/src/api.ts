@@ -60,6 +60,7 @@ export type DashboardScope = "program" | "project";
 export type CustomChartDraft = components["schemas"]["CustomChartDraft"];
 export type CustomTileIn = components["schemas"]["CustomTileIn"];
 export type CustomTileOut = components["schemas"]["CustomTileOut"];
+export type LiveSource = components["schemas"]["LiveSource"];
 export type CustomTileListBundle = components["schemas"]["CustomTileListBundle"];
 export type DraftChange = components["schemas"]["DraftChange"];
 export type TileChatResponse = components["schemas"]["TileChatResponse"];

@@ -58,18 +58,29 @@ class DashboardTile(Base, Timestamped):
 
 
 class CustomTile(Base, Timestamped):
-    """A person's own chart, drafted from data they pasted in - never from
-    anything the intelligence layer computed.
+    """A person's own chart - either pasted/typed data, or one the tile
+    agent built by reading this app's own computed data through a tool.
 
-    This is the one tile type this app's governing rule does not apply to,
-    and that has to be stated rather than papered over: `CLAUDE.md` invariant
-    1 says the model never produces a number a PM will read as computed fact.
-    A `CustomTile`'s numbers come from the person, typed or pasted by them -
-    the model's job here is parsing their text into `{title, chart_type,
-    labels, values}`, not authoring the values. `source_note` (what they said
-    the data was) travels with the tile so the canvas can label it plainly as
-    custom, the same honesty the Agent tab and the Risk register already
-    practice for their own ungoverned surfaces.
+    The pasted/typed case is the one tile type this app's governing rule does
+    not apply to, and that has to be stated rather than papered over:
+    `CLAUDE.md` invariant 1 says the model never produces a number a PM will
+    read as computed fact. Here the model's job is parsing what the person
+    typed into `{title, chart_type, labels, values}`, not authoring the
+    values - `source_note` (what they said the data was) travels with the
+    tile so the canvas can label it plainly as custom.
+
+    The tool-sourced case does not actually break invariant 1, despite
+    looking like the same exception: the numbers still come from
+    `app/intelligence/`'s own deterministic bundles, read through the same
+    tools `app/dashboard/agent.py` exposes for a one-off chat answer - the
+    model only ever chose *which* tool and *which* field, never a value.
+    `live_source_json` set means exactly that: `get_custom_tile` recomputes
+    `labels`/`values` from the live tool result on every read rather than
+    returning what is frozen in `labels_json` / `values_json` below, so the
+    tile tracks the project the same way a catalogue tile does. `None` (every
+    pasted/typed tile, and any tool-sourced draft the inference in
+    `agent.py` could not confidently reproduce) means there is nothing live
+    to read it from, and the frozen columns are the only truth there is.
 
     Saved once, addable to any dashboard many times - `DashboardTile.tile_key`
     for one of these is `f"custom:{id}"` rather than a `catalogue` key.
@@ -87,3 +98,12 @@ class CustomTile(Base, Timestamped):
     #: What the person said this data was, kept verbatim - the honesty label
     #: rendered on the tile, and the only provenance a pasted number has.
     source_note: Mapped[str | None] = mapped_column(Text, default=None)
+    #: JSON `{tool, project_id, list_field, label_field, value_field}`, set
+    #: only when this tile's rows were read straight from one of the tile
+    #: agent's tools (`app/dashboard/agent.py`) rather than pasted or typed -
+    #: see that module for how it is inferred, and `custom.get_custom_tile`
+    #: for where it turns into a live re-fetch instead of the frozen
+    #: `labels_json` / `values_json` above. `None` for every tile this
+    #: column's own docstring predates: read as "pasted", the correct
+    #: default for data with no live source to refresh from.
+    live_source_json: Mapped[str | None] = mapped_column(Text, default=None)

@@ -49,7 +49,7 @@ import logging
 from typing import Any
 
 from app.api.schemas.agent import ChatMessage
-from app.api.schemas.dashboard import CustomChartDraft
+from app.api.schemas.dashboard import CustomChartDraft, LiveSource
 from app.dashboard.custom import _draft_json, _parse_model_json, _validate_draft
 from app.narration.providers import ModelConfig, _base, _import, _key
 
@@ -213,6 +213,69 @@ def _execute_tool(name: str, session, project_id: str) -> dict:
     return {"error": f"unknown tool {name!r}"}
 
 
+def _rows_match(labels: list[str], values: list[float], by_label: dict) -> bool:
+    for label, value in zip(labels, values):
+        found = by_label.get(label)
+        if found is None:
+            return False
+        try:
+            if abs(float(found) - float(value)) > 1e-6:
+                return False
+        except (TypeError, ValueError):
+            return False
+    return True
+
+
+def _infer_live_source(
+    tool_calls: list[tuple[str, dict]], draft: CustomChartDraft, project_id: str
+) -> LiveSource | None:
+    """If this chart's every row can be read straight back out of one tool
+    call, say how - otherwise `None`, and it stays a frozen snapshot.
+
+    Deliberately conservative rather than clever: this never asks *why* the
+    model picked the numbers it did, it only checks whether some (list,
+    label field, value field) triple in the tool's own JSON reproduces
+    `draft.labels`/`draft.values` exactly. A findings count grouped by
+    severity, a forecast percentile relabelled, anything the model computed
+    rather than copied - none of that has a matching field to point at, so
+    it correctly returns `None` rather than a recipe that would drift from
+    what was actually approved. More than one distinct tool called this turn
+    is the same story: which one produced which row is not recoverable from
+    the final JSON alone, so it is not claimed.
+    """
+    names = {name for name, _ in tool_calls}
+    if len(names) != 1:
+        return None
+    if not draft.labels or len(draft.labels) != len(draft.values):
+        return None
+    tool_name = next(iter(names))
+    # The latest call to this tool this turn - a revision that re-calls the
+    # same tool mid-conversation should be judged against what it just saw.
+    data = next(result for name, result in reversed(tool_calls) if name == tool_name)
+
+    for list_field, rows in data.items():
+        if not isinstance(rows, list) or not rows or not isinstance(rows[0], dict):
+            continue
+        str_fields = [k for k, v in rows[0].items() if isinstance(v, str)]
+        num_fields = [
+            k
+            for k, v in rows[0].items()
+            if isinstance(v, (int, float)) and not isinstance(v, bool)
+        ]
+        for label_field in str_fields:
+            for value_field in num_fields:
+                by_label = {str(r.get(label_field)): r.get(value_field) for r in rows}
+                if _rows_match(draft.labels, draft.values, by_label):
+                    return LiveSource(
+                        tool=tool_name,
+                        project_id=project_id,
+                        list_field=list_field,
+                        label_field=label_field,
+                        value_field=value_field,
+                    )
+    return None
+
+
 def agentic_turn(
     messages: list[ChatMessage],
     session,
@@ -251,6 +314,11 @@ def agentic_turn(
         )
         conversation.append({"role": "assistant", "content": "Understood - what would you like changed?"})
     conversation.extend({"role": m.role, "content": m.content} for m in messages)
+    #: Every tool call this turn actually made, name and raw result - what
+    #: `_infer_live_source` checks the final draft against. Turn-scoped, not
+    #: carried from a previous revision: what mattered to *this* answer is
+    #: only what was looked up to produce it.
+    tool_calls: list[tuple[str, dict]] = []
 
     try:
         for _ in range(MAX_TOOL_ROUNDS):
@@ -271,6 +339,7 @@ def agentic_turn(
                     if block.type != "tool_use":
                         continue
                     data = _execute_tool(block.name, session, project_id)
+                    tool_calls.append((block.name, data))
                     results.append(
                         {
                             "type": "tool_result",
@@ -285,6 +354,9 @@ def agentic_turn(
             parsed = _parse_model_json(text)
             draft = _validate_draft(parsed) if parsed is not None else None
             if draft is not None:
+                live_source = _infer_live_source(tool_calls, draft, project_id)
+                if live_source is not None:
+                    draft = draft.model_copy(update={"live_source": live_source})
                 return draft, None
             # Not valid JSON - real prose (the model explaining itself, per
             # the system prompt) is a usable answer on its own.

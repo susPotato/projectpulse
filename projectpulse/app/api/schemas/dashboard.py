@@ -95,6 +95,25 @@ class CustomTileDraftRequest(Response):
     hint: str | None = None
 
 
+class LiveSource(Response):
+    """How to recompute a tool-sourced tile's rows live, instead of trusting
+    the snapshot taken when it was drafted.
+
+    Never asserted by the model - `app/dashboard/agent.py` infers this by
+    matching a draft's own `labels`/`values` against the raw JSON one of its
+    tools actually returned, so a chart carries this only when the match is
+    exact. `tool` is one of `agent.TOOLS`'s names; `list_field` is which list
+    in that tool's JSON result the rows came from, `label_field` and
+    `value_field` which two keys of each row became a label and a value.
+    """
+
+    tool: str
+    project_id: str
+    list_field: str
+    label_field: str
+    value_field: str
+
+
 class CustomChartDraft(Response):
     """A proposed `{title, chart_type, labels, values}` - not saved yet. The
     person reviews and edits this before it becomes a `CustomTileOut`."""
@@ -110,6 +129,10 @@ class CustomChartDraft(Response):
     source: Literal["ai", "csv_fallback", "local_edit"]
     #: Set only when the model was not what produced this: why not.
     fallback_reason: str | None = None
+    #: Set only when every row was read straight from one tool call this
+    #: draft came from - `None` otherwise, including for a plain "ai" draft
+    #: parsed from pasted data, which has no tool behind it to replay.
+    live_source: LiveSource | None = None
 
 
 class DraftChange(Response):
@@ -148,6 +171,7 @@ class CustomChartDraftIn(Response):
     values: list[float] = Field(default_factory=list)
     source: Literal["ai", "csv_fallback", "local_edit"] = "ai"
     fallback_reason: str | None = None
+    live_source: LiveSource | None = None
 
 
 class TileChatRequest(Response):
@@ -192,15 +216,23 @@ class CustomTileIn(Response):
     labels: list[str]
     values: list[float]
     source_note: str | None = None
+    #: Carried straight from the draft that was on screen when Save was
+    #: pressed - see `LiveSource`. `labels`/`values` above still travel too,
+    #: as the snapshot to fall back on if the live read ever fails.
+    live_source: LiveSource | None = None
 
 
 class CustomTileOut(Response):
     id: int
     name: str
     chart_type: ChartType
+    #: The rows to draw right now - recomputed from `live_source` on every
+    #: read when one is set, otherwise the frozen snapshot. Either way this
+    #: is what a renderer should use; nothing downstream needs to know which.
     labels: list[str]
     values: list[float]
     source_note: str | None = None
+    live_source: LiveSource | None = None
 
 
 class CustomTileListBundle(Response):

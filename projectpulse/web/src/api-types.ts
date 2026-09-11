@@ -1427,6 +1427,7 @@ export interface components {
             source: "ai" | "csv_fallback" | "local_edit";
             /** Fallback Reason */
             fallback_reason: string | null;
+            live_source: components["schemas"]["LiveSource"] | null;
         };
         /**
          * CustomChartDraftIn
@@ -1460,6 +1461,7 @@ export interface components {
             source: "ai" | "csv_fallback" | "local_edit";
             /** Fallback Reason */
             fallback_reason?: string | null;
+            live_source?: components["schemas"]["LiveSource"] | null;
         };
         /** CustomTileDraftRequest */
         CustomTileDraftRequest: {
@@ -1483,6 +1485,7 @@ export interface components {
             values: number[];
             /** Source Note */
             source_note?: string | null;
+            live_source?: components["schemas"]["LiveSource"] | null;
         };
         /** CustomTileListBundle */
         CustomTileListBundle: {
@@ -1506,6 +1509,7 @@ export interface components {
             values: number[];
             /** Source Note */
             source_note: string | null;
+            live_source: components["schemas"]["LiveSource"] | null;
         };
         /** DashboardOut */
         DashboardOut: {
@@ -2017,6 +2021,30 @@ export interface components {
             context: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * LiveSource
+         * @description How to recompute a tool-sourced tile's rows live, instead of trusting
+         *     the snapshot taken when it was drafted.
+         *
+         *     Never asserted by the model - `app/dashboard/agent.py` infers this by
+         *     matching a draft's own `labels`/`values` against the raw JSON one of its
+         *     tools actually returned, so a chart carries this only when the match is
+         *     exact. `tool` is one of `agent.TOOLS`'s names; `list_field` is which list
+         *     in that tool's JSON result the rows came from, `label_field` and
+         *     `value_field` which two keys of each row became a label and a value.
+         */
+        LiveSource: {
+            /** Tool */
+            tool: string;
+            /** Project Id */
+            project_id: string;
+            /** List Field */
+            list_field: string;
+            /** Label Field */
+            label_field: string;
+            /** Value Field */
+            value_field: string;
         };
         /**
          * Member

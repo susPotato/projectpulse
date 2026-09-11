@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.api.schemas.agent import ChatMessage
-from app.api.schemas.dashboard import CustomChartDraft, CustomTileIn, TileIn
+from app.api.schemas.dashboard import CustomChartDraft, CustomTileIn, LiveSource, TileIn
 from app.dashboard.catalogue import BY_KEY, CATALOGUE, TEMPLATES, for_scope
 from app.dashboard.custom import (
     _local_revision,
@@ -20,6 +20,7 @@ from app.dashboard.custom import (
     delete_custom_tile,
     diff_drafts,
     draft_chart,
+    get_custom_tile,
     list_custom_tiles,
     summarize,
 )
@@ -303,6 +304,81 @@ def test_create_custom_tile_rejects_mismatched_lengths(session):
             session,
             CustomTileIn(name="Bad", chart_type="bar", labels=["a", "b"], values=[1]),
         )
+
+
+def test_pasted_data_tiles_never_carry_a_live_source(session):
+    """No `live_source` on the way in means none on the way out - a tile
+    built from pasted data has no tool to refresh it from."""
+    out = create_custom_tile(
+        session,
+        CustomTileIn(name="Pasted", chart_type="bar", labels=["a"], values=[1]),
+    )
+    assert out.live_source is None
+
+
+# --------------------------------------------------------------------------
+# Live tiles: a tool-sourced draft's rows are not what got frozen at save -
+# `get_custom_tile` re-reads them from the same tool every time instead.
+# --------------------------------------------------------------------------
+
+_LIVE_SOURCE = LiveSource(
+    tool="get_team_effort",
+    project_id=PROJECT,
+    list_field="members",
+    label_field="name",
+    value_field="hours_logged",
+)
+
+
+def test_get_custom_tile_recomputes_live_rows_on_every_read(session, monkeypatch):
+    monkeypatch.setattr(
+        "app.dashboard.agent._execute_tool",
+        lambda name, session, project_id: {
+            "members": [{"name": "Tung Nguyen", "hours_logged": 16.0}]
+        },
+    )
+    created = create_custom_tile(
+        session,
+        CustomTileIn(
+            name="Hours Logged", chart_type="bar",
+            labels=["Tung Nguyen"], values=[16.0], live_source=_LIVE_SOURCE,
+        ),
+    )
+    assert created.values == [16.0]
+
+    # The underlying number moves, as it would after the next sync - the
+    # frozen 16.0 above is not what a second read should answer with.
+    monkeypatch.setattr(
+        "app.dashboard.agent._execute_tool",
+        lambda name, session, project_id: {
+            "members": [{"name": "Tung Nguyen", "hours_logged": 24.0}]
+        },
+    )
+    refreshed = get_custom_tile(session, created.id)
+    assert refreshed is not None
+    assert refreshed.values == [24.0]
+    assert refreshed.live_source == _LIVE_SOURCE
+
+
+def test_get_custom_tile_falls_back_to_the_snapshot_when_the_live_read_fails(session, monkeypatch):
+    """A live tile degrading to its last known values beats a 500 taking the
+    rest of the dashboard down with it."""
+    monkeypatch.setattr(
+        "app.dashboard.agent._execute_tool",
+        lambda name, session, project_id: {"members": [{"name": "A", "hours_logged": 5.0}]},
+    )
+    created = create_custom_tile(
+        session,
+        CustomTileIn(name="X", chart_type="bar", labels=["A"], values=[5.0], live_source=_LIVE_SOURCE),
+    )
+
+    def _boom(name, session, project_id):
+        raise RuntimeError("database hiccup")
+
+    monkeypatch.setattr("app.dashboard.agent._execute_tool", _boom)
+    still_there = get_custom_tile(session, created.id)
+    assert still_there is not None
+    assert still_there.values == [5.0]
 
 
 # --------------------------------------------------------------------------
@@ -618,6 +694,130 @@ def test_agentic_turn_executes_a_tool_call_before_answering(monkeypatch, session
 
     assert note is None
     assert draft is not None and draft.title == "Team Effort"
+
+
+def test_agentic_turn_infers_a_live_source_when_the_draft_matches_the_tool_exactly(
+    monkeypatch, session
+):
+    """The model's own JSON is never trusted for this on its own -
+    `_infer_live_source` checks it against the tool's raw result field by
+    field, and only a chart that matches exactly gets marked live."""
+    from app.dashboard.agent import agentic_turn
+    from app.narration.providers import ModelConfig
+
+    monkeypatch.setattr(
+        "app.dashboard.agent._execute_tool",
+        lambda name, session, project_id: {
+            "members": [
+                {"name": "Tung Nguyen", "hours_logged": 16.0, "hours_planned": 20.0},
+                {"name": "My Nguyen", "hours_logged": 11.0, "hours_planned": 15.0},
+            ]
+        },
+    )
+    tool_call = types.SimpleNamespace(type="tool_use", id="t1", name="get_team_effort", input={})
+    final = (
+        '{"title": "Hours Logged", "chart_type": "bar", '
+        '"labels": ["Tung Nguyen", "My Nguyen"], "values": [16.0, 11.0]}'
+    )
+    _install_fake_agent_anthropic(
+        monkeypatch,
+        [_FakeAgentResponse(tool_calls=[tool_call]), _FakeAgentResponse(text=final)],
+    )
+
+    draft, note = agentic_turn(
+        _msgs("chart hours logged per member"),
+        session, PROJECT,
+        cfg=ModelConfig(model="claude-opus-5", api_key="x"),
+    )
+
+    assert note is None
+    assert draft is not None
+    assert draft.live_source is not None
+    assert draft.live_source.tool == "get_team_effort"
+    assert draft.live_source.project_id == PROJECT
+    assert draft.live_source.list_field == "members"
+    assert draft.live_source.label_field == "name"
+    assert draft.live_source.value_field == "hours_logged"
+
+
+def test_agentic_turn_does_not_infer_a_live_source_it_cannot_reproduce(monkeypatch, session):
+    """A findings-by-severity count is the model's own aggregation, not a
+    field read straight from the tool - `get_project_findings`'s rows carry
+    no numeric field at all, so nothing can match and this stays a
+    snapshot rather than a live recipe that would silently drift."""
+    from app.dashboard.agent import agentic_turn
+    from app.narration.providers import ModelConfig
+
+    monkeypatch.setattr(
+        "app.dashboard.agent._execute_tool",
+        lambda name, session, project_id: {
+            "findings": [
+                {"severity": "high", "category": "schedule_risk", "headline": "..."},
+                {"severity": "medium", "category": "quality_risk", "headline": "..."},
+            ],
+            "milestones_at_risk": 1,
+            "qa_blocked": 0,
+            "qa_count": 5,
+            "task_count": 10,
+        },
+    )
+    tool_call = types.SimpleNamespace(
+        type="tool_use", id="t1", name="get_project_findings", input={}
+    )
+    final = (
+        '{"title": "Findings by Severity", "chart_type": "bar", '
+        '"labels": ["high", "medium"], "values": [1, 1]}'
+    )
+    _install_fake_agent_anthropic(
+        monkeypatch,
+        [_FakeAgentResponse(tool_calls=[tool_call]), _FakeAgentResponse(text=final)],
+    )
+
+    draft, note = agentic_turn(
+        _msgs("chart findings by severity"),
+        session, PROJECT,
+        cfg=ModelConfig(model="claude-opus-5", api_key="x"),
+    )
+
+    assert note is None
+    assert draft is not None
+    assert draft.live_source is None
+
+
+def test_agentic_turn_does_not_infer_a_live_source_from_two_distinct_tools(monkeypatch, session):
+    """Which of two tools produced which row is not recoverable from the
+    final JSON alone, so a chart built from more than one tool call this
+    turn is never marked live, however well its numbers happen to match."""
+    from app.dashboard.agent import agentic_turn
+    from app.narration.providers import ModelConfig
+
+    def fake_tool(name, session, project_id):
+        if name == "get_team_effort":
+            return {"members": [{"name": "A", "hours_logged": 5.0}]}
+        return {"risks": [{"title": "A", "category": "schedule", "rating": "high"}]}
+
+    monkeypatch.setattr("app.dashboard.agent._execute_tool", fake_tool)
+    calls = [
+        types.SimpleNamespace(type="tool_use", id="t1", name="get_team_effort", input={}),
+        types.SimpleNamespace(type="tool_use", id="t2", name="get_risk_register", input={}),
+    ]
+    final = (
+        '{"title": "Mixed", "chart_type": "bar", "labels": ["A"], "values": [5.0]}'
+    )
+    _install_fake_agent_anthropic(
+        monkeypatch,
+        [_FakeAgentResponse(tool_calls=calls), _FakeAgentResponse(text=final)],
+    )
+
+    draft, note = agentic_turn(
+        _msgs("chart effort and risk together"),
+        session, PROJECT,
+        cfg=ModelConfig(model="claude-opus-5", api_key="x"),
+    )
+
+    assert note is None
+    assert draft is not None
+    assert draft.live_source is None
 
 
 def test_chat_turn_surfaces_the_agents_explanation_as_an_ok_reply_on_a_revision(monkeypatch, session):

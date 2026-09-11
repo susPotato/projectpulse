@@ -747,6 +747,14 @@ export const CustomChartTile: ComponentType<TileProps> = ({ tileKey }) => {
             <span className="rounded bg-purple/15 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.05em] text-purple">
               Custom
             </span>
+            {bundle.live_source && (
+              <span
+                className="rounded bg-green/15 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.05em] text-green"
+                title="Refreshes from the project's own data every time this tile is viewed"
+              >
+                Live
+              </span>
+            )}
             {bundle.source_note && (
               <span className="min-w-0 flex-1 truncate text-[10.5px] text-ink-3" title={bundle.source_note}>
                 {bundle.source_note}
