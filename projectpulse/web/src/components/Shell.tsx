@@ -286,6 +286,17 @@ export function Page({
   //: page, since most of them are the former.
   wide?: boolean;
 }) {
+  // Every page routes its title and scope through here, so this is the one
+  // place the browser tab needs to know about either - no per-page copy to
+  // forget. `scope` is typed as `ReactNode` for callers that might someday
+  // pass markup, but every current one passes a plain string; a future JSX
+  // one just leaves the tab on `title` alone rather than stringifying markup
+  // into it.
+  useEffect(() => {
+    const withScope = typeof scope === "string" && scope ? `${title} · ${scope}` : title;
+    document.title = `${withScope} — ProjectPulseAI`;
+  }, [title, scope]);
+
   return (
     <div className="shell">
       <Rail current={current} />

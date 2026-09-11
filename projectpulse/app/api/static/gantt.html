@@ -187,6 +187,10 @@
       bundle.project_id + "  -  " + bundle.rows.length + " tasks, " +
       bundle.rows.filter(function (r) { return r.is_inconsistent; }).length +
       " whose planned date the chain cannot support";
+    // Same data the line above reads, into the tab - the React pages' Page
+    // component does this for every one of them; this hand-written page has
+    // no equivalent so it is set here instead.
+    document.title = bundle.project_id + " · " + bundle.rows.length + " tasks — ProjectPulseAI - Schedule";
 
     var main = document.getElementById("main");
     main.textContent = "";
