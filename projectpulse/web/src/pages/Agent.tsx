@@ -9,7 +9,7 @@ import {
   type PortfolioBundle,
 } from "../api";
 import { Card, Note, Page } from "../components/Shell";
-import { TileBuilder, type TileTarget } from "../components/TileBuilder";
+import { SavedTiles, TileBuilder, type TileTarget } from "../components/TileBuilder";
 
 /*
   The Agent tab, in two modes - and the two are not the same kind of thing,
@@ -107,6 +107,13 @@ export function Agent() {
      and a silent target is the wrong default for a write. */
   const [target, setTarget] = useState<TileTarget | null>(null);
   const [targetProblem, setTargetProblem] = useState(false);
+  /** "Build a tile" vs "My Custom Tiles" - the same two tabs the dashboard's
+      Custom Tile dialog offers, added here because this page previously had
+      no second tab at all: a tile saved from here landed correctly (in the
+      library, and on a dashboard when a project was ambient) with no way to
+      see that from this page - which reads exactly like a failed save even
+      though it was not one. */
+  const [tileTab, setTileTab] = useState<"build" | "saved">("build");
 
   useEffect(() => {
     if (mode !== "tile" || target !== null || targetProblem) return;
@@ -281,12 +288,42 @@ export function Agent() {
             )}
           </Note>
 
+          {/* Same two tabs, same labels, same styling, as the dashboard's
+              Custom Tile dialog (`CustomTileModal.tsx`) - this page just had
+              nowhere to put the second one before. "Build with AI" rather
+              than "Build a tile" again: the mode switch above already says
+              "Build a tile", and repeating it one row down would read as two
+              different things happening to share a name. */}
+          <div className="mt-4 flex border-b border-rule">
+            {([
+              ["build", "Build with AI"],
+              ["saved", "My Custom Tiles"],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTileTab(id)}
+                className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2 text-[12.5px] ${
+                  tileTab === id
+                    ? "border-navy font-semibold text-ink"
+                    : "border-transparent text-ink-2 hover:text-ink"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* Not `Card`: it hardcodes `p-4` and the builder owns its own
               padding, and overriding a Tailwind utility by class order is not
               something Tailwind guarantees. The builder needs a bounded flex
               column to grow into - see its module docstring. */}
-          <div className="mt-4 flex h-[68vh] flex-col overflow-hidden rounded-lg border border-rule bg-surface">
-            <TileBuilder target={target} />
+          <div className="flex h-[68vh] flex-col overflow-hidden rounded-b-lg border border-t-0 border-rule bg-surface">
+            {tileTab === "build" ? (
+              <TileBuilder target={target} />
+            ) : (
+              <SavedTiles target={target} />
+            )}
           </div>
         </>
       )}

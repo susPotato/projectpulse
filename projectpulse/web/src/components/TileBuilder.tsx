@@ -44,6 +44,7 @@ import {
   type ApiProblem,
   type ChartType,
   type CustomChartDraft,
+  type CustomTileListBundle,
   type CustomTileOut,
   type DashboardOut,
   type DashboardScope,
@@ -124,6 +125,88 @@ export async function addCustomTileToDashboard(
     y,
     ...CUSTOM_SLOT,
   });
+}
+
+/**
+ * "My Custom Tiles": every tile ever saved, across every project - `CustomTile`
+ * carries no project or scope of its own (see its docstring), so this is not
+ * filtered to `target` even when one is given.
+ *
+ * One implementation, two hosts, same reason as the builder above: the
+ * `Custom Tile` dialog's second tab, and now the Agent page's "Build a tile"
+ * mode. It used to exist only in the dialog - the Agent page had no way to
+ * see a tile it had just saved, which read as "it said saved but it is not
+ * there" when what had actually happened is there was nowhere on that page
+ * to look. Fetches fresh on every mount rather than caching across the
+ * host's lifetime: a tab switch away and back is the moment this needs to be
+ * right, right after a save.
+ */
+export function SavedTiles({
+  target,
+  existingTiles,
+  onAdded,
+}: {
+  /** Where "+ Add to Dashboard" sends a tile. Null hides that action - the
+      Agent page, before a project has resolved, has nowhere to put one. */
+  target: TileTarget | null;
+  existingTiles?: TileOut[];
+  onAdded?: () => void;
+}) {
+  const [saved, setSaved] = useState<CustomTileOut[] | null>(null);
+  const [problem, setProblem] = useState<ApiProblem | null>(null);
+
+  useEffect(() => {
+    load<CustomTileListBundle>("/api/custom-tiles").then(
+      (b) => setSaved(b.tiles),
+      setProblem,
+    );
+  }, []);
+
+  async function deleteSaved(id: number) {
+    await send(`/api/custom-tiles/${id}`, "DELETE");
+    setSaved((prev) => (prev ? prev.filter((t) => t.id !== id) : prev));
+  }
+
+  async function addSaved(tile: CustomTileOut) {
+    if (!target) return;
+    await addCustomTileToDashboard(target, tile, existingTiles);
+    onAdded?.();
+  }
+
+  return (
+    <div className="overflow-y-auto p-4">
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        {problem && <p className="m-0 text-[12.5px] text-red">{problem.title}</p>}
+        {saved && saved.length === 0 && (
+          <p className="m-0 text-[12.5px] text-ink-3">No custom tiles saved yet.</p>
+        )}
+        {saved?.map((tile) => (
+          <div key={tile.id} className="rounded-lg border border-rule p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[12.5px] font-semibold text-ink">{tile.name}</span>
+              <button
+                type="button"
+                onClick={() => deleteSaved(tile.id)}
+                className="cursor-pointer rounded border-0 bg-transparent text-[11.5px] text-ink-3 hover:text-red"
+              >
+                Delete
+              </button>
+            </div>
+            <MiniChart chartType={tile.chart_type} labels={tile.labels} values={tile.values} />
+            {target && (
+              <button
+                type="button"
+                onClick={() => addSaved(tile)}
+                className="mt-2.5 w-full cursor-pointer rounded-md border border-rule bg-bg px-2.5 py-1 text-[11.5px] font-semibold text-ink hover:bg-rule/40"
+              >
+                + Add to Dashboard
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /* What produced the draft, said plainly. A table read by the plain CSV
