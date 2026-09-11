@@ -80,6 +80,7 @@
 <nav class="rail" aria-label="Sections">
   <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
   <a href="/programs"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Program</span></a>
+  <a href="/projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Projects</span></a>
   <a href="/console"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Console</span></a>
   <a href="/gantt"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
   <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
@@ -330,7 +331,10 @@
       '<div class="card"><div class="lbl">Upload a document</div>' +
       '<div class="hint" style="margin:6px 0 12px">The alternative to the OneDrive-synced folder below ' +
       "&mdash; the only way to add data on a deployed host, which has no such folder to sync. " +
-      "Ingests through the same reader, differ and rules as everything else.</div>" +
+      "Ingests through the same reader, differ and rules as everything else. " +
+      "The tab is found from the workbook's own contents, so it can be called anything &mdash; " +
+      "it needs a header row with the template's columns, including <code>Task ID</code>, " +
+      "which is what identifies a row across imports.</div>" +
       '<label for="up-target">Project</label>' +
       '<select id="up-target">' +
         '<option value="__new__">New project&hellip;</option>' +
@@ -429,10 +433,15 @@
           var notes = (j.notes || []).map(function (n) {
             return "<div>" + esc(n) + "</div>";
           }).join("");
+          // Which tab was read, because that is now resolved from the
+          // workbook's own contents rather than fixed - a person uploading a
+          // file with several sheets should see which one we took.
           freshResult.innerHTML =
             '<div class="hint" style="margin-top:10px"><span class="ok">' + esc(j.project_name) +
             "</span> &middot; " + j.rows_ok + " row(s), " + j.changes_emitted + " change(s)" +
-            (j.rows_rejected ? ", " + j.rows_rejected + " rejected" : "") + "</div>" +
+            (j.rows_rejected ? ", " + j.rows_rejected + " rejected" : "") +
+            (j.sheet_name ? " &middot; read the <b>" + esc(j.sheet_name) + "</b> tab" : "") +
+            "</div>" +
             '<div class="hint" style="margin-top:4px">' + notes + "</div>";
         });
       })

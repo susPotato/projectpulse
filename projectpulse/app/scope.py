@@ -9,25 +9,29 @@ rows were one project and would have listed HRMS twice.
 
 This is that pairing, in one place. The demo project is a built-in seed;
 anything registered since - typically by uploading a document for a project
-nobody has seen before, via Settings > Sources - is layered on top of it and
-persisted the same way narration settings are: a small JSON file in
-`PULSE_STATE_DIR`, gitignored, plaintext, read fresh on every call rather than
-cached, because a second worker process must see what the first one wrote.
+nobody has seen before, via Settings > Sources - is layered on top of it.
+
+**Registered projects live in the database**, not in a file. They used to be a
+small JSON file under `PULSE_STATE_DIR`, which works on a laptop and quietly
+fails on a host: a Fly machine's filesystem does not survive a deploy, so a
+project imported through the browser disappeared from every picker on the next
+release while its ingested rows stayed in Postgres, orphaned. Same reasoning as
+the narration cache and the OneDrive sign-in, and the same conclusion.
+
+Read fresh on every call rather than cached, because a second worker process
+must see what the first one wrote - and an unreachable or not-yet-created table
+returns "just the seed" rather than raising, exactly as a missing file did.
+Nothing here needs a session from its caller; a read that cannot happen is not
+an error at this layer.
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import os
-import threading
 from dataclasses import dataclass, field
-from pathlib import Path
 
 log = logging.getLogger(__name__)
-
-_LOCK = threading.Lock()
-FILENAME = "projects.json"
 
 
 @dataclass(frozen=True)
@@ -67,35 +71,44 @@ _SEED: tuple[DeliveryProject, ...] = (
 )
 
 
-def _state_path() -> Path:
-    from app.config import settings
+def _rows() -> list[DeliveryProject]:
+    """Registered projects, or nothing at all if they cannot be read.
 
-    return Path(settings.state_dir) / FILENAME
+    Every failure mode collapses to "there are none", which is the same answer
+    a missing JSON file gave and the right one here: `all_projects()` is on the
+    path of every request, and a database that is down or a schema that has not
+    been created yet must degrade to the built-in seed rather than take down
+    the portfolio, the project picker and the risk form with it.
+    """
+    from sqlalchemy import select
 
+    from app.db import session_scope
+    from app.models.uploads import RegisteredProject
 
-def _load_registered() -> list[DeliveryProject]:
-    path = _state_path()
     try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return []
-    except (OSError, json.JSONDecodeError) as exc:
-        log.warning("ignoring unreadable project registry at %s: %s", path, exc)
-        return []
-
-    if not isinstance(raw, list):
+        with session_scope() as session:
+            rows = session.execute(
+                select(
+                    RegisteredProject.canonical_id,
+                    RegisteredProject.name,
+                    RegisteredProject.also,
+                )
+            ).all()
+    except Exception as exc:  # noqa: BLE001 - see the docstring
+        log.warning("ignoring unreadable project registry: %s", exc)
         return []
 
     out: list[DeliveryProject] = []
-    for item in raw:
-        if not isinstance(item, dict):
-            continue
-        canonical_id = str(item.get("canonical_id") or "")
-        name = str(item.get("name") or "")
+    for canonical_id, name, also in rows:
         if not canonical_id or not name:
             continue
-        also = tuple(str(a) for a in item.get("also") or ())
-        out.append(DeliveryProject(canonical_id=canonical_id, name=name, also=also))
+        try:
+            paired = tuple(str(a) for a in json.loads(also or "[]"))
+        except (TypeError, json.JSONDecodeError):
+            # A pairing we cannot read is one project with one source id,
+            # which is the conservative reading - never a dropped project.
+            paired = ()
+        out.append(DeliveryProject(canonical_id=canonical_id, name=name, also=paired))
     return out
 
 
@@ -103,7 +116,7 @@ def all_projects() -> tuple[DeliveryProject, ...]:
     """Every delivery project: the built-in demo, plus anything registered
     since. Read fresh each call - see the module docstring for why."""
     merged: dict[str, DeliveryProject] = {p.canonical_id: p for p in _SEED}
-    for entry in _load_registered():
+    for entry in _rows():
         merged[entry.canonical_id] = entry
     return tuple(merged.values())
 
@@ -112,35 +125,60 @@ def register(canonical_id: str, name: str, also: tuple[str, ...] = ()) -> Delive
     """Add a project, or update its pairing/name if the id already exists.
 
     Called when a document is uploaded for a project id nobody has ingested
-    before - see `POST /api/sources/upload`. Persisted immediately so the
+    before - see `POST /api/sources/upload`. Committed immediately so the
     portfolio picks it up (as `no_data`, correctly, until something is
-    actually ingested for it) without a restart.
+    actually ingested for it) without a restart, and so it is still there
+    after the next deploy.
+
+    Unlike the read above, a failure here is **raised**: the caller is in the
+    middle of accepting somebody's document and telling them it worked when
+    the project was not recorded is the bug this whole change is about.
     """
+    from app.db import session_scope
+    from app.models.uploads import RegisteredProject
+
     entry = DeliveryProject(canonical_id=canonical_id, name=name, also=tuple(also))
-    with _LOCK:
-        registered = {p.canonical_id: p for p in _load_registered()}
-        registered[canonical_id] = entry
-        path = _state_path()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps(
-                [
-                    {"canonical_id": p.canonical_id, "name": p.name, "also": list(p.also)}
-                    for p in registered.values()
-                ],
-                indent=2,
-            ),
-            encoding="utf-8",
+    with session_scope() as session:
+        session.merge(
+            RegisteredProject(
+                canonical_id=canonical_id,
+                name=name,
+                also=json.dumps(list(also)),
+            )
         )
-        try:
-            os.chmod(path, 0o600)
-        except OSError:  # pragma: no cover - platform dependent
-            pass
     return entry
 
 
 def find(canonical_id: str) -> DeliveryProject | None:
     return next((p for p in all_projects() if p.canonical_id == canonical_id), None)
+
+
+def resolve(source_id: str) -> DeliveryProject | None:
+    """The delivery project a source id belongs to, canonical or paired.
+
+    `find` matches the canonical id only. A caller holding
+    `jira:Project:1:HRMS` is naming the same delivery project as
+    `excel:Project:1:HRMS` - invariant 7 - and telling it that project is
+    unknown is how one project's data ends up filed in two places. Anything
+    written *against* a project should be stored under the returned
+    `canonical_id` rather than whichever id the caller happened to have.
+    """
+    for project in all_projects():
+        if source_id == project.canonical_id or source_id in project.also:
+            return project
+    return None
+
+
+def source_ids_for(source_id: str) -> list[str]:
+    """Every id one delivery project may have been filed under.
+
+    For reading back something stored per project by an earlier version, or by
+    a caller that only had a paired id: a query over these finds the project's
+    rows whichever of its ids they carry. An unknown id is returned as itself,
+    for the same reason `also_for` returns an empty list rather than raising.
+    """
+    project = resolve(source_id)
+    return list(project.source_ids) if project else [source_id]
 
 
 def also_for(canonical_id: str) -> list[str]:

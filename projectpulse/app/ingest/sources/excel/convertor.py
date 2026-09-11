@@ -186,7 +186,15 @@ def _convert_task(
 ) -> int:
     name = (payload.get("milestone") or "").strip()
     task = Task(
-        id=domain_id(SOURCE, "Task", connection_id, tool.row_key),
+        # Namespaced by project, like `Milestone` above. Every Excel project
+        # shares one `connection_id`, and a row key is only unique *within its
+        # own sheet* - so without the project two workbooks that both number
+        # their tasks `1, 2, 3` (or `WBS-101`, which is not an unusual thing
+        # for two teams to pick) collide into one row, and the second import
+        # silently takes the first project's tasks. `gen_portfolio_data.py`
+        # prefixes its ids per project to dodge exactly this, which a document
+        # somebody uploads cannot be asked to do.
+        id=domain_id(SOURCE, "Task", connection_id, project_id, tool.row_key),
         project_id=project_id,
         milestone_id=(milestones or {}).get(name),
         title=payload.get("title"),
@@ -217,7 +225,8 @@ def _convert_qa_item(session, connection_id: int, project_id: str, tool, payload
         status = "BLOCKED"
 
     item = QaItem(
-        id=domain_id(SOURCE, "QaItem", connection_id, tool.row_key),
+        # Per project, for the reason `_convert_task` spells out.
+        id=domain_id(SOURCE, "QaItem", connection_id, project_id, tool.row_key),
         project_id=project_id,
         test_case=payload.get("title"),
         status=status,

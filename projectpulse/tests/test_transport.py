@@ -195,12 +195,20 @@ def test_a_fetched_sheet_carries_what_ingest_needs(tmp_path):
 
 def test_default_transport_is_local_unless_switched_on(tmp_path):
     """`PULSE_EXCEL_TRANSPORT` picks the source; local stays the default so
-    installing the `onedrive` extra never changes behaviour by itself."""
+    installing the `onedrive` extra never changes behaviour by itself.
+
+    "Local" is now stored-then-folder: an imported document lives in the
+    database so it survives a deploy, and the demo's generated sheets stay in
+    `data_root` because they are reproducible and a table would only duplicate
+    them. The folder is still what answers for them, which is what this pins.
+    """
     from app.ingest.sources.excel.source import _default_transport
+    from app.ingest.sources.excel.transport import StoredSheetSource
 
     source = _default_transport(session=object(), data_root=tmp_path)
-    assert isinstance(source, LocalFolderSource)
-    assert source.root == tmp_path
+    assert isinstance(source, StoredSheetSource)
+    assert isinstance(source.folder, LocalFolderSource)
+    assert source.folder.root == tmp_path
 
 
 def test_graph_transport_is_selected_when_configured(monkeypatch):

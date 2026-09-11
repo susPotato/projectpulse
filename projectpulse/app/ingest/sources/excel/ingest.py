@@ -147,6 +147,34 @@ def ingest_sheet(
     read = read_sheet(file_path, sheet_name, contract)
     report.unknown_headers = read.unknown_headers
 
+    # A sheet that could not be read *at all* - the tab is not in the workbook,
+    # or no header row was found - has already said exactly why. Report that,
+    # and do not go on to the identity step.
+    #
+    # This used to fall through, and `resolve_identities` then raised
+    # `MissingKeyColumn` over the top of it: a workbook whose Task ID column is
+    # right there was reported as "sheet has no 'task_id' column; add the
+    # column to the template". The person was told to fix the one thing that
+    # was never wrong, and the real cause - the tab is called something else -
+    # was never shown. An unreadable sheet's own reason outranks a guard that
+    # only fired because there were no rows to guard.
+    if read.rejects and not read.rows:
+        report.error = read.rejects[0].reason
+        for rejection in read.rejects:
+            session.add(
+                RawReject(
+                    sync_run_id=sync_run_id,
+                    project_id=project_id,
+                    file_path=origin,
+                    sheet_name=sheet_name,
+                    row_index=rejection.row_index,
+                    raw_row=normalized_payload(rejection.raw_row),
+                    reason=rejection.reason,
+                )
+            )
+        report.rows_rejected = len(read.rejects)
+        return report
+
     # No baseline means no claims: the first sight of a sheet is history we did
     # not witness, not change we observed.
     baseline = _previous_rows(session, scope) if previous_scan is not None else None
@@ -235,12 +263,19 @@ def ingest_sheet(
     lower_bound = previous_scan.scanned_at if previous_scan is not None else now
 
     for change in diff.changes:
-        entity_id = domain_id(source, entity_name, connection_id, change.row_key)
+        # Every id below carries `project_id`, and must keep carrying it: these
+        # have to be byte-identical to what `convertor.py` writes, or a state
+        # change points at a task that does not exist and the evidence panel -
+        # the thing the whole product rests on - goes empty.
+        entity_id = domain_id(
+            source, entity_name, connection_id, project_id, change.row_key
+        )
         state_change = StateChange(
             id=domain_id(
                 source,
                 "StateChange",
                 connection_id,
+                project_id,
                 change.row_key,
                 change.field,
                 str(int(now.timestamp())),
@@ -304,15 +339,16 @@ def ingest_sheet(
                     source,
                     "Dependency",
                     connection_id,
+                    project_id,
                     edge.predecessor_key,
                     edge.successor_key,
                 ),
                 project_id=project_id,
                 predecessor_id=domain_id(
-                    source, entity_name, connection_id, edge.predecessor_key
+                    source, entity_name, connection_id, project_id, edge.predecessor_key
                 ),
                 successor_id=domain_id(
-                    source, entity_name, connection_id, edge.successor_key
+                    source, entity_name, connection_id, project_id, edge.successor_key
                 ),
                 dep_type=edge.dep_type,
                 lag_days=edge.lag_days,

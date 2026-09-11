@@ -149,6 +149,111 @@ Add the extra to the image first, or the SDK is not there to import - in
 
 ---
 
+## What the deployed app keeps, and where
+
+A Fly machine's filesystem **does not survive a deploy**, and a deployment can
+run more than one machine. So nothing the app has to remember is written to
+disk - it is all in Postgres:
+
+| | where | survives a deploy |
+|---|---|---|
+| Ingested rows, findings, state changes | Postgres | yes |
+| Risk register, dashboards, tile layouts, custom tiles | Postgres | yes |
+| Narration cache | Postgres | yes |
+| OneDrive sign-in | Postgres | yes |
+| **Imported workbooks** (bytes + which tab + which project) | Postgres (`uploaded_sheets`) | yes |
+| **Projects somebody registered** by importing a document | Postgres (`registered_projects`) | yes |
+| **Narration settings** set in the browser | Postgres (`app_settings`) | yes |
+| The demo's *generated* sheets (`data/demo/*.xlsx`) | container disk | **no**, and deliberately - they are reproducible from `scripts.gen_demo_data`, and their ingested rows are already in Postgres |
+
+The last three used to be files under `PULSE_STATE_DIR` and `data_root`. That
+worked on a laptop and failed quietly on a host: a document imported through
+the browser **disappeared from every project picker on the next release**,
+while its ingested rows stayed in Postgres with nothing pointing at them.
+
+That means **the website is self-sufficient**: a project can be created,
+imported, re-imported after an edit, risk-assessed and dashboarded entirely
+from the browser, with no local copy of the app and no synced folder. The
+transport that makes it work is `StoredSheetSource` - it reads a workbook out
+of the database into a temp file and deletes it afterwards, which is exactly
+the seam `excel/transport.py` was written for.
+
+⚠️ **A deploy still adds tables.** `scripts.serve` calls `create_all()` on
+boot, so `uploaded_sheets`, `registered_projects` and `app_settings` appear by
+themselves. If you would rather not rely on that, `fly ssh console -C "python
+-m scripts.sync init"` is the explicit form.
+
+⚠️ **`PULSE_DATA_ROOT` still matters for the demo sheets.** After a deploy the
+container has none, so a sync reports them "not present, skipped" - correct,
+and not an error. Their data is already ingested. Only pressing a `/console`
+guided-tour button regenerates them, which is the one thing that also
+re-ingests (see below).
+
+---
+
+## Upgrading a database that already holds data
+
+There is no Alembic here (see "What is deliberately not here"), so a change to
+how rows are *keyed* comes with a script. There is one, and a database seeded
+before 2026-09-11 needs it:
+
+```bash
+python -m scripts.migrate_ids            # report what would change
+python -m scripts.migrate_ids --apply    # change it
+```
+
+**What it is for.** Excel-derived ids (`tasks`, `qa_items`, `state_changes`,
+`dependencies`) gained a project component, because every Excel project shares
+one `connection_id` and a row key is unique only within its own sheet - so two
+projects that both numbered their tasks `1, 2, 3` collided into one row, and
+importing the second document silently took the first's tasks.
+
+**When you need it.** Measured, not reasoned about:
+
+| what someone does | does it duplicate? |
+|---|---|
+| Reads the site - dashboards, Insight, Risk, adding a risk, building a tile | **No.** Nothing syncs on a page load, and old-style ids read correctly. |
+| Redeploys the app | **No.** `serve.py` skips seeding a non-empty database. |
+| Presses **Sync Excel** on `/console` | **No** - on a deployed host. The container's `data_root` is empty after a redeploy, so every watched sheet answers "not present, skipped". |
+| Uploads a document | **No.** The new sheet ingests; the absent demo sheets are skipped. |
+| Presses a **guided tour** button on `/console`, then syncs | **Yes.** `/api/write-step` runs `gen_demo_data`, which writes the sheets fresh - and `.xlsx` output is not byte-identical between runs, so the sha256 always differs and the whole sheet re-ingests. |
+
+On the demo data that last row took HRMS from **10 tasks to 16** and from
+**9 findings to 6** - every task drawn twice on the Gantt. It is not cosmetic:
+the schedule graph is computed over the doubled set, so the conclusions move.
+
+So the migration is not urgent for ordinary use, and it is still worth doing
+now, because nothing stops a visitor pressing a guided-tour button. If a sync
+already duplicated things, run it anyway - it deletes the duplicate rather
+than renaming onto it.
+
+⚠️ **Separately, and already true before any of this: `/console` is
+unauthenticated on a public deploy, and "Reset database" drops the schema.**
+Anyone who opens the live site can wipe it, risk register included. That is
+worth closing before a judged demo window - the buttons are useful locally and
+have no business being reachable in production.
+
+⚠️ **Do not reach for `scripts.replay` on a deployed database.** It rebuilds
+from the sheets, which is correct for a local demo and destroys the only data
+in there that no source system can regenerate: the risk register, the
+dashboards people arranged, the custom tiles, the narration cache and the
+OneDrive sign-in. The migration keeps all of it.
+
+On Fly:
+
+```bash
+fly ssh console -C "python -m scripts.migrate_ids"          # look first
+fly ssh console -C "python -m scripts.migrate_ids --apply"
+```
+
+⚠️ `fly ssh console` exits 1 with "Error: The handle is invalid" after every
+command on the Windows/Git-Bash setup this was written on. That is a local pty
+artifact, not a remote failure - **the command's own stdout above it is the
+truth.** Check the task count per project afterwards; that is the number this
+was about.
+
+---
+
 ## Verifying a deploy
 
 Check **`content_type`, never the status code.** This is written down because it

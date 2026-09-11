@@ -1,6 +1,6 @@
 {
   "project_id": "excel:Project:1:HRMS",
-  "generated_at": "2026-09-10T15:05:14.733205Z",
+  "generated_at": "2026-09-11T07:42:30.901956Z",
   "as_of": "2026-03-22T09:00:00",
   "findings": [
     {
@@ -12,28 +12,28 @@
       "headline_template": "The plan cannot hold: {{tasks_inconsistent}} task(s) are dated earlier than their own dependencies allow, by up to {{max_propagated_days}} days.",
       "recommendation_template": "Re-baseline the affected tasks or compress the driving path before the next steering review.",
       "facts": {
-        "tasks_inconsistent": "3",
-        "max_propagated_days": "34"
+        "max_propagated_days": "34",
+        "tasks_inconsistent": "3"
       },
       "evidence": [
         {
           "raw_data_id": 56,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row9",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row9",
           "remark": "{\"row_key\": \"WBS-121\", \"row_index\": 9}",
           "label": "excel rows"
         },
         {
           "raw_data_id": 54,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row7",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row7",
           "remark": "{\"row_key\": \"WBS-118\", \"row_index\": 7}",
           "label": "excel rows"
         },
         {
           "raw_data_id": 53,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
           "remark": "{\"row_key\": \"WBS-114\", \"row_index\": 6}",
           "label": "excel rows"
         }
@@ -63,21 +63,21 @@
         {
           "raw_data_id": 56,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row9",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row9",
           "remark": "{\"row_key\": \"WBS-121\", \"row_index\": 9}",
           "label": "excel rows"
         },
         {
           "raw_data_id": 54,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row7",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row7",
           "remark": "{\"row_key\": \"WBS-118\", \"row_index\": 7}",
           "label": "excel rows"
         },
         {
           "raw_data_id": 53,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
           "remark": "{\"row_key\": \"WBS-114\", \"row_index\": 6}",
           "label": "excel rows"
         }
@@ -101,8 +101,8 @@
       "headline_template": "QA has stalled: {{qa_blocked}} of {{qa_count}} test items are blocked.",
       "recommendation_template": "Clear the blocking dependency before adding more test scope - additional cases will queue behind the same cause.",
       "facts": {
-        "qa_blocked": "17",
-        "qa_count": "17"
+        "qa_count": "17",
+        "qa_blocked": "17"
       },
       "evidence": [],
       "causal_link": null,
@@ -125,21 +125,21 @@
       "headline_template": "{{chains_dependency_backed}} of {{chain_count}} finding(s) trace to a stated dependency, not just a coincidence in timing.",
       "recommendation_template": "Open the evidence panel to see the source rows.",
       "facts": {
-        "chains_dependency_backed": "2",
-        "chain_count": "50"
+        "chain_count": "50",
+        "chains_dependency_backed": "2"
       },
       "evidence": [
         {
           "raw_data_id": 26,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row5",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row5",
           "remark": "{\"row_key\": \"WBS-108\", \"row_index\": 5}",
           "label": "excel rows"
         },
         {
           "raw_data_id": 40,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
           "remark": "{\"row_key\": \"WBS-114\", \"row_index\": 6}",
           "label": "excel rows"
         }
@@ -149,7 +149,7 @@
         "template_name": "Dependency slip hit its successor",
         "question": "Which of my tasks slipped because something upstream slipped?",
         "cause": {
-          "entity_id": "excel:Task:1:WBS-108",
+          "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
           "entity_label": "WBS-108",
           "field": "planned_end",
           "old_value": "2026-03-04",
@@ -161,7 +161,7 @@
           }
         },
         "effect": {
-          "entity_id": "excel:Task:1:WBS-114",
+          "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
           "entity_label": "WBS-114",
           "field": "planned_end",
           "old_value": "2026-03-20",
@@ -255,14 +255,14 @@
         {
           "raw_data_id": 26,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row5",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row5",
           "remark": "{\"row_key\": \"WBS-108\", \"row_index\": 5}",
           "label": "excel rows"
         },
         {
           "raw_data_id": 40,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
           "remark": "{\"row_key\": \"WBS-114\", \"row_index\": 6}",
           "label": "excel rows"
         }
@@ -272,7 +272,7 @@
         "template_name": "Dependency slip hit its successor",
         "question": "Which of my tasks slipped because something upstream slipped?",
         "cause": {
-          "entity_id": "excel:Task:1:WBS-108",
+          "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
           "entity_label": "WBS-108",
           "field": "planned_end",
           "old_value": "2026-03-04",
@@ -284,7 +284,7 @@
           }
         },
         "effect": {
-          "entity_id": "excel:Task:1:WBS-114",
+          "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
           "entity_label": "WBS-114",
           "field": "planned_end",
           "old_value": "2026-03-20",
@@ -327,14 +327,14 @@
         {
           "raw_data_id": 26,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row5",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row5",
           "remark": "{\"row_key\": \"WBS-108\", \"row_index\": 5}",
           "label": "excel rows"
         },
         {
           "raw_data_id": 41,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row7",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row7",
           "remark": "{\"row_key\": \"WBS-118\", \"row_index\": 7}",
           "label": "excel rows"
         }
@@ -344,7 +344,7 @@
         "template_name": "A slip reached further down the chain",
         "question": "How far downstream has this delay actually spread?",
         "cause": {
-          "entity_id": "excel:Task:1:WBS-108",
+          "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
           "entity_label": "WBS-108",
           "field": "planned_end",
           "old_value": "2026-03-04",
@@ -356,7 +356,7 @@
           }
         },
         "effect": {
-          "entity_id": "excel:Task:1:WBS-118",
+          "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-118",
           "entity_label": "WBS-118",
           "field": "planned_end",
           "old_value": "2026-05-14",
@@ -399,14 +399,14 @@
         {
           "raw_data_id": 40,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_schedule.xlsx#Activities!row6",
           "remark": "{\"row_key\": \"WBS-114\", \"row_index\": 6}",
           "label": "excel rows"
         },
         {
           "raw_data_id": 57,
           "raw_table": "_raw_excel_rows",
-          "url": "file://C:/Users/Potato/Downloads/hackathon/hackathon/projectpulse/data/demo/hrms_worklog.xlsx#Worklog!row4",
+          "url": "file://C:/Users/TriLTM5/Downloads/hackathon/projectpulse/data/demo/hrms_worklog.xlsx#Worklog!row4",
           "remark": "{\"row_key\": \"QA-001\", \"row_index\": 4}",
           "label": "excel rows"
         }
@@ -416,7 +416,7 @@
         "template_name": "Blocked delivery work stalled QA",
         "question": "Why has my QA queue stopped moving?",
         "cause": {
-          "entity_id": "excel:Task:1:WBS-114",
+          "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
           "entity_label": "WBS-114",
           "field": "status",
           "old_value": "Not Started",
@@ -428,7 +428,7 @@
           }
         },
         "effect": {
-          "entity_id": "excel:QaItem:1:QA-001",
+          "entity_id": "excel:QaItem:1:excel%3AProject%3A1%3AHRMS:QA-001",
           "entity_label": "QA-001",
           "field": "status",
           "old_value": "Open",
@@ -460,10 +460,10 @@
   },
   "delivery_confidence": {
     "band": "medium",
-    "score": 0.5234,
+    "score": 0.6,
     "coverage": 0.6,
-    "freshness": 0.8724,
-    "data_age_hours": 24.9,
+    "freshness": 1,
+    "data_age_hours": 0.1,
     "precedent_available": false
   },
   "narrative": "What is at risk\nThere is significant delivery risk in this project. The plan cannot hold: 3 task(s) are dated earlier than their own dependencies allow, by up to 34 days. 3 milestone(s) sit behind work that cannot finish on its planned date. QA has stalled: 17 of 17 test items are blocked.\n\nWhy it is happening\nWBS-108 moved from 2026-03-04 to 2026-03-16; between 4 and 12 days later WBS-114 moved from 2026-03-20 to 2026-04-01. This is reported because a dependency stated in the schedule sheet connects the two tasks. The later event was observed by comparing two spreadsheet snapshots, so its timing is a range rather than a point - the order is still provable because the ranges do not overlap.\n\nWhat it will impact\nThe downstream impact is described above. Note that this projection depends on dependency edges inferred from the schedule's own dates rather than stated by a person; it should be confirmed before being quoted externally.\n\nWhat to do next\n1. Re-baseline the affected tasks or compress the driving path before the next steering review. 2. Raise the milestone date now, or move scope out of it - the current date is not supported by the schedule underneath it. 3. Clear the blocking dependency before adding more test scope - additional cases will queue behind the same cause.\n\nWhat this analysis could not use\nThe schedule conclusion changes if inferred dependencies are removed - 1 of 4 edges were derived from dates rather than stated by a person. 8 row(s) could not be read and were quarantined.",
@@ -478,7 +478,7 @@
     "tasks_not_started": 0,
     "tasks_with_baseline": 6,
     "baseline_coverage": 0.6,
-    "data_age_hours": 24.92316831333333,
+    "data_age_hours": 0.050390771111111114,
     "tasks_inconsistent": 3,
     "max_propagated_days": 34,
     "max_recorded_slip_days": 12,

@@ -472,7 +472,11 @@ def test_a_bool_is_formatted_as_a_word_not_as_the_integer_it_also_is():
         ("jira:Task:1:10108", "10108"),
         ("WBS-108", "WBS-108"),
         ("excel:Task:1:WBS%3A108", "WBS%3A108"),  # an escaped colon survives
-        ("a:b:c:d:e", "d:e"),  # only the first three parts are structure
+        # An Excel entity is namespaced by project as well as by row key, so
+        # the label is the *last* component and not everything after the
+        # structure - otherwise the encoded project id is printed as the name.
+        ("excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108", "WBS-108"),
+        ("a:b:c:d:e", "e"),
     ],
 )
 def test_entity_label(entity_id, expected):

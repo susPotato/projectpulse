@@ -16,9 +16,11 @@ from __future__ import annotations
 import importlib.util
 import json
 import logging
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
@@ -27,7 +29,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFi
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.api.schemas.explain import ExplainBundle
 from app.api.schemas.gantt import GanttBundle
@@ -829,6 +831,18 @@ def programs_page() -> FileResponse:
     return FileResponse(STATIC / "app" / "index.html")
 
 
+@app.get("/projects")
+def projects_page() -> FileResponse:
+    """Every project, flat and searchable - pick one and open it.
+
+    Distinct from `/programs`, which is the portfolio by program and reaches a
+    project only through the program that owns it. This one exists for the
+    other question: open the project I work on. It reads `/api/portfolio`, so
+    a project no program claims - an uploaded one - is still reachable.
+    """
+    return FileResponse(STATIC / "app" / "index.html")
+
+
 @app.get("/api/programs", response_model=ProgramListBundle)
 def programs_api() -> ProgramListBundle:
     """Every Program, with a project count and its worst project's band."""
@@ -922,7 +936,9 @@ async def upload_source(
     database from it does survive - only *re*-ingesting a later edit to the
     same document would need another upload.
     """
+    from app.ingest.sources.excel.reader import find_sheet
     from app.ingest.sources.excel.source import SHEET_KINDS, register_watched
+    from app.models.tool import ToolExcelRow
 
     kind = sheet_kind.strip().lower()
     if kind not in SHEET_KINDS:
@@ -940,6 +956,13 @@ async def upload_source(
     project_id = project_id.strip()
     project_name = project_name.strip()
 
+    #: Set for a project this upload would be the first sight of. Registered
+    #: only once the workbook has been *accepted* - registering up here left a
+    #: project behind every time a document was refused, and it then sat on
+    #: the portfolio as `no_data`, indistinguishable from the silent-failure
+    #: bug this whole route was fixed for.
+    register_new: str | None = None
+
     if project_id:
         found = scope.find(project_id)
         if found is None:
@@ -953,16 +976,63 @@ async def upload_source(
             )
         name_slug = re.sub(r"[^a-z0-9]+", "-", project_name.lower()).strip("-") or "project"
         project_id = f"excel:Project:upload:{name_slug}"
-        scope.register(project_id, project_name)
+        register_new = project_name
 
     id_slug = re.sub(r"[^a-z0-9]+", "-", project_id.lower()).strip("-")
     file_name = f"upload_{id_slug}_{kind}.xlsx"
 
-    data_root = Path(settings.data_root)
-    data_root.mkdir(parents=True, exist_ok=True)
-    (data_root / file_name).write_bytes(await file.read())
+    payload = await file.read()
 
-    register_watched(file_name, kind, project_id)
+    # Which tab holds the table, decided from the workbook's own contents.
+    # Resolved here, once, rather than per scan: the answer is half the scope
+    # key, so re-deriving it would let a tab rename lose the baseline.
+    #
+    # Inspected from a temp file, not from `data_root`: nothing is stored until
+    # the workbook has been accepted, so a document we are going to refuse
+    # cannot displace the copy of this sheet we are already syncing.
+    conventional, contract = SHEET_KINDS[kind]
+    staged = Path(tempfile.gettempdir()) / f"pulse-incoming-{os.getpid()}-{file_name}"
+    staged.write_bytes(payload)
+    try:
+        sheet_name = find_sheet(staged, contract, preferred=conventional)
+        if sheet_name is None:
+            from openpyxl import load_workbook
+
+            book = load_workbook(staged, read_only=True)
+            tabs = list(book.sheetnames)
+            book.close()
+            # Name the tabs we saw and the columns we need. "Could not read
+            # this workbook" sends a person back to a file with nothing to
+            # change; this tells them which sheet to fix and what is missing.
+            wanted = [h for h in contract.template_headers[:5]]
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"no sheet in this workbook looks like a {kind}. Tabs found: "
+                    f"{tabs}. One of them needs a header row with columns like "
+                    f"{wanted} - a '{contract.key_field}' column is required, "
+                    "because it is what identifies a row across imports."
+                ),
+            )
+    finally:
+        staged.unlink(missing_ok=True)
+
+    # Accepted - so the project may exist now.
+    if register_new is not None:
+        scope.register(project_id, register_new)
+
+    # The bytes go into the database with the registration, not onto the
+    # container's disk. A Fly machine's filesystem does not survive a deploy,
+    # so a document written there had to be re-uploaded after every release -
+    # and the sheet went on being watched with nothing behind it.
+    register_watched(
+        file_name,
+        kind,
+        project_id,
+        sheet_name=sheet_name,
+        content=payload,
+        original_filename=file.filename,
+    )
 
     try:
         with session_scope() as session:
@@ -970,17 +1040,36 @@ async def upload_source(
     except Exception as exc:  # noqa: BLE001 - surfaced on the page, not swallowed
         return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "project_id": project_id}
 
+    # This sheet's own outcome, not the whole run's. `run_sync` scans every
+    # watched sheet, so `outcome.rows_ok` counts other projects' rows too - an
+    # import that ingested nothing would report whatever else happened to move
+    # and read as a success.
+    scope_key = f"{file_name}#{sheet_name}"
+    mine = next((n for n in outcome.notes if n.startswith(f"{scope_key}:")), None)
+    rejected = "REJECTED" in (mine or "")
+    with session_scope() as session:
+        rows = session.scalar(
+            select(func.count()).select_from(ToolExcelRow).where(
+                ToolExcelRow.scope == scope_key
+            )
+        ) or 0
+
     return {
-        "ok": True,
+        # An import that landed no rows is not a success, whatever the run did.
+        "ok": rows > 0 and not rejected,
         "project_id": project_id,
         "project_name": project_name,
         "file_name": file_name,
+        "sheet_name": sheet_name,
+        "rows_ok": rows,
         "run_id": outcome.run_id,
         "status": outcome.status,
-        "rows_ok": outcome.rows_ok,
         "rows_rejected": outcome.rows_rejected,
         "changes_emitted": outcome.changes_emitted,
-        "notes": outcome.notes,
+        # This sheet's line first - the rest of the run is context, and a
+        # previous upload's failure showing up first reads as this one's.
+        "notes": ([mine] if mine else []) + [n for n in outcome.notes if n != mine],
+        "error": (mine or "this workbook produced no rows") if (rejected or rows == 0) else None,
     }
 
 

@@ -24,6 +24,7 @@ from app.ingest.sources.excel.ingest import ingest_sheet
 from app.ingest.sources.excel.reader import SCHEDULE_CONTRACT, WORKLOG_CONTRACT, SheetContract
 from app.ingest.sources.excel.transport import (
     LocalFolderSource,
+    StoredSheetSource,
     SheetSource,
     WatchedSheet,
 )
@@ -96,30 +97,45 @@ def _state_path() -> Path:
 
 
 def _load_registered() -> list[WatchedSheet]:
-    path = _state_path()
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return []
-    except (OSError, json.JSONDecodeError) as exc:
-        log.warning("ignoring unreadable watched-sheet registry at %s: %s", path, exc)
-        return []
+    """Uploaded sheets, from the database, or nothing if they cannot be read.
 
-    if not isinstance(raw, list):
+    In the database rather than a JSON file under `PULSE_STATE_DIR`, for the
+    reason `app/models/uploads.py` spells out: a container's disk does not
+    survive a deploy, so an imported sheet silently stopped being watched on
+    the next release. Every failure collapses to "none registered" - the same
+    answer a missing file gave, and it leaves the demo seed working.
+    """
+    from sqlalchemy import select
+
+    from app.db import session_scope
+    from app.models.uploads import UploadedSheet
+
+    try:
+        with session_scope() as session:
+            rows = session.execute(
+                select(
+                    UploadedSheet.file_name,
+                    UploadedSheet.kind,
+                    UploadedSheet.project_id,
+                    UploadedSheet.sheet_name,
+                )
+            ).all()
+    except Exception as exc:  # noqa: BLE001 - see the docstring
+        log.warning("ignoring unreadable watched-sheet registry: %s", exc)
         return []
 
     out: list[WatchedSheet] = []
-    for item in raw:
-        if not isinstance(item, dict):
-            continue
-        file_name = str(item.get("file_name") or "")
-        kind = str(item.get("kind") or "")
-        project_id = str(item.get("project_id") or "")
+    for file_name, kind, project_id, sheet_name in rows:
         spec = SHEET_KINDS.get(kind)
         if not file_name or not project_id or spec is None:
             continue
-        sheet_name, contract = spec
-        out.append(WatchedSheet(file_name, sheet_name, contract, project_id))
+        conventional, contract = spec
+        # The tab this workbook actually keeps the table on, resolved once when
+        # the sheet was imported. Absent, the conventional name is what it
+        # meant - which is what our own generated workbooks use.
+        out.append(
+            WatchedSheet(file_name, sheet_name or conventional, contract, project_id)
+        )
     return out
 
 
@@ -133,54 +149,84 @@ def all_watched() -> tuple[WatchedSheet, ...]:
     return tuple(merged.values())
 
 
-def register_watched(file_name: str, kind: str, project_id: str) -> WatchedSheet:
-    """Start watching one more sheet, keyed by its logical file name.
+def register_watched(
+    file_name: str,
+    kind: str,
+    project_id: str,
+    sheet_name: str | None = None,
+    content: bytes | None = None,
+    original_filename: str | None = None,
+) -> WatchedSheet:
+    """Store one imported workbook and start watching it.
 
-    Called by `POST /api/sources/upload` after the bytes are written to
-    `settings.data_root / file_name` - the same folder `LocalFolderSource`
-    already reads, so nothing about the transport has to change for this
-    sheet to start syncing on the next run.
+    Called by `POST /api/sources/upload`. The bytes go in the same row as the
+    registration, so the two can never disagree - a sheet we are watching and
+    whose document is missing is the broken state this replaces, and it was
+    the ordinary state on a deployed host, where both the file and the old
+    JSON registry lived on a disk that a deploy throws away.
+
+    `content` is optional only so a caller that already has the bytes on disk
+    (the demo seed's own files, which are generated rather than uploaded) can
+    register without duplicating them into the database. An upload always
+    passes them.
+
+    `sheet_name` is the tab the table is actually on, resolved from the
+    workbook's contents by `reader.find_sheet`. It defaults to the
+    conventional name for the kind, which is what our own generated workbooks
+    use. ⚠️ It is **half the scope key**, so it is stored here and never
+    re-derived per scan - see `find_sheet`'s own warning.
     """
+    from app.db import session_scope
+    from app.models.uploads import UploadedSheet
+
     spec = SHEET_KINDS.get(kind)
     if spec is None:
         raise ValueError(f"unknown sheet kind {kind!r}; expected one of {list(SHEET_KINDS)}")
-    sheet_name, contract = spec
-    entry = WatchedSheet(file_name, sheet_name, contract, project_id)
+    conventional, contract = spec
+    entry = WatchedSheet(file_name, sheet_name or conventional, contract, project_id)
 
-    with _LOCK:
-        registered = {w.file_name: w for w in _load_registered()}
-        registered[file_name] = entry
-        path = _state_path()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps(
-                [
-                    {
-                        "file_name": w.file_name,
-                        "kind": next(k for k, (sn, _c) in SHEET_KINDS.items() if sn == w.sheet_name),
-                        "project_id": w.project_id,
-                    }
-                    for w in registered.values()
-                ],
-                indent=2,
-            ),
-            encoding="utf-8",
-        )
-        try:
-            os.chmod(path, 0o600)
-        except OSError:  # pragma: no cover - platform dependent
-            pass
+    with session_scope() as session:
+        values = {
+            "file_name": file_name,
+            "kind": kind,
+            "project_id": project_id,
+            "sheet_name": entry.sheet_name,
+        }
+        if content is not None:
+            values["content"] = content
+            values["original_filename"] = original_filename
+        else:
+            # Re-registering without new bytes: keep whatever is stored, and
+            # require *something* - a registration with no document behind it
+            # is the state this row shape exists to make impossible.
+            existing = session.get(UploadedSheet, file_name)
+            if existing is None:
+                raise ValueError(
+                    f"no stored workbook for {file_name!r}; pass content on first register"
+                )
+            values["content"] = existing.content
+            values["original_filename"] = existing.original_filename
+        session.merge(UploadedSheet(**values))
+
     return entry
 
 
 def _default_transport(session, data_root: Path | None) -> SheetSource:
     """`settings.excel_transport` picks between the demo route and the
-    production one - see `app/config.py`."""
+    production one - see `app/config.py`.
+
+    The local route is a **stored-then-folder** pair rather than a folder
+    alone: an imported document lives in the database (so it survives a
+    deploy) and the demo's generated sheets live in `data_root` (so they are
+    never copied into a table they can be regenerated from). Neither knows
+    about the other; `StoredSheetSource` just asks the folder for anything it
+    does not hold.
+    """
     if settings.excel_transport == "graph":
         from app.ingest.sources.excel.graph_source import GraphSheetSource
 
         return GraphSheetSource(session, folder=settings.onedrive_folder)
-    return LocalFolderSource(data_root or settings.data_root)
+    return StoredSheetSource(LocalFolderSource(data_root or settings.data_root))
 
 
 @register_source(SOURCE)

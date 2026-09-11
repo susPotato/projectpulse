@@ -65,10 +65,27 @@ def entity_label(entity_id: str, *, title: str | None = None) -> str:
     available. Callers with nothing to offer get the key, which is still better
     than an empty cell - the row exists and hiding it would be worse.
     """
-    tail = entity_id.split(":", 3)[-1] if ":" in entity_id else entity_id
+    tail = _row_key(entity_id)
     if title and tail.startswith(ANON_PREFIX):
         return title
     return tail
+
+
+def _row_key(entity_id: str) -> str:
+    """The last component of a domain id - the key a person typed.
+
+    Not `split(":", 3)[-1]`, which joined every key component back together.
+    Excel entities are namespaced by project as well as by row key
+    (`excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108`, so two projects
+    numbering their tasks the same way cannot collide), and that spelling put
+    the encoded project id into the headline of every causal finding:
+    `excel%3AProject%3A1%3AHRMS:WBS-108 moved from ...`.
+
+    The row key is always last, however many namespacing parts precede it -
+    and `domain_id` escapes a colon inside a component, so the last
+    colon-separated part is exactly one component and never half a key.
+    """
+    return entity_id.rsplit(":", 1)[-1]
 
 
 def format_fact(name: str, value: object) -> str:

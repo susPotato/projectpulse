@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  currentProject,
   dash,
   load,
   send,
   type ApiProblem,
+  type ProjectOption,
   type RiskBundle,
   type RiskIn,
   type RiskOut,
@@ -147,16 +149,31 @@ const STATUS_OPTIONS = ["Active", "Closed", "Retired"];
 function RiskForm({
   initial,
   categories,
+  projects,
   onClose,
   onSaved,
 }: {
   initial: RiskOut | null;
   categories: string[];
+  projects: ProjectOption[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [draft, setDraft] = useState<RiskIn>(() => ({
-    project_id: initial?.project_id ?? "excel:Project:1:HRMS",
+    /* Which project this risk belongs to, in the order a person means it:
+       the one being edited, then the one the app is currently scoped to,
+       then the first project that exists.
+
+       This was a hard-coded `"excel:Project:1:HRMS"` in a free-text box, and
+       it is the whole reported bug: a PM working on SAIN either left HRMS's
+       id in place - filing the risk against the wrong project - or typed
+       "SAIN", which the server used to accept and which then belonged to no
+       project at all. Neither showed up on SAIN's own tiles. */
+    project_id:
+      initial?.project_id ??
+      currentProject()?.id ??
+      projects[0]?.project_id ??
+      null,
     title: initial?.title ?? "",
     risk_no: initial?.risk_no ?? null,
     status: initial?.status ?? "Active",
@@ -241,12 +258,34 @@ function RiskForm({
                 onChange={(e) => set("title", e.target.value)}
               />
             </Field>
-            <Field label="Project ID" span={2}>
-              <input
+            {/* A picker, not a text box. The id is a machine key
+                (`excel:Project:1:SAIN`) and nobody should be asked to
+                remember it - a risk typed against a project that does not
+                exist is invisible on every screen that asks by project. The
+                list is served on the bundle, from `app/scope.py`, so it
+                cannot drift from what the rest of the app calls a project. */}
+            <Field label="Project" span={2}>
+              <select
                 className={inputClass}
                 value={draft.project_id ?? ""}
                 onChange={(e) => set("project_id", e.target.value)}
-              />
+              >
+                {projects.map((option) => (
+                  <option key={option.project_id} value={option.project_id}>
+                    {option.name}
+                  </option>
+                ))}
+                {/* An older risk whose project is no longer registered still
+                    has to be editable, and silently re-homing it onto
+                    whatever is first in the list would be a worse answer than
+                    showing what it actually says. */}
+                {draft.project_id &&
+                  !projects.some((p) => p.project_id === draft.project_id) && (
+                    <option value={draft.project_id}>
+                      {draft.project_id} (unknown project)
+                    </option>
+                  )}
+              </select>
             </Field>
             <Field label="Risk No.">
               <input
@@ -452,10 +491,12 @@ function RiskRow({
   risk,
   onEdit,
   onDeleted,
+  projectName,
 }: {
   risk: RiskOut;
   onEdit: () => void;
   onDeleted: () => void;
+  projectName?: string;
 }) {
   const [deleting, setDeleting] = useState(false);
 
@@ -475,7 +516,13 @@ function RiskRow({
       <td className="py-2 pr-2.5 text-[11.5px] text-ink-3">{dash(risk.risk_no)}</td>
       <td className="py-2 pr-2.5">
         <div className="font-semibold text-[13px]">{risk.title}</div>
-        <div className="text-[11.5px] text-ink-3">{risk.project_id}</div>
+        {/* The project's name, with the id behind it as a tooltip. A register
+            that lists several projects has to say which one each row is on in
+            terms a reader recognises - a raw source id is why a risk filed
+            against the wrong project read as correct. */}
+        <div className="text-[11.5px] text-ink-3" title={risk.project_id}>
+          {projectName ?? `${risk.project_id} (unknown project)`}
+        </div>
       </td>
       <td className="py-2 pr-2.5 text-[11.5px]">{dash(risk.category)}</td>
       <td className="py-2 pr-2.5">
@@ -522,17 +569,22 @@ function RiskRow({
   );
 }
 
-function RiskTable({ bundle, onEdit, onChanged }: {
+function RiskTable({ bundle, risks, nameOf, onEdit, onChanged }: {
   bundle: RiskBundle;
+  risks: RiskOut[];
+  nameOf: (projectId: string) => string | undefined;
   onEdit: (risk: RiskOut) => void;
   onChanged: () => void;
 }) {
   if (bundle.risks.length === 0) {
     return <Card>No risks logged yet. Add the first one.</Card>;
   }
+  if (risks.length === 0) {
+    return <Card>No risks on this project yet. Add the first one.</Card>;
+  }
 
   return (
-    <Panel caption={`Risks — ${bundle.risks.length}`} span={12}>
+    <Panel caption={`Risks — ${risks.length}`} span={12}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
@@ -550,8 +602,14 @@ function RiskTable({ bundle, onEdit, onChanged }: {
             </tr>
           </thead>
           <tbody>
-            {bundle.risks.map((risk) => (
-              <RiskRow key={risk.id} risk={risk} onEdit={() => onEdit(risk)} onDeleted={onChanged} />
+            {risks.map((risk) => (
+              <RiskRow
+                key={risk.id}
+                risk={risk}
+                projectName={nameOf(risk.project_id)}
+                onEdit={() => onEdit(risk)}
+                onDeleted={onChanged}
+              />
             ))}
           </tbody>
         </table>
@@ -564,12 +622,28 @@ export function Risk() {
   const [bundle, setBundle] = useState<RiskBundle | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
   const [editing, setEditing] = useState<RiskOut | "new" | null>(null);
+  /* The register stays program-wide by default - `Layout/fpt-pm-risk.html`
+     lists several projects in one table, and that is the view a delivery
+     manager wants. The filter is how a PM answers "did my risk land on SAIN",
+     which is the question this screen could not previously be asked. */
+  const [filter, setFilter] = useState<string>("");
 
   function refresh() {
     load<RiskBundle>("/api/risks").then(setBundle, setProblem);
   }
 
   useEffect(refresh, []);
+
+  const nameOf = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const option of bundle?.projects ?? []) map[option.project_id] = option.name;
+    return (projectId: string) => map[projectId];
+  }, [bundle]);
+
+  const shown = useMemo(
+    () => (bundle?.risks ?? []).filter((r) => !filter || r.project_id === filter),
+    [bundle, filter],
+  );
 
   if (problem) {
     return (
@@ -586,7 +660,11 @@ export function Risk() {
     <Page
       current="/risk"
       title="Risk Register"
-      scope={`${bundle.risks.length} risk(s)`}
+      scope={
+        filter
+          ? `${shown.length} of ${bundle.risks.length} risk(s)`
+          : `${bundle.risks.length} risk(s)`
+      }
       action={
         <button
           type="button"
@@ -607,15 +685,39 @@ export function Risk() {
         </Note>
       </Section>
 
+      <div className="mb-3.5 flex items-center gap-2 text-[12px] text-ink-2">
+        <label htmlFor="risk-project-filter">Project</label>
+        <select
+          id="risk-project-filter"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-[12px] text-ink"
+        >
+          <option value="">All projects</option>
+          {bundle.projects.map((option) => (
+            <option key={option.project_id} value={option.project_id}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <Board className="mb-6">
         <Matrix bundle={bundle} />
-        <RiskTable bundle={bundle} onEdit={setEditing} onChanged={refresh} />
+        <RiskTable
+          bundle={bundle}
+          risks={shown}
+          nameOf={nameOf}
+          onEdit={setEditing}
+          onChanged={refresh}
+        />
       </Board>
 
       {editing && (
         <RiskForm
           initial={editing === "new" ? null : editing}
           categories={bundle.categories}
+          projects={bundle.projects}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);

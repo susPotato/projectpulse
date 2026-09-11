@@ -5,16 +5,24 @@ deployment configuration and useless for a key someone wants to paste into a
 form. This is the mutable half: which vendor, which model, whether narration is
 on at all, and the credential.
 
-**The key is stored in plaintext on this machine**, in `PULSE_STATE_DIR`
-(`<repo>/.pulse/` by default, gitignored). That is the same bargain as a `.env`
-file and it is stated here, in the API response and on the settings page rather
-than left for someone to discover. It is never logged, and never returned to a
-browser - `public_view()` returns a hint like `sk-ant-...bQ4A` and a boolean, so
-a page can show that a key is set without being able to read it back.
+**The key is stored in plaintext**, in the database (`app_settings`, key
+`narration`). That is the same bargain as a `.env` file and it is stated here,
+in the API response and on the settings page rather than left for someone to
+discover. It is never logged, and never returned to a browser - `public_view()`
+returns a hint like `sk-ant-...bQ4A` and a boolean, so a page can show that a
+key is set without being able to read it back.
+
+It used to be a JSON file under `PULSE_STATE_DIR`, which is fine on a laptop
+and wrong on a host: a container's filesystem does not survive a deploy, so a
+provider chosen in the browser silently reverted on the next release. The
+database is where the rest of this app's mutable state already lives, and it
+is the same security boundary the connection string is.
 
 Environment still wins where it is set: `ANTHROPIC_API_KEY` and friends are read
 by the SDKs when no key is stored here, so a deployment that injects secrets
-properly never needs this file to exist.
+properly - Fly secrets, say - never needs this row to exist. That remains the
+recommended path for a deployment; this is for configuring a running app by
+hand.
 """
 
 from __future__ import annotations
@@ -24,15 +32,12 @@ import logging
 import os
 import threading
 from dataclasses import asdict, dataclass, replace
-from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-#: Guards read-modify-write. Uvicorn serves requests from a thread pool, so two
-#: saves arriving together could otherwise interleave into a half-written file.
+#: Guards read-modify-write, so two saves arriving together cannot interleave
+#: into one row where each wrote half the fields.
 _LOCK = threading.Lock()
-
-FILENAME = "narration.json"
 
 
 @dataclass(frozen=True)
@@ -49,12 +54,6 @@ class NarrationSettings:
     #: Point the vendor's SDK elsewhere - a self-hosted open model behind an
     #: OpenAI-compatible server, or an internal gateway. Empty = the vendor.
     base_url: str = ""
-
-
-def state_path() -> Path:
-    from app.config import settings
-
-    return Path(settings.state_dir) / FILENAME
 
 
 def _mask(key: str) -> str:
@@ -74,8 +73,8 @@ def _mask(key: str) -> str:
 def load() -> NarrationSettings:
     """Current settings, falling back to `app.config` then to the defaults.
 
-    A missing or unreadable file is not an error: it means nobody has configured
-    narration on this machine, which is the ordinary state.
+    A missing or unreadable row is not an error: it means nobody has
+    configured narration here, which is the ordinary state.
     """
     from app.config import settings
 
@@ -85,15 +84,7 @@ def load() -> NarrationSettings:
         model=settings.narration_model,
     )
 
-    path = state_path()
-    try:
-        stored = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return base
-    except (OSError, json.JSONDecodeError) as exc:
-        log.warning("ignoring unreadable narration settings at %s: %s", path, exc)
-        return base
-
+    stored = _read()
     if not isinstance(stored, dict):
         return base
 
@@ -107,19 +98,47 @@ def load() -> NarrationSettings:
     )
 
 
+SETTING_KEY = "narration"
+
+
+def _read() -> dict | None:
+    """The stored settings, or `None` if there are none to read.
+
+    Every failure - no row, no table, no database - means "nobody has
+    configured narration", which is the ordinary state and must fall back to
+    `app.config` rather than raise. This runs on the path of every narrated
+    request.
+    """
+    from app.db import session_scope
+    from app.models.uploads import AppSetting
+
+    try:
+        with session_scope() as session:
+            row = session.get(AppSetting, SETTING_KEY)
+            if row is None:
+                return None
+            return json.loads(row.value or "{}")
+    except Exception as exc:  # noqa: BLE001 - see the docstring
+        log.warning("ignoring unreadable narration settings: %s", exc)
+        return None
+
+
 def save(current: NarrationSettings) -> NarrationSettings:
-    """Write settings to disk and return what was written."""
-    path = state_path()
-    with _LOCK:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(asdict(current), indent=2), encoding="utf-8")
-        try:
-            # Owner-only where the platform honours it. Windows ignores the
-            # mode bits, so this is best effort and not a security boundary -
-            # which is why the page says the key is stored in plaintext.
-            os.chmod(path, 0o600)
-        except OSError:  # pragma: no cover - platform dependent
-            pass
+    """Persist settings and return what was written.
+
+    In the database rather than a file under `PULSE_STATE_DIR`: a container's
+    disk does not survive a deploy, so a provider chosen in the browser reset
+    itself on every release. Platform secrets (`ANTHROPIC_API_KEY` and
+    friends, read by the SDKs) remain the better path for a deployment - this
+    is for the case where somebody is configuring the running app by hand.
+    """
+    from app.db import session_scope
+    from app.models.uploads import AppSetting
+
+    with _LOCK, session_scope() as session:
+        session.merge(
+            AppSetting(key=SETTING_KEY, value=json.dumps(asdict(current)))
+        )
     return current
 
 
@@ -157,7 +176,9 @@ def public_view() -> dict:
         "providers": list(PROVIDERS),
         "default_models": dict(DEFAULT_MODELS),
         "model_options": {k: [dict(o) for o in v] for k, v in MODEL_OPTIONS.items()},
-        "stored_at": str(state_path()),
+        # Where the settings live, so the page can say so rather than
+        # implying a file somebody could go and edit.
+        "stored_at": "database (app_settings.narration)",
     }
 
 

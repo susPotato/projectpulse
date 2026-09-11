@@ -9,7 +9,14 @@ from __future__ import annotations
 
 from sqlalchemy import func, select
 
-from app.api.schemas.risk import RiskBundle, RiskIn, RiskMatrixCell, RiskOut
+from app import scope
+from app.api.schemas.risk import (
+    ProjectOption,
+    RiskBundle,
+    RiskIn,
+    RiskMatrixCell,
+    RiskOut,
+)
 from app.models.domain import Risk
 from app.risks.matrix import IMPACTS, LIKELIHOODS, rating_for
 
@@ -25,6 +32,30 @@ CATEGORIES = (
     "Operational",
     "Legal/Compliance",
 )
+
+
+def _canonical_project(project_id: str) -> str:
+    """The delivery project this risk belongs to, or a refusal naming the id.
+
+    A risk is the one thing in this app a person types rather than the engine
+    derives, and `project_id` used to be whatever string arrived. A risk filed
+    against `"SAIN"` - the project's *name*, which is what a PM types - was
+    accepted, listed in the flat register, and then invisible everywhere that
+    asks per project: the project dashboard's risk tile, the Program tab's
+    cross-project risk tile, and the `risks` report section's own gate. It
+    read as "my risk was not saved" while the row sat in the table.
+
+    So: refuse an id no delivery project claims, and store the canonical id
+    for one that is paired (invariant 7), so a risk logged from the Jira side
+    of a project is not a second pile from the Excel side.
+    """
+    project = scope.resolve(project_id)
+    if project is None:
+        known = ", ".join(p.canonical_id for p in scope.all_projects())
+        raise ValueError(
+            f"unknown project {project_id!r}; a risk must belong to one of: {known}"
+        )
+    return project.canonical_id
 
 
 def _to_out(risk: Risk) -> RiskOut:
@@ -75,10 +106,30 @@ def _next_risk_no(session, project_id: str) -> str:
     return str(highest + 1)
 
 
+def _widen(project_ids: list[str] | None) -> list[str] | None:
+    """Every id each requested project may have been filed under.
+
+    Writes store the canonical id, but a caller narrowing to one project may
+    hold a paired one (a tile scoped to the Jira side of HRMS), and rows
+    written before that rule existed can carry either. Reading by one id and
+    finding nothing is precisely the symptom this whole change is about, so
+    the read is widened rather than trusting the write to have been tidy.
+    """
+    if project_ids is None:
+        return None
+    widened: list[str] = []
+    for project_id in project_ids:
+        for source_id in scope.source_ids_for(project_id):
+            if source_id not in widened:
+                widened.append(source_id)
+    return widened
+
+
 def build_matrix(session, project_ids: list[str] | None = None) -> list[RiskMatrixCell]:
     """The 5x5 heat-map: every cell's rating, and how many risks (by their
     pre-treatment assessment - the register's convention, see the mockup)
     landed in it."""
+    project_ids = _widen(project_ids)
     query = select(Risk.pre_likelihood, Risk.pre_impact, func.count()).group_by(
         Risk.pre_likelihood, Risk.pre_impact
     )
@@ -102,9 +153,10 @@ def list_risks(session, project_ids: list[str] | None = None) -> RiskBundle:
     """Every risk, program-wide by default - the register is a program-level
     view (`Layout/fpt-pm-risk.html` lists several projects in one table),
     with `project_ids` narrowing it when a caller wants one project."""
+    widened = _widen(project_ids)
     query = select(Risk).order_by(Risk.project_id, Risk.risk_no)
-    if project_ids is not None:
-        query = query.where(Risk.project_id.in_(project_ids))
+    if widened is not None:
+        query = query.where(Risk.project_id.in_(widened))
     rows = session.scalars(query).all()
 
     return RiskBundle(
@@ -113,6 +165,13 @@ def list_risks(session, project_ids: list[str] | None = None) -> RiskBundle:
         likelihoods=list(LIKELIHOODS),
         impacts=list(IMPACTS),
         categories=list(CATEGORIES),
+        #: Served with the register for the same reason `categories` is: the
+        #: form's project picker has one source of truth, instead of the
+        #: front end hard-coding an id and a PM typing over it.
+        projects=[
+            ProjectOption(project_id=p.canonical_id, name=p.name)
+            for p in scope.all_projects()
+        ],
     )
 
 
@@ -122,10 +181,12 @@ def create_risk(session, data: RiskIn) -> RiskOut:
     if not data.title:
         raise ValueError("title is required")
 
+    project_id = _canonical_project(data.project_id)
+
     risk = Risk(
-        project_id=data.project_id,
+        project_id=project_id,
         title=data.title,
-        risk_no=data.risk_no or _next_risk_no(session, data.project_id),
+        risk_no=data.risk_no or _next_risk_no(session, project_id),
         status=data.status or "Active",
         key_risk=bool(data.key_risk),
         description=data.description,
@@ -159,6 +220,8 @@ def update_risk(session, risk_id: int, data: RiskIn) -> RiskOut | None:
         return None
 
     changes = data.model_dump(exclude_unset=True)
+    if changes.get("project_id"):
+        changes["project_id"] = _canonical_project(changes["project_id"])
     for field, value in changes.items():
         setattr(risk, field, value)
 

@@ -153,3 +153,63 @@ def test_the_bundle_carries_the_vocabulary_the_form_needs(session):
     assert "Technology" in bundle.categories
     assert bundle.likelihoods
     assert bundle.impacts
+
+
+# A risk is the one row in this product a person types rather than the engine
+# derives, so `project_id` is the one place a typo can file something against a
+# project that does not exist. These four are the guard.
+
+
+def test_a_risk_cannot_be_filed_against_a_project_that_does_not_exist(session):
+    """The reported bug: a risk added "to SAIN" landed nowhere.
+
+    `project_id` was a free-text box, so a PM typing the project's *name*
+    stored `"SAIN"` - accepted, visible in the flat register, and absent from
+    every per-project surface that asks by id. Refusing is the honest answer;
+    the id is not a detail the register can quietly guess at.
+    """
+    with pytest.raises(ValueError) as raised:
+        create_risk(session, _risk(project_id="SAIN"))
+
+    # The refusal has to say what *would* work, or it is the same dead end.
+    assert "SAIN" in str(raised.value)
+    assert OTHER_PROJECT in str(raised.value)
+
+
+def test_a_risk_filed_under_a_paired_source_id_is_stored_against_the_project(session):
+    """Invariant 7 reaching the register: one project, however it was named."""
+    out = create_risk(session, _risk(project_id="jira:Project:1:HRMS"))
+
+    assert out.project_id == PROJECT
+    assert [r.title for r in list_risks(session, project_ids=[PROJECT]).risks] == [
+        "Scope Creep"
+    ]
+
+
+def test_narrowing_by_a_paired_source_id_finds_the_project_s_risks(session):
+    """The read is widened too - a tile scoped to the Jira side of HRMS is
+    asking about the same project, and rows written before the rule above
+    existed can carry either id."""
+    create_risk(session, _risk())
+
+    bundle = list_risks(session, project_ids=["jira:Project:1:HRMS"])
+
+    assert [r.title for r in bundle.risks] == ["Scope Creep"]
+    assert sum(c.risk_count for c in bundle.matrix) == 1
+
+
+def test_an_edit_cannot_move_a_risk_onto_a_project_that_does_not_exist(session):
+    created = create_risk(session, _risk())
+
+    with pytest.raises(ValueError):
+        update_risk(session, created.id, RiskIn(project_id="Example Project"))
+
+
+def test_the_bundle_carries_the_projects_a_risk_can_belong_to(session):
+    """Same reasoning as `categories`: the picker's vocabulary is served, not
+    hard-coded in the front end - which is where the wrong default came from."""
+    bundle = list_risks(session)
+
+    by_id = {p.project_id: p.name for p in bundle.projects}
+    assert by_id[OTHER_PROJECT] == "SAIN"
+    assert by_id[PROJECT] == "HRMS Platform"

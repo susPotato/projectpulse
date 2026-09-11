@@ -2,7 +2,7 @@
   "project_id": "excel:Project:1:HRMS",
   "steps": [
     {
-      "entity_id": "excel:Task:1:WBS-101",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-101",
       "label": "WBS-101",
       "title": "Requirements sign-off",
       "start": "2026-01-12",
@@ -90,7 +90,7 @@
       ]
     },
     {
-      "entity_id": "excel:Task:1:~anon-ef0576ffa2b2a0f2",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:~anon-ef0576ffa2b2a0f2",
       "label": "~anon-ef0576ffa2b2a0f2",
       "title": "Data migration dry-run",
       "start": "2026-03-10",
@@ -466,7 +466,7 @@
       ]
     },
     {
-      "entity_id": "excel:Task:1:WBS-108",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
       "label": "WBS-108",
       "title": "Environment Setup",
       "start": "2026-02-16",
@@ -562,12 +562,12 @@
       ]
     },
     {
-      "entity_id": "excel:Task:1:WBS-114",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
       "label": "WBS-114",
       "title": "Integration build",
       "start": "2026-03-05",
       "duration_days": 27,
-      "driver": "excel:Task:1:WBS-108",
+      "driver": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
       "driver_label": "WBS-108",
       "lag_days": 0,
       "earliest_start": "2026-03-16",
@@ -658,12 +658,12 @@
       ]
     },
     {
-      "entity_id": "excel:Task:1:WBS-118",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-118",
       "label": "WBS-118",
       "title": "UAT preparation",
       "start": "2026-03-23",
       "duration_days": 64,
-      "driver": "excel:Task:1:WBS-114",
+      "driver": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
       "driver_label": "WBS-114",
       "lag_days": 2,
       "earliest_start": "2026-04-12",
@@ -754,12 +754,12 @@
       ]
     },
     {
-      "entity_id": "excel:Task:1:WBS-121",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-121",
       "label": "WBS-121",
       "title": "Cutover rehearsal",
       "start": "2026-05-18",
       "duration_days": 11,
-      "driver": "excel:Task:1:WBS-118",
+      "driver": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-118",
       "driver_label": "WBS-118",
       "lag_days": 4,
       "earliest_start": "2026-06-17",
@@ -851,10 +851,10 @@
     }
   ],
   "driving_path": [
-    "excel:Task:1:WBS-108",
-    "excel:Task:1:WBS-114",
-    "excel:Task:1:WBS-118",
-    "excel:Task:1:WBS-121"
+    "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
+    "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
+    "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-118",
+    "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-121"
   ],
   "project_end_planned": "2026-05-29",
   "project_end_projected": "2026-07-02",

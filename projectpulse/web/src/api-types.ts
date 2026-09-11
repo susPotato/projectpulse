@@ -514,6 +514,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Projects Page
+         * @description Every project, flat and searchable - pick one and open it.
+         *
+         *     Distinct from `/programs`, which is the portfolio by program and reaches a
+         *     project only through the program that owns it. This one exists for the
+         *     other question: open the project I work on. It reads `/api/portfolio`, so
+         *     a project no program claims - an uploaded one - is still reachable.
+         */
+        get: operations["projects_page_projects_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/programs": {
         parameters: {
             query?: never;
@@ -2181,6 +2206,22 @@ export interface components {
             projects: components["schemas"]["ProjectRow"][];
         };
         /**
+         * ProjectOption
+         * @description One project a risk may be filed against, for the form's picker.
+         *
+         *     `project_id` is the canonical id from `app/scope.py`, `name` is what a
+         *     person calls it. Both halves matter: a picker showing only names cannot
+         *     post, and one showing only ids asks a PM to know that "SAIN" is spelled
+         *     `excel:Project:1:SAIN` - which is exactly what a free-text box asked, and
+         *     exactly how risks ended up filed against a project that does not exist.
+         */
+        ProjectOption: {
+            /** Project Id */
+            project_id: string;
+            /** Name */
+            name: string;
+        };
+        /**
          * ProjectRow
          * @description One delivery project, whatever number of sources fed it.
          */
@@ -2452,6 +2493,8 @@ export interface components {
             impacts: string[];
             /** Categories */
             categories: string[];
+            /** Projects */
+            projects: components["schemas"]["ProjectOption"][];
         };
         /**
          * RiskIn
@@ -3535,6 +3578,26 @@ export interface operations {
         };
     };
     programs_page_programs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    projects_page_projects_get: {
         parameters: {
             query?: never;
             header?: never;

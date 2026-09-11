@@ -17,49 +17,49 @@
     },
     {
       "percentile": 95,
-      "finish": "2026-08-19",
-      "days_late": 82
+      "finish": "2026-08-07",
+      "days_late": 70
     }
   ],
   "observations": 6,
   "sample": [
     {
-      "entity_id": "excel:Task:1:WBS-101",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-101",
       "label": "Requirements sign-off",
       "committed": "2026-01-30",
       "planned": "2026-01-30",
       "days": 0
     },
     {
-      "entity_id": "excel:Task:1:WBS-108",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
       "label": "Environment Setup",
       "committed": "2026-03-04",
       "planned": "2026-03-16",
       "days": 12
     },
     {
-      "entity_id": "excel:Task:1:WBS-114",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
       "label": "Integration build",
       "committed": "2026-03-20",
       "planned": "2026-04-01",
       "days": 12
     },
     {
-      "entity_id": "excel:Task:1:WBS-118",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-118",
       "label": "UAT preparation",
       "committed": "2026-05-14",
       "planned": "2026-05-26",
       "days": 12
     },
     {
-      "entity_id": "excel:Task:1:WBS-121",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-121",
       "label": "Cutover rehearsal",
       "committed": "2026-05-29",
       "planned": "2026-05-29",
       "days": 0
     },
     {
-      "entity_id": "excel:Task:1:~anon-ef0576ffa2b2a0f2",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:~anon-ef0576ffa2b2a0f2",
       "label": "Data migration dry-run",
       "committed": "2026-03-27",
       "planned": "2026-03-27",

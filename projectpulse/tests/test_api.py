@@ -393,6 +393,20 @@ def test_every_page_carries_the_same_rail():
         )
 
 
+def test_every_rail_entry_is_actually_served(client):
+    """A tab pointing at a 404 is the failure mode of adding one.
+
+    The rail is three copies checked against each other above, which proves
+    they agree and not that any of them goes anywhere - a new entry added to
+    all four files in step is still a dead link until a route serves it.
+    """
+    shell = (WEB / "src" / "components" / "Shell.tsx").read_text(encoding="utf-8")
+    table = re.search(r"const TABS = \[(.*?)\] as const;", shell, re.S)
+    assert table
+    for href in re.findall(r'href: "([^"]+)"', table.group(1)):
+        assert client.get(href).status_code == 200, f"the rail links {href}, nothing serves it"
+
+
 def test_every_hand_written_page_marks_its_own_rail_entry():
     """Without `aria-current` the reader cannot tell which page they are on."""
     for name in HAND_WRITTEN:
@@ -465,7 +479,7 @@ def test_the_risk_route_serves_the_bundle(client):
 
 def test_creating_a_risk_through_the_api(client):
     body = {
-        "project_id": "excel:Project:1:RISKTEST",
+        "project_id": "excel:Project:1:SAIN",
         "title": "Vendor lock-in",
         "category": "Technology",
         "pre_likelihood": "Possible",
@@ -478,7 +492,7 @@ def test_creating_a_risk_through_the_api(client):
     assert payload["pre_rating"] == "High"  # Possible x Major, per the matrix
     assert payload["risk_no"] == "1"
 
-    listed = client.get("/api/risks", params={"project": "excel:Project:1:RISKTEST"})
+    listed = client.get("/api/risks", params={"project": "excel:Project:1:SAIN"})
     assert listed.status_code == 200
     assert [r["title"] for r in listed.json()["risks"]] == ["Vendor lock-in"]
 
@@ -491,13 +505,37 @@ def test_creating_a_risk_through_the_api(client):
     deleted = client.delete(f"/api/risks/{risk_id}")
     assert deleted.status_code == 204
 
-    after = client.get("/api/risks", params={"project": "excel:Project:1:RISKTEST"})
+    after = client.get("/api/risks", params={"project": "excel:Project:1:SAIN"})
     assert after.json()["risks"] == []
+
+
+def test_a_risk_cannot_be_filed_against_a_project_that_does_not_exist(client):
+    """The register's one typed key, guarded at the route as well.
+
+    `project_id` used to be whatever string arrived, so a PM typing a
+    project's *name* into the form created a risk belonging to no project: in
+    the flat register, absent from that project's own risk tile and from the
+    Program tab's cross-project one. A 400 naming the id is the honest answer.
+    """
+    response = client.post(
+        "/api/risks", json={"project_id": "SAIN", "title": "Typed the name"}
+    )
+
+    assert response.status_code == 400
+    assert "SAIN" in response.json()["detail"]
+    assert client.get("/api/risks").json()["risks"] == []
+
+
+def test_the_risk_bundle_carries_the_projects_a_risk_can_belong_to(client):
+    """So the form's picker has a vocabulary instead of a hard-coded id."""
+    projects = client.get("/api/risks").json()["projects"]
+
+    assert "excel:Project:1:SAIN" in {p["project_id"] for p in projects}
 
 
 def test_creating_a_risk_without_a_title_is_rejected(client):
     response = client.post(
-        "/api/risks", json={"project_id": "excel:Project:1:RISKTEST"}
+        "/api/risks", json={"project_id": "excel:Project:1:SAIN"}
     )
     assert response.status_code == 400
 

@@ -13,6 +13,7 @@ import {
   type PortfolioBundle,
   type ProjectRow,
 } from "../api";
+import { ProjectPicker } from "./ProjectPicker";
 
 /* One list, and the hand-written pages carry the same one. `tests/test_api.py`
    asserts they match, because three copies of a nav is how the six original
@@ -22,6 +23,7 @@ import {
    `href`, not by what it is called. */
 const TABS = [
   { href: "/programs", label: "Program" },
+  { href: "/projects", label: "Projects" },
   { href: "/console", label: "Console" },
   { href: "/gantt", label: "Schedule" },
   { href: "/insight", label: "Insight" },
@@ -43,6 +45,14 @@ const ICONS: Record<string, ReactNode> = {
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="3" y="14" width="7" height="7" rx="1" />
       <rect x="14" y="14" width="7" height="7" rx="1" />
+    </>
+  ),
+  /* A folder, against Program's four tiles: the Program tab is the portfolio
+     at a glance, this one is the drawer you pick a single project out of. */
+  "/projects": (
+    <>
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+      <path d="M3 11h18" />
     </>
   ),
   "/console": <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
@@ -164,18 +174,6 @@ export function SubTabs({
   );
 }
 
-/* Spelled out rather than interpolated - same Tailwind-scanning trap as the
-   board's column spans. Mirrors `Portfolio.tsx`'s own `CELL`; kept as a
-   separate small literal rather than a shared import because the two pages
-   want it for different things (a heatmap cell vs. a 6px status dot) and a
-   shared name would suggest a coupling that is not there. */
-const BAND_DOT: Record<string, string> = {
-  critical: "bg-red",
-  watch: "bg-amber",
-  healthy: "bg-green",
-  no_data: "bg-rule",
-};
-
 /* Which project every project-scoped page reads - see `api.ts#currentProject`.
    Lives in the shell rather than each page so switching carries across a full
    page navigation without seven copies of the same fetch-and-redirect. Shows
@@ -193,34 +191,25 @@ function ProjectSwitcher() {
   if (!bundle || bundle.projects.length === 0) return null;
 
   const selectedId = currentProject()?.id ?? bundle.projects[0]?.project_id;
-  const selected = bundle.projects.find((p) => p.project_id === selectedId);
 
   function goTo(row: ProjectRow) {
     window.location.href = projectLink(window.location.pathname, row);
   }
 
   return (
-    <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
-      <span
-        className={`h-2 w-2 shrink-0 rounded-full ${BAND_DOT[selected?.band ?? "no_data"]}`}
-        title={selected ? `${selected.band} - ${selected.name}` : undefined}
-      />
-      <span className="sr-only">Project</span>
-      <select
-        value={selectedId ?? ""}
-        onChange={(e) => {
-          const row = bundle.projects.find((p) => p.project_id === e.target.value);
-          if (row) goTo(row);
-        }}
-        className="max-w-[220px] cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-[12px] text-ink"
-      >
-        {bundle.projects.map((row) => (
-          <option key={row.project_id} value={row.project_id}>
-            {row.name}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ProjectPicker
+      projects={bundle.projects.map((row) => ({
+        id: row.project_id,
+        name: row.name,
+        band: row.band,
+        hint: row.days_late > 0 ? `+${row.days_late}d against commitment` : undefined,
+      }))}
+      value={selectedId ?? null}
+      onPick={(picked) => {
+        const row = bundle.projects.find((p) => p.project_id === picked.id);
+        if (row) goTo(row);
+      }}
+    />
   );
 }
 

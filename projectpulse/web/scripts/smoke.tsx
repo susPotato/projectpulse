@@ -28,6 +28,7 @@ import type {
 import { CalculationView } from "../src/pages/Calculation";
 import { InsightView } from "../src/pages/Insight";
 import { PortfolioView } from "../src/pages/Portfolio";
+import { ProjectsView } from "../src/pages/Projects";
 import { TeamView } from "../src/pages/Team";
 import { ReportsView } from "../src/pages/Reports";
 import { CustomTileModal } from "../src/components/CustomTileModal";
@@ -94,8 +95,15 @@ const cases: Array<[string, string, string[]]> = [
       // rendering splits with an HTML comment - see the JSX gotcha in
       // CLAUDE.md section 6. The finish dates are whole interpolations, and
       // the forecast is seeded from its own sample, so they are stable.
+      //
+      // ⚠️ Stable, but not permanent: the seed hashes each observation's
+      // `entity_id`, so namespacing Excel task ids by project moved the draw
+      // (P95 was 2026-08-19). P50 did not move, and neither did the method -
+      // the upper tail is simply coarse on six observations of {0,0,0,12,12,12}.
+      // If these dates churn again, check what changed about the sample
+      // before assuming the forecast broke.
       "2026-07-26",
-      "2026-08-19",
+      "2026-08-07",
       "observed drift(s)",
       "What the range is built from",
       "keeps drifting the way it has been drifting",
@@ -142,6 +150,19 @@ const cases: Array<[string, string, string[]]> = [
       "no sheet ingested",
       // The band, never a score.
       "worst of its projects",
+    ],
+  ],
+  [
+    /* The pick-a-project tab. Rendered with `programs` null on purpose: the
+       program label is a hint layered on top, and a project no program claims
+       - an uploaded one - still has to be listed here. */
+    "Projects",
+    renderToString(<ProjectsView bundle={portfolio} programs={null} />),
+    [
+      "Search by project, program or source id",
+      "Pick one to open its dashboard",
+      // Every row links into that project, carrying the selection with it.
+      "/project/dashboard?project=",
     ],
   ],
   [

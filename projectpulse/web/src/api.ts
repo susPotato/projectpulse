@@ -37,6 +37,7 @@ export type ChatResponse = components["schemas"]["ChatResponse"];
 export type RiskOut = components["schemas"]["RiskOut"];
 export type RiskIn = components["schemas"]["RiskIn"];
 export type RiskMatrixCell = components["schemas"]["RiskMatrixCell"];
+export type ProjectOption = components["schemas"]["ProjectOption"];
 
 export type ReportOptions = components["schemas"]["ReportOptions"];
 export type ReportPreview = components["schemas"]["ReportPreview"];

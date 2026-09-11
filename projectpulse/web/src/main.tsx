@@ -9,6 +9,7 @@ import { Risk } from "./pages/Risk";
 import { Agent } from "./pages/Agent";
 import { Reports } from "./pages/Reports";
 import { Programs } from "./pages/Programs";
+import { Projects } from "./pages/Projects";
 import { ProgramDashboardPage } from "./pages/ProgramDashboardPage";
 import { ProjectDashboardPage } from "./pages/ProjectDashboardPage";
 
@@ -39,6 +40,7 @@ const PAGES: Record<string, React.ReactElement> = {
   "/agent": <Agent />,
   "/reports": <Reports />,
   "/programs": <Programs />,
+  "/projects": <Projects />,
   "/programs/dashboard": <ProgramDashboardPage />,
   "/project/dashboard": <ProjectDashboardPage />,
 };

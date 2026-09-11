@@ -96,6 +96,20 @@ class RiskMatrixCell(Response):
     risk_count: int = 0
 
 
+class ProjectOption(Response):
+    """One project a risk may be filed against, for the form's picker.
+
+    `project_id` is the canonical id from `app/scope.py`, `name` is what a
+    person calls it. Both halves matter: a picker showing only names cannot
+    post, and one showing only ids asks a PM to know that "SAIN" is spelled
+    `excel:Project:1:SAIN` - which is exactly what a free-text box asked, and
+    exactly how risks ended up filed against a project that does not exist.
+    """
+
+    project_id: str
+    name: str
+
+
 class RiskBundle(Response):
     """Everything the risk register screen renders."""
 
@@ -104,3 +118,6 @@ class RiskBundle(Response):
     likelihoods: list[str] = Field(default_factory=list)
     impacts: list[str] = Field(default_factory=list)
     categories: list[str] = Field(default_factory=list)
+    #: Every project a risk can belong to - the vocabulary of the one field a
+    #: person used to have to type from memory.
+    projects: list[ProjectOption] = Field(default_factory=list)

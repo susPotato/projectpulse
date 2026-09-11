@@ -24,14 +24,28 @@ from app.narration import store
 
 
 @pytest.fixture
-def state(tmp_path, monkeypatch):
-    """Point the store at a temp directory, never the developer's real one."""
-    import app.config
+def state():
+    """Start every test with no stored settings.
 
-    monkeypatch.setattr(
-        app.config, "settings", dataclasses.replace(app.config.settings, state_dir=tmp_path)
-    )
-    return tmp_path
+    These live in the database now rather than a file under `PULSE_STATE_DIR`
+    - a container's disk does not survive a deploy, so a provider chosen in
+    the browser used to revert on every release. The fixture therefore has to
+    clear a *row* rather than hand out a temp directory: the suite shares one
+    SQLite file (see `tests/conftest.py`), so a settings row left behind by
+    one test is the next test's starting state.
+    """
+    from sqlalchemy import delete
+
+    from app.db import session_scope
+    from app.models.uploads import AppSetting
+
+    def clear():
+        with session_scope() as session:
+            session.execute(delete(AppSetting).where(AppSetting.key == store.SETTING_KEY))
+
+    clear()
+    yield
+    clear()
 
 
 def _local(app):
@@ -57,12 +71,31 @@ def test_settings_survive_a_round_trip(state):
     assert loaded.api_key == "sk-secret"
 
 
-def test_an_absent_file_is_the_ordinary_state_not_an_error(state):
+def test_no_stored_settings_is_the_ordinary_state_not_an_error(state):
     assert store.load().enabled is False
 
 
-def test_an_unreadable_file_falls_back_rather_than_raising(state):
-    (state / store.FILENAME).write_text("{ not json", encoding="utf-8")
+def test_an_unreadable_row_falls_back_rather_than_raising(state):
+    """Corrupt JSON means "nobody configured narration", not a 500 on every
+    narrated request - `load()` runs on that path."""
+    from app.db import session_scope
+    from app.models.uploads import AppSetting
+
+    with session_scope() as session:
+        session.merge(AppSetting(key=store.SETTING_KEY, value="{ not json"))
+
+    assert store.load().provider == "anthropic"
+
+
+def test_an_unreachable_database_falls_back_rather_than_raising(state, monkeypatch):
+    """The same courtesy when the database itself is the problem. Narration
+    settings are not worth failing a page render over."""
+    import app.db
+
+    def boom():
+        raise RuntimeError("no database")
+
+    monkeypatch.setattr(app.db, "session_scope", boom)
 
     assert store.load().provider == "anthropic"
 

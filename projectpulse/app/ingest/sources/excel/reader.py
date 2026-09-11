@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass, field
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -124,6 +125,54 @@ def _find_header_row(
             return row_index, mapping
 
     return None, {}
+
+
+def find_sheet(
+    path: str | Path,
+    contract: SheetContract,
+    *,
+    preferred: str | None = None,
+) -> str | None:
+    """Which tab in this workbook is the sheet `contract` describes.
+
+    The header *row* has always been searched for rather than assumed, because
+    real sheets carry a title line above the table. Demanding an exact tab
+    name was the matching rigidity nobody had removed: our own generated
+    workbooks say `Activities`, and a workbook a PM already had says `Sheet1`
+    or `Schedule` or `WBS`, so importing a real document ingested zero rows.
+
+    This is not a guess. A tab qualifies only if the contract can find its
+    header row *and* the identity column is in it - the same two conditions
+    `read_sheet` imposes before it will trust a row - so a workbook of notes
+    and a pivot table qualifies nothing and the caller is told so.
+
+    `preferred` is tried first, so a workbook that does use the conventional
+    name resolves to it whatever else is in the file, and nothing about an
+    existing sheet's behaviour changes.
+
+    ⚠️ The answer is half the scope key (`ingest_sheet` builds
+    `"<logical name>#<sheet>"`), so resolve **once, when a sheet is
+    registered**, and store it. Re-resolving on every scan would let a tab
+    rename silently change the scope, which loses the baseline and fabricates
+    a change per row with no lower bound - the same trap `transport.py`
+    documents for `logical_name`.
+    """
+    workbook = load_workbook(path, data_only=True, read_only=True)
+    try:
+        names = list(workbook.sheetnames)
+        order = ([preferred] if preferred in names else []) + [
+            n for n in names if n != preferred
+        ]
+        for name in order:
+            grid = list(
+                islice(workbook[name].iter_rows(values_only=True), _HEADER_SEARCH_ROWS)
+            )
+            header_row, columns = _find_header_row(grid, contract)
+            if header_row is not None and contract.key_field in set(columns.values()):
+                return name
+    finally:
+        workbook.close()
+    return None
 
 
 def read_sheet(

@@ -61,6 +61,7 @@ HOST, PORT = "127.0.0.1", 8000
 PAGES = (
     ("/portfolio", "program", 1200),
     ("/programs", "programs", 900),
+    ("/projects", "projects", 900),
     ("/programs/dashboard?program=excel:Program:1:DEFAULT", "program-dashboard", 1400),
     ("/project/dashboard?project=excel:Project:1:HRMS", "project-dashboard", 1400),
     ("/console", "console", 1500),

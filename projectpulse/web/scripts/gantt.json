@@ -2,7 +2,7 @@
   "project_id": "excel:Project:1:HRMS",
   "rows": [
     {
-      "entity_id": "excel:Task:1:WBS-101",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-101",
       "label": "WBS-101",
       "title": "Requirements sign-off",
       "status": "DONE",
@@ -21,7 +21,7 @@
       "on_driving_path": false
     },
     {
-      "entity_id": "excel:Task:1:WBS-108",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
       "label": "WBS-108",
       "title": "Environment Setup",
       "status": "IN_PROGRESS",
@@ -37,12 +37,12 @@
       "milestone_id": "excel:Milestone:1:excel%3AProject%3A1%3AHRMS:Environment Setup",
       "milestone_name": "Environment Setup",
       "depends_on": [
-        "excel:Task:1:WBS-101"
+        "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-101"
       ],
       "on_driving_path": true
     },
     {
-      "entity_id": "excel:Task:1:WBS-114",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
       "label": "WBS-114",
       "title": "Integration build",
       "status": "BLOCKED",
@@ -58,12 +58,12 @@
       "milestone_id": "excel:Milestone:1:excel%3AProject%3A1%3AHRMS:Development",
       "milestone_name": "Development",
       "depends_on": [
-        "excel:Task:1:WBS-108"
+        "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108"
       ],
       "on_driving_path": true
     },
     {
-      "entity_id": "excel:Task:1:WBS-118",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-118",
       "label": "WBS-118",
       "title": "UAT preparation",
       "status": "TODO",
@@ -79,12 +79,12 @@
       "milestone_id": "excel:Milestone:1:excel%3AProject%3A1%3AHRMS:UAT",
       "milestone_name": "UAT",
       "depends_on": [
-        "excel:Task:1:WBS-114"
+        "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114"
       ],
       "on_driving_path": true
     },
     {
-      "entity_id": "excel:Task:1:WBS-121",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-121",
       "label": "WBS-121",
       "title": "Cutover rehearsal",
       "status": "TODO",
@@ -100,12 +100,12 @@
       "milestone_id": "excel:Milestone:1:excel%3AProject%3A1%3AHRMS:Go-Live",
       "milestone_name": "Go-Live",
       "depends_on": [
-        "excel:Task:1:WBS-118"
+        "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-118"
       ],
       "on_driving_path": true
     },
     {
-      "entity_id": "excel:Task:1:~anon-ef0576ffa2b2a0f2",
+      "entity_id": "excel:Task:1:excel%3AProject%3A1%3AHRMS:~anon-ef0576ffa2b2a0f2",
       "label": "Data migration dry-run",
       "title": "Data migration dry-run",
       "status": "TODO",
@@ -246,10 +246,10 @@
   "window_end": "2026-07-05",
   "as_of": "2026-03-19",
   "driving_path": [
-    "excel:Task:1:WBS-108",
-    "excel:Task:1:WBS-114",
-    "excel:Task:1:WBS-118",
-    "excel:Task:1:WBS-121"
+    "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-108",
+    "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-114",
+    "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-118",
+    "excel:Task:1:excel%3AProject%3A1%3AHRMS:WBS-121"
   ],
   "project_end_planned": "2026-05-29",
   "project_end_projected": "2026-07-02"

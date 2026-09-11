@@ -2,7 +2,78 @@
 
 Read this first. It is the handoff between sessions.
 
-**Last updated:** 2026-09-11 (round-1 due today) — the tile-building agent got tools:
+---
+
+## ⚠️ DO THIS FIRST — deploy steps owed to production, 2026-09-11
+
+**Nothing below has been run against the live app.** All of it is committed and
+green locally; `flyctl` is not installed on the machine that wrote it, so the
+deploy was deferred to whichever machine has it. Until these run,
+`projectpulse.fly.dev` is on the *old* code and one of the steps is not
+optional — step 2 repairs data.
+
+```bash
+# 0. Get the code and check it before touching production.
+git pull
+cd projectpulse
+python -m pytest -q          # expect 730 passed, 1 skipped
+cd web && npm run build      # the committed bundle must not be stale
+cd ..
+
+# 1. Ship it. `create_all()` on boot adds the three new tables
+#    (uploaded_sheets, registered_projects, app_settings).
+fly auth login               # a new machine needs its own login
+fly deploy
+
+# 2. NOT OPTIONAL - re-key the existing rows. See section 0b.
+#    Reports without writing until --apply.
+fly ssh console -C "python -m scripts.migrate_ids"
+fly ssh console -C "python -m scripts.migrate_ids --apply"
+
+# 3. Check the number this was all about.
+curl -s https://projectpulse.fly.dev/api/portfolio | python -m json.tool | grep -E 'project_id|task_count'
+#    HRMS 10 tasks, EXPROJ 3, SAIN 5. 16 for HRMS means step 2 did not run.
+```
+
+⚠️ **`fly ssh console` exits 1 with "Error: The handle is invalid" after every
+command on Windows/Git-Bash. That is a local pty artifact, not a remote
+failure — the command's own stdout above it is the truth.**
+
+**Why step 2 is not optional.** Excel domain ids gained a project component
+(section 0a, defect 4), so a database seeded before today holds old-style ids.
+Reading is fine — a deploy alone breaks nothing. The damage lands when a
+`/console` guided-tour button rewrites the demo sheets and anything then
+syncs: every task doubles and the *findings change* (measured: HRMS 10 → 16
+tasks, 9 → 6 findings). The migration renames in place and is idempotent, so
+running it is cheap and skipping it is not.
+
+⚠️ **Do not reach for `scripts.replay` on production.** It rebuilds from the
+sheets, which is correct locally and destroys the risk register, the arranged
+dashboards, the custom tiles and the narration cache — the only data there
+with no source system behind it.
+
+### Still open, deliberately not done
+
+- ⚠️ **`/console` is unauthenticated on the public deploy and its "Reset
+  database" button calls `/api/reset`, which drops the schema.** Anybody who
+  opens `projectpulse.fly.dev/console` can wipe the live database, risk
+  register included; the guided-tour buttons are the same class of problem and
+  are also the one path that triggers the duplication above. Asked about and
+  explicitly deferred this session. **This is the one to close before the
+  judged window** — the suggested shape is an env flag that is off in
+  production, so the buttons keep working locally.
+- The pitch deck is still unreconciled with the product (§8 item 1). Unchanged
+  and still the largest non-code risk.
+
+---
+
+**Last updated:** 2026-09-11, later the same day — a searchable project picker, a
+`Projects` tab, the risk-register project bug, manual document import (five defects),
+an id migration for existing databases, and the app's own state moved into Postgres so
+the website works without a local copy. Sections 0 / 0a / 0b / 0c. **Not deployed —
+see the block above.**
+
+Earlier that day — the tile-building agent got tools:
 real project data (team effort, findings, risks, forecast) instead of only pasted text;
 fixed production never having the `anthropic` SDK installed at all, which made both that
 and regular narration silently fall back to gemini/template on the live site while working
@@ -127,7 +198,285 @@ fallbacks is the standing preference here, not just for this one bug.
 
 ---
 
-## 0. This session — 2026-09-10, read this before anything else in the file below
+## 0. This session — 2026-09-11: the Projects tab, a searchable picker, and the risk-register bug
+
+**Read this before section 0a below, which it supersedes on navigation.**
+
+⚠️ **A risk could be filed against a project that does not exist, and that is
+the reported "I added a risk to SAIN and nothing happened".** The form's
+`Project ID` was a **free-text box prefilled with the hard-coded literal
+`"excel:Project:1:HRMS"`**, and the server stored whatever string arrived. So a
+PM adding a risk to SAIN either left HRMS's id in place (filed on the wrong
+project) or typed `SAIN` — the project's *name* — which belongs to no project
+at all. Either way it showed in the flat register and was **absent from every
+surface that asks per project**: the project dashboard's risk tile, the Program
+tab's Cross-Project Risk tile, and the `risks` report section's own gate. It
+read as "not saved" while the row sat in the table. Reproduced against the real
+API before touching anything, and re-run after.
+- `scope.resolve()` / `scope.source_ids_for()` are new: the first says which
+  delivery project an id belongs to **canonical or paired**, the second lists
+  every id it may have been filed under.
+- `risks/service.py` now **refuses an id no project claims** (400, naming the
+  id and listing what would work) and **stores the canonical id** for a paired
+  one — so a risk logged from the Jira side of HRMS is not a second pile.
+  ⚠️ This is a contract change: `tests/test_api.py` used a made-up
+  `excel:Project:1:RISKTEST` and correctly started failing. It now uses a real
+  project. **Do not "fix" a future failure here by loosening the check.**
+- The read is **widened as well as the write tightened** — `_widen` expands a
+  requested id to the project's whole id set, so querying by either id finds
+  the rows, including ones written before this rule existed.
+- `RiskBundle.projects` carries the project vocabulary, exactly as
+  `categories` already did, and the form's box is now a **select of real
+  projects defaulting to the ambient selection** (`currentProject()`), never a
+  literal. The register shows the project's **name** with the id as a tooltip,
+  and has a per-project filter — the thing that could not previously be asked.
+  Verified in a real browser: on `/risk?project=…SAIN` the form defaults to
+  SAIN, saving lands on SAIN, and `GET /api/risks?project=…SAIN` (what both
+  risk tiles ask) returns it.
+
+**The rail gained a `Projects` tab, reversing the 2026-09-10 decision below.**
+That note records a second project tab being tried and explicitly rejected in
+favour of one entry point for the whole hierarchy; this session was asked for
+it directly. The two now answer different questions and neither is the other's
+half: `/programs` is the portfolio *by program*, `/projects` is a flat,
+searchable list of **every** project — including any no program claims, which
+is why it reads `/api/portfolio` and layers the program name on from
+`/api/programs` as a hint that is allowed to fail. Worst band first.
+- ⚠️ **The rail is four copies** (`Shell.tsx` plus the three hand-written
+  pages) and `test_every_page_carries_the_same_rail` asserts they match — all
+  four were updated. New: `test_every_rail_entry_is_actually_served`, because
+  that test proves the copies agree and *not* that any of them goes anywhere;
+  a tab pointing at a 404 was the live failure mode of adding one.
+- `web/scripts/smoke.tsx` renders the new view, and `scripts/shots.py` carries
+  `/projects` — its `PAGES` comment already said every TABS entry belongs there.
+
+**The rail's project switcher is now a searchable combobox**
+(`components/ProjectPicker.tsx`), not a `<select>`: a native select has no
+filter, which is fine at three demo projects and unusable at a real program's
+count. `filterProjects` is exported and the Projects tab uses the same
+function, so a query that finds a project in one finds it in the other.
+Matching is per word over name + id + program.
+
+**The import path was then checked properly, and it was badly broken — see
+the section below.** The first pass here uploaded the blank template we hand
+out, which passes by construction and proves nothing.
+
+⚠️ Driving the import locally writes to `.pulse/projects.json`,
+`.pulse/watched_sheets.json` and `data/demo/` — all gitignored, all worth
+cleaning up afterwards, which this session did.
+
+---
+
+## 0a. Same session — manual document import, which did not work
+
+**Importing a document a PM already had ingested zero rows and reported
+success.** Five defects, found by uploading realistic workbooks instead of our
+own template. All fixed, all with tests in `tests/test_upload.py`.
+
+1. ⚠️ **The tab name was hardcoded** to `Activities` / `Worklog`. The header
+   *row* has always been searched for (real sheets carry a title line), but
+   the tab had to be named exactly right — and a workbook somebody already had
+   is called `Sheet1`, `Schedule`, `WBS`, `Plan 2026`. New
+   `reader.find_sheet()` picks the tab whose header row the contract can read
+   *and* which carries the identity column — the same two conditions
+   `read_sheet` already imposes, so it is a resolution and not a guess. The
+   conventional name is tried first, so nothing about an existing sheet moved.
+   - ⚠️ **It is resolved once, at registration, and stored** in
+     `watched_sheets.json`. The sheet name is **half the scope key**
+     (`"<logical name>#<sheet>"`), so re-deriving it per scan would let a tab
+     rename change the scope, lose the baseline and fabricate a change per row
+     with no lower bound — the trap `transport.py` documents for
+     `logical_name`, one field over. Guarded by
+     `test_the_resolved_tab_is_remembered_so_a_re_import_keeps_its_baseline`.
+   - `register_watched`'s own `kind` lookup matched `SHEET_KINDS` **by sheet
+     name**, so it would have raised `StopIteration` on the first upload of a
+     non-conventional tab. It matches by contract now.
+2. ⚠️ **The error message named the wrong cause.** A sheet that could not be
+   read returned early from `read_sheet` with a correct rejection ("sheet
+   'Activities' not found; workbook has ['Sheet1']") and `has_key_column`
+   False — and `resolve_identities` then raised `MissingKeyColumn` **over the
+   top of it**, so the person was told *"sheet has no 'task_id' column; add
+   the column to the template"* about a workbook whose Task ID column was
+   right there. Structural rejections now win and the identity guard is not
+   reached. `test_a_missing_tab_is_reported_as_a_missing_tab`.
+3. ⚠️ **`ok: true` with zero rows.** The response reported
+   `outcome.rows_ok` — the **whole sync run's** total across every watched
+   sheet — so an import that ingested nothing showed whatever else happened
+   to move. It now reports this sheet's own row count, puts this sheet's note
+   first, and `ok` is false when nothing landed.
+4. ⚠️ **The one that lost data: two imported documents collided.**
+   `domain_id(SOURCE, "Task", connection_id, row_key)` namespaced a task by
+   connection + row key, every Excel project shares one `connection_id`, and
+   a row key is unique only *within its own sheet* — so importing team B's
+   plan **silently took team A's tasks** when both numbered them `1, 2, 3`.
+   `gen_portfolio_data.py`'s docstring calls this out and dodges it by
+   prefixing ids per project; a document somebody uploads cannot be asked to.
+   Task, QaItem, StateChange, Dependency and both dependency endpoints now
+   carry `project_id`, as `Milestone` already did — it was the outlier that
+   proved the convention.
+   - ⚠️ **This changes every Excel-derived id, so an existing database needs
+     `python -m scripts.migrate_ids --apply`** — see the section below, which
+     measures exactly what breaks and when. `scripts.replay` rebuilds, so
+     local and a judge's clone need nothing.
+   - It also moved two things that look like regressions and are not:
+     `assembler.entity_label` was `split(":", 3)[-1]`, which joined every key
+     component back together and printed
+     `excel%3AProject%3A1%3AHRMS:WBS-108` into the headline of every causal
+     finding — it takes the **last** component now (`domain_id` escapes a
+     colon inside a component, so the last part is exactly one key). And
+     `forecast._seed` hashes `entity_id`, so the resample draw changed: P95
+     2026-08-19 → 2026-08-07, P50 unchanged, method untouched. The upper tail
+     is coarse on six observations of {0,0,0,12,12,12}.
+5. ⚠️ **A refused document still left a project behind.** `scope.register`
+   ran before the workbook was read, so every rejected upload added a project
+   that then sat on the portfolio as `no_data` — indistinguishable from defect
+   1's silent failure. Registration happens after acceptance now, and the
+   bytes are **staged under `.incoming_*` first** so a bad re-upload cannot
+   overwrite the copy of that sheet the differ is diffing against.
+
+**A workbook with no importable sheet is now refused with a 400 that names
+the tabs it found and the columns it needs**, rather than accepted and
+silently empty. Verified by driving the real Settings > Sources form in a
+browser: a document with a title line, a blank row and a tab called
+`Delivery Plan` imported 3 tasks, 2 dependencies and 3 derived milestones,
+and the page reports *"read the **Delivery Plan** tab"*; a budget sheet was
+refused and left no project behind. The imported project then works
+everywhere — Projects tab, Gantt window, driving path, forecast.
+
+Checks after all of it: **730 passed, 1 skipped**, `npm run build` and
+`npm run smoke` green.
+
+---
+
+## 0c. Same session — the app's own state moved into Postgres
+
+**The website is now self-sufficient**, which it was not: a project could be
+imported through the browser and would **disappear from every picker on the
+next deploy**, while its ingested rows stayed in Postgres with nothing
+pointing at them. Asked for directly, because the plan is to delete the local
+copy of the app and keep only the deployed one.
+
+Three stores were files on the container's disk, which `fly deploy` throws
+away. All three are now rows:
+- `uploaded_sheets` — **the imported workbook's bytes**, plus its project, its
+  kind and the tab `find_sheet` resolved. One row, not a blob table plus a
+  registration table, because those two can disagree and "a sheet we are
+  watching with no document behind it" was the ordinary state on a host.
+- `registered_projects` — what `app/scope.py` merges over its `_SEED`.
+- `app_settings` — narration settings from the Settings page. ⚠️ **This row
+  can hold an API key**, in plaintext, and the module docstring says so; the
+  database is the security boundary, as it already is for the OneDrive token.
+  Platform secrets (Fly secrets, read by the SDKs) remain the better path for
+  a deployment and need no row at all.
+
+⚠️ **`StoredSheetSource` is the transport this change needed, and the seam was
+already there for it.** It reads a workbook out of the database into a temp
+file and **deletes it in `release()`** — the case `FetchedSheet.release`'s own
+docstring described and nothing had implemented. The local transport is now
+**stored-then-folder**: uploads come from the database, the demo's generated
+sheets stay in `data_root` because they are reproducible and a table would
+only duplicate them. Neither knows about the other.
+- ⚠️ **The temp path must never reach `scope`.** `ingest_sheet` takes the
+  scope from `watched.file_name`, which is why that is the primary key of
+  `uploaded_sheets` — see `transport.py`'s own warning about what a temp path
+  in a scope key destroys.
+
+**Every DB read at this layer degrades to "nothing configured" rather than
+raising.** `scope.all_projects()` runs on the path of every request, so an
+unreachable database or a schema that has not been created yet must fall back
+to the built-in seed and leave the portfolio, the picker and the risk form
+working — exactly as a missing JSON file did. ⚠️ **A `register()` write is the
+opposite and raises**: the caller is accepting somebody's document, and
+telling them it worked when the project was not recorded is the bug being
+fixed.
+
+Verified by simulating a deploy rather than reasoning about it: import a
+document through the real Settings > Sources form, kill the app, **delete
+`.pulse/` and every file in `data/demo/`**, restart on the same database.
+- The project is still in `scope.all_projects()` and on the Projects tab with
+  its 3 tasks. Before this it would have been gone.
+- Re-importing an edited copy reported **`changes_emitted: 1`** — the baseline
+  was found and one date moved, with no file on disk. `3` would have meant the
+  scope key moved and every row read as new, which is the failure the whole
+  design is arranged against.
+
+⚠️ **`tests/test_upload.py`'s isolation fixture had to change with it.** The
+registries are shared rows now, and the suite shares one SQLite file, so
+isolation means truncating two tables — not handing out a temp directory.
+Without that, one test's imported project is in `scope.all_projects()` for
+every test after it. Same reason `tests/test_settings.py`'s `state` fixture
+now clears a row instead of pointing at `tmp_path`.
+
+---
+
+## 0b. Same session — the id change on an existing database, measured
+
+Defect 4 above re-keys every Excel-derived row. "Will that break the live
+deploy" was answered with evidence rather than reasoning: a copy of the demo
+database was transformed *backwards* into a pre-change one (the only
+difference between the two is the project component, so removing it reproduces
+exactly what the old code wrote), a risk was added to stand in for the
+hand-entered data a deployed database holds, and the new code was pointed at
+it.
+
+**A deploy on its own breaks nothing.** Old-id data read perfectly under the
+new code — 10 tasks, 9 findings, 10 Gantt rows, labels intact. Nothing parses
+an id's structure except `entity_label`, and that takes the last component
+either way. The migration can therefore happen calmly, before or after a
+deploy, as long as it happens before a sync.
+
+⚠️ **The damage arrives on the next sync of a sheet that has changed**, and it
+is not cosmetic. One edited cell, one `sync run`, and HRMS went **10 tasks ->
+16**, every task drawn twice on the Gantt, and **findings 9 -> 6** — the
+schedule graph is computed over a doubled and partly orphaned set of rows, so
+the conclusions change, not just the counts.
+
+**Which of those can happen just by someone using the live site?** Measured on
+a simulated live database; DEPLOY.md carries the table. Reading the site does
+nothing, a redeploy does nothing, and on a deployed host even **Sync Excel is
+a no-op** — `serve.py` skips seeding a non-empty database, so the container's
+`data_root` is empty and every watched sheet answers "not present, skipped".
+The one path that does it is a **`/console` guided-tour button**, which calls
+`/api/write-step` -> `gen_demo_data` and rewrites the sheets; `.xlsx` output
+is **not byte-identical between runs**, so the sha256 always differs and the
+whole sheet re-ingests.
+- ⚠️ **Unrelated to this change and more serious: `/console` is
+  unauthenticated on the public deploy, and its "Reset database" button calls
+  `/api/reset`, which drops the schema.** Anybody who opens
+  `projectpulse.fly.dev/console` can wipe the live database, risk register
+  included. The guided-tour buttons are the same class of problem. Worth
+  closing before the judged window — **not started.**
+
+**`python -m scripts.migrate_ids`** is the fix, and reports without writing
+until `--apply`. It renames in place and keeps everything.
+- ⚠️ **`scripts.replay` is the wrong answer for a deployed database.** It
+  rebuilds from the sheets, which is right for a demo and destroys the only
+  data in there with no source system behind it: the risk register, the
+  dashboards people arranged, the custom tiles, the narration cache, the
+  OneDrive session. The migration preserved the risk register through the
+  whole exercise; a rebuild would not have.
+- **The new id is built by calling `domain_id`, never by string surgery**, so
+  the script cannot disagree with the convertor about the format, and the
+  missing component is read from each row's own `project_id` — derived from
+  the data, never guessed.
+- **Idempotent** (a row already carrying its project is skipped) and **safe to
+  run late**: where a sync has already written the new-style row, the old one
+  is deleted rather than renamed onto a duplicate. Verified on the damaged
+  database — 8 renamed, 6 duplicates dropped, and the app came back to 10
+  tasks / 9 findings / no duplicate labels / the risk still there.
+- A state change whose task is gone is **left alone rather than re-keyed onto
+  a guess**. A state change is evidence; picking a project for one would be
+  inventing provenance.
+- `tests/test_migrate_ids.py` — nine guards, including the two that matter
+  most: a state change follows the task it describes (leaving them behind
+  empties the evidence panel), and a Jira task is never touched.
+
+Checks: **706 passed, 1 skipped**, `npm run build` and `npm run smoke` green,
+`scripts.shots` clean on `/projects` and `/risk`.
+
+---
+
+## 0. Previous session — 2026-09-10, read this before anything else in the file below
 
 **Later the same day, on a second machine - the AI tile builder, plus the
 environment repairs that had to happen first. Read this before the rest of
@@ -1436,6 +1785,12 @@ python -m scripts.fetch_model          # downloads the artefact (needs ml-fetch)
 python -m scripts.sync advise
 
 # What the container runs: schema, seed only if empty, then uvicorn.
+# Re-key an existing database onto project-namespaced ids. Only needed for a
+# database seeded before 2026-09-11 - `replay` rebuilds and needs nothing.
+# Reports without writing until --apply. See DEPLOY.md for when it matters.
+python -m scripts.migrate_ids
+python -m scripts.migrate_ids --apply
+
 python -m scripts.serve --check        # everything but binding a port
 python -m scripts.serve
 

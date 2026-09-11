@@ -31,11 +31,15 @@ with no lower bound. So scope comes from :attr:`WatchedSheet.file_name`, the
 
 from __future__ import annotations
 
+import logging
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 from app.ingest.sources.excel.reader import SheetContract
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -81,6 +85,86 @@ class SheetSource(Protocol):
         normal and must not fail the other sheets.
         """
         ...
+
+
+class StoredSheetSource:
+    """Read a workbook out of the database, falling back to a folder on disk.
+
+    The transport a deployed app needs, and the one this module was written in
+    anticipation of. A container's filesystem does not survive a deploy, so a
+    document somebody imported through the browser had to be re-uploaded after
+    every release; stored as bytes in Postgres beside its registration
+    (`app/models/uploads.py`), it simply keeps working.
+
+    It delegates to a folder source for anything not in the database, because
+    the demo's own sheets are *generated* into `data_root` by
+    `scripts.gen_demo_data` and there is no reason to copy them into a table -
+    they are reproducible by construction, which uploaded documents are not.
+
+    ⚠️ The temp file this writes must never reach `scope`. It hands back
+    `watched.file_name` as the logical identity via `FetchedSheet.watched`, and
+    `ingest_sheet` takes the scope from there - see the module docstring for
+    what a temp path in the scope key would destroy.
+    """
+
+    def __init__(self, folder: SheetSource | None = None) -> None:
+        self.folder = folder
+
+    def fetch(self, watched: WatchedSheet) -> FetchedSheet | None:
+        content, original = self._stored(watched.file_name)
+        if content is None:
+            return self.folder.fetch(watched) if self.folder else None
+
+        handle = tempfile.NamedTemporaryFile(
+            prefix="pulse-sheet-", suffix=".xlsx", delete=False
+        )
+        try:
+            handle.write(content)
+        finally:
+            handle.close()
+
+        return _TempFetched(
+            watched=watched,
+            local_path=Path(handle.name),
+            # What a person would recognise. There is no path or URL to give
+            # them - the document lives in our database because they handed it
+            # to us - so name the file they uploaded and say where it went.
+            display_uri=f"upload://{original or watched.file_name}",
+        )
+
+    @staticmethod
+    def _stored(file_name: str) -> tuple[bytes | None, str | None]:
+        """The stored bytes, or `(None, None)` if there are none to read.
+
+        An unreachable database is "not stored here", which lets the folder
+        fallback answer instead of failing the whole sync - the same courtesy
+        a missing file already gets.
+        """
+        from app.db import session_scope
+        from app.models.uploads import UploadedSheet
+
+        try:
+            with session_scope() as session:
+                row = session.get(UploadedSheet, file_name)
+                if row is None:
+                    return None, None
+                return row.content, row.original_filename
+        except Exception as exc:  # noqa: BLE001 - see the docstring
+            log.warning("could not read stored workbook %s: %s", file_name, exc)
+            return None, None
+
+
+@dataclass(frozen=True)
+class _TempFetched(FetchedSheet):
+    """A fetch backed by a temp file, which `release()` has to delete.
+
+    Without this a long-running server slowly fills its disk with copies of
+    every sheet it has ever scanned - the case `FetchedSheet.release`'s own
+    docstring describes and had no implementation for until now.
+    """
+
+    def release(self) -> None:
+        self.local_path.unlink(missing_ok=True)
 
 
 class LocalFolderSource:
