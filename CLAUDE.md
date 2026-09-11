@@ -4,13 +4,18 @@ Read this first. It is the handoff between sessions.
 
 ---
 
-## ⚠️ DO THIS FIRST — deploy steps owed to production, 2026-09-11
+## ✅ Done — deploy steps owed to production, ran 2026-09-11
 
-**Nothing below has been run against the live app.** All of it is committed and
-green locally; `flyctl` is not installed on the machine that wrote it, so the
-deploy was deferred to whichever machine has it. Until these run,
-`projectpulse.fly.dev` is on the *old* code and one of the steps is not
-optional — step 2 repairs data.
+Ran from the machine with `flyctl` installed: merged `web-self-sufficient-import`
+into `main` (fast-forward, pushed), `pytest` 735 passed locally, `npm run build`
+confirmed the committed bundle was not stale, `fly deploy` shipped it, then
+`scripts.migrate_ids --apply` re-keyed the existing rows (10 dependencies, 20
+qa_items, 27 state_changes, 14 tasks). Verified via
+`curl https://projectpulse.fly.dev/api/portfolio`: HRMS 10, EXPROJ 3, SAIN 5 —
+matches the expected numbers below, so the migration took.
+
+The steps, kept for reference (a second machine repeating this deploy from
+scratch should still read them):
 
 ```bash
 # 0. Get the code and check it before touching production.
@@ -67,11 +72,11 @@ with no source system behind it.
 
 ---
 
-**Last updated:** 2026-09-11, later the same day — a searchable project picker, a
-`Projects` tab, the risk-register project bug, manual document import (five defects),
-an id migration for existing databases, and the app's own state moved into Postgres so
-the website works without a local copy. Sections 0 / 0a / 0b / 0c. **Not deployed —
-see the block above.**
+**Last updated:** 2026-09-11, later still — deployed and migrated the round-1 work
+described just below (searchable project picker, `Projects` tab, the risk-register
+project bug, manual document import fixes, the id migration, app state in Postgres).
+Live on `projectpulse.fly.dev`. Sections 0 / 0a / 0b / 0c. See the ✅ block above for
+the deploy record; the `/console` auth gap it flagged is still open.
 
 Earlier that day — the tile-building agent got tools:
 real project data (team effort, findings, risks, forecast) instead of only pasted text;
