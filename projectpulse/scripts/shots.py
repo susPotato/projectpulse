@@ -153,9 +153,15 @@ def shoot(browser: str, url: str, out: Path, *, dark: bool, height: int) -> bool
         f"--user-data-dir={profile}",
         "--no-first-run",
         "--no-default-browser-check",
-        # The pages follow `prefers-color-scheme`, and headless defaults to
-        # light. Without this the dark design is never what gets photographed.
-        *(["--force-dark-mode"] if dark else []),
+        # The pages follow `prefers-color-scheme`. Headless used to default to
+        # light, which is why only the dark case carried a flag - but on a
+        # host whose OS theme is dark, `--headless=new` (unlike the old
+        # headless) inherits that, and "light" silently photographed dark
+        # instead. `--blink-settings=preferredColorScheme=1` pins it back to
+        # light regardless of the OS. Verified empirically, not from docs:
+        # passing this alongside `--force-dark-mode` for the dark case wins
+        # over it and photographs light, so the two flags are exclusive.
+        *(["--force-dark-mode"] if dark else ["--blink-settings=preferredColorScheme=1"]),
         # The React pages fetch before they render, so a screenshot taken at
         # load is a picture of "Loading...". This lets virtual time run on.
         "--virtual-time-budget=6000",

@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Retriever console</title>
+<!-- Sets data-theme before the stylesheet paints anything, so a saved or
+     system dark preference does not flash light first. Kept identical
+     across all four rail copies - see theme.js. -->
+<script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 <link rel="stylesheet" href="/static/shell.css">
+<script src="/static/theme.js" defer></script>
 <style>
 :root{
   --navy:#0D2B5E; --blue:#1565C0; --orange:#C4550E; --orange-fill:#F47920;
@@ -12,12 +17,19 @@
   --ink:#101A2C; --ink-2:#5A6678; --ink-3:#8A94A6;
   --bg:#F5F7FA; --surface:#fff; --rule:#DCE2EB; --rule-2:#EDF0F5;
 }
-@media (prefers-color-scheme:dark){:root{
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --navy:#3E7BD1; --blue:#5E9BE8; --orange:#FF9E52; --orange-fill:#E8731C;
   --green:#42C98A; --red:#E8705F; --amber:#E9903F;
   --ink:#E8EDF4; --ink-2:#9DA9BA; --ink-3:#6F7C8F;
   --bg:#0D1219; --surface:#151D28; --rule:#26313F; --rule-2:#1C2531;
 }}
+/* Explicit dark, so the switch on the rail wins over the OS setting either way. */
+:root[data-theme="dark"]{
+  --navy:#3E7BD1; --blue:#5E9BE8; --orange:#FF9E52; --orange-fill:#E8731C;
+  --green:#42C98A; --red:#E8705F; --amber:#E9903F;
+  --ink:#E8EDF4; --ink-2:#9DA9BA; --ink-3:#6F7C8F;
+  --bg:#0D1219; --surface:#151D28; --rule:#26313F; --rule-2:#1C2531;
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 'Segoe UI',system-ui,sans-serif;padding:20px}
 .wrap{max-width:1180px;margin:auto}
@@ -74,6 +86,7 @@ tr:last-child td{border-bottom:none}
 <div class="shell">
 <nav class="rail" aria-label="Sections">
   <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
+  <button type="button" class="theme-toggle" data-theme-toggle><svg viewBox="0 0 24 24"></svg></button>
   <a href="/programs"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Program</span></a>
   <a href="/projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Projects</span></a>
   <a href="/console" aria-current="page"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Console</span></a>

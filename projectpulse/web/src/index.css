@@ -28,10 +28,14 @@
   --font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
 }
 
-/* Dark is *selected*, not an automatic inversion - the same steps the static
-   pages use, so a reader switching tabs does not switch palettes. */
+/* System preference, unless the rail's switch has picked a side. These are
+   plain `:root` rules rather than nested `@theme` blocks (which cannot carry
+   a selector) - the custom properties they set are the same ones `@theme`
+   above declared, and Tailwind's generated utilities read them at paint
+   time regardless of which rule last set them. Kept in step with
+   shell.css's equivalent block, which the static pages use. */
 @media (prefers-color-scheme: dark) {
-  @theme {
+  :root:not([data-theme="light"]) {
     --color-navy: #3e7bd1;
     --color-blue: #5e9be8;
     --color-orange: #ff9e52;
@@ -48,7 +52,32 @@
     --color-surface: #151d28;
     --color-rule: #26313f;
     --color-rule-2: #1c2531;
+
+    color-scheme: dark;
   }
+}
+
+/* Dark when it is *selected*, so the switch wins over the OS setting either
+   way. Values match the media query above - keep them in step. */
+:root[data-theme="dark"] {
+  --color-navy: #3e7bd1;
+  --color-blue: #5e9be8;
+  --color-orange: #ff9e52;
+  --color-green: #42c98a;
+  --color-red: #e8705f;
+  --color-amber: #e9903f;
+  --color-purple: #a98bf5;
+
+  --color-ink: #e8edf4;
+  --color-ink-2: #9da9ba;
+  --color-ink-3: #6f7c8f;
+
+  --color-bg: #0d1219;
+  --color-surface: #151d28;
+  --color-rule: #26313f;
+  --color-rule-2: #1c2531;
+
+  color-scheme: dark;
 }
 
 /* The vanilla Gantt reads these names; keep one source for them. */
@@ -63,7 +92,10 @@
   --red: var(--color-red);
   --navy: var(--color-navy);
   --blue: var(--color-blue);
-  color-scheme: light dark;
+  /* Explicit, not `light dark`: the guarded dark rules above are what should
+     decide it, and `light dark` here would have let the OS win regardless
+     of an explicit light choice via data-theme. */
+  color-scheme: light;
 }
 
 body {

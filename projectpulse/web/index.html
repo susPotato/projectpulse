@@ -4,6 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ProjectPulseAI</title>
+    <!-- Sets data-theme before the stylesheet paints anything, so a saved or
+         system dark preference does not flash light first. Kept identical
+         across all four rail copies - see theme.js and Shell.tsx's
+         ThemeToggle, which read this same attribute once React mounts. -->
+    <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
     <!-- The shared Gantt is one vanilla implementation used by both the static
          Schedule page and this app. Porting it to React would create a second
          one, and two implementations eventually draw two different pictures of

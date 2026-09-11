@@ -43,10 +43,15 @@
   --viz-plan: #2a78d6;
   --viz-over: #d03b3b;
   --viz-base: var(--ink-3);
+
+  color-scheme: light;
 }
 
+/* System preference, unless a switch on the rail has picked a side -
+   `:not([data-theme="light"])` is what lets an explicit *light* choice win
+   over a dark OS setting; `[data-theme="dark"]` below is the reverse case. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --navy: #3E7BD1;
     --blue: #5E9BE8;
     --orange: #FF9E52;
@@ -66,12 +71,35 @@
     --rule-2: #1C2531;
 
     --viz-plan: #3987e5;
+
+    color-scheme: dark;
   }
 }
 
-/* Dark when it is *selected*, so a toggle wins in both directions. */
+/* Dark when it is *selected*, so a toggle wins in both directions regardless
+   of the OS setting. Values match the media query above - keep them in step. */
 :root[data-theme="dark"] {
+  --navy: #3E7BD1;
+  --blue: #5E9BE8;
+  --orange: #FF9E52;
+  --orange-fill: #E8731C;
+  --green: #42C98A;
+  --red: #E8705F;
+  --amber: #E9903F;
+  --purple: #A98BF5;
+
+  --ink: #E8EDF4;
+  --ink-2: #9DA9BA;
+  --ink-3: #6F7C8F;
+
+  --bg: #0D1219;
+  --surface: #151D28;
+  --rule: #26313F;
+  --rule-2: #1C2531;
+
   --viz-plan: #3987e5;
+
+  color-scheme: dark;
 }
 
 /* --- the left rail ----------------------------------------------------- */
@@ -160,6 +188,40 @@
   height: 17px;
 }
 
+/* The light/dark switch. Sits where the brand sits - a 30px square, so it
+   reads as part of the same corner of chrome rather than a stray control -
+   and shows the icon of the mode a click switches *to*. */
+.theme-toggle {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  margin-bottom: 12px;
+  border-radius: 7px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  background: var(--rule-2);
+}
+
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .shell > main {
   flex: 1 1 auto;
   min-width: 0;
@@ -180,6 +242,7 @@
     padding: 6px 8px;
   }
   .rail .brand { margin-bottom: 0; margin-right: 6px; }
+  .theme-toggle { margin-bottom: 0; margin-left: auto; }
 }
 
 /* --- the tab bar ------------------------------------------------------- */

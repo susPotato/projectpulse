@@ -109,6 +109,56 @@ const ICONS: Record<string, ReactNode> = {
   ),
 };
 
+/* Sun and moon, matching theme.js's icons so the switch looks identical
+   whether React drew it or a hand-written page did. Each shows the mode a
+   click switches *to*, not the one currently active. */
+const SUN_ICON = (
+  <>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+  </>
+);
+const MOON_ICON = <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" />;
+
+/* Reads its initial state from `<html data-theme>`, which the inline script
+   in index.html (and each hand-written page's <head>) has already set
+   before this component mounts - so there is no flash of the wrong palette
+   and no duplicate "which theme is it" logic here. */
+function ThemeToggle() {
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    typeof document !== "undefined" &&
+    document.documentElement.getAttribute("data-theme") === "dark"
+      ? "dark"
+      : "light",
+  );
+
+  function toggle() {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("pulse-theme", next);
+    } catch {
+      // Private browsing / storage disabled: the switch still works for
+      // this page view, it just will not be remembered.
+    }
+    setTheme(next);
+  }
+
+  const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={toggle}
+      aria-pressed={theme === "dark"}
+      aria-label={label}
+      title={label}
+    >
+      <svg viewBox="0 0 24 24">{theme === "dark" ? SUN_ICON : MOON_ICON}</svg>
+    </button>
+  );
+}
+
 /* The app shell from the design: sections down the left, content to the right.
    Styled by `shell.css` so the built pages and the hand-written ones share one
    definition of it rather than one each. */
@@ -120,6 +170,7 @@ export function Rail({ current }: { current: string }) {
           <path d="M4 19V9M10 19V5M16 19v-7M22 19H2" />
         </svg>
       </a>
+      <ThemeToggle />
       {TABS.map((tab) => (
         <a
           key={tab.href}
