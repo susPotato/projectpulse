@@ -188,6 +188,53 @@ actually caught this (see §-1).
 
 ---
 
+## 0m. Same session - two more things one Jira export can say
+
+**824 tests pass.** Deployed; 32 tiles live.
+
+### Deadline clustering
+
+8 of the real export'''s 16 dated tasks land on 2026-10-02 and 5 on 2026-09-16 -
+**13 of 16 on two days**. That is not a plan, it is a deadline everybody was
+handed, and it concentrates risk: the date cannot slip a little, only for
+everything at once. Needs no baseline and no dependency graph, which is what
+makes it available to a source carrying neither.
+
+Counted over *open* tasks only: a cluster of dates that have all been met is a
+delivered milestone, not a pile-up.
+
+### "What This Data Can Answer" (`data_readiness`)
+
+The tile the Jira case asks for, and arguably the most honest thing in the
+product. A project ingested from one export trips few rules - **not because it
+is healthy, but because half the engine has no input** - and a dashboard quiet
+for that reason looks identical to one quiet because everything is fine. Those
+are opposite situations and should not render the same way.
+
+Per capability it reports whether the input is present and what its absence
+costs: baseline unlocks slip against what was *promised* rather than against
+today; dependencies unlock the projected finish and the driving path; a second
+scan unlocks causal chains; a program unlocks contention. Nothing is computed in
+the tile - every row is a scalar the server already published, so it cannot
+drift from the findings beside it. On the real export: **2 of 6 inputs present**.
+
+Worded as "not supplied" plus what it would unlock, never a red cross. A PM
+should come away knowing what to go and get.
+
+### Signals looked at and deliberately not used
+
+- **Reporter / Creator / Assignee** are the same person on all 17 rows, so they
+  add nothing beyond `single_owner_project`. Worth revisiting on a real
+  multi-person project, where "who raised it" vs "who does it" is a real signal.
+- **16 of 17 have no Priority.** A genuine triage-readiness signal, but it needs
+  a field this app does not currently carry onto `Task`, and the schema change
+  is not worth it for one rule yet.
+- **All 17 created in the same minute** - a template instantiated rather than a
+  backlog grown. A strong narrative, but it rests on one timestamp and would
+  misfire on any bulk import, so it was left alone.
+
+---
+
 ## 0l. Same session - movement from one export, and a self-inflicted outage
 
 **820 tests pass.** Deployed and migrated; production verified healthy on every
