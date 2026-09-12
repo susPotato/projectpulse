@@ -188,6 +188,74 @@ actually caught this (see §-1).
 
 ---
 
+## 0l. Same session - movement from one export, and a self-inflicted outage
+
+**820 tests pass.** Deployed and migrated; production verified healthy on every
+page.
+
+### `tasks.source_updated_at` - testimony, not evidence
+
+Carries Jira'''s `Updated`. `work_not_moving` fires when three or more open tasks
+have gone a week untouched in a project that has completed nothing.
+
+Kept deliberately apart from `state_changes`, which is what *we* observed
+between two scans. This is a claim the vendor makes; that is a thing we watched
+happen - the same relationship `original_status` has to `status`. Testimony is
+all a single export has, because there is no earlier scan to diff against.
+Nothing back-fills the column: we cannot make a claim about the past on the
+source'''s behalf, so **rows ingested before the migration have it NULL and the
+rule stays quiet for them until the project is re-uploaded.** A blank means
+"this tool does not say", never "has not moved" - otherwise every hand-kept
+spreadsheet would read as abandoned.
+
+`STALE_AFTER_DAYS = 7`, not the fortnight `DUE_SOON_DAYS` uses, because the rule
+requires three or more *and* zero completions. Under that conjunction a week is
+conservative. A holiday can still trip it, which is why the recommendation asks
+whether the work stopped or only the updating did rather than asserting either.
+
+### ⚠️ This migration is NOT safe to defer. It took production down.
+
+`scripts.migrate_programs` could be deployed first and migrated after - reading
+was safe, it just looked wrong. **This one is the opposite.** `load_tasks`
+selects the entity, so a missing column errors `/api/portfolio` - which is the
+health check - and Fly pulls both machines out of the pool. Every URL answered
+**503**, and `fly ssh console` then refused with "no started VMs" even though
+`fly status` showed both *started*: flyctl filters on health, not state.
+
+The way through, if it happens again:
+
+```bash
+fly ssh console --machine <id> -C "python -m scripts.migrate_task_columns --apply"
+```
+
+`--machine` bypasses the health filter. Downtime was about a minute. **For any
+future column the app *selects*, expect 503 between `fly deploy` and the
+migration** - there is no ordering that avoids it, because the old image does
+not contain the new migration script.
+
+### Three bugs that would have fired the day a column filled in
+
+The user asked for the currently-empty columns to work when they get data
+tomorrow. Each of these would have been silent - no error, just a worse answer.
+
+- **`Sub-Tasks` fed `Predecessor`.** A sub-task is a *child*, so this asserted a
+  parent waits for its children - a chain nobody stated, reaching a critical
+  path and a projected date.
+- **Jira repeats a header per value** rather than packing a list into a cell
+  (this export already carries `Approver` x4). One position per header reads only
+  the last, so an issue with three links would contribute one edge and lose two.
+- **Link direction was ignored.** `blocks P-2` and `is blocked by P-2` name the
+  same pair and *opposite* edges. Taking both reverses half the arrows, which
+  does not fail - it returns a confident, wrong critical path. Only inbound
+  phrasing counts; a bare key with no direction word is dropped rather than
+  guessed at; an outbound-only column is reported as such, because "your links
+  point the other way" and "you have no links" need different actions.
+
+Progress is taken as a percentage or not at all - Jira'''s aggregate fields are in
+*seconds*, and a silently rescaled 43200 would render as plausible completion.
+
+---
+
 ## 0k. Same session - what this product can say from a Jira export alone
 
 A project ingested from Jira alone tripped exactly one rule ("no baseline") and
