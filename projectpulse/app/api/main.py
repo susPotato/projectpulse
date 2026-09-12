@@ -1,14 +1,45 @@
-"""A small local console for watching the retriever work.
+"""The whole server: the JSON API, the built web app, and the static pages.
 
-Not the product UI. This exists so a change to a spreadsheet can be made in Excel
-and its consequences seen immediately: which rows were read, which were refused,
-what state changes came out, how precisely they are dated, and how many of them
-can actually be ordered against each other.
+One FastAPI app, run by one uvicorn process, serving everything from one origin -
+so there is no reverse proxy, no separate static host and no CORS anywhere.
 
-    python -m scripts.demo          # then open http://127.0.0.1:8000
+    python -m scripts.demo          # local, http://127.0.0.1:8000
+    python -m scripts.serve         # the container entry point, $PORT
 
-The workflow it is built around is the real one: edit `data/demo/*.xlsx` in Excel,
-or `data/demo/jira/*.json` in any editor, press Sync, and look at what changed.
+Three kinds of front end share the one `/static` mount, which is history rather
+than design - the hand-written pages came first - but the split is stable:
+
+* the built React bundle (`static/app/`), served by every page route below,
+* two hand-written pages, `/gantt` and `/settings`,
+* the shared assets both use - `shell.css`, `gantt.css`, `gantt.js`, `theme.js`.
+
+`shell.css` and `gantt.js` are shared on purpose. Six mockups with their own
+`:root` blocks is how this project ended up with two conflicting token families,
+and porting the Gantt into React would create a second renderer - two renderers
+eventually draw two different pictures of one projection.
+
+**Every screen has a real route.** `/insight`, `/team`, `/risk` and the rest each
+return the same `index.html` and the app picks the page from the path, rather
+than a hash router, so the URLs are linkable. There is deliberately no catch-all:
+an unknown path 404s here instead of booting the app into a client-side "not
+found", so a typo in an API path cannot render a dashboard.
+
+This module is routes only. Every `/api/*` handler is a thin wrapper that checks
+the connection, resolves the project id (invariant 7 - one delivery project, two
+source ids), opens a session and calls `intelligence/pipeline.py`. No figure is
+computed here; `response_model=` is what validates one on the way out.
+
+Two failure shapes are deliberate and are what the pages rely on:
+
+* **503** - the database is unreachable, and the detail says so. Paired with
+  psycopg's 5-second connect timeout, a missing container reads as a missing
+  container instead of a hang.
+* **404** - there is no data, and the detail carries the command that fixes it
+  (`python -m scripts.replay`).
+
+So the three ways a screen can fail are distinguishable from the browser alone:
+503 is the database, 404 is the seed, and no JSON at all means the HTML was
+opened from disk, where a relative fetch has no server to reach.
 """
 
 from __future__ import annotations
