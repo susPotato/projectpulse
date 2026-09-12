@@ -4,68 +4,86 @@ Read this first. It is the handoff between sessions.
 
 ---
 
-## ⚠️ DO THIS FIRST — deploy owed to production (added 2026-09-12)
+## ⚠️ DO THIS FIRST — deploy owed to production (updated 2026-09-12, second session)
 
-The Program↔Project relationship was fixed (section 0d below). **Production must
-run `scripts.migrate_programs --apply` with this deploy, not after it.**
+**Only one step is owed now: `fly deploy`. There is no migration to run.**
+`main` is at `015a62b` and pushed; production is running the commit before it.
 
-§0e ("Default setup" and 12 new tiles) rides along with this same deploy and
-adds no migration of its own. It does add a `POST /api/dashboards/default`
-route and a rebuilt bundle, so `npm run build` below is not optional either.
+The §0d migration block that used to live here is **done** — see the done-record
+below. It was checked against the live deploy rather than assumed, which is the
+only reason we know: `/api/programs` already answers
+`program:Program:0:DEFAULT` (3 projects) and `program:Program:0:CLOUD`
+(0 projects), and `/api/portfolio` still reads HRMS 10 / EXPROJ 3 / SAIN 5. A
+machine with `flyctl` had already shipped and migrated it. **Check the live
+endpoints before believing a block like this one**; an owed-deploy note is
+written by whoever could not run it and is stale the moment somebody does.
 
-Why it is not optional, and why it is more urgent than `migrate_ids` was. The
-Programs list used to hide the duplicate program row by dropping an empty
-program that shared a *name* with a non-empty one. That suppression is **gone**
-— it was name-equality entity resolution in the display layer, which is the
-thing `app/scope.py` exists to avoid. So an unmigrated database now *shows* its
-duplicate: `/api/programs` lists "Digital Transformation 2026" twice, one of
-them with zero projects. Reading is otherwise safe; nothing is destroyed by
-deploying first, it just looks broken until step 2 runs.
+What production does *not* have is §0e. `/api/dashboard/catalogue` answers
+**18 tiles and 3 templates**; this commit makes it **30 tiles and 5 templates**.
+That is the one-line test of whether the deploy below has landed.
 
 ```bash
 # 0. Check before touching production.
 git pull
 cd projectpulse
-python -m pytest -q          # expect 794 passed (776 at §0d, +18 since)
+python -m pytest -q          # expect 801 passed
 cd web && npm run build      # committed bundle must not be stale
 cd ..
 
-# 1. Ship it.
+# 1. Ship it. This is the whole deploy - §0e adds no schema change and no
+#    migration. `create_all()` on boot needs to do nothing new, and
+#    `scripts.serve` only seeds an *empty* database, so production's data is
+#    untouched.
 fly auth login               # a new machine needs its own login
 fly deploy
 
-# 2. NOT OPTIONAL. Reports without writing until --apply; safe to run twice.
-fly ssh console -C "python -m scripts.migrate_programs"
-fly ssh console -C "python -m scripts.migrate_programs --apply"
+# 2. The one-line check that it landed: 30 tiles, 5 templates.
+curl -s https://projectpulse.fly.dev/api/dashboard/catalogue \
+  | python -c "import json,sys; d=json.load(sys.stdin); print(len(d['tiles']), list(d['templates']))"
+#    expect: 30 ['it_portfolio_dashboard', 'sprint_delivery_report',
+#                'project_delivery_review', 'program_delivery_control',
+#                'project_delivery_control']
 
-# 3. Check the thing this was about: exactly two programs, no source prefixes.
+# 3. Nothing else may move. This work did not touch ingestion or identity.
 curl -s https://projectpulse.fly.dev/api/programs | python -m json.tool \
   | grep -E '"id"|project_count'
-#    expect program:Program:0:DEFAULT (3 projects) and
-#           program:Program:0:CLOUD   (0 projects, correctly empty)
-#    Any id starting excel:Program or jira:Program means step 2 did not run.
-
-# 4. Task counts must be unchanged — this work did not touch ingestion.
+#    still program:Program:0:DEFAULT (3) and program:Program:0:CLOUD (0)
 curl -s https://projectpulse.fly.dev/api/portfolio | python -m json.tool \
   | grep -E 'project_id|task_count'
-#    HRMS 10, EXPROJ 3, SAIN 5 — same as the 2026-09-11 deploy.
+#    still HRMS 10, EXPROJ 3, SAIN 5
 ```
 
-The migration also adds `registered_projects.program_id`. That column matters
-more than it looks: `create_all()` on boot creates missing *tables* but never
-adds a column to an existing one, and `scope._rows()` degrades a failed read to
-"there are no registered projects" **by design** — so without the ALTER, every
-project somebody imported through the browser silently vanishes from the picker
-and the portfolio while its ingested rows sit on in Postgres. The migration does
-the ALTER; `--apply` is what performs it.
+**Do not press "Default setup" on a production dashboard to test it.** It
+*replaces* that scope's board (one dashboard per scope), so trying it on HRMS
+destroys the arranged demo layout, which has no source system behind it and is
+not rebuildable by a sync. Make a throwaway project and press it there.
 
-⚠️ Still true from last time: `fly ssh console` exits 1 with "Error: The handle
-is invalid" after every command on Windows/Git-Bash. Local pty artifact, not a
-remote failure — the command's own stdout above it is the truth.
+⚠️ Still true: `fly ssh console` exits 1 with "Error: The handle is invalid"
+after every command on Windows/Git-Bash. Local pty artifact, not a remote
+failure — the command's own stdout above it is the truth.
 
-⚠️ Still open and still the one to close before the judged window: `/console`
-is unauthenticated on the public deploy and its "Reset database" button calls
-`/api/reset`, which drops the schema. Untouched by this work.
+⚠️ **Still open, still the one to close before the judged window**, and now the
+only thing on this list that is genuinely owed: `/console` is unauthenticated on
+the public deploy and its "Reset database" button calls `/api/reset`, which
+drops the schema. Untouched by every session so far.
+
+---
+
+## ✅ Done — the §0d migration deploy, confirmed against production 2026-09-12
+
+Ran from a machine with `flyctl` (not this one). Verified live rather than
+assumed, by reading the two endpoints the old block named as its own tests:
+
+- `/api/programs` → `program:Program:0:DEFAULT` with 3 projects, and
+  `program:Program:0:CLOUD` with 0 — source-neutral ids, no `excel:Program` or
+  `jira:Program` prefix left, and the deliberately-empty second program
+  believed rather than suppressed.
+- `/api/portfolio` → HRMS 10, EXPROJ 3, SAIN 5. Unchanged, which is what says
+  the migration re-keyed rows in place instead of re-ingesting them.
+
+So `scripts.migrate_programs --apply` has run on production and the
+`registered_projects.program_id` ALTER is in place. It is idempotent; running it
+again is cheap and harmless, but it is no longer owed.
 
 ---
 
@@ -171,6 +189,84 @@ actually caught this (see §-1).
 
 ---
 
+## 0f. Same session — loading a real Jira export, and what it proves the product needs
+
+**801 tests pass** (+7 in `tests/test_scripts.py`). `scripts/from_jira_export.py`
+converts a Jira "general_report" export into the blank schedule template's own
+columns, so its output is the document `/api/sources/upload` already accepts.
+
+Run against a real export (`Jira Cowork Local 1.xlsx`, project `CoWorkLocal`,
+17 issues, 421 columns): **17 rows ingested, 0 rejected.**
+
+### Three things make a Jira export not a sheet, and only one is the names
+
+- Its table starts below a filter name and a "Displaying N issues at ..." line.
+  `reader.find_sheet` already searches for a header row, so that half was free.
+- **One issue is not one row.** With rich-text Descriptions, Jira writes each
+  issue across a block - fields on the first row, wrapped text below (a stride
+  of 9 on this file). Rows are collected by "has a Key"; counting rows or
+  assuming a stride invents issues.
+- Most of the 421 columns are empty custom fields, and several hold the page's
+  **own JavaScript** (`Value Point`, `Project Model`) or Jira's rendering
+  failures as prose (`Error rendering 'aligned-strategy-customfield'`). Those
+  are dropped rather than written through: a task whose Owner is a jQuery call
+  is worse than a task with no Owner.
+
+### The converter prints a coverage report every run, and that is the point
+
+Filled: Task ID, Activity, Phase, Status, Owner (17/17), Start and Planned
+Finish (16/17). Empty: **Baseline Finish, Predecessor, Progress, Milestone.**
+
+That empty column is not a mapping failure and no better mapping fixes it:
+
+- **Jira has no baseline field.** Recorded slip is not knowable from one export
+  - only from two taken at different times, which is exactly what the differ
+  compares. A second export later would genuinely light this up.
+- **No dependency edges** (Linked Issues and Sub-Tasks both 0/17). This is the
+  one that matters: projected finish, propagated slip, the driving path,
+  `days_late` and milestones-at-risk are *all* forward-pass results over a DAG.
+  With no edges, projected == planned for all 17.
+- **No effort at all** (Original Estimate / Time Spent / Progress all 0/17), and
+  one assignee across all 17, so no burn and no contention either.
+
+It also flags a `Planned Start` that equals `Created` on every row that has it -
+a field default, not a plan. Carried across because it is what the export says,
+and flagged because it is indistinguishable from a plan once it is in a Start
+column.
+
+### The app's own answer was the right one
+
+One finding, banded `watch` on **evidence** rather than schedule: *"Only 0 of 17
+tasks have a baseline date, so schedule variance cannot be measured for the
+rest,"* recommending *"Record baseline dates when the plan is agreed."* The
+product said "I cannot tell you anything, and here is why" instead of colouring
+unknown green - which is the behaviour the whole design argues for, met for the
+first time by data nobody wrote for it.
+
+### A defect this surfaced, not yet fixed
+
+**An already-ingested project cannot be un-assigned from its program.**
+`POST /api/projects` with no `program_id` sets the *declaration* to NULL and
+`scope.program_for` correctly returns None - but `pipeline._project_row` falls
+back to the ingested `projects` row when the declaration is None, and that row
+still carries the collector's value, so the Programs list keeps showing it.
+The fallback is documented as a migration shim for pre-`migrate_programs` data;
+it also silently overrides a deliberate un-assignment. Clearing it needed a
+direct write to `projects.program_id`. Same family as §0d - a project filed
+under a program nobody currently declares - and worth closing there.
+
+### Demo data is untouched
+
+The converted project was first uploaded into "Digital Transformation 2026",
+which made it a fourth project in the demo program, and was then moved out: the
+program is back to exactly HRMS / Example Project / SAIN. CoWork Local is
+loaded, unassigned, and reachable from Projects and Portfolio - which also
+exercised `program_context`'s "No program" branch against real data for the
+first time. All of that is **local only** (`pulse.db`, and `data/` is in
+`.dockerignore`), so nothing about it reaches production.
+
+---
+
 ## 0e. This session — 2026-09-12 (second): "Default setup", and 12 tiles from the PM's own list
 
 **794 tests pass** (was 786; +8 in `tests/test_dashboard.py`). Bundle rebuilt.
@@ -272,9 +368,11 @@ local register is back to empty, which is why those tiles photograph their
 empty states.
 
 ⚠️ Nothing here touched ingestion, the risk register's contents, or production.
-**No deploy has been run for this work** — §0d's deploy block above is still the
-one owed to production, and this rides along with it. `/console` is still
-unauthenticated on the public deploy.
+Merged to `main` and pushed (`015a62b`); **the `fly deploy` itself has not been
+run** — see the block at the top, which is now the only step owed. Correcting
+what this paragraph said when it was written: §0d's migration was *not* still
+owed, it had already been shipped from another machine, which reading the live
+endpoints showed and this note had assumed away.
 
 ---
 
