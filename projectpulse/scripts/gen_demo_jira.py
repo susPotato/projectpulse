@@ -140,12 +140,15 @@ def main() -> None:
     for name, path in written:
         print(f"  {name:18} {path.name}")
     print(
-        "\n  Upload each at Settings > Sources, kind 'Jira issue export', with the\n"
-        "  same program for all three.\n\n"
-        "  Expect a projected finish, a driving path and milestones at risk - and\n"
-        "  no recorded slip or forecast, because Jira carries no baseline. Those\n"
-        "  arrive on the *second* export of the same project, when the differ has\n"
-        "  two observations to compare.\n"
+        "\n  Upload each file TWICE at Settings > Sources - one export carries\n"
+        "  both halves - same project name each time, same program for all\n"
+        "  three:\n\n"
+        "    Jira issue export - schedule   the plan: dates, links, milestones\n"
+        "    Jira issue export - effort     estimate against time spent\n\n"
+        "  Expect a projected finish, a driving path, milestones at risk and an\n"
+        "  effort overrun - and no recorded slip or forecast, because Jira\n"
+        "  carries no baseline. Those arrive on the *second* export of the same\n"
+        "  project, when the differ has two observations to compare.\n"
     )
 
 
