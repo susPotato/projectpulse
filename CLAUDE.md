@@ -188,6 +188,67 @@ actually caught this (see §-1).
 
 ---
 
+## 0k. Same session - what this product can say from a Jira export alone
+
+A project ingested from Jira alone tripped exactly one rule ("no baseline") and
+otherwise reported nothing - **not because it was healthy**. With no dependency
+edges there is no chain, so every schedule scalar sits at 0 and the page renders
+absence of data as absence of risk, which is the one thing this product exists
+not to do.
+
+### Four snapshot rules
+
+Each is a count over the rows as they stand, so none needs a second observation:
+
+| rule | fires on | why it is defensible |
+|---|---|---|
+| `status_not_maintained` | many in progress, none complete | a claim about the *board*, and every other figure is computed from those statuses |
+| `tasks_overdue` | past its own due date, not done | needs no graph - the one schedule claim available without a baseline |
+| `due_soon_none_finished` | a cluster inside the fortnight a PM can still act in | no completion behind it means the dates rest on nothing |
+| `single_owner_project` | one assignee across the project | stated so it is not read as healthy: contention is unknowable alone |
+
+They live beside the schedule scalars, not inside them: `max_propagated_days` is
+a claim about a chain, and a project with no edges has no chain.
+
+On the real export this goes from **1 finding to 5**, and the narrative writes
+itself from them.
+
+### Two corrections the work forced, both worth keeping
+
+**Candidate columns are chosen by which has data, not which exists.** A Jira
+instance defines every standard field whether or not anybody fills it, so the
+export carries an empty `Parent Link` *and* a populated `Product`. Picking by
+presence chose the empty one and reported "Milestone 0/17" where there were 16.
+
+**`tasks_overdue` is `medium`, not `high`, and the reason is subtle.** `as_of`
+is the latest change we *observed* and falls back to the wall clock for a
+project nothing has ever been observed to change - which is every project on its
+first upload. So "past due" can measure the age of the document rather than the
+health of the work: the demo sheets describe March, and read in September every
+task in them is trivially overdue. At `high` that banded SAIN critical on its
+own and the portfolio lost its gradient. The finding is true and stays; the
+severity now flags rather than judges, because whether overdue is a crisis
+depends on what those tasks are and this rule cannot know.
+
+### The parent link is a grouping, never a dependency
+
+An epic becomes the Milestone band its children sit under, which is what the
+Gantt's "NOT UNDER A MILESTONE" was showing before. Putting it in `Predecessor`
+would fabricate a chain: a parent says these belong together, never that one
+waits for another.
+
+### Still not available from one export, and honestly so
+
+No baseline (recorded slip stays 0), no edges (no projected finish, driving path
+or milestones-at-risk), no effort. **Upload a second export and the first two
+start working** - the differ compares it against the first, which is why the
+form says "until a second export is uploaded" rather than "never". The
+"nothing is late" tile now says *which* lateness it means, since both of its
+measures are relative and a source with no baseline makes both 0 while Insight
+correctly reports tasks past due.
+
+---
+
 ## 0j. Same session - the Schedule page could not change project
 
 It fetched `/api/gantt` **bare**, so it always got the route's default. That is
