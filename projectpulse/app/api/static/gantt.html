@@ -95,6 +95,13 @@
     <h1>Schedule</h1>
     <span class="scope">baseline, plan and projected overrun on one window</span>
     <span class="spacer"></span>
+    <!-- This page is hand-written, so it does not get the React rail's own
+         ProjectSwitcher for free. Without one it fetched `/api/gantt` bare and
+         always got the route's default project - and the project dashboard's
+         "Schedule" link passes `?project=`, which this page ignored, so it
+         showed HRMS's schedule under another project's link. -->
+    <label class="asof" for="proj" style="margin-right:6px">Project</label>
+    <select id="proj" style="margin-right:12px"></select>
     <!-- Lived in the old tab bar and was lost when the rail replaced it. It is
          load-bearing copy: it is the answer to "why can I not drag a bar?" -->
     <span class="asof">read-only - the PM edits in Excel</span>
@@ -106,6 +113,86 @@
 <script>
 (function () {
   "use strict";
+
+  /* Which project this page shows.
+
+     Deliberately the same mechanism as `web/src/api.ts#currentProject`, key
+     included: a `?project=` in the URL wins and is persisted, otherwise the
+     stored selection is used. If this page invented its own key, picking a
+     project here and then clicking Insight would show two different projects,
+     which is worse than not being able to pick at all. */
+  var STORAGE_KEY = "pulse.project";
+
+  function currentProject() {
+    var params = new URLSearchParams(window.location.search);
+    var fromUrl = params.get("project");
+    if (fromUrl) {
+      var selection = { id: fromUrl, also: params.getAll("also") };
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selection));
+      } catch (e) {
+        // Private window or storage blocked. The URL still won this page load,
+        // which is all correctness needs here.
+      }
+      return selection;
+    }
+    try {
+      var stored = window.localStorage.getItem(STORAGE_KEY);
+      if (!stored) return null;
+      var parsed = JSON.parse(stored);
+      return parsed && parsed.id ? { id: parsed.id, also: parsed.also || [] } : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function ganttUrl() {
+    var sel = currentProject();
+    if (!sel) return "/api/gantt";
+    var params = new URLSearchParams();
+    params.set("project", sel.id);
+    (sel.also || []).forEach(function (id) { params.append("also", id); });
+    return "/api/gantt?" + params.toString();
+  }
+
+  /* The picker. Reads the portfolio so the list is the same set of projects -
+     and the same names - every other page offers, rather than a second idea of
+     what exists. A failure here leaves the select empty and the chart still
+     renders: not being able to switch is a smaller problem than not drawing. */
+  function fillPicker() {
+    var select = document.getElementById("proj");
+    if (!select) return;
+    fetch("/api/portfolio")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (bundle) {
+        if (!bundle || !bundle.projects || !bundle.projects.length) return;
+        var sel = currentProject();
+        var selectedId = sel ? sel.id : bundle.projects[0].project_id;
+        bundle.projects.forEach(function (row) {
+          var option = document.createElement("option");
+          option.value = row.project_id;
+          option.textContent = row.name;
+          option.dataset.also = JSON.stringify(row.source_ids.filter(function (id) {
+            return id !== row.project_id;
+          }));
+          if (row.project_id === selectedId) option.selected = true;
+          select.appendChild(option);
+        });
+        select.addEventListener("change", function () {
+          var option = select.options[select.selectedIndex];
+          var params = new URLSearchParams();
+          params.set("project", option.value);
+          JSON.parse(option.dataset.also || "[]").forEach(function (id) {
+            params.append("also", id);
+          });
+          // A real navigation rather than a re-render: the URL is then
+          // linkable, and `currentProject` persists the choice on the way in
+          // so every other page follows.
+          window.location.search = params.toString();
+        });
+      })
+      .catch(function () { /* see above - the chart matters more */ });
+  }
 
   function $(tag, cls, text) {
     var node = document.createElement(tag);
@@ -221,7 +308,9 @@
     document.getElementById("sub").textContent = title;
   }
 
-  fetch("/api/gantt")
+  fillPicker();
+
+  fetch(ganttUrl())
     .then(function (r) {
       return r.json().then(function (body) {
         return { ok: r.ok, status: r.status, body: body };

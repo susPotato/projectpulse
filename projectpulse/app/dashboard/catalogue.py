@@ -130,6 +130,16 @@ CATALOGUE: tuple[TileSpec, ...] = (
         # the one that falls off the bottom.
         "program", "programs", default_w=6, default_h=6,
     ),
+    TileSpec(
+        "program_timeline", "Program Timeline", "Schedule",
+        "Every project's committed finish on one shared window, and how far "
+        "past it the dependency chain implies it will land.",
+        # 5 rows: the date axis, a row per project, and the line saying what the
+        # tick and the bar mean. At h=4 that last line fell below the fold, and
+        # an unlabelled tick on a shared axis is exactly the thing a reader
+        # guesses wrong about.
+        "program", "programs", default_w=8, default_h=5, preview="chart",
+    ),
     # --- Project scope ---------------------------------------------------
     TileSpec(
         "milestones_at_risk", "Milestones at Risk", "Schedule",

@@ -1106,6 +1106,110 @@ const TeamEffortTile: ComponentType<TileProps> = ({ scopeId }) => {
   );
 };
 
+/* Every project's finish on one shared window.
+
+   Deliberately NOT a merged Gantt. Stacking several projects' task bars into
+   one chart would imply a schedule they do not share: `driving_path` and
+   `project_end_projected` are per-project forward-pass results, and there is no
+   single critical chain across projects that only compete for people. Drawing
+   one would invent a dependency structure nobody stated - the same class of
+   claim `app/scope.py` refuses at the identity level.
+
+   What a program level can honestly say about schedule is *when each project
+   lands, side by side*: the committed date as a tick, and the overrun the
+   chain implies as a bar past it. Both come straight off the rollup rows the
+   Programs list already computes, so this cannot disagree with the heatmap or
+   Top Delayed beside it. The full task-level chart stays one click away, on
+   each project's own Schedule page. */
+const ProgramTimeline: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useRollup(scopeId);
+  const rows = (bundle?.projects ?? []).filter((p) => p.committed_end);
+
+  const day = (iso: string | null | undefined) =>
+    iso ? new Date(`${iso}T00:00:00Z`).getTime() : null;
+
+  const starts = rows.map((r) => day(r.committed_end)!).filter(Boolean);
+  const ends = rows.map((r) => day(r.projected_end) ?? day(r.committed_end)!).filter(Boolean);
+  const min = Math.min(...starts, ...ends);
+  const max = Math.max(...starts, ...ends);
+  //: A single-project program, or every project landing the same day, gives a
+  //: zero-width window - which would divide by zero and put every tick at the
+  //: same pixel. Pad it to a day so the row still draws.
+  const span = Math.max(max - min, 86_400_000);
+  const at = (ms: number) => ((ms - min) / span) * 100;
+
+  const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {rows.length > 0 ? (
+        <div className="grid gap-2">
+          <div className="flex justify-between text-[10.5px] text-ink-3">
+            <span>{iso(min)}</span>
+            <span>{iso(max)}</span>
+          </div>
+          {rows.map((row) => {
+            const committed = day(row.committed_end)!;
+            const projected = day(row.projected_end) ?? committed;
+            const late = row.days_late > 0;
+            return (
+              <a
+                key={row.project_id}
+                href={projectLink("/gantt", row)}
+                title={`${row.name}: committed ${row.committed_end}${
+                  late ? `, chain implies ${row.projected_end}` : ""
+                } - open its schedule`}
+                className="flex items-center gap-2 rounded px-1 py-0.5 no-underline hover:bg-bg"
+              >
+                <span className="w-[84px] shrink-0 truncate text-[11.5px] text-ink-2">
+                  {row.name}
+                </span>
+                <span className="relative h-[14px] flex-1 rounded-sm bg-rule-2">
+                  {/* The overrun, drawn only when there is one - a zero-width
+                      bar at every project reads as a rendering fault. */}
+                  {late && (
+                    <span
+                      className="absolute top-[3px] h-[8px] rounded-sm bg-red"
+                      style={{
+                        left: `${at(committed)}%`,
+                        width: `${Math.max(1, at(projected) - at(committed))}%`,
+                      }}
+                    />
+                  )}
+                  {/* Committed finish. A tick, not a bar: we know the date it
+                      was promised for, not when the work started. */}
+                  <span
+                    className="absolute top-0 h-full w-[2px] bg-ink-2"
+                    style={{ left: `${at(committed)}%` }}
+                  />
+                </span>
+                <span
+                  className={`w-[46px] shrink-0 text-right text-[11px] ${
+                    late ? "text-red" : "text-ink-3"
+                  }`}
+                >
+                  {late ? `+${row.days_late}d` : "on plan"}
+                </span>
+              </a>
+            );
+          })}
+          <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+            Tick = committed finish, bar = overrun the chain implies. Each
+            project's own critical chain is on its Schedule page - there is no
+            shared one to draw here.
+          </p>
+        </div>
+      ) : (
+        bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            No project in this program has a committed finish date yet.
+          </p>
+        )
+      )}
+    </TileShell>
+  );
+};
+
 /* ---- Project scope, added from the PM's own tiles list ------------------ */
 
 function useGantt(scopeId: string) {
@@ -1692,6 +1796,7 @@ export const TILE_REGISTRY: Record<string, ComponentType<TileProps>> = {
   top_delayed_projects: TopDelayedProjects,
   resource_contention_split: ResourceContentionSplit,
   team_allocation: TeamAllocation,
+  program_timeline: ProgramTimeline,
   project_summary: ProjectSummary,
   program_context: ProgramContext,
   schedule_variance: ScheduleVariance,
