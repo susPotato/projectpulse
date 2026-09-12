@@ -888,20 +888,23 @@ async def upload_source(
     #: so everything downstream (the contract, the differ, the identity
     #: resolver, the watched-sheet registration) handles one shape and there is
     #: no second ingestion path to keep in step.
-    #: `jira_export` becomes a schedule, `jira_worklog` a worklog - one export
-    #: legitimately carries both, because an issue row holds a plan (dates,
-    #: links) *and* a record of effort, and this app keeps those in separate
-    #: contracts the way a spreadsheet shop keeps them in separate files.
-    from_jira = kind in {"jira_export", "jira_worklog"}
-    jira_kind = "worklog" if kind == "jira_worklog" else "schedule"
+    #: One Jira export becomes *both* sheets, not one the person has to pick.
+    #:
+    #: An issue row genuinely holds a plan (dates, links) and a record of effort,
+    #: and this app keeps those in separate contracts the way a spreadsheet shop
+    #: keeps them in separate files. That is an internal arrangement, though, and
+    #: asking somebody which half of their own file to read leaks it onto the
+    #: form - they have one file. So the schedule always goes in, and the worklog
+    #: follows whenever the export carries effort at all.
+    from_jira = kind == "jira_export"
     if from_jira:
-        kind = jira_kind
+        kind = "schedule"
     if kind not in SHEET_KINDS:
         raise HTTPException(
             status_code=400,
             detail=(
                 f"unknown sheet_kind {sheet_kind!r}; expected one of "
-                f"{[*SHEET_KINDS, 'jira_export', 'jira_worklog']}"
+                f"{[*SHEET_KINDS, 'jira_export']}"
             ),
         )
 
@@ -955,16 +958,19 @@ async def upload_source(
         register_new = project_name
 
     id_slug = re.sub(r"[^a-z0-9]+", "-", project_id.lower()).strip("-")
-    file_name = f"upload_{id_slug}_{kind}.xlsx"
 
     payload = await file.read()
 
-    #: The conversion, before the workbook is inspected or stored. What gets
-    #: registered and re-synced is the *converted* schedule, which is what makes
-    #: a later export of the same project a genuine second observation: the
-    #: differ compares it against this one, and the baseline Jira cannot give us
-    #: starts existing the moment somebody uploads twice.
+    #: The sheets this one upload becomes: `(kind, bytes)`.
+    #:
+    #: Conversion happens before the workbook is inspected or stored, and what
+    #: gets registered and re-synced is the *converted* sheet - which is what
+    #: makes a later export of the same project a genuine second observation:
+    #: the differ compares it against this one, and the baseline Jira cannot
+    #: give us starts existing the moment somebody uploads twice.
+    sheets: list[tuple[str, bytes]] = []
     jira_coverage: dict | None = None
+
     if from_jira:
         from app.ingest.sources.jira.export_sheet import (
             NotAJiraExport,
@@ -972,46 +978,72 @@ async def upload_source(
         )
 
         try:
-            payload, jira_coverage = convert_workbook(BytesIO(payload), kind=jira_kind)
+            schedule_bytes, jira_coverage = convert_workbook(
+                BytesIO(payload), kind="schedule"
+            )
         except NotAJiraExport as exc:
-            # 400 with the reason. The person picked the wrong kind for their
-            # file, or exported without the fields - neither is a server fault,
-            # and a 500 here would read as "the product is broken".
+            # 400 with the reason. The file is the wrong shape, or was exported
+            # without the fields - neither is a server fault, and a 500 here
+            # would read as "the product is broken".
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        sheets.append(("schedule", schedule_bytes))
 
-    # Which tab holds the table, decided from the workbook's own contents.
+        #: The effort half, when there is one. Its absence is **not** an error:
+        #: plenty of Jira projects never fill in an estimate, and refusing the
+        #: whole upload for that would reject a perfectly good schedule.
+        try:
+            worklog_bytes, _ = convert_workbook(BytesIO(payload), kind="worklog")
+        except NotAJiraExport:
+            worklog_bytes = None
+        if worklog_bytes is not None:
+            sheets.append(("worklog", worklog_bytes))
+    else:
+        sheets.append((kind, payload))
+
+    # Which tab holds each table, decided from the workbook's own contents.
     # Resolved here, once, rather than per scan: the answer is half the scope
     # key, so re-deriving it would let a tab rename lose the baseline.
     #
     # Inspected from a temp file, not from `data_root`: nothing is stored until
     # the workbook has been accepted, so a document we are going to refuse
-    # cannot displace the copy of this sheet we are already syncing.
-    conventional, contract = SHEET_KINDS[kind]
-    staged = Path(tempfile.gettempdir()) / f"pulse-incoming-{os.getpid()}-{file_name}"
-    staged.write_bytes(payload)
-    try:
-        sheet_name = find_sheet(staged, contract, preferred=conventional)
-        if sheet_name is None:
-            from openpyxl import load_workbook
+    # cannot displace the copy of this sheet we are already syncing. Every sheet
+    # is validated before *any* is registered, so a Jira export whose second
+    # half is malformed does not leave the first half half-imported.
+    resolved: list[tuple[str, str, str, bytes]] = []
+    for this_kind, this_payload in sheets:
+        this_name = f"upload_{id_slug}_{this_kind}.xlsx"
+        conventional, contract = SHEET_KINDS[this_kind]
+        staged = Path(tempfile.gettempdir()) / f"pulse-incoming-{os.getpid()}-{this_name}"
+        staged.write_bytes(this_payload)
+        try:
+            sheet_name = find_sheet(staged, contract, preferred=conventional)
+            if sheet_name is None:
+                from openpyxl import load_workbook
 
-            book = load_workbook(staged, read_only=True)
-            tabs = list(book.sheetnames)
-            book.close()
-            # Name the tabs we saw and the columns we need. "Could not read
-            # this workbook" sends a person back to a file with nothing to
-            # change; this tells them which sheet to fix and what is missing.
-            wanted = [h for h in contract.template_headers[:5]]
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"no sheet in this workbook looks like a {kind}. Tabs found: "
-                    f"{tabs}. One of them needs a header row with columns like "
-                    f"{wanted} - a '{contract.key_field}' column is required, "
-                    "because it is what identifies a row across imports."
-                ),
-            )
-    finally:
-        staged.unlink(missing_ok=True)
+                book = load_workbook(staged, read_only=True)
+                tabs = list(book.sheetnames)
+                book.close()
+                # Name the tabs we saw and the columns we need. "Could not read
+                # this workbook" sends a person back to a file with nothing to
+                # change; this tells them which sheet to fix and what is missing.
+                wanted = [h for h in contract.template_headers[:5]]
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"no sheet in this workbook looks like a {this_kind}. Tabs "
+                        f"found: {tabs}. One of them needs a header row with columns "
+                        f"like {wanted} - a '{contract.key_field}' column is required, "
+                        "because it is what identifies a row across imports."
+                    ),
+                )
+        finally:
+            staged.unlink(missing_ok=True)
+        resolved.append((this_kind, this_name, sheet_name, this_payload))
+
+    #: What the response reports on: the schedule, which is always first. The
+    #: worklog rides along and is named in the notes rather than counted here -
+    #: "17 rows" meaning the plan is the number a person is looking for.
+    kind, file_name, sheet_name, payload = resolved[0]
 
     # Accepted - so the project may exist now.
     if register_new is not None:
@@ -1021,14 +1053,15 @@ async def upload_source(
     # container's disk. A Fly machine's filesystem does not survive a deploy,
     # so a document written there had to be re-uploaded after every release -
     # and the sheet went on being watched with nothing behind it.
-    register_watched(
-        file_name,
-        kind,
-        project_id,
-        sheet_name=sheet_name,
-        content=payload,
-        original_filename=file.filename,
-    )
+    for this_kind, this_name, this_sheet, this_payload in resolved:
+        register_watched(
+            this_name,
+            this_kind,
+            project_id,
+            sheet_name=this_sheet,
+            content=this_payload,
+            original_filename=file.filename,
+        )
 
     try:
         with session_scope() as session:

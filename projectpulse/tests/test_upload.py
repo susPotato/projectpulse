@@ -594,3 +594,72 @@ def test_a_removal_plan_names_the_rows_no_sync_can_rebuild():
         counts={"tasks": 10, "risks": 2, "dashboards": 1, "qa_items": 0},
     )
     assert outcome.irreplaceable == {"risks": 2, "dashboards": 1}
+
+def test_one_jira_export_becomes_both_sheets_when_it_carries_effort(tmp_path):
+    """The form asks for a file, not for which half of it to read.
+
+    An issue row holds a plan and a record of effort, and this app keeps those
+    in separate contracts - but that is an internal arrangement, and making
+    somebody upload the same file twice leaks it onto the form.
+    """
+    from datetime import datetime
+
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import NotAJiraExport, convert_workbook
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 1 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status", "Assignee", "Due Date",
+                  "Original Estimate", "Time Spent"])
+    sheet.append(["P", "P-1", "Design", "To Do", "Ann", datetime(2026, 9, 30), 8, 12])
+    path = tmp_path / "with_effort.xlsx"
+    book.save(path)
+
+    schedule, _ = convert_workbook(path, kind="schedule")
+    worklog, _ = convert_workbook(path, kind="worklog")
+    assert schedule and worklog
+
+
+def test_a_jira_export_without_effort_still_imports_its_schedule(tmp_path):
+    """The common case, and the one that must not regress: plenty of Jira
+    projects never fill in an estimate, and refusing the whole upload for that
+    would reject a perfectly good schedule."""
+    from datetime import datetime
+
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import NotAJiraExport, convert_workbook
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 1 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status", "Assignee", "Due Date"])
+    sheet.append(["P", "P-1", "Design", "To Do", "Ann", datetime(2026, 9, 30)])
+    path = tmp_path / "no_effort.xlsx"
+    book.save(path)
+
+    schedule, _ = convert_workbook(path, kind="schedule")
+    assert schedule
+
+    # The worklog half refuses - and the route treats that as "no effort here",
+    # not as a failed import.
+    with pytest.raises(NotAJiraExport):
+        convert_workbook(path, kind="worklog")
+
+
+def test_the_upload_form_offers_one_jira_option_not_two():
+    """Pinned because the two-option version shipped and was wrong: a person has
+    one file and should not be asked which half of it to read."""
+    from pathlib import Path
+
+    import app.api.main as main
+
+    html = (Path(main.__file__).parent / "static" / "settings.html").read_text(
+        encoding="utf-8"
+    )
+    assert html.count('value="jira_export"') == 1
+    assert "jira_worklog" not in html

@@ -349,8 +349,7 @@
       '<select id="up-kind">' +
         '<option value="schedule">Schedule (Activities)</option>' +
         '<option value="worklog">Worklog</option>' +
-        '<option value="jira_export">Jira issue export &mdash; schedule</option>' +
-        '<option value="jira_worklog">Jira issue export &mdash; effort (estimate vs time spent)</option>' +
+        '<option value="jira_export">Jira issue export</option>' +
       "</select>" +
       '<div class="hint" id="up-kind-hint" style="margin-top:6px"></div>' +
       '<label for="up-file">Workbook</label>' +
@@ -394,8 +393,8 @@
         ? "Upload the workbook straight from Jira&rsquo;s <b>Excel (All fields)</b> export. " +
           "It is converted into a schedule sheet here. Jira has no baseline or " +
           "dependency column, so recorded slip stays empty until a <i>second</i> " +
-          "export is uploaded &mdash; the differ compares the two. Upload the same " +
-          "file under both Jira kinds to get the schedule and the effort."
+          "export is uploaded &mdash; the differ compares the two. Effort is taken " +
+          "from the same file when the export carries it."
         : "";
     }
     kindEl.addEventListener("change", describeKind);
