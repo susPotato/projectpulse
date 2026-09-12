@@ -207,6 +207,31 @@ DEFAULT_TABLE = RuleTable(
             ),
         ),
         Rule(
+            id="work_not_moving",
+            when=(
+                Condition("tasks_stale", ">=", 3),
+                Condition("tasks_done", "==", 0),
+            ),
+            category="evidence_quality",
+            severity="medium",
+            headline=(
+                "{{tasks_stale}} open task(s) have not been touched in the "
+                "source system for a week or more - the stalest for "
+                "{{stalest_task_days}} days."
+            ),
+            recommendation=(
+                "Find out whether the work stopped or only the updating did. "
+                "Both are worth knowing and they need different conversations."
+            ),
+            rationale=(
+                "Read from the tracker's own 'last updated', which is testimony "
+                "rather than evidence - we did not watch it happen. It is still "
+                "the only movement signal a single export carries, because there "
+                "is no earlier scan to diff against. Paired with nothing "
+                "completed, a stalled board is the likeliest reading."
+            ),
+        ),
+        Rule(
             id="single_owner_project",
             when=(
                 Condition("distinct_owners", "==", 1),

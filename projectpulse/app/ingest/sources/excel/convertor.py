@@ -216,6 +216,7 @@ def _convert_task(
         due_date=_to_date(payload.get("planned_end")),
         baseline_end=_to_date(payload.get("baseline_end")),
         progress=_to_float(payload.get("progress")),
+        source_updated_at=_to_date(payload.get("source_updated_at")),
     )
     task.copy_origin_from(tool)
     task.raw_data_remark = tool.raw_data_remark

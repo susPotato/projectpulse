@@ -839,3 +839,110 @@ def test_the_converter_has_one_implementation_not_two():
     # The parsing itself must not live here any more.
     assert "def read_export" not in source
     assert "def convert(" not in source
+
+# --------------------------------------------------------------------------
+# The columns that are empty today and will not be tomorrow.
+#
+# Every case below is a way the conversion would have gone wrong *silently* the
+# first time somebody filled a column in - no error, just a worse answer.
+# --------------------------------------------------------------------------
+
+
+def _future_export(tmp_path, header, rows):
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "general_report"
+    sheet.append(["FI2.0"])
+    sheet.append(["Displaying N issues at 13/Sep/26 9:00 AM."])
+    sheet.append(header)
+    for row in rows:
+        sheet.append(list(row))
+    path = tmp_path / "future.xlsx"
+    workbook.save(path)
+    return path
+
+
+LINK_HEADER = ["Project", "Key", "Summary", "Status", "Linked Issues", "Linked Issues"]
+
+
+def _converted(tmp_path, header, rows):
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    headers, data = read_export(_future_export(tmp_path, header, rows))
+    records, chosen = convert(headers, data)
+    return {r["Task ID"]: r for r in records}, chosen
+
+
+def test_a_repeated_header_is_read_across_every_column(tmp_path):
+    """Jira repeats a header per value rather than packing a list into one cell
+    - this export already carries `Approver` four times. Keeping one position
+    per header reads only the last, so an issue with two links would contribute
+    one edge and lose the other."""
+    by, _ = _converted(
+        tmp_path, LINK_HEADER,
+        [("P", "P-2", "Build", "To Do", "depends on P-1", "is blocked by P-3")],
+    )
+    assert by["P-2"]["Predecessor"] == "P-1, P-3"
+
+
+def test_an_outbound_link_never_becomes_a_predecessor(tmp_path):
+    """"blocks P-2" and "is blocked by P-2" name the same pair and opposite
+    edges. Accepting both reverses half the arrows, which does not fail - it
+    returns a confident, wrong critical path."""
+    by, _ = _converted(
+        tmp_path, LINK_HEADER,
+        [("P", "P-3", "Spec", "To Do", "blocks P-2", None)],
+    )
+    assert by["P-3"]["Predecessor"] is None
+
+
+def test_a_bare_key_with_no_direction_is_dropped_not_guessed(tmp_path):
+    """Same rule `dependencies.py` applies to a dangling reference: drop it
+    rather than hedge. A key on its own does not say which way the arrow goes."""
+    by, _ = _converted(
+        tmp_path, LINK_HEADER, [("P", "P-4", "Infra", "To Do", "P-1", None)]
+    )
+    assert by["P-4"]["Predecessor"] is None
+
+
+def test_a_sub_task_is_never_read_as_a_predecessor(tmp_path):
+    """A sub-task is a child. Feeding it to `Predecessor` would assert that a
+    parent waits for its children - a chain nobody stated, reaching a critical
+    path and a projected date."""
+    by, _ = _converted(
+        tmp_path,
+        ["Project", "Key", "Summary", "Status", "Sub-Tasks"],
+        [("P", "P-1", "Design", "To Do", "P-9")],
+    )
+    assert by["P-1"]["Predecessor"] is None
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [("100%", 100.0), (60, 60.0), ("60 %", 60.0), (43200, None), ("blocks P-2", None)],
+)
+def test_progress_is_taken_as_a_percentage_or_not_at_all(tmp_path, raw, expected):
+    """43200 is Jira's aggregate progress in *seconds*. Rescaling it would put a
+    plausible completion figure on screen; rejecting it says nothing, which is
+    what we know."""
+    by, _ = _converted(
+        tmp_path,
+        ["Project", "Key", "Summary", "Status", "Progress"],
+        [("P", "P-1", "Design", "To Do", raw)],
+    )
+    assert by["P-1"]["Progress"] == expected
+
+
+def test_an_outbound_only_column_says_so_rather_than_reporting_no_links(tmp_path):
+    """"You have links, they point the other way" and "you have no links" need
+    different actions, and only one of them is fixable in Jira in a minute."""
+    from app.ingest.sources.jira.export_sheet import convert, coverage, read_export
+
+    headers, data = read_export(
+        _future_export(tmp_path, LINK_HEADER, [("P", "P-3", "Spec", "To Do", "blocks P-2", None)])
+    )
+    records, chosen = convert(headers, data)
+    notes = " ".join(coverage(records, chosen, headers, data)["notes"])
+    assert "outbound direction" in notes

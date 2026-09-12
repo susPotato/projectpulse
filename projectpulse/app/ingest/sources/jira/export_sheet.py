@@ -86,8 +86,37 @@ SOURCES: dict[str, tuple[str, ...]] = {
     "Baseline Finish": (),
     "Planned Finish": ("Due Date", "End date"),
     "Progress": ("Task progress", "Progress"),
-    "Predecessor": ("Linked Issues", "Sub-Tasks"),
+    # `Linked Issues` only. `Sub-Tasks` was here and was simply wrong: a
+    # sub-task is a *child*, not a predecessor. Nothing showed it while the
+    # column was empty on every row, and the day it filled in this would have
+    # asserted that a parent waits for its children - a chain nobody stated,
+    # feeding a critical path and a projected date.
+    "Predecessor": ("Linked Issues",),
+    "Last Updated": ("Updated", "Last Viewed"),
 }
+
+#: A Jira issue key, anywhere in a cell.
+ISSUE_KEY = re.compile(r"\b([A-Z][A-Z0-9_]*-\d+)\b")
+
+#: The phrases that mean "this issue comes *after* the one named".
+#:
+#: Direction is the whole problem with link columns. "blocks PROJ-3" and "is
+#: blocked by PROJ-3" name the same pair and opposite edges, and a predecessor
+#: column that takes both produces a graph with half its arrows reversed - which
+#: does not fail, it just returns a confident and wrong critical path. So only
+#: inbound phrasing is accepted, and a bare key with no direction word is
+#: dropped rather than guessed at, the same way `dependencies.py` drops a
+#: dangling reference instead of hedging it.
+INBOUND_LINK = re.compile(
+    r"\b(is\s+blocked\s+by|blocked\s+by|depends\s+on|is\s+depended\s+on\s+by"
+    r"|follows|is\s+after|after)\b",
+    re.I,
+)
+
+#: The opposite phrasings, recognised only so they can be reported as skipped
+#: rather than silently ignored - a person who filled in a whole column of
+#: "blocks" links deserves to be told why no edges came of it.
+OUTBOUND_LINK = re.compile(r"\b(blocks|is\s+blocking|precedes|is\s+before|before)\b", re.I)
 
 #: Jira renders some custom fields by shipping the page's own script, so the
 #: cell holds a function body rather than a value. Any cell that looks like this
@@ -98,7 +127,7 @@ SCRIPT_SMELL = re.compile(r"\$\(|function\s*\(|setTimeout|document\.ready", re.I
 #: Same idea for Jira's own rendering failures, which arrive as prose.
 ERROR_SMELL = re.compile(r"^Error rendering ", re.I)
 
-DATE_COLUMNS = frozenset({"Start", "Planned Finish", "Baseline Finish"})
+DATE_COLUMNS = frozenset({"Start", "Planned Finish", "Baseline Finish", "Last Updated"})
 
 
 class NotAJiraExport(ValueError):
@@ -149,6 +178,43 @@ def _as_date(value):
         return datetime.fromisoformat(str(value)[:10]).date()
     except ValueError:
         return None
+
+
+def _as_percent(value):
+    """Jira progress as the 0-100 the schedule sheet uses, or nothing.
+
+    Accepts `60`, `60%`, `"60 %"`. Rejects anything outside 0-100 rather than
+    rescaling it: Jira's own aggregate progress fields are in *seconds*, and a
+    silently divided 43200 would render as a plausible completion figure.
+    """
+    value = _clean(value)
+    if value is None:
+        return None
+    if isinstance(value, str):
+        value = value.replace("%", "").strip()
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if 0 <= number <= 100 else None
+
+
+def _predecessors(cells: list) -> str | None:
+    """The issues this one comes *after*, as the schedule sheet writes them.
+
+    Comma-separated keys, which is what `dependencies.py` parses. Only inbound
+    phrasing contributes - see `INBOUND_LINK` for why a bare key is dropped
+    instead of guessed at.
+    """
+    keys: list[str] = []
+    for cell in cells:
+        text = _clean(cell)
+        if not isinstance(text, str) or not INBOUND_LINK.search(text):
+            continue
+        for key in ISSUE_KEY.findall(text):
+            if key not in keys:
+                keys.append(key)
+    return ", ".join(keys) if keys else None
 
 
 def _find_header(grid: list[tuple]) -> int | None:
@@ -207,14 +273,35 @@ def read_export(source, sheet: str | None = None) -> tuple[list[str], list[tuple
     )
 
 
+def _index(headers: list[str]) -> dict[str, list[int]]:
+    """Header -> every column position carrying it.
+
+    Jira repeats a header rather than packing a list into one cell: an issue
+    with four approvers produces four `Approver` columns. This export already
+    has `Approver` x4 and `Watchers` x2, so a dict keeping one position per
+    header silently reads the last one - and the day `Linked Issues` is filled
+    in, an issue with three links would contribute one edge and lose two.
+    """
+    positions: dict[str, list[int]] = {}
+    for at, header in enumerate(headers):
+        if header:
+            positions.setdefault(header.casefold(), []).append(at)
+    return positions
+
+
 def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str, str]]:
     """`(records, chosen)` - the template rows, and which Jira column fed each."""
-    lookup = {h.casefold(): i for i, h in enumerate(headers) if h}
+    lookup = _index(headers)
+
+    def _cells(row: tuple, name: str) -> list:
+        """Every value this row carries under `name`, across repeated columns."""
+        return [
+            row[at] for at in lookup[name.casefold()] if at < len(row) and _clean(row[at])
+        ]
 
     def _populated(name: str) -> int:
-        """How many issues actually have a value in this Jira column."""
-        at = lookup[name.casefold()]
-        return sum(1 for r in rows if at < len(r) and _clean(r[at]) is not None)
+        """How many issues carry a value in any column of this name."""
+        return sum(1 for r in rows if _cells(r, name))
 
     #: The candidate with the most data wins, not the first one that exists.
     #:
@@ -250,15 +337,20 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
             if source is None:
                 record[column] = None
                 continue
-            at = lookup[source.casefold()]
-            raw = row[at] if at < len(row) else None
+            cells = _cells(row, source)
             if column in DATE_COLUMNS:
-                record[column] = _as_date(raw)
+                record[column] = _as_date(cells[0]) if cells else None
+            elif column == "Predecessor":
+                record[column] = _predecessors(cells)
+            elif column == "Progress":
+                record[column] = _as_percent(cells[0]) if cells else None
+            elif column == "Milestone":
+                value = _clean(cells[0]) if cells else None
+                record[column] = (
+                    PARENT_KEY.sub("", value) or None if isinstance(value, str) else value
+                )
             else:
-                value = _clean(raw)
-                if column == "Milestone" and isinstance(value, str):
-                    value = PARENT_KEY.sub("", value) or None
-                record[column] = value
+                record[column] = _clean(cells[0]) if cells else None
         records.append(record)
     return records, chosen
 
@@ -332,12 +424,40 @@ def coverage(
             "different times - upload a later one and the differ will observe it."
         )
     if "Predecessor" in missing:
-        notes.append(
-            "No dependency edges (Linked Issues / Sub-Tasks are empty). The "
-            "projected finish, propagated slip, the driving path, days-late and "
-            "milestones-at-risk are all forward-pass results over a DAG, so with "
-            "no edges every task's projected date equals its planned one."
-        )
+        #: Distinguish "no links at all" from "links that name the wrong
+        #: direction", because the second is fixable in Jira in a minute and the
+        #: first is not, and a single note for both would send a person looking
+        #: in the wrong place.
+        linked = chosen.get("Predecessor")
+        outbound = 0
+        if linked and linked.casefold() in {h.casefold() for h in headers if h}:
+            positions = _index(headers).get(linked.casefold(), [])
+            outbound = sum(
+                1
+                for r in rows
+                for at in positions
+                if at < len(r)
+                and isinstance(_clean(r[at]), str)
+                and OUTBOUND_LINK.search(str(r[at]))
+                and not INBOUND_LINK.search(str(r[at]))
+            )
+        if outbound:
+            notes.append(
+                f"{outbound} issue link(s) name the outbound direction only "
+                "(\"blocks\", \"precedes\"). A predecessor column has to say what "
+                "an issue comes *after*, and taking both directions would reverse "
+                "half the arrows and produce a confident, wrong critical path - so "
+                "they were skipped. Adding the matching \"is blocked by\" link in "
+                "Jira turns them into edges."
+            )
+        else:
+            notes.append(
+                "No dependency edges: no issue carries an inbound link (\"is "
+                "blocked by\", \"depends on\"). The projected finish, propagated "
+                "slip, the driving path, days-late and milestones-at-risk are all "
+                "forward-pass results over a DAG, so without them every task's "
+                "projected date equals its planned one."
+            )
 
     start_source = chosen.get("Start")
     lookup = {h.casefold(): i for i, h in enumerate(headers) if h}

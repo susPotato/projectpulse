@@ -139,6 +139,7 @@ def load_tasks(session, project_ids: Sequence[str]) -> list[TaskNode]:
                 # The real foreign key, now that the convertor creates the rows.
                 milestone_id=task.milestone_id,
                 raw_data_id=task.raw_data_id,
+                source_updated_at=task.source_updated_at,
             )
         )
     return nodes

@@ -99,6 +99,15 @@ class Task(DomainEntity, Base):
     due_date: Mapped[date | None] = mapped_column(Date, default=None)
     baseline_end: Mapped[date | None] = mapped_column(Date, default=None)
     progress: Mapped[float | None] = mapped_column(Numeric(5, 2), default=None)
+    #: When the *source system* last says this row changed - Jira's `Updated`.
+    #:
+    #: Deliberately distinct from anything in `state_changes`, which is what
+    #: *we* observed between two scans. This is a claim the vendor makes, in the
+    #: same relationship as `original_status` to `status`: carried because it is
+    #: what the tool says, never mistaken for what we saw. It is the only
+    #: movement signal available from a single export, where we have observed
+    #: nothing yet because there is no earlier scan to diff against.
+    source_updated_at: Mapped[date | None] = mapped_column(Date, default=None)
 
 
 class Dependency(DomainEntity, Base):

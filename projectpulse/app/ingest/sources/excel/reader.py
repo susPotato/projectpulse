@@ -286,6 +286,12 @@ SCHEDULE_CONTRACT = SheetContract(
         # The column that closes the dependency-edge gap (architecture 5.4). We
         # own this template, so it is the cheapest real source of DAG edges.
         "Predecessor",
+        # What the source system says about when this row last moved. Optional
+        # and usually blank on a hand-kept sheet - a person editing a workbook
+        # is not going to maintain it - but every issue tracker has one, and it
+        # is the only movement signal a *single* export carries: with no earlier
+        # scan there is nothing for the differ to compare against yet.
+        "Last Updated",
     ),
     columns={
         "task id": "task_id",
@@ -300,6 +306,8 @@ SCHEDULE_CONTRACT = SheetContract(
         "assignee": "assignee",
         "start": "start_date",
         "start date": "start_date",
+        "last updated": "source_updated_at",
+        "updated": "source_updated_at",
         "baseline finish": "baseline_end",
         "baseline completion": "baseline_end",
         "planned finish": "planned_end",

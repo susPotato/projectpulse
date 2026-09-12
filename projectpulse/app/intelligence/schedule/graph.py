@@ -48,6 +48,11 @@ class TaskNode:
     baseline_end: date | None = None
     milestone_id: str | None = None
     raw_data_id: int | None = None
+    #: What the source system says about when this row last changed. Not a
+    #: scheduling input - nothing in the forward pass reads it - but it rides
+    #: with the task because the alternative is a second query returning a
+    #: parallel list that has to be kept in the same order as this one.
+    source_updated_at: date | None = None
 
     @property
     def committed_end(self) -> date | None:

@@ -47,6 +47,21 @@ IN_PROGRESS_STATES = frozenset({"in progress", "in_progress", "wip", "doing"})
 #: busy and says nothing.
 DUE_SOON_DAYS = 14
 
+#: How long an open task can go without the source recording a change before it
+#: is worth remarking on.
+#:
+#: A working week, not the fortnight `DUE_SOON_DAYS` uses, because the rule that
+#: reads this is not "some things are quiet" - it requires three or more *and*
+#: nothing completed in the whole project. Under that conjunction a week is
+#: conservative: a team that has finished nothing and touched nothing in seven
+#: days is either stopped or not recording, and both are worth a question.
+#:
+#: A holiday can still trip it, which is why the recommendation asks whether the
+#: work stopped or only the updating did rather than asserting either. Stated
+#: here so the number is arguable: this is a judgement about how long is too
+#: long, not a measurement.
+STALE_AFTER_DAYS = 7
+
 
 def _ratio(part: int, whole: int) -> float:
     """Ratios of an empty set are 0.0, not a division error and not None.
@@ -95,6 +110,16 @@ class DeliveryContext:
     #: Distinct assignees on the task rows. One means every cross-project
     #: contention signal is structurally unavailable, not that there is none.
     distinct_owners: int = 0
+    #: Open tasks the *source system* has not recorded a change to in
+    #: `STALE_AFTER_DAYS`, and the age of the stalest.
+    #:
+    #: Sourced from Jira's own `Updated`, which is a claim the vendor makes -
+    #: not from `state_changes`, which is what we observed between two scans.
+    #: They are kept apart on purpose: the second is evidence, the first is
+    #: testimony. Testimony is all a single export has, because there is no
+    #: earlier scan to diff it against.
+    tasks_stale: int = 0
+    stalest_task_days: int = 0
     #: Hours between `generated_at` and the most recent successful sync of any
     #: source, or -1 when nothing has ever synced. Not the age of the events
     #: the data describes - the demo timeline is fixed in the past by design -
@@ -263,6 +288,17 @@ def build_context(
         for t in _open_tasks
         if t.planned_end is not None and _today <= t.planned_end <= _soon
     )
+    #: Open tasks whose source-reported update is older than the window. Counted
+    #: only where the source actually reports one - a blank means "this tool
+    #: does not say", which is not the same as "has not moved", and counting it
+    #: as stale would make every hand-kept spreadsheet look abandoned.
+    _ages = [
+        (_today - t.source_updated_at).days
+        for t in _open_tasks
+        if getattr(t, "source_updated_at", None) is not None
+        and t.source_updated_at <= _today
+    ]
+    _stale = [age for age in _ages if age >= STALE_AFTER_DAYS]
 
     dependency_backed = sum(
         1
@@ -301,6 +337,8 @@ def build_context(
         tasks_overdue=_overdue,
         tasks_due_soon=_due_soon,
         distinct_owners=len({(o or "").strip() for o in owners if (o or "").strip()}),
+        tasks_stale=len(_stale),
+        stalest_task_days=max(_ages, default=0),
         tasks_done=sum(1 for t in tasks if _status_of(t) in DONE_STATES),
         tasks_not_started=sum(1 for t in tasks if _status_of(t) == "not started"),
         tasks_with_baseline=with_baseline,
