@@ -6,6 +6,10 @@ __pycache__/
 .pytest_cache/
 pulse.db
 data/demo/*.xlsx
+# Anything else written into the data root: uploaded sheets, and workbooks
+# converted from a customer's own export (scripts/from_jira_export.py). Real
+# project data that happens to land in the working tree is not ours to commit.
+data/*.xlsx
 
 # Trained model artefacts. Downloaded on request by `scripts.fetch_model`, never
 # committed - it is a third-party binary and the app treats its absence as a

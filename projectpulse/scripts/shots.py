@@ -57,7 +57,8 @@ HOST, PORT = "127.0.0.1", 8000
 #: Every entry in `Shell.tsx`'s TABS belongs here. `/risk` and `/agent` were
 #: added to the app and not to this list, so the one check that looks at the
 #: rendered page had stopped covering them - which is the same silence the
-#: check exists to break.
+#: check exists to break. `/console` and `/explain` came off when those two
+#: pages were deleted.
 PAGES = (
     ("/portfolio", "program", 1200),
     ("/programs", "programs", 900),
@@ -73,12 +74,10 @@ PAGES = (
     #: Taller than the rest: "Default setup" places thirteen tiles over six
     #: grid rows, and the previous 1400 cut the board off mid-Gantt.
     ("/project/dashboard?project=excel:Project:1:HRMS", "project-dashboard", 2600),
-    ("/console", "console", 1500),
     ("/gantt", "schedule", 1100),
     ("/insight", "insight", 2500),
     ("/risk", "risk", 1600),
     ("/team", "team", 1500),
-    ("/explain", "calculation", 2400),
     ("/reports", "reports", 1800),
     ("/agent", "agent", 1100),
     ("/settings", "settings", 950),

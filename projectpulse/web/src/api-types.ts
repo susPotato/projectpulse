@@ -29,129 +29,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/console": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Console Page
-         * @description The retriever console: what was read, what was refused, what changed.
-         *
-         *     Not the product UI - see the module docstring. Lives at its own path now
-         *     that `/` is the Program board.
-         */
-        get: operations["console_page_console_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/state": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * State
-         * @description Everything the console renders, in one round trip.
-         */
-        get: operations["state_api_state_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/sync": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Sync
-         * @description The same call the scheduler and the PM's button make.
-         */
-        post: operations["sync_api_sync_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/write-step": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Write Step
-         * @description Overwrite the demo workbooks at a given point in their story.
-         *
-         *     A shortcut for the guided tour. Editing the files in Excel by hand does
-         *     exactly the same thing and is the more convincing demonstration.
-         */
-        post: operations["write_step_api_write_step_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/write-jira": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Write Jira */
-        post: operations["write_jira_api_write_jira_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reset
-         * @description Drop and recreate the schema, so a timeline can be replayed from scratch.
-         */
-        post: operations["reset_api_reset_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/insight": {
         parameters: {
             query?: never;
@@ -219,7 +96,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/explain": {
+    "/api/template/{kind}.xlsx": {
         parameters: {
             query?: never;
             header?: never;
@@ -227,14 +104,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Explain Page
-         * @description The arithmetic behind every number.
+         * Template
+         * @description A blank input workbook, generated from the sheet contract itself.
          *
-         *     A sibling of `/insight` rather than a panel inside it: a PM opens this only
-         *     when they want to check a figure, and burying it would make the insight
-         *     screen heavier for everyone else.
+         *     Two files rather than one with two tabs, because that is what the watcher
+         *     watches. `kind` is `schedule` or `worklog`.
          */
-        get: operations["explain_page_explain_get"];
+        get: operations["template_api_template__kind__xlsx_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -253,31 +129,14 @@ export interface paths {
         /**
          * Api Explain
          * @description The forward pass, with the working, for one project.
+         *
+         *     The `/explain` *page* was deleted; this is not part of it. The Insight
+         *     page's driving-path panel reads this bundle rather than recomputing the
+         *     chain, and the report's projection section reads the same function - so
+         *     removing it takes a panel off Insight silently, because that fetch
+         *     degrades to `null` rather than erroring.
          */
         get: operations["api_explain_api_explain_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/template/{kind}.xlsx": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Template
-         * @description A blank input workbook, generated from the sheet contract itself.
-         *
-         *     Two files rather than one with two tabs, because that is what the watcher
-         *     watches. `kind` is `schedule` or `worklog`.
-         */
-        get: operations["template_api_template__kind__xlsx_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -983,6 +842,32 @@ export interface paths {
         put?: never;
         /** Apply Template Api */
         post: operations["apply_template_api_api_dashboards_apply_template_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboards/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Default Dashboard Api
+         * @description Default setup: this scope's starting board, without picking anything.
+         *
+         *     Its own route rather than the caller naming a template, because *which*
+         *     template is the default is a product decision and belongs beside the
+         *     catalogue (`catalogue.DEFAULT_TEMPLATE`), not in a query string a browser
+         *     can get wrong. 400, not 404, for an unknown `scope_type`: the template
+         *     exists, the scope does not.
+         */
+        post: operations["apply_default_dashboard_api_api_dashboards_default_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3014,24 +2899,6 @@ export interface components {
              */
             program_name: string;
         };
-        /** StepRequest */
-        StepRequest: {
-            /**
-             * Step
-             * @default 0
-             */
-            step: number;
-        };
-        /** SyncRequest */
-        SyncRequest: {
-            /**
-             * Source
-             * @default excel
-             */
-            source: string;
-            /** Now */
-            now?: string | null;
-        };
         /** TeamBundle */
         TeamBundle: {
             /** Project Id */
@@ -3253,162 +3120,6 @@ export interface operations {
             };
         };
     };
-    console_page_console_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    state_api_state_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-        };
-    };
-    sync_api_sync_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SyncRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    write_step_api_write_step_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["StepRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    write_jira_api_write_jira_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-        };
-    };
-    reset_api_reset_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-        };
-    };
     insight_page_insight_get: {
         parameters: {
             query?: never;
@@ -3481,11 +3192,13 @@ export interface operations {
             };
         };
     };
-    explain_page_explain_get: {
+    template_api_template__kind__xlsx_get: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                kind: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -3497,6 +3210,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3520,37 +3242,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExplainBundle"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    template_api_template__kind__xlsx_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                kind: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -4496,6 +4187,38 @@ export interface operations {
                 scope_type: string;
                 scope_id: string;
                 template: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_default_dashboard_api_api_dashboards_default_post: {
+        parameters: {
+            query: {
+                scope_type: string;
+                scope_id: string;
             };
             header?: never;
             path?: never;

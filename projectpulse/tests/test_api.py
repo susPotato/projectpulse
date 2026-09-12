@@ -159,10 +159,12 @@ def test_the_generated_types_match_the_live_schema(client):
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("path", ["/insight", "/explain"])
-def test_both_app_routes_serve_the_bundle(client, path):
-    """Real URLs rather than a hash router, so either can be linked."""
-    response = client.get(path)
+def test_the_app_route_serves_the_bundle(client):
+    """A real URL rather than a hash router, so it can be linked.
+
+    Was parameterised over `/insight` and `/explain` until the Calc page
+    was deleted - `/explain` now 404s, which is the point."""
+    response = client.get("/insight")
 
     assert response.status_code == 200
     assert 'id="root"' in response.text
@@ -279,7 +281,7 @@ def test_the_app_never_computes_a_reported_number():
     The single permitted operation is the baseline-coverage percentage, a ratio
     rendered for display rather than a finding's own number.
     """
-    for name in ("Insight.tsx", "Calculation.tsx"):
+    for name in ("Insight.tsx",):
         source = (WEB / "src" / "pages" / name).read_text(encoding="utf-8")
         stripped = source.replace("Math.round(q.baseline_coverage * 100)", "")
 
@@ -368,7 +370,7 @@ def test_every_span_the_shell_offers_exists_in_the_built_css():
 # checked against each other rather than trusted.
 # --------------------------------------------------------------------------
 
-HAND_WRITTEN = ("index.html", "gantt.html", "settings.html")
+HAND_WRITTEN = ("gantt.html", "settings.html")
 
 
 def _rail_hrefs(html: str) -> list[str]:

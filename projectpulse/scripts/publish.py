@@ -12,10 +12,11 @@ That distinction is stated on the page itself, next to the date it was frozen.
 Presenting a snapshot as a live system would be the same class of dishonesty the
 rest of this codebase works to avoid.
 
-**Two page shapes.** Insight and Calculation are one built React bundle served at
-two routes, so the same shell is written to both `insight.html` and
-`explain.html` - Pages serves those at `/insight` and `/explain`. Schedule is
-still a hand-written page.
+**Two page shapes.** Insight is the built React bundle, written to
+`insight.html` so Pages serves it at `/insight`. Schedule is still a
+hand-written page. Calculation used to be published alongside Insight from the
+same bundle; that route was deleted from the app, so publishing it here would
+put a page on Pages that no longer exists in the product.
 
 **Asset paths are derived, never declared.** The pages ask for
 `/static/app/assets/index-<hash>.js`; an earlier version wrote assets to the site
@@ -49,7 +50,7 @@ STATIC = REPO / "app" / "api" / "static"
 
 #: Routes served by the built React bundle. Each gets its own copy of the shell,
 #: because Pages routes `/insight` to `insight.html`.
-APP_ROUTES = ("insight", "explain")
+APP_ROUTES = ("insight",)
 #: Pages that are still hand-written HTML.
 STATIC_PAGES = ("gantt.html",)
 
@@ -132,19 +133,20 @@ def _version_assets(html: str) -> str:
     return ASSET_REF.sub(replace, html)
 
 
-#: The tab pointing at `/console`, whatever it happens to be called.
+#: A tab pointing at a path the static snapshot has no server for.
 #:
-#: Matched by `href` rather than by label text on purpose. This used to be a
-#: literal `.replace(">Retriever console<", ...)`, which meant renaming that tab
-#: silently turned the rewrite into a no-op and shipped a snapshot with a dead
-#: console link - and the test for it went on passing, because "the old label is
+#: `/console` used to be the only one, and it was rewritten to the architecture
+#: page rather than left as a dead link. The console has since been deleted
+#: outright - it POSTed schema-dropping actions from an unauthenticated page -
+#: so there is nothing left to rewrite, and what remains here is the *guard*:
+#: a published tab bar must not link anywhere Pages cannot serve.
+#:
+#: Matched by `href` rather than by label text, which is the lesson from the
+#: version before it: that one was a literal `.replace(">Retriever console<",
+#: ...)`, so renaming the tab silently turned the rewrite into a no-op and
+#: shipped a dead link - and its test went on passing, because "the old label is
 #: absent" is trivially true once the old label is gone.
-#:
-#: Rewrites the href too, not just the label: locally the console lives at
-#: `/console`, but on Pages there is no server for it to POST to and the only
-#: thing actually at that snapshot's root is the architecture page - so the
-#: link has to move to `/` as well or "Architecture" would point at a 404.
-_CONSOLE_TAB = re.compile(r'(<a\s[^>]*)href="/console"([^>]*>)([^<]*)(</a>)')
+_SERVERLESS_TABS = re.compile(r'<a\s[^>]*href="(/console|/explain)"[^>]*>')
 
 #: A server-rendered tab bar, captured so the guard below can look *inside* it.
 #: Scoped to the nav rather than the whole document: a page can carry plenty of
@@ -153,35 +155,23 @@ _STATIC_NAV = re.compile(r'<nav class="tabs".*?</nav>', re.S)
 
 
 def _snapshot_nav(html: str, stamp: str) -> str:
-    """Point the tab bar at what actually exists on the static site.
+    """Stamp the freeze date, and refuse to publish a tab Pages cannot serve.
 
-    Locally `/console` is the retriever console; on Pages it is the
-    architecture page at `/`, and the console cannot work at all without a
-    server to POST to. Rewriting the label - and the href, onto `/` - is more
-    honest than leaving a tab that does nothing.
+    This used to rewrite the `/console` tab into a link to the architecture
+    page. The console is gone now, so the rewrite has nothing to do and the
+    guard is the whole job: a snapshot has no server behind it, so a tab
+    pointing at a deleted route would publish as a 404 with no way to tell from
+    the page that it was ever meant to work.
 
-    The React pages build their tab bar in JavaScript, so they carry no such
-    anchor and the rewrite correctly does nothing to them - what this still does
-    for them is stamp the freeze date. A page that *does* carry a static nav and
-    yet has no `/console` tab is a bug, and raises rather than publishing a dead
-    link.
+    The React pages build their tab bar in JavaScript and carry no static
+    anchor, so this correctly does nothing to them but stamp the date.
     """
-    html, replaced = _CONSOLE_TAB.subn(
-        lambda m: f'{m.group(1)}href="/"{m.group(2)}Architecture{m.group(4)}', html, count=1
-    )
-
-    if not replaced:
-        # Only a nav that actually has tabs and yet none pointing at
-        # `/console` is a bug. An empty nav is not a broken console link, and
-        # the React pages have no static nav at all - both must pass through
-        # untouched.
-        nav = _STATIC_NAV.search(html)
-        if nav is not None and "<a " in nav.group(0):
-            raise SystemExit(
-                "snapshot nav: the tab bar has tabs but none link to '/console'. "
-                "The tab that becomes Architecture on Pages could not be found, "
-                "so this page would publish with a console link that cannot work."
-            )
+    dead = _SERVERLESS_TABS.search(html)
+    if dead is not None:
+        raise SystemExit(
+            f"snapshot nav: a tab still links to {dead.group(1)!r}, which no longer "
+            "exists. Remove it from the page's nav rather than publishing a 404."
+        )
 
     note = (
         f'<span class="tab-note">static snapshot, data frozen {stamp} '
@@ -193,9 +183,9 @@ def _snapshot_nav(html: str, stamp: str) -> str:
     # Into the app bar, not the nav. Navigation is a 64px rail now, and a
     # sentence appended inside `</nav>` would be squeezed into that column.
     #
-    # Matched as a block and inserted before the bar's own closing tag: the
-    # console page has several `<span class="spacer">` elements in its toolbar,
-    # so anchoring on the first one lands the note in the wrong row.
+    # Matched as a block and inserted before the bar's own closing tag rather
+    # than on the first `<span class="spacer">`: a toolbar with several of them
+    # would land the note in the wrong row.
     appbar = re.search(r'<div class="appbar">.*?</div>', html, re.S)
     if appbar is not None:
         block = appbar.group(0)
@@ -231,11 +221,7 @@ def _verify() -> None:
 def build(*, project: str, also: list[str], stamp: str | None = None) -> dict:
     """Write the snapshot. Returns what was produced, for printing."""
     from app.db import check_connection, session_scope
-    from app.intelligence.pipeline import (
-        analyze_project,
-        explain_project,
-        gantt_project,
-    )
+    from app.intelligence.pipeline import analyze_project, gantt_project
 
     problem = check_connection()
     if problem is not None:
@@ -252,7 +238,6 @@ def build(*, project: str, also: list[str], stamp: str | None = None) -> dict:
     with session_scope() as session:
         bundles = {
             "insight": analyze_project(session, project_id=project, also=also),
-            "explain": explain_project(session, project_id=project, also=also),
             "gantt": gantt_project(session, project_id=project, also=also),
         }
 
@@ -299,7 +284,7 @@ def build(*, project: str, also: list[str], stamp: str | None = None) -> dict:
     return {
         "written": written,
         "findings": len(bundles["insight"].findings),
-        "steps": len(bundles["explain"].steps),
+        "rows": len(bundles["gantt"].rows),
         "stamp": stamp,
     }
 
@@ -320,7 +305,7 @@ def main() -> None:
     for path in result["written"]:
         print(f"  {path}")
     print(
-        f"\n{result['findings']} finding(s), {result['steps']} task(s), "
+        f"\n{result['findings']} finding(s), {result['rows']} task(s), "
         f"frozen {result['stamp']}"
     )
     print(

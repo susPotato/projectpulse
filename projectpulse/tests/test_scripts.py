@@ -438,14 +438,19 @@ def test_the_snapshot_covers_the_hashed_bundle_paths():
     assert any(u.endswith(".css") for u in bundle_assets)
 
 
-def test_both_app_routes_get_their_own_shell():
-    """Pages routes `/insight` to `insight.html`, so each needs a copy."""
-    from scripts.publish import APP_SHELL, _published_pages
+def test_the_app_route_gets_its_own_shell():
+    """Pages routes `/insight` to `insight.html`, so it needs its own copy.
+
+    `explain.html` used to be published from the same bundle. The Calc page was
+    deleted from the app, and publishing it here would put a page on Pages that
+    the product no longer has."""
+    from scripts.publish import APP_ROUTES, APP_SHELL, _published_pages
 
     pages = _published_pages()
 
     assert pages["insight.html"] == APP_SHELL
-    assert pages["explain.html"] == APP_SHELL
+    assert "explain.html" not in pages
+    assert "explain" not in APP_ROUTES
 
 
 def test_the_publisher_refuses_an_incomplete_snapshot():
@@ -457,27 +462,27 @@ def test_the_publisher_refuses_an_incomplete_snapshot():
     assert "index.html" in source and "200" in source
 
 
-def test_the_snapshot_relabels_the_tab_that_cannot_work_statically():
-    """The retriever console POSTs; there is no server on Pages to POST to."""
+def test_the_snapshot_refuses_a_tab_pointing_at_a_deleted_route():
+    """This used to *rewrite* the `/console` tab into the architecture page,
+    because the console POSTed and Pages has no server to POST to. The console
+    has since been deleted outright, so there is nothing to rewrite and the
+    guard is the whole job: a snapshot must not publish a tab that 404s."""
+    import pytest
+
     from scripts.publish import _snapshot_nav
 
-    source = '<nav class="tabs">\n<a href="/console">Retriever console</a>\n</nav>'
-
-    rewritten = _snapshot_nav(source, "2026-09-07")
-
-    assert ">Architecture<" in rewritten
-    assert "Retriever console" not in rewritten
-    # The href moves too: `/console` has no server to POST to on Pages, and
-    # `/` is where the architecture page actually lives there.
-    assert 'href="/"' in rewritten
-    assert "/console" not in rewritten
+    for dead in ("/console", "/explain"):
+        source = f'<nav class="tabs">\n<a href="{dead}">Gone</a>\n</nav>'
+        with pytest.raises(SystemExit) as caught:
+            _snapshot_nav(source, "2026-09-07")
+        assert dead in str(caught.value)
 
 
 def test_the_snapshot_says_it_is_a_snapshot_and_when():
     """Presenting frozen data as a live system is the dishonesty this avoids."""
     from scripts.publish import _snapshot_nav
 
-    rewritten = _snapshot_nav('<nav class="rail"><a href="/console">Console</a></nav>\\n<div class="appbar">\\n  <h1>Schedule</h1>\\n  <span class="spacer"></span>\\n</div>', "2026-09-07")
+    rewritten = _snapshot_nav('<nav class="rail"><a href="/insight">Insight</a></nav>\n<div class="appbar">\n  <h1>Schedule</h1>\n  <span class="spacer"></span>\n</div>', "2026-09-07")
 
     assert "static snapshot" in rewritten
     assert "2026-09-07" in rewritten
@@ -491,7 +496,7 @@ def test_the_snapshot_note_is_not_added_twice():
     """Publishing twice must not stack banners."""
     from scripts.publish import _snapshot_nav
 
-    once = _snapshot_nav('<nav class="rail"><a href="/console">Console</a></nav>\\n<div class="appbar">\\n  <h1>Schedule</h1>\\n  <span class="spacer"></span>\\n</div>', "2026-09-07")
+    once = _snapshot_nav('<nav class="rail"><a href="/insight">Insight</a></nav>\n<div class="appbar">\n  <h1>Schedule</h1>\n  <span class="spacer"></span>\n</div>', "2026-09-07")
     twice = _snapshot_nav(once, "2026-09-08")
 
     assert twice.count("static snapshot") == 1
@@ -585,37 +590,35 @@ def test_replay_only_deletes_the_database_it_builds():
     ) == absolute
 
 
-def test_the_relabel_is_matched_by_href_not_by_label_text():
-    """The trap this closes.
+def test_the_dead_tab_is_matched_by_href_not_by_label_text():
+    """The trap this closes, which outlived the rewrite it was written for.
 
-    The rewrite used to be a literal `.replace(">Retriever console<", ...)`.
-    Renaming that tab turned it into a silent no-op - the snapshot shipped with
-    a console link that cannot work on Pages - and the test above went on
-    passing, because "the old label is absent" is trivially true once the old
-    label is gone. Matching the `href` makes the label free to change.
+    The original was a literal `.replace(">Retriever console<", ...)`. Renaming
+    that tab turned it into a silent no-op - the snapshot shipped a link that
+    could not work - and its test went on passing, because "the old label is
+    absent" is trivially true once the old label is gone. Matching the `href`
+    is what makes the label free to change, and that still holds now the
+    rewrite has become a refusal.
     """
-    from scripts.publish import _snapshot_nav
-
-    renamed = '<nav class="tabs">\n<a href="/console">Console</a>\n</nav>'
-
-    rewritten = _snapshot_nav(renamed, "2026-09-07")
-
-    assert ">Architecture<" in rewritten
-    assert ">Console<" not in rewritten
-
-
-def test_a_tab_bar_with_tabs_but_no_root_link_fails_the_build():
-    """Loudly, rather than publishing a page whose first tab is dead."""
     import pytest
 
     from scripts.publish import _snapshot_nav
 
-    with pytest.raises(SystemExit) as caught:
-        _snapshot_nav(
-            '<nav class="tabs">\n<a href="/insight">Insight</a>\n</nav>', "2026-09-07"
-        )
+    renamed = '<nav class="tabs">\n<a href="/console">Something Else Entirely</a>\n</nav>'
 
-    assert "none link to" in str(caught.value)
+    with pytest.raises(SystemExit):
+        _snapshot_nav(renamed, "2026-09-07")
+
+
+def test_a_tab_bar_of_live_routes_publishes_untouched():
+    """The inverse of the guard, and the case that must not regress into a
+    false alarm: every tab points at something Pages serves, so the build has
+    nothing to complain about."""
+    from scripts.publish import _snapshot_nav
+
+    live = '<nav class="tabs">\n<a href="/insight">Insight</a>\n</nav>'
+
+    assert 'href="/insight"' in _snapshot_nav(live, "2026-09-07")
 
 
 def test_the_react_pages_carry_no_static_nav_and_pass_through():

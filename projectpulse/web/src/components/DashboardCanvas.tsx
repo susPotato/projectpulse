@@ -44,7 +44,6 @@ const PROJECT_LINKS = [
   { href: "/insight", label: "Insight" },
   { href: "/risk", label: "Risk" },
   { href: "/team", label: "Team" },
-  { href: "/explain", label: "Calc" },
   { href: "/reports", label: "Reports" },
 ] as const;
 

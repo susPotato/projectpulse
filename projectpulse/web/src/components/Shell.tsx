@@ -19,17 +19,17 @@ import { ProjectPicker } from "./ProjectPicker";
    asserts they match, because three copies of a nav is how the six original
    mockups ended up with two conflicting token families.
 
-   Label text is free to change: `publish.py` matches the console link by
-   `href`, not by what it is called. */
+   The retriever console and the Calc page used to sit in here. Both are
+   gone - the console because it POSTed schema-dropping actions from an
+   unauthenticated page, Calc because the arithmetic it showed is now only
+   read where it is used, in the report's projection section. */
 const TABS = [
   { href: "/programs", label: "Program" },
   { href: "/projects", label: "Projects" },
-  { href: "/console", label: "Console" },
   { href: "/gantt", label: "Schedule" },
   { href: "/insight", label: "Insight" },
   { href: "/risk", label: "Risk" },
   { href: "/team", label: "Team" },
-  { href: "/explain", label: "Calc" },
   { href: "/reports", label: "Reports" },
   { href: "/agent", label: "Agent" },
   { href: "/settings", label: "Settings" },
@@ -55,7 +55,6 @@ const ICONS: Record<string, ReactNode> = {
       <path d="M3 11h18" />
     </>
   ),
-  "/console": <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
   "/gantt": <path d="M4 6h9M4 12h14M4 18h6" />,
   "/insight": (
     <>
@@ -78,12 +77,6 @@ const ICONS: Record<string, ReactNode> = {
       <path d="M3 20a6 6 0 0 1 12 0" />
       <path d="M16 5.5a3 3 0 0 1 0 5" />
       <path d="M18 20a6 6 0 0 0-2-4.5" />
-    </>
-  ),
-  "/explain": (
-    <>
-      <path d="M4 4h16v16H4z" />
-      <path d="M8 9h8M8 13h5" />
     </>
   ),
   "/reports": (
