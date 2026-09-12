@@ -189,6 +189,56 @@ actually caught this (see §-1).
 
 ---
 
+## 0g. Same session - invariant 7 was broken at the API, and nothing caught it
+
+Found by answering "do Schedule / Insight / Team still work with the new
+relationship logic?" with a sweep rather than an opinion. **808 tests pass**
+(+7). Shipped to production and re-verified live.
+
+Every project-scoped route derives its pairing from `scope.also_for`, which
+looked the id up with `find` - **canonical ids only**. So
+`also_for("jira:Project:1:HRMS")` answered `[]`, not because that project is
+unpaired but because the caller held the paired half, and the route then
+analysed one source of a two-source project and served it as the whole project.
+
+Measured on the demo, asking by the Jira id instead of the Excel id gave:
+
+| | excel id | jira id |
+|---|---|---|
+| findings | 10 | **1** |
+| schedule rows | 10 | **4** |
+| projected finish | 2026-07-02 | **2026-05-26** |
+| logged hours | 28 | **0** |
+
+Nothing errored. That is the point: quietly wrong numbers presented as the
+project, which is the exact failure `app/scope.py` exists to prevent, and
+`risks/service.py` already avoided by calling `resolve`.
+
+`also_for` now resolves and excludes the id it was handed. `canonical_pairing`
+was added for the routes, because analysing the right rows is only half - a
+bundle fetched by the Jira id must also be *filed* under the canonical id
+rather than describing one project under two names.
+
+**What the sweep also confirmed, and is worth not re-deriving.** Schedule,
+Insight, Team, Calc, Forecast, Risk, Scenarios, Reports and the .docx export
+all answer 200 for every project, *including one with `program_id = NULL`*
+(the Jira-loaded CoWork Local) - so the program-scoped unit factors degrade
+rather than requiring a program. The rollup matches the portfolio and each
+project's own pages field-for-field across band, days_late, findings,
+task_count, milestones, QA, both dates and all five dimension bands; and
+`sum(excess) == sum(apportioned shares)` holds at 36.00 effort-days with every
+contended project banded non-healthy on `resource` and no other. The only 404s
+are the honest one - a registered project with nothing ingested says so by name.
+
+Three guards, each **mutation-checked** by reverting the fix and watching them
+fail: unit tests on both helpers from both ends, a route test over a project
+seeded into two source systems with deliberately different dates (so a
+half-analysis fails on content, not status), and a source-inspection test that
+no route goes back to the canonical-only helper - the bug was one line repeated
+seven times, so the thing to guard is fixing six of them.
+
+---
+
 ## 0f. Same session — loading a real Jira export, and what it proves the product needs
 
 **801 tests pass** (+7 in `tests/test_scripts.py`). `scripts/from_jira_export.py`
