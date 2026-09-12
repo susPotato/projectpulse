@@ -9,6 +9,12 @@ data/demo/*.xlsx
 # Anything else written into the data root: uploaded sheets, and workbooks
 # converted from a customer's own export (scripts/from_jira_export.py). Real
 # project data that happens to land in the working tree is not ours to commit.
+# Any workbook under the data root, at any depth: uploaded sheets, workbooks
+# converted from a customer's own export, and the generated demo sets. The
+# earlier `data/*.xlsx` matched only the top level, so `data/upload_demo/*.xlsx`
+# slipped into a commit - generated artifacts that go stale the moment the
+# generator is re-run, since it dates them relative to today.
+data/**/*.xlsx
 data/*.xlsx
 
 # Trained model artefacts. Downloaded on request by `scripts.fetch_model`, never
