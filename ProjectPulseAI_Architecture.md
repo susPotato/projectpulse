@@ -135,6 +135,299 @@ flowchart TB
 Cloudflare Tunnel to the host running Postgres and FastAPI. These are different origins, so
 CORS is a day-one configuration item, not an afterthought (§15).
 
+> ⚠️ **Superseded by what shipped — see §2a.2.** The built React bundle is committed and
+> served by the same FastAPI process (`app.mount("/static", …)`), so frontend and API are
+> the **same origin** and there is no CORS configuration at all. The two-origin topology
+> above was the plan, not the outcome.
+
+---
+
+## 2a. Technology stack — every dependency, and why it is there
+
+> The full list is `projectpulse/pyproject.toml` and `projectpulse/web/package.json`;
+> this section is the reasoning behind it. Versions are what round 1 was verified
+> against, not floors — the floors are in the manifests.
+
+### 2a.1 The rule that shapes the whole list
+
+Judges run this code on their own machine in a 30-minute window. So the dependency list
+is split in two, and the split is enforced rather than documented:
+
+- **Hard dependencies** — nine packages. Without any one of them the app does not start.
+- **Optional extras** — everything else. Each one, when absent, leaves a working path
+  behind **and says so**: a missing LLM SDK produces the deterministic template with the
+  reason attached; a missing `python-docx` disables one export; a missing `scikit-learn`
+  makes the duration classifier `None` and no caller has to care.
+
+There is no third category. Nothing is "recommended" or "should really be installed" —
+either the app needs it to boot, or its absence is a named, tested code path.
+
+### 2a.2 The web server stack
+
+| Concern | Choice | Verified at | Why this |
+|---|---|---|---|
+| Language | **Python 3.13** (`>=3.11`) | 3.13-slim in the image | The ML, spreadsheet and graph ecosystems are all here. 3.14 is avoided *only* by the `ml` extra — see §8.5. |
+| Web framework | **FastAPI** | 0.141.1 | The `response_model=` on every route is not decoration: the `InsightBundle` contract (§9) is Pydantic models, so the API schema and the contract are one artifact, and `openapi-typescript` generates the frontend's types from it (§2a.6). A hand-written schema would drift from the bundle within a week. |
+| ASGI server | **uvicorn[standard]** | 0.52.4 | `[standard]` pulls `httptools` and `uvloop` where the platform has them. Run directly — **no gunicorn, no worker pool, no nginx.** |
+| ASGI toolkit | **Starlette** (via FastAPI) | bundled | `StaticFiles`, `FileResponse`, `Response`. Never imported directly; everything goes through FastAPI's re-exports. |
+| Form/multipart parsing | **python-multipart** | 0.0.32 | Not optional despite looking it. FastAPI's `File`/`Form` need it **at import time**, so its absence fails app construction, not just `POST /api/sources/upload`. |
+| Validation / serialisation | **Pydantic v2** | 2.13.5 | Every bundle in §9 and §10 is a Pydantic model. Validation at the API boundary is the same code that documents it. |
+| HTTP client (tests) | **httpx** (`dev` extra) | — | Backs `fastapi.testclient`. There is no HTTP client in the hard dependency set — outbound calls are the LLM SDKs' own, plus stdlib `urllib` for the FPT gateway and link fetching. |
+
+#### The process model, in one line
+
+> **One `uvicorn` process runs one `FastAPI` app (`app.api.main:app`), which serves the
+> JSON API, the built React bundle, three hand-written HTML pages and every static asset
+> from the same origin.**
+
+That is the entire server topology. There is no reverse proxy, no static host, no
+separate frontend server, no worker pool, no cache tier and no message broker. The
+consequences are worth stating because each one removed a class of work:
+
+- **No CORS, anywhere.** Frontend and API are the same origin, so the day-one CORS item
+  in §2 and §15 does not exist. *(Those sections describe the two-origin Cloudflare Pages
+  + Tunnel plan, which is not what shipped — see the notes there.)*
+- **No `202 + poll` requirement** for `POST /api/sources/upload` or a sync, because there
+  is no proxy timeout between the browser and the app to exceed.
+- **No asset-path drift.** Vite emits content-hashed filenames and writes the references
+  itself, so the "published page loads unstyled" failure the hand-written pages produced
+  cannot recur inside the bundle.
+- **One thing to restart, one place to read logs.**
+
+#### What is actually served, and from where
+
+Three different front-end shapes share the one mount point. This is history rather than
+design — the hand-written pages came first — but the split is stable and worth knowing:
+
+| Kind | Files | Routes |
+|---|---|---|
+| **Built React SPA** | `app/api/static/app/index.html` + `assets/index-*.js` (≈430 KB) + `assets/index-*.css` (≈38 KB) | `/`, `/insight`, `/portfolio`, `/programs`, `/projects`, `/team`, `/risk`, `/reports`, `/agent`, `/programs/dashboard`, `/project/dashboard` |
+| **Hand-written HTML pages** | `static/gantt.html` (16 KB), `static/settings.html` (29 KB) | `/gantt`, `/settings` |
+| **Shared assets** | `static/shell.css`, `static/gantt.css`, `static/gantt.js`, `static/theme.js` | mounted at `/static` |
+
+**Why a shared `shell.css` and a vanilla `gantt.js` outlive the React rewrite.** The app
+shell — rail, app bar, panel, board — is defined once and linked by *both* the React
+`index.html` and the hand-written pages, because six mockups with their own `:root`
+blocks is exactly how the project ended up with two conflicting token families. The Gantt
+is one vanilla implementation used by both `/gantt` and the React app for the same
+reason: porting it would create a second renderer, and two renderers eventually draw two
+different pictures of one projection.
+
+#### Page routes are real routes, not a hash router
+
+Every screen has its own server route returning the same `index.html`; the React entry
+picks the page from `location.pathname`. Two consequences:
+
+- **URLs are linkable.** A judge can open `/insight` directly, and so can a bookmark.
+- **There is no catch-all.** An unknown path 404s from FastAPI rather than booting the
+  SPA into a client-side "not found". That is deliberate — a typo in an API path should
+  not render a dashboard.
+
+`base: "/static/app/"` in `vite.config.ts` is what makes this work: the bundle lives
+under `/static/app/` but the routes are `/insight` and `/team`, so relative asset URLs
+would otherwise resolve against the wrong directory.
+
+**A guard that only covers two of eleven routes.** `_spa()` exists so a missing bundle
+answers **503 with the command that fixes it** (`cd web && npm install && npm run build`)
+instead of a `FileNotFoundError` 500. Only `/` and `/insight` call it; the other nine page
+routes call `FileResponse(STATIC / "app" / "index.html")` directly.
+
+This is a consistency wart, **not a live risk**: the bundle is committed to git, so every
+clone, image build and deploy has it, and `npm run build` is `tsc --noEmit && vite build`
+— a type error aborts *before* `emptyOutDir` wipes anything. The only window is a failure
+inside the vite stage itself, which leaves the directory empty and would then 500 on nine
+routes and 503 on two. Worth routing them all through `_spa()` the next time this file is
+open; not worth a commit of its own.
+
+#### Request lifecycle
+
+```
+browser ──► uvicorn (HTTP/1.1, :8080)
+              │
+              └─► FastAPI app.api.main:app
+                    │
+                    ├─ /static/*        StaticFiles      → file off disk, no Python
+                    ├─ /insight, /team… FileResponse     → the built index.html
+                    ├─ /gantt, /settings FileResponse    → a hand-written page
+                    └─ /api/*
+                         ├─ check_connection()           → 503 if the DB is unreachable
+                         ├─ scope.canonical_pairing()    → invariant 7: one project, many source ids
+                         ├─ session_scope()              → SQLAlchemy Session, per request
+                         ├─ pipeline.<fn>(session, …)    → the deterministic bundle (§8)
+                         └─ response_model=…             → Pydantic validates on the way out
+```
+
+Two behaviours in that chain are load-bearing and are guarded by tests:
+
+- **`check_connection()` runs before the pipeline**, so a dead database is a **503 naming
+  the cause**, not a stack trace. Paired with psycopg's 5-second connect timeout (§2a.3),
+  a missing container reads as a missing container.
+- **An empty result is a 404 carrying the fix** — `"no tasks for project 'x'. Build the
+  demo timeline first: python -m scripts.replay"`. The three ways `/insight` can fail are
+  distinguishable from the browser alone: 503 = database unreachable, 404 = no data, no
+  JSON at all = the HTML was opened from disk where a relative `fetch` has no server.
+
+#### Four ways it gets started
+
+| Command | Host:port | Serves | For |
+|---|---|---|---|
+| `python -m scripts.serve` | `0.0.0.0:$PORT` (8080) | everything | **The container entry point.** Schema → seed-if-empty → uvicorn. |
+| `python -m scripts.demo` | `127.0.0.1:8000` | everything | Local development and the judged walkthrough. Opens a browser. |
+| `uvicorn app.api.main:app --reload` | as given | everything | Backend work. Serves the *committed* bundle, so frontend edits do not appear. |
+| `npm run dev` (Vite) | `127.0.0.1:5173` | the SPA only, API proxied to `:8000` | Frontend work with HMR. The proxy is why the dev server needs no CORS either. |
+
+**`scripts/serve.py` is Python, not an `entrypoint.sh`,** for two stated reasons: it can be
+run and verified on the machine it was written on, and *"is the database empty"* is a
+query rather than a guess. Its boot sequence:
+
+1. Print the database URL — and **warn loudly if it is SQLite**, because a container
+   filesystem does not survive a restart and the app would come back silently empty.
+2. `create_all()` — the schema. There is no migration runner (§2a.3).
+3. **Seed only if empty**, counting `Task` rows rather than `sync_runs` (a failed boot
+   leaves a run row, which would make an empty database look seeded). `scripts.replay`
+   then *generates* the demo workbooks from code and ingests them through the real
+   reader, differ and identity resolver — invariant 4, so the deployed app has a genuine
+   history rather than seeded domain rows.
+4. **A failed seed logs and carries on.** An app serving "no data for project" is
+   diagnosable from a browser; an app that exits on boot is a crash loop, and the cause is
+   usually the database URL rather than anything a retry fixes.
+5. `uvicorn.run("app.api.main:app", …)`, binding `0.0.0.0` because that is what a
+   container needs, on `$PORT` because Fly, Railway and Render all inject it.
+
+`scripts/_bootstrap.py` runs **before any `app.*` import** in every entry point, and the
+import order that makes look wrong is deliberate: it re-execs into `.venv`'s interpreter
+if the system Python was used, and it must set `DATABASE_URL` before `app.config.Settings`
+freezes it at class-body execution. The library default is Postgres because that is the
+deployment target; only the **CLI entry points** default to SQLite, so reading and running
+the code needs nothing installed.
+
+#### Ports, and why each is what it is
+
+| Port | What | Note |
+|---|---|---|
+| **8080** | the app, in a container | `$PORT`; the value Fly/Railway/Render inject most often |
+| **8000** | the app, `scripts.demo` | ⚠️ A stale uvicorn holding this port serves the *previous* build, so a new route 404s while old ones work. The bind error appears only on the server's stderr — silent from the browser. `Get-NetTCPConnection -LocalPort 8000` finds it. |
+| **5433** | Postgres, host side | Not 5432, so a developer's existing local Postgres stays untouched |
+| **5173** | Vite dev server | Proxies `/api` to `:8000` |
+
+#### Runtime configuration — environment only
+
+`app/config.py` is one frozen dataclass read from the environment at import. No config
+file, no settings service.
+
+| Variable | Default | Effect |
+|---|---|---|
+| `DATABASE_URL` | `postgresql+psycopg://pulse:pulse@localhost:5433/projectpulse` | SQLite URLs are fully supported |
+| `PORT` / `HOST` | `8080` / `0.0.0.0` | Read by `scripts.serve` |
+| `PULSE_DATA_ROOT` | `data/demo` | The watched (OneDrive-synced) folder |
+| `PULSE_EXCEL_TRANSPORT` | `local` | `local` or `graph` — switching is a decision, not a side effect of installing the extra |
+| `PULSE_SYNC_INTERVAL` | `120` (min) | Also the basis for the freshness half of §8.6 |
+| `PULSE_NARRATION` | off | Off by default: the deterministic narrative is complete on its own, so the model is an improvement to opt into rather than a dependency to discover missing |
+| `PULSE_NARRATION_PROVIDER` / `_MODEL` | `anthropic` / vendor default | Overridable from `/settings` without a restart |
+| `PULSE_STATE_DIR` | `.pulse` | Where the API key lands, gitignored |
+| `PULSE_ECHO_SQL` | off | SQLAlchemy statement logging |
+
+#### Security posture, stated plainly
+
+There is **no authentication, no session, no user model and no rate limit**. Anything
+reachable is reachable by anyone who has the URL. What mitigates it today: the product is
+read-only over ingested data; `/settings` writes only to a local file and is documented as
+changeable only from the machine the app runs on; and the two genuinely dangerous routes —
+the unauthenticated `/console` and its schema-dropping `/api/reset` — were **deleted
+outright** before the judged window and now 404 in production. Auth is the first thing a
+real deployment needs (§2a.10).
+
+*(`app/api/main.py`'s module docstring described the deleted retriever console until
+2026-09-12; it now documents the serving topology above — the routes, the three front-end
+shapes, and the 503/404 failure contract — and is the short version of this subsection.)*
+
+### 2a.3 Data layer
+
+| Concern | Choice | Verified at | Why this |
+|---|---|---|---|
+| ORM | **SQLAlchemy 2.x** | 2.0.52 | Typed `Mapped[...]` declarative models, and the three physical layers (§3) are three sets of mapped classes rather than three sets of hand-written SQL. |
+| Driver | **psycopg 3 (binary)** | 3.3.5 | `app/db.py` passes `connect_timeout=5` for Postgres URLs — psycopg's default is effectively minutes, and that failure mode is worse than an error: the app appears to start and only the request hangs. A test run did that for 8m44s before erroring. |
+| Database (dev + judged) | **PostgreSQL 16 via `pgvector/pgvector:pg16`** | docker-compose, host port **5433** | 5433 so a developer's existing local Postgres is untouched. The pgvector image is chosen for §8.4 retrieval, which is **not built yet** — the image is there so enabling it is not also a database migration. |
+| Database (production) | **Neon Postgres** | — | Managed, and the same `postgresql+psycopg://` URL, so nothing in the app knows the difference. |
+| Database (no-Docker fallback) | **SQLite** | stdlib | `DATABASE_URL=sqlite:///pulse.db` runs the entire product except pgvector. This is the path a judge with no Docker takes, and `tests/conftest.py` points the test suite at temp SQLite so the ~800 tests need no database at all. ⚠️ SQLite only auto-increments `INTEGER PRIMARY KEY`, never `BIGINT` — hence `BigIntPK` in `app/models/base.py`. |
+| Migrations | **none — `Base.metadata.create_all()` on boot**, plus hand-written one-shot scripts (`scripts/migrate_ids.py`, `scripts/migrate_programs.py`) | — | Deliberate for a one-developer, eight-week build. Alembic's value is a long-lived migration history across a team; what this project actually needed twice was a **re-keying** script that renames rows in place and is idempotent, which Alembic would not have written for us. ⚠️ The cost is real and is recorded in `CLAUDE.md`: a deploy that adds a column the app `SELECT`s takes production down for ~1 minute between `fly deploy` and the migration, because the health check hits a route that then errors. |
+
+### 2a.4 Ingestion
+
+| Concern | Choice | Verified at | Why this |
+|---|---|---|---|
+| Spreadsheet reading | **openpyxl** | 3.1.5 | `.xlsx` only, which is what the sources actually are. Used in **read-only mode**, so `reader.py` works from `iter_rows(values_only=True)` tuple indices — read-only cells are `EmptyCell` objects with no `.column`. |
+| Spreadsheet writing | **openpyxl** | same | The blank template handed to a PM (`GET /api/template/schedule.xlsx`) is generated **from the sheet contract**, so the file handed out and the file the ingester understands are provably the same file — a test writes one and reads it back with the real reader. |
+| Jira | **no client library** | — | Round 1 ingests a real Jira **export** (`export_sheet.py`) and replays captured JSON payloads (`replay.py`). A live connection would replace the transport only; `extractor.py` and `convertor.py` are already the code it would drive. Adding `jira` or `atlassian-python-api` now would be a dependency on an integration nobody has yet exercised. |
+| OneDrive / SharePoint | **msal + requests** (`onedrive` extra) | — | MSAL's device-code flow signs in against Microsoft's own pre-consented public client, so `Files.Read` needs **no Azure app registration and no tenant admin consent** — which is what makes it demoable inside a corporate tenant. `LocalFolderSource` is the default and needs neither package nor sign-in. |
+
+### 2a.5 Intelligence
+
+| Concern | Choice | Verified at | Why this |
+|---|---|---|---|
+| Dependency graph | **NetworkX** | 3.6.1 | The DAG, the cycle guard and the traversal in `schedule/graph.py`. A cycle would make the forward pass non-terminating, and NetworkX raises rather than returning a wrong number. Pure-Python and dependency-free, so it costs nothing in the image. |
+| Rule engine | **GoRules ZEN** (`zen-engine`) | 2.0.2 | Rules as a decision table a delivery manager can read and edit, rather than `if` statements a developer owns (§8.1). **It is a Rust wheel**, so `intelligence/rules/engine.py` is the only module that imports it and carries a complete built-in Python evaluator; the two backends are checked against each other in `tests/test_rules.py`, and `backend_name` reports which one ran. A wheel that fails to build on a competition machine degrades the rule layer's *speed*, not its existence. |
+| Arithmetic, dates, statistics | **the standard library** | — | `datetime`, `dataclasses`, `difflib.SequenceMatcher` for the identity resolver, `random` for the forecast resampling. **No NumPy, no pandas, no SciPy in the hard dependency set.** Every figure in the product is a count, a ratio of counts, or arithmetic on dates a human typed (§1), and none of that needs an array library — the forecast in `schedule/forecast.py` resamples measured `baseline_end − planned_end` observations rather than fitting a distribution, precisely so that nothing chooses the shape of the answer. |
+
+### 2a.6 Frontend
+
+| Concern | Choice | Verified at | Why this |
+|---|---|---|---|
+| Framework | **React 19** | 19.2.8 | Ten screens, shared bundle-shaped state. |
+| Build | **Vite 8** + `@vitejs/plugin-react` | 8.2.2 | **The built output is committed** to `app/api/static/app/`. That is the load-bearing decision: the Docker image needs no Node and no `npm install`, and `python -m scripts.demo` serves a complete UI on a machine with no JavaScript toolchain at all. The cost is that a stale bundle is a real failure mode — `npm run build` before every deploy is in `DEPLOY.md` for that reason. |
+| Language | **TypeScript 5.9** | 5.9.0 | `npm run build` is `tsc --noEmit && vite build`, so a type error fails the build rather than the page. |
+| API types | **openapi-typescript** | 7.5.0 | `npm run types` regenerates `src/api-types.ts` from FastAPI's own OpenAPI schema. The frontend's idea of a bundle cannot drift from the server's, because it is not independently written. |
+| Styling | **Tailwind CSS 4** via `@tailwindcss/vite` | 4.3.3 | No separate PostCSS config; the Vite plugin is the whole integration. |
+| Dashboard layout | **react-grid-layout** | 2.2.4 | Drag, drop and resize on the Program/Project dashboards. The only UI dependency that is not React itself — charts are hand-written SVG, and there is **no chart library**, because every chart here renders numbers the server already computed and a library's own aggregation would be a second place a figure could be born (§1). |
+| Smoke tests | **vite-node** | 6.0.0 | `npm run smoke` server-renders the pages against captured payloads (`npm run payloads` rebuilds all six from the real pipeline). ⚠️ SSR splits a text node around `{value}` with an HTML comment, so assert the halves, never the sentence a reader sees. |
+
+### 2a.7 The AI layer
+
+| Concern | Choice | Verified at | Why this |
+|---|---|---|---|
+| Narration vendors | **anthropic** / **openai** / **google-genai**, plus an **FPT gateway** over plain `urllib` | anthropic 1.4.0 · openai 3.8.0 · google-genai 2.22.0 | One extra per vendor, never one big `llm` extra: whichever is chosen, the others are dead weight in the image. Each adapter imports its SDK **on first call**, so `app.narration` stays importable with none of them installed. |
+| The seam | **`(system, user) -> str`** | — | That signature is the entire vendor abstraction (§10). The validator, the token substitution, the retry-with-objections and the template fallback are identical whichever adapter runs — because none of them is trusted. A self-hosted model (Ollama, vLLM, LM Studio) is the `openai` adapter with an endpoint override and a dummy key; nothing else changes. |
+| No orchestration framework | **LangChain, LlamaIndex and friends are deliberately absent** | — | Their value is chains, memory and tool-routing built *around* a model. Here the model writes sentences inside a fence that already exists, and the one tool-using surface (`dashboard/agent.py`) calls the Anthropic SDK's tool loop directly against four read-only wrappers. A framework would add a place for a prompt to be assembled that is not `narration/client.py` — which is the one file that guarantees no digit reaches the model. |
+| Duration classifier | **scikit-learn 1.6.x + joblib + pandas** (`ml` extra) | — | The only place pandas appears, and it is inside the optional, advisory, band-only classifier that `app/intelligence/` is **forbidden by test to import** (§8.5). ⚠️ Pinned to 1.6.x because that is what pickled the published artefact; 1.9 removed the private `_RemainderColsList` it unpickles. 1.6.x publishes no 3.14 wheel, so the extra carries a `python_version < "3.14"` marker and **needs Python 3.12 or 3.13**. |
+| Model download | **huggingface-hub** (`ml-fetch` extra) | — | Needed once, to fetch the artefact. Separate from `ml` so a machine that already has the file does not install it. |
+
+### 2a.8 Documents out
+
+| Concern | Choice | Why this |
+|---|---|---|
+| `.docx` status report | **python-docx** (`report` extra) | Installed in the production image despite being an extra, because `DEPLOY.md` lists the report as always-live and python-docx has no fallback — unlike an LLM SDK, its absence removes a feature rather than degrading one. |
+| `.xlsx` report and templates | **openpyxl** | Already a hard dependency; no second writer. |
+| Markdown report | **stdlib string building** | — |
+
+All three render **the same bundles the screens render** and format no number of their
+own, so a `.docx` handed to a steering committee cannot disagree with the page it came
+from.
+
+### 2a.9 Build, deploy and tooling
+
+| Concern | Choice | Why this |
+|---|---|---|
+| Packaging | **setuptools** via `pyproject.toml`, installed `-e` | Editable *in the image too*, deliberately: it leaves the code at `/app` so `_bootstrap.REPO`, `settings.data_root` and `scripts.replay`'s subprocess cwd all point at a real writable tree. A normal install puts them under `site-packages`, where the demo generator would write spreadsheets into the interpreter's own directory. |
+| Container | **`python:3.13-slim`**, single stage | No Node stage is needed because the Vite output is committed. Dependencies are their own layer so editing app code does not reinstall them. Runs as a non-root user (`pulse`, uid 10001). |
+| Local orchestration | **Docker Compose** | `docker compose up -d` is the judged artifact: Postgres+pgvector, then the app built from the same Dockerfile the deploy target uses. |
+| Hosting | **Fly.io** (`sin` region, `shared-cpu-1x`, 512 MB) + **Neon Postgres** | What actually shipped — `projectpulse.fly.dev`. Supersedes §15's Cloudflare plan. The container entry point is `python -m scripts.serve`, which creates the schema, replays the demo timeline **only if the database is empty**, then serves. `PORT` is read from the environment because Fly, Railway and Render all inject it. |
+| Health check | `GET /api/portfolio` | ⚠️ It must be a route the product *actually serves*. This pointed at `/api/state` until that endpoint was deleted with the retriever console — the app kept serving every real page and Fly took both machines out of the pool anyway, because a 404 from a health check reads as "unhealthy", not "that path is gone". `/api/portfolio` is the landing page's own bundle, so a machine that passes the check can answer the first request a visitor makes. |
+| Tests | **pytest** + **httpx** (`dev` extra) | ~800 tests, **no database required** — `tests/conftest.py` points at temp SQLite unless `DATABASE_URL` is already set. httpx backs `fastapi.testclient`. |
+| Linting | **none checked in** | Honest gap. The invariants are guarded by *tests* instead, which is where the value was: `tests/test_ml.py` walks the AST of every module under `app/intelligence/` and fails if one imports `app.ml`, and `tests/test_scripts.py` fails if any CLI source contains a character a cp932 console cannot print. A linter would have caught neither. |
+
+### 2a.10 What the stack does not include, on purpose
+
+| Not used | Why |
+|---|---|
+| **A temporal graph database** (Graphiti, Zep) | It is LLM-driven and would have a model assign temporal validity intervals — i.e. produce dates. See §18. Dropped, not deferred. |
+| **A charting library** | Every chart renders numbers the server already computed; a library's own aggregation would be a second place a figure could be born (§1). Charts are hand-written SVG. |
+| **An LLM orchestration framework** | See §2a.7. It would add a second place a prompt can be assembled. |
+| **NumPy / SciPy in the core** | Nothing in `app/intelligence/` needs an array library, and their presence would invite the fitted distributions `schedule/forecast.py` deliberately refuses. |
+| **Alembic** | See §2a.3. What was needed twice was an idempotent re-keying script, not a migration chain. |
+| **A background job runner** (Celery, APScheduler, arq) | The scheduler is the one piece not wired. `ingest/runner.py` already takes a Postgres **advisory lock** per source, so a second instance joins an in-flight run rather than double-writing — which is the hard half, and it needs no broker. |
+| **Go / Apache DevLake itself** | DevLake is **reference-only** here (§3). The three-layer schema and the provenance mixins are ported from `pydevlake`; no DevLake code runs. |
+| **Auth / a user model** | Round 1 has no multi-tenancy and no login. Settings can only be changed from the machine the app runs on, and the API key sits in a gitignored `.pulse/narration.json` — the same bargain as a `.env` file. This is a scope decision, and it is the first thing a real deployment would need. |
+
 ---
 
 ## 3. The three physical layers
@@ -1069,6 +1362,11 @@ rule trace showing which rule fired on which record.
 ---
 
 ## 15. Deployment
+
+> ⚠️ **Topology B below was not what shipped.** Production is **Fly.io + Neon Postgres**
+> at `projectpulse.fly.dev`, single-origin, with no Cloudflare Tunnel and no Pages — so
+> no CORS and no `202 + poll` requirement. The live stack is in **§2a.9**, the operational
+> detail in `projectpulse/DEPLOY.md`. Topology A is still exactly right and still works.
 
 **Two topologies, both needed.**
 
