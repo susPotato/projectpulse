@@ -155,6 +155,7 @@ export function DashboardCanvas({
   const [newOpen, setNewOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
   const [editingTile, setEditingTile] = useState<TileOut | null>(null);
+  const [seeding, setSeeding] = useState(false);
   const pending = useRef<Map<number, LayoutItem>>(new Map());
   const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -204,6 +205,36 @@ export function DashboardCanvas({
     reload();
   }
 
+  /* "Default setup": the standard board for this level, in one press.
+
+     Which tiles that is lives in `app/dashboard/catalogue.py`
+     (`DEFAULT_TEMPLATE`), not here - the program and project defaults are
+     designed as a pair against how the two levels actually relate, and a copy
+     of that decision in the browser would drift from it.
+
+     It **replaces** the current board, like every other "New Dashboard" path,
+     so it confirms first - but only when there is something to lose. A person
+     pressing this on the empty canvas is asking for exactly what it does, and
+     a prompt there is a dialog with no decision in it. */
+  async function applyDefault() {
+    if (
+      dashboard &&
+      dashboard.tiles.length > 0 &&
+      !window.confirm(
+        `Replace the ${dashboard.tiles.length} tile(s) on this dashboard with the default ${scopeType} setup?`,
+      )
+    ) {
+      return;
+    }
+    setSeeding(true);
+    try {
+      await send(`/api/dashboards/default?${query}`, "POST");
+      reload();
+    } finally {
+      setSeeding(false);
+    }
+  }
+
   if (problem) {
     return (
       <Page current="/programs" title={title} subtitle={problem.title}>
@@ -230,6 +261,19 @@ export function DashboardCanvas({
       wide
       action={
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={applyDefault}
+            disabled={seeding}
+            title={
+              dashboard.tiles.length === 0
+                ? "Fill this dashboard with the standard tiles for this level"
+                : "Replace this dashboard with the standard tiles for this level"
+            }
+            className="cursor-pointer rounded-md border border-navy bg-navy px-2.5 py-1 text-[12px] font-semibold text-surface hover:opacity-90 disabled:opacity-50"
+          >
+            {seeding ? "Setting up..." : "Default setup"}
+          </button>
           <button
             type="button"
             onClick={() => setAddOpen(true)}
@@ -266,15 +310,28 @@ export function DashboardCanvas({
     >
       {scopeType === "project" && <ProjectSubNav />}
       {dashboard.tiles.length === 0 ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-rule text-center">
-          <p className="m-0 text-[13px] text-ink-3">Click Add Tiles to start building your dashboard.</p>
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="mt-3 cursor-pointer rounded-md border border-rule bg-surface px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:bg-bg"
-          >
-            + Add Tiles
-          </button>
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-rule px-6 text-center">
+          <p className="m-0 text-[13px] text-ink-3">
+            This dashboard is empty. Start from the default {scopeType} setup, or
+            add tiles yourself.
+          </p>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            <button
+              type="button"
+              onClick={applyDefault}
+              disabled={seeding}
+              className="cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-surface hover:opacity-90 disabled:opacity-50"
+            >
+              {seeding ? "Setting up..." : `Default ${scopeType} setup`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="cursor-pointer rounded-md border border-rule bg-surface px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:bg-bg"
+            >
+              + Add Tiles
+            </button>
+          </div>
         </div>
       ) : (
         <GridLayout

@@ -62,8 +62,17 @@ PAGES = (
     ("/portfolio", "program", 1200),
     ("/programs", "programs", 900),
     ("/projects", "projects", 900),
-    ("/programs/dashboard?program=excel:Program:1:DEFAULT", "program-dashboard", 1400),
-    ("/project/dashboard?project=excel:Project:1:HRMS", "project-dashboard", 1400),
+    #: Programs are keyed `program:Program:0:<KEY>` - source-neutral and
+    #: connection-neutral. This entry still named `excel:Program:1:DEFAULT`,
+    #: which `scripts.migrate_programs` re-keyed away, so the one check that
+    #: looks at a rendered page was photographing "No program selected" and
+    #: reporting success. The id a URL carries is part of what this script
+    #: covers, and a stale one here is a silent hole exactly like the missing
+    #: `/risk` entry above.
+    ("/programs/dashboard?program=program:Program:0:DEFAULT", "program-dashboard", 1800),
+    #: Taller than the rest: "Default setup" places thirteen tiles over six
+    #: grid rows, and the previous 1400 cut the board off mid-Gantt.
+    ("/project/dashboard?project=excel:Project:1:HRMS", "project-dashboard", 2600),
     ("/console", "console", 1500),
     ("/gantt", "schedule", 1100),
     ("/insight", "insight", 2500),

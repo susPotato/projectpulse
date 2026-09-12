@@ -21,7 +21,7 @@ from app.api.schemas.dashboard import (
     TileOut,
     TileSpecOut,
 )
-from app.dashboard.catalogue import BY_KEY, CATALOGUE, TEMPLATES
+from app.dashboard.catalogue import BY_KEY, CATALOGUE, DEFAULT_TEMPLATE, TEMPLATES
 from app.models.dashboard import Dashboard, DashboardTile
 
 #: react-grid-layout's column count on every canvas - fixed rather than
@@ -179,6 +179,26 @@ def apply_template(
         source="template",
         tiles=auto_layout(scoped_keys),
     )
+
+
+def apply_default(session, scope_type: str, scope_id: str) -> DashboardOut | None:
+    """Default setup: the starting board for this scope, in one click.
+
+    Deliberately thin - it resolves `catalogue.DEFAULT_TEMPLATE` and defers to
+    `apply_template`, so the button and "Browse Templates" place the identical
+    layout and cannot drift apart. `None` for a scope_type that names no
+    default, which the route turns into a 400 rather than an empty canvas.
+
+    Like every other "New Dashboard" path this **replaces** the scope's current
+    board (one dashboard per scope - see the module docstring), which is why the
+    button that calls it asks first. `seed_default_dashboard` below is the
+    non-destructive variant, and the two are not interchangeable: that one is
+    for a database being seeded, this one is for a person who pressed a button.
+    """
+    template = DEFAULT_TEMPLATE.get(scope_type)  # type: ignore[arg-type]
+    if template is None:
+        return None
+    return apply_template(session, scope_type, scope_id, template)
 
 
 def seed_default_dashboard(

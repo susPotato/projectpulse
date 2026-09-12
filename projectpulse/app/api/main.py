@@ -1461,6 +1461,27 @@ def apply_template_api(scope_type: str, scope_id: str, template: str) -> Dashboa
         return bundle
 
 
+@app.post("/api/dashboards/default", response_model=DashboardOut)
+def apply_default_dashboard_api(scope_type: str, scope_id: str) -> DashboardOut:
+    """Default setup: this scope's starting board, without picking anything.
+
+    Its own route rather than the caller naming a template, because *which*
+    template is the default is a product decision and belongs beside the
+    catalogue (`catalogue.DEFAULT_TEMPLATE`), not in a query string a browser
+    can get wrong. 400, not 404, for an unknown `scope_type`: the template
+    exists, the scope does not.
+    """
+    from app.dashboard.service import apply_default
+
+    with session_scope() as session:
+        bundle = apply_default(session, scope_type, scope_id)
+        if bundle is None:
+            raise HTTPException(
+                status_code=400, detail=f"no default dashboard for scope {scope_type!r}"
+            )
+        return bundle
+
+
 @app.post("/api/dashboards/generate", response_model=DashboardOut)
 def generate_dashboard_api(body: GenerateRequest) -> DashboardOut:
     """Create with AI: the model picks tiles from the catalogue, never data.

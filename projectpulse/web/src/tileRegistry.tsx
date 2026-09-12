@@ -10,6 +10,7 @@
 import { useEffect, useState, type ComponentType } from "react";
 import {
   load,
+  programLink,
   projectLink,
   type ApiProblem,
   type ChartType,
@@ -17,6 +18,8 @@ import {
   type ForecastBundle,
   type GanttBundle,
   type InsightBundle,
+  type PortfolioBundle,
+  type ProgramBundle,
   type ProgramRollupBundle,
   type RiskBundle,
   type TeamBundle,
@@ -207,6 +210,17 @@ const BAND_STYLE: Record<string, string> = {
   no_data: "bg-rule text-ink-3",
 };
 
+/* The matrix cell wash, same five steps as `pages/Risk.tsx` - a rating is a
+   lookup (`app/risks/matrix.py`), so the tile and the full page must not
+   shade the same cell differently. */
+const CELL_STYLE: Record<string, string> = {
+  "Very Low": "bg-green/10",
+  Low: "bg-green/20",
+  Medium: "bg-amber/20",
+  High: "bg-orange/20",
+  "Very High": "bg-red/20",
+};
+
 const RATING_STYLE: Record<string, string> = {
   "Very Low": "text-green",
   Low: "text-green",
@@ -214,6 +228,36 @@ const RATING_STYLE: Record<string, string> = {
   High: "text-orange",
   "Very High": "text-red",
 };
+
+/* One request per endpoint per render, not one per tile.
+
+   Every tile fetches its own bundle, which is what keeps a tile a standalone
+   adapter - but a dashboard is many tiles over *few* endpoints: the default
+   project board has four tiles reading `/api/gantt` and three reading
+   `/api/insight`, and each of those recomputes a dependency graph server-side.
+   Uncached, opening it fired thirteen requests for six distinct bundles.
+
+   Keyed by path and deliberately short-lived. The window only has to be long
+   enough to cover one canvas mounting its tiles; anything longer would start
+   serving a stale bundle to somebody who navigated away and came back, and
+   these tiles have no other refresh. A rejection is never cached at all - a
+   failed load must be retried on the next mount, not remembered as the
+   answer. */
+const BUNDLE_TTL_MS = 5_000;
+const inflight = new Map<string, { at: number; promise: Promise<unknown> }>();
+
+function loadShared<T>(path: string): Promise<T> {
+  const hit = inflight.get(path);
+  if (hit && Date.now() - hit.at < BUNDLE_TTL_MS) return hit.promise as Promise<T>;
+
+  const promise = load<T>(path);
+  const entry = { at: Date.now(), promise: promise as Promise<unknown> };
+  inflight.set(path, entry);
+  promise.catch(() => {
+    if (inflight.get(path) === entry) inflight.delete(path);
+  });
+  return promise;
+}
 
 function useBundle<T>(path: string | null): { bundle: T | null; problem: ApiProblem | null } {
   const [bundle, setBundle] = useState<T | null>(null);
@@ -223,7 +267,17 @@ function useBundle<T>(path: string | null): { bundle: T | null; problem: ApiProb
     setBundle(null);
     setProblem(null);
     if (!path) return;
-    load<T>(path).then(setBundle, setProblem);
+    //: Guarded against a path change mid-flight: two tiles differ only by the
+    //: project in their query string, and without this a switch away and back
+    //: can land the first response after the second.
+    let live = true;
+    loadShared<T>(path).then(
+      (value) => live && setBundle(value),
+      (error) => live && setProblem(error as ApiProblem),
+    );
+    return () => {
+      live = false;
+    };
   }, [path]);
 
   return { bundle, problem };
@@ -296,7 +350,17 @@ const ProjectPortfolio: ComponentType<TileProps> = ({ scopeId }) => {
   );
 };
 
-const DIMENSIONS = ["schedule", "quality", "qa", "evidence"] as const;
+/* All five, in `app/api/schemas/portfolio.py`'s own order.
+
+   This listed four, and the missing one was `resource` - the dimension banded
+   from cross-project contention, and the only one whose cause lives outside
+   the project it marks. Dropping it made this tile actively misleading rather
+   than merely incomplete: a project that is fine on its own and starved by a
+   sibling reads amber there and nowhere else, so on the *program* board - the
+   one screen that exists to show what projects cost each other - it read
+   all-green. `pages/Portfolio.tsx` already had all five; this copy had not
+   been updated with it. */
+const DIMENSIONS = ["schedule", "quality", "qa", "evidence", "resource"] as const;
 
 const ProjectHealthHeatmap: ComponentType<TileProps> = ({ scopeId }) => {
   const { bundle, problem } = useRollup(scopeId);
@@ -309,7 +373,7 @@ const ProjectHealthHeatmap: ComponentType<TileProps> = ({ scopeId }) => {
               key={row.project_id}
               href={projectLink("/project/dashboard", row)}
               title={`Open ${row.name}'s dashboard`}
-              className="grid grid-cols-[1fr_repeat(4,20px)] items-center gap-1.5 rounded px-1 py-0.5 no-underline hover:bg-bg"
+              className="grid grid-cols-[1fr_repeat(5,20px)] items-center gap-1.5 rounded px-1 py-0.5 no-underline hover:bg-bg"
             >
               <span className="truncate text-[12px] text-ink">{row.name}</span>
               {DIMENSIONS.map((d) => (
@@ -321,6 +385,13 @@ const ProjectHealthHeatmap: ComponentType<TileProps> = ({ scopeId }) => {
               ))}
             </a>
           ))}
+          {/* Five unlabelled squares need naming once - there is no room for a
+              header row at 20px per column, and the full labelled grid is on
+              the Portfolio page. */}
+          <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+            Left to right: {DIMENSIONS.join(", ")}. Resource is banded from
+            cross-project contention, so it can be the only one that is not green.
+          </p>
         </div>
       )}
     </TileShell>
@@ -460,6 +531,247 @@ const AiDetectedRisksTop: ComponentType<TileProps> = ({ scopeId }) => {
   );
 };
 
+/* Everything not healthy, with the sentence the rollup already wrote for it.
+
+   `headline` is a finding's own substituted prose (`app/api/schemas/insight.py`
+   - numbers live in `facts`, and the server substitutes them), so this tile
+   states a reason without composing one. `no_data` is counted separately rather
+   than listed as a problem: a project nobody has synced is unknown, not late,
+   and the whole product argues against colouring unknown. */
+const ProjectsNeedingAttention: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useRollup(scopeId);
+  const attention = (bundle?.projects ?? []).filter(
+    (p) => p.band === "critical" || p.band === "watch",
+  );
+  const unknown = (bundle?.projects ?? []).filter((p) => p.band === "no_data");
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-1.5">
+        {attention.map((row) => (
+          <a
+            key={row.project_id}
+            href={projectLink("/project/dashboard", row)}
+            title={`Open ${row.name}'s dashboard`}
+            className="flex items-start gap-2 rounded px-1 py-0.5 text-[12.5px] no-underline hover:bg-bg"
+          >
+            <span
+              className={`mt-[3px] h-2 w-2 shrink-0 rounded-full ${(BAND_STYLE[row.band] ?? "bg-rule").split(" ")[0]}`}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="font-semibold text-ink">{row.name}</span>
+              {row.headline && <span className="text-ink-2"> · {row.headline}</span>}
+            </span>
+            {row.days_late > 0 && (
+              <span className="shrink-0 text-[11px] text-orange">+{row.days_late}d</span>
+            )}
+          </a>
+        ))}
+        {attention.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            No project in this program is critical or on watch.
+          </p>
+        )}
+        {unknown.length > 0 && (
+          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+            {unknown.length} project(s) have nothing ingested yet, so they are
+            unranked rather than healthy: {unknown.map((p) => p.name).join(", ")}.
+          </p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
+/* Ranked by `days_late`, which is slip the dependency chain implies and the
+   sheet does not show - the one number on the portfolio screen, because it is
+   a subtraction over two dates the server already holds. */
+const TopDelayedProjects: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useRollup(scopeId);
+  const late = (bundle?.projects ?? [])
+    .filter((p) => p.days_late > 0)
+    .sort((a, b) => b.days_late - a.days_late);
+  const worst = Math.max(1, ...late.map((p) => p.days_late));
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-2">
+        {late.map((row) => (
+          <div key={row.project_id} className="flex items-center gap-2">
+            <span className="w-[84px] shrink-0 truncate text-[11.5px] text-ink-2" title={row.name}>
+              {row.name}
+            </span>
+            <div className="h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
+              <div
+                className="h-full rounded-sm bg-orange"
+                style={{ width: `${Math.max(4, (row.days_late / worst) * 100)}%` }}
+              />
+            </div>
+            <span className="w-[44px] shrink-0 text-right text-[11px] text-ink-3">
+              +{row.days_late}d
+            </span>
+          </div>
+        ))}
+        {late.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            No project's dependencies imply a slip past its plan.
+          </p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
+/* The apportionment, turned around: `resource_conflict` asks "who is short",
+   this asks "which project pays for it".
+
+   Only `effort_days` is added up here, and that is the whole point of the tile.
+   It is the conserved quantity - the contention model asserts that a person's
+   shares sum to their excess rather than merely commenting it
+   (`app/intelligence/contention.py`) - so a project's total across several
+   people and months is a real figure a PM can act on. `delay_days` is
+   deliberately NOT summed (`ProjectShortfall` says why: it is a scenario that
+   holds only if the shortfall lands in a later window with room, and totalling
+   it re-creates exactly the replication error the apportionment removes), so it
+   is shown per row and never accumulated. */
+const ResourceContentionSplit: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useRollup(scopeId);
+  const conflicts = bundle?.resource_conflicts ?? [];
+
+  /* One row per project, not one per (person, window) pair. Contention is
+     assessed per month - because the overtime ceiling it is checked against is
+     monthly - so one person contended all quarter is three results, and listing
+     each of them made a three-project program an eighteen-line tile. The people
+     and the month count are what a reader needs to go look; the per-month
+     arithmetic is on `resource_conflict`, which is the per-person view. */
+  const byProject = new Map<
+    string,
+    { name: string; effortDays: number; people: Set<string>; windows: number }
+  >();
+  for (const conflict of conflicts) {
+    for (const shortfall of conflict.shortfalls) {
+      const entry = byProject.get(shortfall.project_id) ?? {
+        name: shortfall.project_name,
+        effortDays: 0,
+        people: new Set<string>(),
+        windows: 0,
+      };
+      entry.effortDays += shortfall.effort_days;
+      entry.people.add(conflict.resource_name);
+      entry.windows += 1;
+      byProject.set(shortfall.project_id, entry);
+    }
+  }
+  const rows = Array.from(byProject.values()).sort((a, b) => b.effortDays - a.effortDays);
+  const excess = conflicts.reduce((total, c) => total + c.excess_days, 0);
+  const worst = Math.max(1, ...rows.map((r) => r.effortDays));
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-2">
+        {rows.map((row) => (
+          <div key={row.name} className="text-[12.5px]">
+            <div className="flex items-baseline gap-2">
+              <b className="shrink-0 font-semibold text-orange">{row.effortDays.toFixed(2)}d</b>
+              <span className="min-w-0 flex-1 truncate text-ink">{row.name}</span>
+            </div>
+            <div className="mt-0.5 h-[6px] overflow-hidden rounded-sm bg-rule-2">
+              <div
+                className="h-full rounded-sm bg-orange"
+                style={{ width: `${Math.max(4, (row.effortDays / worst) * 100)}%` }}
+              />
+            </div>
+            <div className="mt-0.5 text-[11px] text-ink-3">
+              {Array.from(row.people).join(", ")} · {row.windows} contended month
+              {row.windows === 1 ? "" : "s"}
+            </div>
+          </div>
+        ))}
+        {rows.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            Nobody shared between these projects is committed beyond their
+            capacity in any month.
+          </p>
+        )}
+        {rows.length > 0 && (
+          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+            {excess.toFixed(2)} effort-days of excess demand, apportioned in full
+            - this column adds up to it. A deferral figure is per row only.
+          </p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
+/* Who is on more than one project in this program, and at what stated
+   percentage on each.
+
+   Shown as the plan states it, and labelled as nominal on purpose: two 60%
+   allocations in non-overlapping quarters read as 120% here and are not a
+   conflict, which is exactly why the contention test is windowed demand
+   against discounted supply and not this sum. The tile that answers "is it a
+   problem" is `resource_conflict`; this one answers "who is spread, and
+   where". */
+const TeamAllocation: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useRollup(scopeId);
+
+  const byPerson = new Map<
+    string,
+    { role: string | null; rows: { project: string; percent: number | null }[] }
+  >();
+  for (const row of bundle?.resources ?? []) {
+    const entry = byPerson.get(row.resource_name) ?? { role: row.role ?? null, rows: [] };
+    entry.rows.push({ project: row.project_name, percent: row.allocation_percent ?? null });
+    byPerson.set(row.resource_name, entry);
+  }
+  //: Shared people first - the reason this tile is at program level at all.
+  const people = Array.from(byPerson.entries()).sort(
+    (a, b) => b[1].rows.length - a[1].rows.length || a[0].localeCompare(b[0]),
+  );
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-2">
+        {people.map(([name, entry]) => {
+          const nominal = entry.rows.reduce((sum, r) => sum + (r.percent ?? 0), 0);
+          return (
+            <div key={name} className="text-[12.5px]">
+              <div className="flex items-baseline gap-2">
+                <span className="min-w-0 flex-1 truncate font-semibold text-ink">
+                  {name}
+                  {entry.role && <span className="font-normal text-ink-3"> · {entry.role}</span>}
+                </span>
+                <span
+                  className={`shrink-0 text-[11px] ${entry.rows.length > 1 ? "text-ink-2" : "text-ink-3"}`}
+                >
+                  {nominal}% over {entry.rows.length} project{entry.rows.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              <div className="text-[11px] text-ink-3">
+                {entry.rows
+                  .map((r) => `${r.project}${r.percent == null ? "" : ` ${r.percent}%`}`)
+                  .join(" · ")}
+              </div>
+            </div>
+          );
+        })}
+        {people.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            No resource allocations recorded for this program's projects.
+          </p>
+        )}
+        {people.length > 0 && (
+          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+            Stated percentages, summed nominally - not the contention test. Two
+            allocations that never overlap add up here and are not a conflict.
+          </p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
 /* ---- Project scope ------------------------------------------------------ */
 
 function useInsight(scopeId: string) {
@@ -511,26 +823,65 @@ const QualityHealth: ComponentType<TileProps> = ({ scopeId }) => {
   );
 };
 
+/* The actual 5x5 heat-map, which this tile claimed to be and was not.
+
+   It used to render a ranked *list* of risks - the catalogue described it as
+   "the 5x5 likelihood x impact heat-map", its picker swatch was the heat-map
+   skeleton, and a person who added it got a list. That list is now its own
+   tile (`risk_register`), which is what it always was, and this draws the grid.
+
+   Cells come from the server (`build_matrix`), which is the same rating lookup
+   a risk's own badge uses, so a cell here cannot disagree with a badge in the
+   register beside it. Counts are pre-treatment, the register's own convention.
+   No axis labels at tile size: five impact names do not fit across a 6-column
+   tile, so the axes are named once in the footnote and each cell carries its
+   own `title` - the full labelled grid is on the Risk page. */
 const RiskMatrixTile: ComponentType<TileProps> = ({ scopeId }) => {
   const { bundle, problem } = useBundle<RiskBundle>(
     `/api/risks?project=${encodeURIComponent(scopeId)}`,
   );
+  const cellAt = (likelihood: string, impact: string) =>
+    bundle?.matrix.find((c) => c.likelihood === likelihood && c.impact === impact);
+  const assessed = (bundle?.matrix ?? []).reduce((total, c) => total + c.risk_count, 0);
+
   return (
     <TileShell loading={!bundle && !problem} problem={problem}>
       {bundle && (
-        <div className="grid gap-1.5">
-          {bundle.risks.slice(0, 6).map((r) => (
-            <div key={r.id} className="flex items-center gap-2 text-[12.5px]">
-              <span className={`font-semibold ${RATING_STYLE[r.pre_rating ?? ""] ?? "text-ink-3"}`}>
-                {r.pre_rating ?? "n/a"}
-              </span>
-              <span className="min-w-0 flex-1 truncate">{r.title}</span>
-            </div>
-          ))}
-          {bundle.risks.length === 0 && (
-            <p className="m-0 text-[12.5px] text-ink-3">No risks logged yet.</p>
-          )}
-        </div>
+        <>
+          <div
+            className="grid gap-[3px]"
+            style={{ gridTemplateColumns: `repeat(${bundle.impacts.length}, minmax(0, 1fr))` }}
+          >
+            {bundle.likelihoods.map((likelihood) =>
+              bundle.impacts.map((impact) => {
+                const cell = cellAt(likelihood, impact);
+                return (
+                  <div
+                    key={`${likelihood}:${impact}`}
+                    title={`${likelihood} x ${impact} = ${cell?.rating ?? "unrated"}${
+                      cell?.risk_count ? ` · ${cell.risk_count} risk(s)` : ""
+                    }`}
+                    className={`flex h-[26px] items-center justify-center rounded-sm text-[11px] font-bold text-ink ${
+                      CELL_STYLE[cell?.rating ?? ""] ?? "bg-rule/20"
+                    }`}
+                  >
+                    {cell?.risk_count ? cell.risk_count : ""}
+                  </div>
+                );
+              }),
+            )}
+          </div>
+          <p className="mt-2 mb-0 text-[10.5px] text-ink-3">
+            Rows: likelihood, {bundle.likelihoods[0]} to{" "}
+            {bundle.likelihoods[bundle.likelihoods.length - 1]}. Columns: impact,{" "}
+            {bundle.impacts[0]} to {bundle.impacts[bundle.impacts.length - 1]}.
+          </p>
+          <p className="m-0 text-[10.5px] text-ink-3">
+            {assessed} risk(s) placed, pre-treatment.
+            {assessed < bundle.risks.length &&
+              ` ${bundle.risks.length - assessed} not assessed, so unplaced.`}
+          </p>
+        </>
       )}
     </TileShell>
   );
@@ -755,6 +1106,523 @@ const TeamEffortTile: ComponentType<TileProps> = ({ scopeId }) => {
   );
 };
 
+/* ---- Project scope, added from the PM's own tiles list ------------------ */
+
+function useGantt(scopeId: string) {
+  return useBundle<GanttBundle>(`/api/gantt?project=${encodeURIComponent(scopeId)}`);
+}
+
+function useRisks(scopeId: string) {
+  return useBundle<RiskBundle>(`/api/risks?project=${encodeURIComponent(scopeId)}`);
+}
+
+/* This project's own row out of the portfolio, rather than a second summary
+   computed here. `/api/portfolio` folds every source id of one delivery
+   project into one row (invariant 7), so reading the row is also the only way
+   to get counts that agree with the Programs list and the heat-map. */
+function usePortfolioRow(scopeId: string) {
+  const { bundle, problem } = useBundle<PortfolioBundle>("/api/portfolio");
+  const row = bundle?.projects.find(
+    (p) => p.project_id === scopeId || p.source_ids.includes(scopeId),
+  );
+  return { bundle, row, problem };
+}
+
+/* Band, what set it, the two finish dates, and the counts - the context a
+   person needs on opening a project, none of it recomputed here. */
+const ProjectSummary: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, row, problem } = usePortfolioRow(scopeId);
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {row ? (
+        <>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="min-w-0 truncate text-[13px] font-semibold text-ink">{row.name}</span>
+            <span
+              className={`shrink-0 rounded px-2 py-0.5 text-[10.5px] font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[row.band]}`}
+            >
+              {row.band.replace("_", " ")}
+            </span>
+          </div>
+          {row.worst_severity && (
+            <p className="mt-1 mb-0 text-[11px] text-ink-3">
+              set by a {row.worst_severity} finding, of {row.findings}
+            </p>
+          )}
+          <div className="mt-2 grid gap-1 border-t border-rule pt-2 text-[11.5px] text-ink-2">
+            <div className="flex justify-between gap-2">
+              <span className="text-ink-3">committed</span>
+              <span>{row.committed_end ?? "-"}</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-ink-3">projected</span>
+              <span className={row.days_late > 0 ? "font-semibold text-orange" : ""}>
+                {row.projected_end ?? "-"}
+                {row.days_late > 0 ? ` (+${row.days_late}d)` : ""}
+              </span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-ink-3">tasks / QA blocked</span>
+              <span>
+                {row.task_count} / {row.qa_blocked} of {row.qa_count}
+              </span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-ink-3">milestones at risk</span>
+              <span className={row.milestones_at_risk > 0 ? "font-semibold text-red" : ""}>
+                {row.milestones_at_risk}
+              </span>
+            </div>
+          </div>
+          {/* Said here rather than left for someone to discover: a projected
+              date resting on edges we inferred is a weaker claim than one
+              resting on stated ones. */}
+          {row.depends_on_inferred_edges && (
+            <p className="mt-2 mb-0 text-[11px] text-amber">
+              The projected date rests partly on inferred dependency edges.
+            </p>
+          )}
+        </>
+      ) : (
+        bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            This project is not in the portfolio - nothing has been ingested for
+            it yet.
+          </p>
+        )
+      )}
+    </TileShell>
+  );
+};
+
+/* The relationship, read from below.
+
+   A project cannot answer any of this from its own data, and that is the point:
+   membership is *declared* in `app/scope.py` rather than derived from whichever
+   collector wrote the row (which is how one program came to exist under two
+   ids), and contention is apportioned at program level because only that level
+   can see a person committed to two projects at once.
+
+   Three things it therefore says out loud:
+
+   * **Which program, or none.** `program_id = NULL` is a legitimate state - a
+     project registered by upload before anyone chose its program - and is never
+     filled in with an invented default. So "no program" is rendered as an
+     answer, not as a blank.
+   * **Which source systems are this one project.** `also` is the pairing that
+     makes two rows one delivery project (invariant 7).
+   * **What the siblings are taking from it.** This project's own share of every
+     shared person's excess demand - the same apportionment the program board
+     shows, filtered to here. */
+const ProgramContext: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle: config, problem: configProblem } = useBundle<ProgramBundle>("/api/program");
+  const entry = config?.scope.find(
+    (e) => e.canonical_id === scopeId || e.also.includes(scopeId),
+  );
+  const programId = entry?.program_id || "";
+  const siblings = (config?.scope ?? []).filter(
+    (e) => programId && e.program_id === programId && e.canonical_id !== entry?.canonical_id,
+  );
+
+  const { bundle: rollup } = useBundle<ProgramRollupBundle>(
+    programId ? `/api/programs/${encodeURIComponent(programId)}` : null,
+  );
+  //: Every id this project may have been filed under, because a shortfall is
+  //: keyed by the source id the `Resource` row carried - the same widening
+  //: `scope.source_ids_for` does server-side.
+  const ownIds = new Set(entry ? [entry.canonical_id, ...entry.also] : [scopeId]);
+  //: Rolled up per person, not per (person, month). Contention is assessed
+  //: monthly - the overtime ceiling it is checked against is monthly - so one
+  //: person contended all quarter is three results, and listing each of them
+  //: filled this tile with arithmetic instead of the point it is making. The
+  //: month count carries that a shortfall is recurring rather than one-off.
+  const byPerson = new Map<string, { effortDays: number; windows: number }>();
+  for (const conflict of rollup?.resource_conflicts ?? []) {
+    for (const shortfall of conflict.shortfalls) {
+      if (!ownIds.has(shortfall.project_id)) continue;
+      const entry = byPerson.get(conflict.resource_name) ?? { effortDays: 0, windows: 0 };
+      entry.effortDays += shortfall.effort_days;
+      entry.windows += 1;
+      byPerson.set(conflict.resource_name, entry);
+    }
+  }
+  const mine = Array.from(byPerson.entries()).sort((a, b) => b[1].effortDays - a[1].effortDays);
+  const owed = mine.reduce((total, [, m]) => total + m.effortDays, 0);
+
+  return (
+    <TileShell loading={!config && !configProblem} problem={configProblem}>
+      {entry ? (
+        <>
+          {programId ? (
+            <>
+              <a
+                href={programLink("/programs/dashboard", programId)}
+                className="text-[13px] font-semibold text-ink no-underline hover:underline"
+                title="Open this program's dashboard"
+              >
+                {entry.program_name || programId}
+              </a>
+              <p className="mt-1 mb-0 text-[11.5px] text-ink-3">
+                {siblings.length === 0
+                  ? "The only project in this program."
+                  : `Shares this program with ${siblings.map((s) => s.name).join(", ")}.`}
+              </p>
+            </>
+          ) : (
+            <>
+              <span className="text-[13px] font-semibold text-ink">No program</span>
+              <p className="mt-1 mb-0 text-[11.5px] text-ink-3">
+                Nobody has assigned this project to a program yet. It is not
+                filed under a default one, so it has no cross-project rollup.
+              </p>
+            </>
+          )}
+
+          <div className="mt-2 border-t border-rule pt-2 text-[11.5px] text-ink-2">
+            {entry.also.length > 0 ? (
+              <>
+                Tracked in {entry.also.length + 1} source systems, analysed as one
+                project:{" "}
+                <span className="text-ink-3">
+                  {[entry.canonical_id, ...entry.also]
+                    .map((id) => id.split(":")[0])
+                    .join(" + ")}
+                </span>
+              </>
+            ) : (
+              <span className="text-ink-3">One source system feeds this project.</span>
+            )}
+          </div>
+
+          {mine.length > 0 && (
+            <div className="mt-2 border-t border-rule pt-2">
+              <p className="m-0 text-[11.5px] text-ink-2">
+                <b className="font-semibold text-orange">{owed.toFixed(2)} effort-days</b> of
+                this project's demand is lost to people a sibling also needs:
+              </p>
+              {mine.map(([person, m]) => (
+                <div key={person} className="text-[11px] text-ink-3">
+                  {person}: {m.effortDays.toFixed(2)}d over {m.windows} contended month
+                  {m.windows === 1 ? "" : "s"}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        config && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            This project id is not declared in the project registry, so its
+            program cannot be resolved.
+          </p>
+        )
+      )}
+    </TileShell>
+  );
+};
+
+/* Two kinds of slip, side by side, because they are two different facts and
+   the distinction is the one this product exists to make.
+
+   `recorded_slip_days` is a person moving a date in their own sheet - they know
+   about it. `propagated_days` is what the dependency chain implies and the sheet
+   does not show - nobody has written it down. Summing them into one "variance"
+   figure would destroy exactly the claim worth making. */
+const ScheduleVariance: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const rows = bundle?.rows ?? [];
+  const recorded = rows.filter((r) => (r.recorded_slip_days ?? 0) > 0);
+  const propagated = rows.filter((r) => (r.propagated_days ?? 0) > 0);
+  const worstRecorded = Math.max(0, ...recorded.map((r) => r.recorded_slip_days ?? 0));
+  const worstPropagated = Math.max(0, ...propagated.map((r) => r.propagated_days ?? 0));
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {bundle && (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <b className="block text-[22px] leading-none font-bold text-ink">
+                {worstRecorded > 0 ? `+${worstRecorded}d` : "0d"}
+              </b>
+              <span className="mt-1 block text-[10.5px] text-ink-3">
+                recorded against baseline &middot; {recorded.length} task(s)
+              </span>
+            </div>
+            <div>
+              <b
+                className={`block text-[22px] leading-none font-bold ${
+                  worstPropagated > 0 ? "text-orange" : "text-ink"
+                }`}
+              >
+                {worstPropagated > 0 ? `+${worstPropagated}d` : "0d"}
+              </b>
+              <span className="mt-1 block text-[10.5px] text-ink-3">
+                implied, not written down &middot; {propagated.length} task(s)
+              </span>
+            </div>
+          </div>
+          <div className="mt-2 grid gap-1 border-t border-rule pt-2 text-[11.5px] text-ink-2">
+            <div className="flex justify-between gap-2">
+              <span className="text-ink-3">project end, planned</span>
+              <span>{bundle.project_end_planned ?? "-"}</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-ink-3">project end, projected</span>
+              <span>{bundle.project_end_projected ?? "-"}</span>
+            </div>
+          </div>
+          {/* Worst task, not a total: the two columns are per-task maxima and
+              adding slips along a chain would double-count the same delay. */}
+          <p className="mt-2 mb-0 text-[10.5px] text-ink-3">
+            Worst single task in each column, never a sum.
+          </p>
+        </>
+      )}
+    </TileShell>
+  );
+};
+
+/* The evidence behind the variance: which tasks carry the slip, and whether
+   they sit on the chain that sets the project's finish - the only sequence a
+   PM can shorten to pull the date in. */
+const DelayedTasks: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const late = (bundle?.rows ?? [])
+    .filter((r) => (r.propagated_days ?? 0) > 0 || (r.recorded_slip_days ?? 0) > 0)
+    .sort(
+      (a, b) =>
+        Math.max(b.propagated_days ?? 0, b.recorded_slip_days ?? 0) -
+        Math.max(a.propagated_days ?? 0, a.recorded_slip_days ?? 0),
+    );
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-1.5">
+        {late.slice(0, 10).map((row) => (
+          <div key={row.entity_id} className="flex items-baseline gap-2 text-[12.5px]">
+            <span className="min-w-0 flex-1 truncate text-ink" title={row.title ?? row.label}>
+              {row.title ?? row.label}
+              {row.on_driving_path && (
+                <span
+                  className="ml-1.5 rounded bg-navy/15 px-1 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.05em] text-navy"
+                  title="On the chain that sets this project's finish date"
+                >
+                  driving
+                </span>
+              )}
+            </span>
+            <span className="shrink-0 text-[11px] text-ink-3">
+              {(row.recorded_slip_days ?? 0) > 0 && <span>+{row.recorded_slip_days}d recorded</span>}
+              {(row.recorded_slip_days ?? 0) > 0 && (row.propagated_days ?? 0) > 0 && " · "}
+              {(row.propagated_days ?? 0) > 0 && (
+                <span className="text-orange">+{row.propagated_days}d implied</span>
+              )}
+            </span>
+          </div>
+        ))}
+        {late.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">No task is late on either measure.</p>
+        )}
+        {late.length > 10 && (
+          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+            {late.length - 10} more, worst first - the full list is on Schedule.
+          </p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
+/* Each milestone's planned date against the baseline it was committed to.
+
+   Soonest first, and both dates always shown: a marker that has moved is only
+   legible beside the one it moved from. `at_risk` is the server's flag, not a
+   comparison redone here. */
+const UpcomingMilestones: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const milestones = (bundle?.milestones ?? [])
+    .slice()
+    .sort((a, b) => (a.planned_date ?? "9999").localeCompare(b.planned_date ?? "9999"));
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-1.5">
+        {milestones.map((m) => (
+          <div key={m.id} className="flex items-baseline gap-2 text-[12.5px]">
+            <span
+              className={`mt-[1px] h-2 w-2 shrink-0 rounded-full ${m.at_risk ? "bg-red" : "bg-green"}`}
+              title={m.at_risk ? "At risk" : "On track"}
+            />
+            <span className="min-w-0 flex-1 truncate text-ink" title={m.name}>
+              {m.name}
+            </span>
+            <span className="shrink-0 text-[11px] text-ink-3">
+              {m.planned_date ?? "undated"}
+              {!!m.slipped_days && m.slipped_days > 0 && (
+                <span className="text-orange"> +{m.slipped_days}d vs {m.baseline_date}</span>
+              )}
+            </span>
+          </div>
+        ))}
+        {milestones.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">No milestones in this project's schedule.</p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
+/* The register as a table - rating, status, owner - which is what a PM reads
+   beside the matrix rather than instead of it. The rating badge is the server's
+   lookup (`app/risks/matrix.py`), never typed, so it cannot disagree with the
+   cell the same risk lands in on `risk_matrix`. */
+const RiskRegister: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useRisks(scopeId);
+  const rank: Record<string, number> = {
+    "Very High": 0,
+    High: 1,
+    Medium: 2,
+    Low: 3,
+    "Very Low": 4,
+  };
+  const risks = (bundle?.risks ?? [])
+    .slice()
+    .sort((a, b) => (rank[a.pre_rating ?? ""] ?? 9) - (rank[b.pre_rating ?? ""] ?? 9));
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-1.5">
+        {risks.map((r) => (
+          <div key={r.id} className="flex items-baseline gap-2 text-[12.5px]">
+            <span
+              className={`w-[62px] shrink-0 text-[11px] font-semibold ${RATING_STYLE[r.pre_rating ?? ""] ?? "text-ink-3"}`}
+            >
+              {r.pre_rating ?? "not assessed"}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-ink" title={r.title}>
+              {r.risk_no ? <span className="text-ink-3">{r.risk_no} </span> : null}
+              {r.title}
+            </span>
+            <span className="shrink-0 text-[11px] text-ink-3">
+              {r.status}
+              {r.responsible ? ` · ${r.responsible}` : ""}
+            </span>
+          </div>
+        ))}
+        {risks.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">No risks logged for this project yet.</p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
+/* Does the mitigation somebody wrote down actually move the assessment?
+
+   Only risks carrying *both* assessments appear. A post-treatment rating is a
+   judgement a person makes after deciding on an action, so a risk without one
+   has not been mitigated yet rather than been mitigated to no effect - and
+   showing it as unchanged would claim the second thing. The count of those is
+   reported instead, because "nobody has reassessed 8 of 10 risks" is itself the
+   finding a reader wants. */
+const MitigationEffect: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useRisks(scopeId);
+  const all = bundle?.risks ?? [];
+  const treated = all.filter((r) => r.pre_rating && r.post_rating);
+  const untreated = all.length - treated.length;
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-1.5">
+        {treated.map((r) => {
+          const moved = r.pre_rating !== r.post_rating;
+          const days =
+            r.pre_delay_days != null && r.post_delay_days != null
+              ? `${r.pre_delay_days}d → ${r.post_delay_days}d`
+              : null;
+          return (
+            <div key={r.id} className="text-[12.5px]">
+              <div className="flex items-baseline gap-2">
+                <span className="min-w-0 flex-1 truncate text-ink" title={r.title}>
+                  {r.title}
+                </span>
+                <span className="shrink-0 text-[11px]">
+                  <span className={RATING_STYLE[r.pre_rating ?? ""] ?? "text-ink-3"}>
+                    {r.pre_rating}
+                  </span>
+                  <span className="text-ink-3"> → </span>
+                  <span className={RATING_STYLE[r.post_rating ?? ""] ?? "text-ink-3"}>
+                    {r.post_rating}
+                  </span>
+                </span>
+              </div>
+              <div className="text-[11px] text-ink-3">
+                {moved ? "mitigation moves the rating" : "mitigation does not move the rating"}
+                {days ? ` · delay exposure ${days}` : ""}
+              </div>
+            </div>
+          );
+        })}
+        {treated.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            No risk here carries both a pre- and a post-mitigation assessment yet.
+          </p>
+        )}
+        {untreated > 0 && treated.length > 0 && (
+          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+            {untreated} more risk(s) have no post-mitigation assessment, so they
+            are absent rather than shown as unchanged.
+          </p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
+/* The decision half of every finding, on its own so it can be worked through.
+
+   `recommendation` is substituted server-side from the finding's own `facts`,
+   the same as `headline` - so an action naming a number names the number the
+   rule fired on. A finding with no recommendation is skipped rather than given
+   a generic one. */
+const AiRecommendedActions: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useInsight(scopeId);
+  const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+  const actionable = (bundle?.findings ?? [])
+    .filter((f) => f.recommendation)
+    .sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9));
+  const silent = (bundle?.findings ?? []).length - actionable.length;
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-2">
+        {actionable.map((f, i) => (
+          <div key={f.id} className="flex gap-2 text-[12.5px]">
+            <span className="shrink-0 text-[11px] font-bold text-ink-3">{i + 1}</span>
+            <span className="min-w-0 flex-1">
+              <span className="text-ink">{f.recommendation}</span>
+              <span className="block text-[11px] text-ink-3">
+                <span className="font-semibold uppercase">{f.severity}</span> · {f.headline}
+              </span>
+            </span>
+          </div>
+        ))}
+        {actionable.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            No finding here carries a recommended action.
+          </p>
+        )}
+        {silent > 0 && actionable.length > 0 && (
+          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+            {silent} further finding(s) have no recommendation attached.
+          </p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
 /* ---- Custom tiles -------------------------------------------------------
    Keyed `custom:<id>`, not a fixed catalogue entry - `DashboardCanvas`
    special-cases the prefix and renders this directly rather than looking the
@@ -814,4 +1682,22 @@ export const TILE_REGISTRY: Record<string, ComponentType<TileProps>> = {
   delivery_forecast: DeliveryForecastTile,
   effort_burn: EffortBurnTile,
   team_effort: TeamEffortTile,
+
+  // Added from the PM's own (Program)/(Project) tiles lists. Every key here
+  // must exist in `app/dashboard/catalogue.py` too: that module is the
+  // allow-list the AI generator validates against, and a tile rendered here
+  // but absent there can never be chosen, while the reverse renders as
+  // "Unknown tile".
+  projects_needing_attention: ProjectsNeedingAttention,
+  top_delayed_projects: TopDelayedProjects,
+  resource_contention_split: ResourceContentionSplit,
+  team_allocation: TeamAllocation,
+  project_summary: ProjectSummary,
+  program_context: ProgramContext,
+  schedule_variance: ScheduleVariance,
+  delayed_tasks: DelayedTasks,
+  upcoming_milestones: UpcomingMilestones,
+  risk_register: RiskRegister,
+  mitigation_effect: MitigationEffect,
+  ai_recommended_actions: AiRecommendedActions,
 };

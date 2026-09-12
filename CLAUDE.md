@@ -9,6 +9,10 @@ Read this first. It is the handoff between sessions.
 The Program↔Project relationship was fixed (section 0d below). **Production must
 run `scripts.migrate_programs --apply` with this deploy, not after it.**
 
+§0e ("Default setup" and 12 new tiles) rides along with this same deploy and
+adds no migration of its own. It does add a `POST /api/dashboards/default`
+route and a rebuilt bundle, so `npm run build` below is not optional either.
+
 Why it is not optional, and why it is more urgent than `migrate_ids` was. The
 Programs list used to hide the duplicate program row by dropping an empty
 program that shared a *name* with a non-empty one. That suppression is **gone**
@@ -22,7 +26,7 @@ deploying first, it just looks broken until step 2 runs.
 # 0. Check before touching production.
 git pull
 cd projectpulse
-python -m pytest -q          # expect 776 passed
+python -m pytest -q          # expect 794 passed (776 at §0d, +18 since)
 cd web && npm run build      # committed bundle must not be stale
 cd ..
 
@@ -164,6 +168,113 @@ trusting a provider switch, check `pip show anthropic` (or whichever vendor) ins
 container image, not just the dev venv** - `flyctl ssh console -C "python -c 'import
 anthropic'"` is the fast check, or just hit the deployed endpoint directly, which is what
 actually caught this (see §-1).
+
+---
+
+## 0e. This session — 2026-09-12 (second): "Default setup", and 12 tiles from the PM's own list
+
+**794 tests pass** (was 786; +8 in `tests/test_dashboard.py`). Bundle rebuilt.
+Nothing here added backend computation: every new tile is a slice of a bundle
+`/api/insight`, `/api/portfolio`, `/api/programs/{id}`, `/api/program`,
+`/api/gantt` or `/api/risks` already returns, which is `catalogue.py`'s own
+stated rule and now a test (`test_every_new_catalogue_tile_reads_a_bundle_that_exists`).
+
+### "Default setup"
+
+One button beside "New Dashboard" on both canvases, and the primary action on
+an empty one. `POST /api/dashboards/default?scope_type=&scope_id=` →
+`service.apply_default` → `catalogue.DEFAULT_TEMPLATE` → `apply_template`. It
+defers rather than holding its own tile list **so the button and "Browse
+Templates" cannot drift into offering two different things under one idea of
+"default"** — pinned by a test that compares the two boards tile-for-tile
+including x/y/w/h. It replaces (one dashboard per scope), so the button
+confirms first — but only when there are tiles to lose, since a prompt on an
+empty canvas is a dialog with no decision in it.
+
+### The two defaults are a matched pair, not two good tile sets
+
+This is what §0d's re-keying actually bought, made visible:
+
+- **Only the program level can see contention.** Excess demand on a shared
+  person is apportioned across the projects that lose out, so `resource` is the
+  one band whose cause lives outside the project it marks. `program_delivery_control`
+  therefore leads with who-is-short and where it lands; `project_delivery_control`
+  carries `program_context`, the same apportionment read from below.
+- **Membership is declared and may be absent.** `program_context` renders
+  `program_id = NULL` as "No program" in words, never as a blank or a default.
+
+Both templates pack to exact 12-column rows, and that is now a test
+(`test_the_default_boards_fill_whole_grid_rows`) rather than something to
+notice in a screenshot: `auto_layout` wraps at 12 and never back-fills, so a
+tile whose width does not close its row leaves a permanent gap on the board
+every new scope opens on.
+
+### 12 tiles, from `(Program)Tiles List` / `(Project)Tiles List`
+
+Program: `projects_needing_attention`, `top_delayed_projects`,
+`resource_contention_split`, `team_allocation`. Project: `project_summary`,
+`program_context`, `schedule_variance`, `delayed_tasks`, `upcoming_milestones`,
+`risk_register`, `mitigation_effect`, `ai_recommended_actions`.
+
+Two the sheet marks **Must** are deliberately absent, both for the same reason
+— the data to do them honestly does not exist:
+
+- **Progress vs Effort / Productivity Trend** need an output measure, and
+  `progress` is self-reported. `app/api/schemas/team.py` already refuses the
+  same tile for the same reason; refusing it twice in two places is the point.
+- **Current Critical Path** needs float per task, and the forward-pass CPM step
+  that produces float is still not built (§0d, "Not done, deliberately").
+  `delayed_tasks` flags `on_driving_path` instead, which is the honest half.
+
+### Three defects found by actually looking at the rendered page
+
+Each was invisible to the test suite and to `curl`, and each is the kind §0d
+was about:
+
+1. **The heat-map tile dropped `resource`.** `tileRegistry`'s local `DIMENSIONS`
+   still listed four while `app/api/schemas/portfolio.py` and
+   `pages/Portfolio.tsx` had five. Not merely incomplete — actively misleading:
+   Example Project is `resource: critical` and green on everything else, so on
+   the *program* board, the one screen that exists to show what projects cost
+   each other, it read all-green. The five squares are unlabelled at 20px, so
+   the tile now names the order once underneath.
+2. **`risk_matrix` rendered a list, not a matrix.** The catalogue described it
+   as "the 5x5 likelihood x impact heat-map" and its picker swatch was the
+   heat-map skeleton; a person who added it got a ranked list. That list is now
+   `risk_register`, which is what it always was, and the tile draws the grid
+   from `build_matrix` — the same lookup the badges use, so a cell cannot
+   disagree with a badge beside it.
+3. **`scripts/shots.py` still pointed at `excel:Program:1:DEFAULT`.**
+   `migrate_programs` re-keyed that away, so the one check that looks at a
+   rendered page was photographing "No program selected" and reporting success
+   — the same silence the missing `/risk` entry caused, noted in that file's
+   own comment.
+
+### One performance change, which the 13-tile default forced
+
+Every tile fetches its own bundle — that is what keeps a tile a standalone
+adapter — but the project default has four tiles on `/api/gantt` and three on
+`/api/insight`, each recomputing a dependency graph server-side. Opening it
+fired thirteen requests for six distinct bundles. `useBundle` now shares an
+in-flight promise per path for 5 seconds: long enough to cover one canvas
+mounting its tiles, short enough that navigating away and back does not serve a
+stale bundle to a tile that has no other refresh. Rejections are never cached.
+
+### Verified against real data, not just types
+
+`resource_contention_split`'s claim is conservation, so it was checked as one:
+the program's excess is 36.00 effort-days and the per-project column sums to
+36.00, with HRMS's 21.80 matching its own finding headline. `delay_days` is
+rendered per row and never totalled — `ProjectShortfall` says why. The risk
+tiles were exercised by POSTing two risks through the real API (matrix cells,
+register ordering, pre→post movement all correct) and deleting them again; the
+local register is back to empty, which is why those tiles photograph their
+empty states.
+
+⚠️ Nothing here touched ingestion, the risk register's contents, or production.
+**No deploy has been run for this work** — §0d's deploy block above is still the
+one owed to production, and this rides along with it. `/console` is still
+unauthenticated on the public deploy.
 
 ---
 

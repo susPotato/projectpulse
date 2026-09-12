@@ -12,7 +12,13 @@ from sqlalchemy.orm import sessionmaker
 
 from app.api.schemas.agent import ChatMessage
 from app.api.schemas.dashboard import CustomChartDraft, CustomTileIn, LiveSource, TileIn
-from app.dashboard.catalogue import BY_KEY, CATALOGUE, TEMPLATES, for_scope
+from app.dashboard.catalogue import (
+    BY_KEY,
+    CATALOGUE,
+    DEFAULT_TEMPLATE,
+    TEMPLATES,
+    for_scope,
+)
 from app.dashboard.custom import (
     _local_revision,
     chat_turn,
@@ -27,6 +33,7 @@ from app.dashboard.custom import (
 from app.dashboard.generator import generate_layout
 from app.dashboard.service import (
     add_tile,
+    apply_default,
     seed_default_dashboard,
     apply_template,
     delete_tile,
@@ -153,6 +160,115 @@ def test_reset_blank_clears_existing_tiles(session):
     out = reset_blank(session, "program", PROGRAM)
     assert out.tiles == []
     assert out.source == "blank"
+
+
+# --------------------------------------------------------------------------
+# "Default setup": the one-click board per scope, and the pair of defaults
+# behind it.
+# --------------------------------------------------------------------------
+
+
+def test_every_scope_has_a_default_and_it_names_a_real_template():
+    """The button offers a default for both levels or neither. A scope missing
+    from this map turns the button into a 400 on the only board a new scope
+    ever opens on."""
+    assert set(DEFAULT_TEMPLATE) == {"program", "project"}
+    for scope, template in DEFAULT_TEMPLATE.items():
+        assert template in TEMPLATES, template
+        keys = TEMPLATES[template]
+        assert keys, template
+        # Every key in a default is for that scope - a default half-composed of
+        # the other level's tiles applies as a partial board, which looks like
+        # the feature half-working rather than like a mistake.
+        assert all(BY_KEY[k].scope == scope for k in keys), template
+
+
+def test_apply_default_places_the_scopes_whole_default(session):
+    for scope, scope_id in (("program", PROGRAM), ("project", PROJECT)):
+        out = apply_default(session, scope, scope_id)
+        assert out is not None
+        assert out.source == "template"
+        assert [t.tile_key for t in out.tiles] == list(TEMPLATES[DEFAULT_TEMPLATE[scope]])
+
+
+def test_apply_default_and_browse_templates_place_the_identical_board(session):
+    """The two routes into the same decision must not drift. `apply_default`
+    defers to `apply_template` precisely so this holds by construction."""
+    for scope, scope_id in (("program", PROGRAM), ("project", PROJECT)):
+        via_default = apply_default(session, scope, scope_id)
+        via_template = apply_template(session, scope, scope_id, DEFAULT_TEMPLATE[scope])
+        assert via_default is not None and via_template is not None
+        assert [(t.tile_key, t.x, t.y, t.w, t.h) for t in via_default.tiles] == [
+            (t.tile_key, t.x, t.y, t.w, t.h) for t in via_template.tiles
+        ]
+
+
+def test_apply_default_replaces_rather_than_appends(session):
+    """It is a "New Dashboard" path, not an "Add Tiles" one - which is why the
+    button that calls it confirms first when there is something to lose."""
+    add_tile(session, "project", PROJECT, TileIn(tile_key="schedule_gantt", x=0, y=0, w=4, h=3))
+    out = apply_default(session, "project", PROJECT)
+    assert out is not None
+    expected = list(TEMPLATES[DEFAULT_TEMPLATE["project"]])
+    assert [t.tile_key for t in out.tiles] == expected
+    assert len(out.tiles) == len(expected)
+
+
+def test_apply_default_is_none_for_a_scope_with_no_default(session):
+    """The route turns this into a 400. Returning an empty dashboard instead
+    would look like a default that happens to be blank."""
+    assert apply_default(session, "portfolio", PROGRAM) is None
+
+
+def test_the_default_boards_fill_whole_grid_rows(session):
+    """Not cosmetic. `auto_layout` wraps at 12 columns and never back-fills, so
+    a tile whose width does not close its row leaves a permanent gap on the
+    board every new scope opens on. Only a trailing row may be short."""
+    from app.dashboard.service import GRID_COLS
+
+    for scope, scope_id in (("program", PROGRAM), ("project", PROJECT)):
+        out = apply_default(session, scope, scope_id)
+        assert out is not None
+        widths: dict[int, int] = {}
+        for tile in out.tiles:
+            widths[tile.y] = widths.get(tile.y, 0) + tile.w
+        rows = sorted(widths)
+        for y in rows[:-1]:
+            assert widths[y] == GRID_COLS, f"{scope} row y={y} is {widths[y]} wide"
+        assert widths[rows[-1]] <= GRID_COLS
+
+
+def test_the_project_default_carries_the_program_relationship(session):
+    """The two defaults are designed as a pair, and this is the hinge: a
+    project board that cannot name its program has no way to show the one
+    thing a project cannot compute for itself - what a sibling is taking from
+    it (`app/scope.py`, `app/intelligence/contention.py`)."""
+    assert "program_context" in TEMPLATES[DEFAULT_TEMPLATE["project"]]
+    assert "resource_contention_split" in TEMPLATES[DEFAULT_TEMPLATE["program"]]
+
+
+def test_every_new_catalogue_tile_reads_a_bundle_that_exists():
+    """The catalogue's own rule (its module docstring): a tile is a slice of a
+    bundle that already exists, never a trigger for new backend computation.
+    This pins the `data_source` values to the routes actually served, so a
+    future entry naming a bundle nobody computes fails here rather than
+    rendering an empty tile."""
+    served = {
+        "insight": "/api/insight",
+        "portfolio": "/api/portfolio",
+        "programs": "/api/programs/{program_id}",
+        "program": "/api/program",
+        "risks": "/api/risks",
+        "gantt": "/api/gantt",
+        "forecast": "/api/forecast",
+        "team": "/api/team",
+    }
+    from app.api.main import app
+
+    paths = set(app.openapi()["paths"])
+    for spec in CATALOGUE:
+        assert spec.data_source in served, spec.key
+        assert served[spec.data_source] in paths, (spec.key, spec.data_source)
 
 
 # --------------------------------------------------------------------------
