@@ -150,7 +150,23 @@ DEFAULT_TABLE = RuleTable(
             id="tasks_overdue",
             when=(Condition("tasks_overdue", ">=", 1),),
             category="schedule_risk",
-            severity="high",
+            # `medium`, not `high`, and the reason is worth keeping.
+            #
+            # `as_of` is the latest change we observed, and it falls back to the
+            # wall clock for a project nothing has ever been observed to change
+            # - which is every project on its first upload. So "past due" can be
+            # measuring the age of the document rather than the health of the
+            # work: the demo sheets describe March, and read in September every
+            # one of their tasks is trivially overdue.
+            #
+            # The finding is still true and still worth making - those tasks
+            # were due and are not done - but `high` bands the project critical
+            # on its own, and a whole portfolio going red because a spreadsheet
+            # is old is exactly the false alarm that teaches people to ignore
+            # the colour. Whether overdue is a crisis depends on what those
+            # tasks are, which this rule cannot know, so it flags rather than
+            # judges.
+            severity="medium",
             headline=(
                 "{{tasks_overdue}} task(s) are past their own due date and not "
                 "marked done."
