@@ -728,6 +728,54 @@ def create_project_route(body: ProjectIn) -> CreatedProject:
     )
 
 
+@app.get("/api/projects/{project_id}/removal")
+def preview_project_removal(project_id: str) -> dict:
+    """What removing this project would destroy, without removing anything.
+
+    Its own request so a confirmation can name real numbers rather than a
+    generic warning. "This deletes 17 tasks and 2 risks you typed by hand" is a
+    decision; "are you sure?" is a reflex.
+    """
+    from app.projects import plan
+
+    with session_scope() as session:
+        outcome = plan(session, project_id)
+        return {
+            "project_id": outcome.project_id,
+            "name": outcome.name,
+            "removable": outcome.removable,
+            "reason": outcome.reason,
+            "source_ids": list(outcome.source_ids),
+            "counts": outcome.counts,
+            "irreplaceable": outcome.irreplaceable,
+        }
+
+
+@app.delete("/api/projects/{project_id}")
+def remove_project_route(project_id: str) -> dict:
+    """Remove a project and everything that was only ever about it.
+
+    There is no undo and nothing rebuilds a risk somebody typed or a board
+    somebody arranged, so the reason to refuse is served as a sentence rather
+    than a status code alone - see `app/projects.py` for what is deliberately
+    left behind.
+    """
+    from app.projects import remove
+
+    with session_scope() as session:
+        try:
+            outcome = remove(session, project_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "ok": True,
+        "project_id": outcome.project_id,
+        "name": outcome.name,
+        "removed": outcome.counts,
+    }
+
+
 @app.get("/team")
 def team_page() -> FileResponse:
     """Who is carrying what, and what moved."""

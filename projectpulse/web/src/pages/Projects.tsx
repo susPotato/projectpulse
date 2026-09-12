@@ -237,7 +237,12 @@ export function ProjectsView({
 
       <div className="grid gap-2">
         {matched.map((row) => (
-          <ProjectRowCard key={row.project_id} row={row} program={programOf[row.project_id]} />
+          <ProjectRowCard
+            key={row.project_id}
+            row={row}
+            program={programOf[row.project_id]}
+            onRemoved={() => onChanged?.()}
+          />
         ))}
         {matched.length === 0 && (
           <p className="m-0 rounded-lg border border-dashed border-rule px-3 py-6 text-center text-[13px] text-ink-3">
@@ -251,12 +256,142 @@ export function ProjectsView({
   );
 }
 
-function ProjectRowCard({ row, program }: { row: ProjectRow; program?: string }) {
+/* What removing a project would destroy, as the server reports it.
+
+   Fetched only when somebody presses Remove, never with the list: it is several
+   counting queries per project, and a portfolio page should not run them for
+   rows nobody is touching. */
+interface RemovalPreview {
+  name: string;
+  removable: boolean;
+  reason: string;
+  counts: Record<string, number>;
+  irreplaceable: Record<string, number>;
+}
+
+/* Remove, in two steps, because there is no undo and nothing rebuilds a risk
+   somebody typed or a board somebody arranged.
+
+   The first press asks the server what would go and shows the real numbers.
+   "This deletes 17 tasks and 2 risks you typed by hand" is a decision; "are you
+   sure?" is a reflex, and people click through reflexes. */
+function RemoveProject({ row, onRemoved }: { row: ProjectRow; onRemoved: () => void }) {
+  const [preview, setPreview] = useState<RemovalPreview | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function ask() {
+    setBusy(true);
+    setError(null);
+    try {
+      setPreview(
+        await load<RemovalPreview>(
+          `/api/projects/${encodeURIComponent(row.project_id)}/removal`,
+        ),
+      );
+    } catch (e) {
+      setError((e as ApiProblem).detail ?? "could not read what would be removed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirm() {
+    setBusy(true);
+    try {
+      await send(`/api/projects/${encodeURIComponent(row.project_id)}`, "DELETE");
+      onRemoved();
+    } catch (e) {
+      setError((e as ApiProblem).detail ?? "could not remove this project");
+      setBusy(false);
+    }
+  }
+
+  if (!preview && !error) {
+    return (
+      <button
+        type="button"
+        onClick={ask}
+        disabled={busy}
+        title={`Remove ${row.name}`}
+        className="shrink-0 cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-[11.5px] text-ink-3 hover:border-red hover:text-red disabled:opacity-50"
+      >
+        {busy ? "..." : "Remove"}
+      </button>
+    );
+  }
+
   return (
+    <div className="w-full rounded-md border border-rule bg-bg p-2.5">
+      {error && <p className="m-0 text-[12px] text-red">{error}</p>}
+      {preview && !preview.removable && (
+        <p className="m-0 text-[12px] text-ink-2">{preview.reason}</p>
+      )}
+      {preview?.removable && (
+        <>
+          <p className="m-0 text-[12.5px] text-ink">
+            Remove <b>{preview.name}</b> and everything about it?
+          </p>
+          <p className="mt-1 mb-0 text-[11.5px] text-ink-3">
+            {Object.entries(preview.counts)
+              .filter(([, n]) => n > 0)
+              .map(([k, n]) => `${n} ${k.replace(/_/g, " ")}`)
+              .join(", ") || "nothing has been ingested for it"}
+            .
+          </p>
+          {/* Led with, because it is the half no sync brings back. */}
+          {Object.keys(preview.irreplaceable).length > 0 && (
+            <p className="mt-1 mb-0 text-[11.5px] font-semibold text-red">
+              Includes{" "}
+              {Object.entries(preview.irreplaceable)
+                .map(([k, n]) => `${n} ${k.replace(/_/g, " ")}`)
+                .join(" and ")}{" "}
+              that no sync will rebuild.
+            </p>
+          )}
+        </>
+      )}
+      <div className="mt-2 flex gap-2">
+        {preview?.removable && (
+          <button
+            type="button"
+            onClick={confirm}
+            disabled={busy}
+            className="cursor-pointer rounded-md border border-red bg-red px-2.5 py-1 text-[11.5px] font-semibold text-surface disabled:opacity-50"
+          >
+            {busy ? "Removing..." : "Remove permanently"}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setPreview(null);
+            setError(null);
+          }}
+          className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[11.5px] text-ink-2"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ProjectRowCard({
+  row,
+  program,
+  onRemoved,
+}: {
+  row: ProjectRow;
+  program?: string;
+  onRemoved: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-rule bg-surface px-3.5 py-3 hover:border-navy">
     <a
       href={projectLink("/project/dashboard", row)}
       title={`Open ${row.name}`}
-      className="flex items-center gap-3 rounded-lg border border-rule bg-surface px-3.5 py-3 no-underline hover:border-navy"
+      className="flex min-w-0 flex-1 items-center gap-3 no-underline"
     >
       <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${BAND_DOT[row.band] ?? "bg-rule"}`} />
 
@@ -285,6 +420,8 @@ function ProjectRowCard({ row, program }: { row: ProjectRow; program?: string })
         {BAND_LABEL[row.band]}
       </span>
     </a>
+      <RemoveProject row={row} onRemoved={onRemoved} />
+    </div>
   );
 }
 

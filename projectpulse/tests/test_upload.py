@@ -534,3 +534,63 @@ def config_module():
     import app.config
 
     return app.config.settings
+
+# --------------------------------------------------------------------------
+# Removing a project. The one operation with nothing to rebuild from.
+# --------------------------------------------------------------------------
+
+
+def test_a_built_in_seed_project_is_refused_with_a_reason():
+    """`app/scope.py` declares HRMS in code, not in the registry. Deleting its
+    data would empty it without removing it - leaving a project on the portfolio
+    with nothing in it, which looks exactly like one awaiting its first sync and
+    is a worse state than the one somebody was trying to leave."""
+    from app.db import session_scope
+    from app.projects import plan, remove
+
+    with session_scope() as session:
+        outcome = plan(session, "excel:Project:1:HRMS")
+        assert outcome.removable is False
+        assert "scope.py" in outcome.reason
+
+        with pytest.raises(ValueError):
+            remove(session, "excel:Project:1:HRMS")
+
+
+def test_an_unknown_project_is_refused_rather_than_silently_doing_nothing():
+    from app.db import session_scope
+    from app.projects import plan
+
+    with session_scope() as session:
+        outcome = plan(session, "nothing:Project:9:NOPE")
+        assert outcome.removable is False
+        assert "no project" in outcome.reason
+
+
+def test_the_plan_counts_what_would_go_without_removing_any_of_it():
+    """The preview has to be free of side effects, or pressing Remove and then
+    cancelling would already have done half the job."""
+    from sqlalchemy import func, select
+
+    from app.db import session_scope
+    from app.models.domain import Task
+    from app.projects import plan
+
+    with session_scope() as session:
+        before = session.scalar(select(func.count()).select_from(Task)) or 0
+        plan(session, "excel:Project:1:HRMS")
+        plan(session, "nothing:Project:9:NOPE")
+        assert (session.scalar(select(func.count()).select_from(Task)) or 0) == before
+
+
+def test_a_removal_plan_names_the_rows_no_sync_can_rebuild():
+    """A risk somebody typed and a board somebody arranged have no source system
+    behind them. A confirmation that does not lead with those is asking the
+    wrong question."""
+    from app.projects import RemovalPlan
+
+    outcome = RemovalPlan(
+        project_id="p", name="P", removable=True,
+        counts={"tasks": 10, "risks": 2, "dashboards": 1, "qa_items": 0},
+    )
+    assert outcome.irreplaceable == {"risks": 2, "dashboards": 1}
