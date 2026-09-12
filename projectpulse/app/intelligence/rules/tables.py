@@ -107,6 +107,113 @@ class RuleTable:
 DEFAULT_TABLE = RuleTable(
     name="delivery_risk",
     rules=(
+        # -- Snapshot rules -------------------------------------------------
+        #
+        # For a project whose source carries no baseline, no dependency edges
+        # and no effort - a Jira export being the case these exist for. Every
+        # condition below reads a count over the rows as they stand, so none
+        # needs a second observation to fire.
+        #
+        # They earn their place because the alternative is silence. A project
+        # ingested from Jira alone trips none of the schedule rules above: with
+        # no edges there is no chain, so `max_propagated_days` is 0 and the page
+        # reports nothing at all - absence of data rendered as absence of risk,
+        # which is the one thing this product exists not to do.
+        Rule(
+            id="status_not_maintained",
+            # Half the work claiming to be underway with none of it finished is
+            # a statement about the *board*, not about the work.
+            when=(
+                Condition("tasks_in_progress", ">=", 5),
+                Condition("tasks_done", "==", 0),
+            ),
+            category="data_quality",
+            severity="medium",
+            headline=(
+                "{{tasks_in_progress}} of {{task_count}} task(s) report in "
+                "progress and none is complete."
+            ),
+            recommendation=(
+                "Check the board is being kept up to date before reading "
+                "anything else here - every other figure on this page is "
+                "computed from these statuses."
+            ),
+            rationale=(
+                "A team cannot genuinely have this much in flight at once with "
+                "nothing finished. The likeliest explanation is that status is "
+                "set when work is picked up and not moved again, which makes "
+                "'in progress' mean 'not started' - and that is worth knowing "
+                "before trusting a completion figure derived from it."
+            ),
+        ),
+        Rule(
+            id="tasks_overdue",
+            when=(Condition("tasks_overdue", ">=", 1),),
+            category="schedule_risk",
+            severity="high",
+            headline=(
+                "{{tasks_overdue}} task(s) are past their own due date and not "
+                "marked done."
+            ),
+            recommendation=(
+                "Re-date them or close them. A due date in the past is either a "
+                "slip nobody has recorded or a task nobody has closed, and the "
+                "two need different actions."
+            ),
+            rationale=(
+                "Measured against the scan this analysis reflects, not against "
+                "today, and it needs no dependency graph - which is what makes "
+                "it the one schedule claim available for a source that carries "
+                "no baseline and no edges."
+            ),
+        ),
+        Rule(
+            id="due_soon_none_finished",
+            when=(
+                Condition("tasks_due_soon", ">=", 3),
+                Condition("tasks_done", "==", 0),
+            ),
+            category="schedule_risk",
+            severity="medium",
+            headline=(
+                "{{tasks_due_soon}} task(s) fall due within a fortnight and "
+                "nothing has been completed yet."
+            ),
+            recommendation=(
+                "Confirm which of them will actually land, and move the rest "
+                "now rather than on the day."
+            ),
+            rationale=(
+                "A fortnight is the horizon a PM can still act inside - long "
+                "enough to move a person or cut scope. With no completion to "
+                "date behind it, a cluster of dates in that window is a "
+                "forecast nobody has evidence for."
+            ),
+        ),
+        Rule(
+            id="single_owner_project",
+            when=(
+                Condition("distinct_owners", "==", 1),
+                Condition("task_count", ">=", 5),
+            ),
+            category="resource_risk",
+            severity="medium",
+            headline=(
+                "All {{task_count}} task(s) are assigned to one person "
+                "({{distinct_owners}} distinct owner)."
+            ),
+            recommendation=(
+                "Confirm this is real rather than an unassigned backlog filed "
+                "under whoever raised it - the two look identical here and only "
+                "one of them is a delivery risk."
+            ),
+            rationale=(
+                "Stated so it is not mistaken for a clean bill of health. "
+                "Cross-project contention is computed across projects sharing a "
+                "person, so a single-owner project contributes nothing to a "
+                "program rollup: its resource band is unknown, not healthy."
+            ),
+        ),
         Rule(
             id="schedule_inconsistent_major",
             when=(Condition("max_propagated_days", ">=", 5),),

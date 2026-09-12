@@ -69,7 +69,15 @@ SOURCES: dict[str, tuple[str, ...]] = {
     "Task ID": ("Key",),
     "Activity": ("Summary",),
     "Phase": ("Issue Type",),
-    "Milestone": ("Milestone", "Fix Version/s"),
+    # A parent/epic is a *grouping*, and Milestone is this contract's grouping
+    # column - so an epic becomes the band its children sit under on the Gantt,
+    # which is what "NOT UNDER A MILESTONE" was showing before. It is emphatically
+    # not a dependency: a parent says these belong together, never that one waits
+    # for another, and putting it in `Predecessor` would fabricate a chain.
+    #
+    # `Product` is last because it is only a parent link on instances configured
+    # that way; the standard fields win when present.
+    "Milestone": ("Parent", "Parent Link", "Epic Link", "Epic Name", "Fix Version/s", "Product"),
     "Status": ("Status",),
     "Owner": ("Assignee",),
     "Start": ("Planned Start", "Start date", "Start Date"),
@@ -100,6 +108,13 @@ class NotAJiraExport(ValueError):
     500, and the CLI can exit with a message - the two disagreed when this was
     a bare `SystemExit` inside a script.
     """
+
+
+#: Jira writes a parent as `Some Name [PROJ-123]`. The key is noise in a
+#: grouping label - the band on a chart wants "Management", not
+#: "Management [COWORKLOCAL-1]" - and the issue it names is in the export
+#: anyway, under its own row.
+PARENT_KEY = re.compile(r"\s*\[[A-Z][A-Z0-9_]*-\d+\]\s*$")
 
 
 def _clean(value):
@@ -196,12 +211,36 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
     """`(records, chosen)` - the template rows, and which Jira column fed each."""
     lookup = {h.casefold(): i for i, h in enumerate(headers) if h}
 
+    def _populated(name: str) -> int:
+        """How many issues actually have a value in this Jira column."""
+        at = lookup[name.casefold()]
+        return sum(1 for r in rows if at < len(r) and _clean(r[at]) is not None)
+
+    #: The candidate with the most data wins, not the first one that exists.
+    #:
+    #: Presence order was wrong and quietly so. A Jira instance defines every
+    #: standard field whether or not anybody fills it, so this export carries an
+    #: empty `Parent Link` column *and* a populated `Product` one - and picking
+    #: by presence chose the empty one, reporting "Milestone 0/17 from 'Parent
+    #: Link'" as though the export had no parents. It has 16.
+    #:
+    #: Ties keep the declared order, so the preference in `SOURCES` still decides
+    #: between two columns that are equally filled - which is the case it was
+    #: written for (`Due Date` vs `End date`, where an instance uses one or the
+    #: other).
     chosen: dict[str, str] = {}
     for column, candidates in SOURCES.items():
-        for candidate in candidates:
-            if candidate.casefold() in lookup:
-                chosen[column] = candidate
-                break
+        present = [c for c in candidates if c.casefold() in lookup]
+        if not present:
+            continue
+        best = max(present, key=lambda name: (_populated(name), -present.index(name)))
+        if _populated(best) or not rows:
+            chosen[column] = best
+        else:
+            # Every candidate is empty. Name the preferred one anyway so the
+            # coverage report can say "0/17 from 'Due Date'" rather than going
+            # silent about a column nobody filled.
+            chosen[column] = present[0]
 
     records = []
     for row in rows:
@@ -213,7 +252,13 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
                 continue
             at = lookup[source.casefold()]
             raw = row[at] if at < len(row) else None
-            record[column] = _as_date(raw) if column in DATE_COLUMNS else _clean(raw)
+            if column in DATE_COLUMNS:
+                record[column] = _as_date(raw)
+            else:
+                value = _clean(raw)
+                if column == "Milestone" and isinstance(value, str):
+                    value = PARENT_KEY.sub("", value) or None
+                record[column] = value
         records.append(record)
     return records, chosen
 

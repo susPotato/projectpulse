@@ -549,17 +549,33 @@ def test_a_project_analysed_without_a_program_says_contention_is_unknown():
 
 def test_the_contention_rules_cannot_fire_without_program_context():
     """Every contention rule requires `has_program_context`, so a project
-    analysed alone produces no contention finding at all."""
+    analysed alone produces no contention finding at all.
+
+    Keyed off the fields a rule actually *reads*, not off its category. The
+    category was a proxy that happened to hold while every `resource_risk` rule
+    was a contention rule, and it stopped holding the moment one was not:
+    `single_owner_project` is a real resource claim computed from the task rows
+    alone, and guarding it with `has_program_context` would be backwards, since
+    the thing it reports is most worth saying when there is no program to
+    compare against.
+
+    The guarantee this is here for is unchanged and now stated directly: a rule
+    that reads a contention scalar must not be able to fire without the program
+    context those scalars come from, because every one of them sits at zero when
+    the context is absent - and zero excess reads as "no conflict" rather than
+    "not looked at"."""
     from app.intelligence.rules.tables import DEFAULT_TABLE
 
     contention_rules = [
-        r for r in DEFAULT_TABLE if r.category == "resource_risk"
+        r
+        for r in DEFAULT_TABLE
+        if any(c.field.startswith("contention_") for c in r.when)
     ]
 
     assert contention_rules, "the contention rules went missing"
     for rule in contention_rules:
         guards = [c for c in rule.when if c.field == "has_program_context"]
-        assert guards, f"{rule.id} can fire without program context"
+        assert guards, f"{rule.id} reads a contention scalar without guarding on context"
 
 
 def test_the_rule_table_is_still_valid_with_the_contention_rules():

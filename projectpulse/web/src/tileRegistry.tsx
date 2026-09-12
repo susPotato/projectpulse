@@ -1526,7 +1526,19 @@ const DelayedTasks: ComponentType<TileProps> = ({ scopeId }) => {
           </div>
         ))}
         {late.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">No task is late on either measure.</p>
+          /* Which "late" this tile means, when it means nothing.
+             Both measures here are *relative*: slip against a baseline, and
+             slip against a dependency chain. A source that carries neither -
+             a Jira export does not - makes both of them 0, and "no task is
+             late" then sits next to an Insight finding saying several are
+             past their due date. Both are true and they look contradictory,
+             so the empty state says which lateness it is reporting. */
+          <p className="m-0 text-[12.5px] text-ink-3">
+            {(bundle.rows ?? []).some((r) => r.baseline_end) ||
+            (bundle.rows ?? []).some((r) => r.depends_on.length > 0)
+              ? "No task is late on either measure."
+              : "No task has a baseline or a predecessor, so neither recorded nor implied slip can be measured. Overdue against a due date is reported on Insight."}
+          </p>
         )}
         {late.length > 10 && (
           <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">

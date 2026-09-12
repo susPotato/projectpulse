@@ -104,6 +104,21 @@ def _hours_since_last_sync(session, generated_at: datetime) -> float | None:
     return (generated_at - finished).total_seconds() / 3600
 
 
+def load_owners(session, project_ids: Sequence[str]) -> list[str | None]:
+    """Who each task belongs to.
+
+    Its own read because `load_tasks` returns `TaskNode`, which is deliberately
+    reduced to what scheduling needs and carries no assignee. Widening that type
+    would put a field in the scheduling model the scheduler never looks at; a
+    named query costs one cheap column scan and says what it is for.
+    """
+    return list(
+        session.scalars(
+            select(Task.assignee).where(Task.project_id.in_(list(project_ids)))
+        ).all()
+    )
+
+
 def load_tasks(session, project_ids: Sequence[str]) -> list[TaskNode]:
     rows = session.scalars(
         select(Task).where(Task.project_id.in_(list(project_ids)))
@@ -285,6 +300,7 @@ def analyze_project(
         data_age_hours=-1.0 if hours_since_sync is None else hours_since_sync,
         program=program,
         source_ids=project_ids,
+        owners=load_owners(session, project_ids),
     )
 
     engine = engine or RulesEngine(table, known_fields=_known_fields())

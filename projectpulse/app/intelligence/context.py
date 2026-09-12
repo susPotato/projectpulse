@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from app.intelligence.contention import OVERTIME_MONTHLY_LIMIT
@@ -38,6 +38,14 @@ if TYPE_CHECKING:  # pragma: no cover - annotation only
 #: Statuses that mean "not progressing", normalized to casefold.
 BLOCKED_STATES = frozenset({"blocked", "yes", "on hold", "impeded"})
 DONE_STATES = frozenset({"done", "complete", "completed", "closed"})
+IN_PROGRESS_STATES = frozenset({"in progress", "in_progress", "wip", "doing"})
+
+#: What counts as "due soon". Two weeks because it is the horizon a PM can still
+#: act inside - long enough to move a person or cut scope, short enough that
+#: everything in it is genuinely imminent. A rule may narrow it; nothing should
+#: widen it without saying why, since a 90-day window makes every project look
+#: busy and says nothing.
+DUE_SOON_DAYS = 14
 
 
 def _ratio(part: int, whole: int) -> float:
@@ -67,6 +75,26 @@ class DeliveryContext:
     tasks_not_started: int = 0
     tasks_with_baseline: int = 0
     baseline_coverage: float = 0.0
+
+    #: What a *snapshot* says, for a project whose source carries no baseline,
+    #: no dependency edges and no effort - a Jira export being the case this
+    #: exists for. Every scalar below is a count over the task rows as they
+    #: stand, so none of them needs a second observation to mean something.
+    #:
+    #: They are deliberately separate from the schedule scalars above rather
+    #: than folded into them: `max_propagated_days` is a claim about a *chain*,
+    #: and a project with no edges has no chain to make claims about. Saying
+    #: "nothing is late" there would be reporting absence of data as absence of
+    #: risk, which is the failure this product is built against.
+    tasks_in_progress: int = 0
+    #: Past its own planned finish and not done, counted against `as_of` rather
+    #: than today: the analysis reflects the scan it was built from.
+    tasks_overdue: int = 0
+    #: Due inside `DUE_SOON_DAYS` and not done.
+    tasks_due_soon: int = 0
+    #: Distinct assignees on the task rows. One means every cross-project
+    #: contention signal is structurally unavailable, not that there is none.
+    distinct_owners: int = 0
     #: Hours between `generated_at` and the most recent successful sync of any
     #: source, or -1 when nothing has ever synced. Not the age of the events
     #: the data describes - the demo timeline is fixed in the past by design -
@@ -184,6 +212,7 @@ def build_context(
     data_age_hours: float = -1.0,
     program: "ProgramContext | None" = None,
     source_ids: Sequence[str] = (),
+    owners: Sequence[str | None] = (),
 ) -> DeliveryContext:
     """Aggregate one project into the scalars the rules compare.
 
@@ -197,6 +226,11 @@ def build_context(
     encoding: a project analysed alone has unknown contention, not none.
     `source_ids` is how this project's allocations are found - every id it may
     have been filed under, not just the canonical one.
+
+    `owners` is the assignee of each task row. Passed in rather than read off
+    `schedule.tasks` because `TaskNode` is deliberately reduced to what
+    scheduling needs, and who a task belongs to is not that - widening it would
+    put a field in the scheduling type that the scheduler never reads.
     """
     tasks = list(schedule.tasks.values())
     projections = list(impact.projections.values())
@@ -213,6 +247,22 @@ def build_context(
         1 for c in changes if getattr(c, "identity_confidence", "high") == "low"
     )
     with_baseline = sum(1 for t in tasks if t.baseline_end is not None)
+
+    #: Counted against `as_of` - the scan the analysis reflects - and not
+    #: against today. The demo timeline is fixed in the past by design, so
+    #: "overdue" measured from the wall clock would report every demo task as
+    #: late and mean nothing.
+    _today = as_of.date() if isinstance(as_of, datetime) else as_of
+    _soon = _today + timedelta(days=DUE_SOON_DAYS)
+    _open_tasks = [t for t in tasks if _status_of(t) not in DONE_STATES]
+    _overdue = sum(
+        1 for t in _open_tasks if t.planned_end is not None and t.planned_end < _today
+    )
+    _due_soon = sum(
+        1
+        for t in _open_tasks
+        if t.planned_end is not None and _today <= t.planned_end <= _soon
+    )
 
     dependency_backed = sum(
         1
@@ -247,6 +297,10 @@ def build_context(
         as_of=as_of.isoformat(),
         task_count=len(tasks),
         tasks_blocked=sum(1 for t in tasks if _status_of(t) in BLOCKED_STATES),
+        tasks_in_progress=sum(1 for t in tasks if _status_of(t) in IN_PROGRESS_STATES),
+        tasks_overdue=_overdue,
+        tasks_due_soon=_due_soon,
+        distinct_owners=len({(o or "").strip() for o in owners if (o or "").strip()}),
         tasks_done=sum(1 for t in tasks if _status_of(t) in DONE_STATES),
         tasks_not_started=sum(1 for t in tasks if _status_of(t) == "not started"),
         tasks_with_baseline=with_baseline,
