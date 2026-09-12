@@ -653,3 +653,144 @@ def test_a_page_with_no_server_rendered_bar_is_left_alone():
     react_page = '<div id="root"></div>'
 
     assert _snapshot_nav(react_page, "2026-09-07") == react_page
+
+
+# --------------------------------------------------------------------------
+# `scripts.from_jira_export`: the three ways a Jira export is not a sheet.
+#
+# Every case here is one this converter met on a real export
+# ("Jira Cowork Local 1.xlsx", 17 issues, 421 columns) rather than one imagined
+# for a test - which is the same standard the rest of this file is held to.
+# --------------------------------------------------------------------------
+
+
+def _export(tmp_path, header_extra=(), rows=(), preamble=2):
+    """A workbook shaped like a Jira "general_report" export."""
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "general_report"
+    for index in range(preamble):
+        sheet.append([f"preamble line {index}"])
+    sheet.append(["Project", "Key", "Summary", "Status", "Assignee", "Due Date",
+                  "Created", *header_extra])
+    for row in rows:
+        sheet.append(list(row))
+    path = tmp_path / "export.xlsx"
+    workbook.save(path)
+    return path
+
+
+def test_the_header_row_is_found_below_the_export_preamble(tmp_path):
+    """A Jira export opens with the filter name and "Displaying N issues at
+    ...", so the table never starts at row 1."""
+    from scripts.from_jira_export import read_export
+
+    path = _export(tmp_path, rows=[("P", "P-1", "One", "To Do", "Ann", None, None)])
+    headers, rows = read_export(path)
+    assert headers[:3] == ["Project", "Key", "Summary"]
+    assert len(rows) == 1
+
+
+def test_only_rows_carrying_a_key_are_issues(tmp_path):
+    """One issue is not one row. An export with rich-text Descriptions writes
+    each issue across a block, the fields on the first row and the wrapped text
+    below - so counting rows, or assuming a fixed stride, invents issues."""
+    from scripts.from_jira_export import read_export
+
+    path = _export(
+        tmp_path,
+        rows=[
+            ("P", "P-1", "One", "To Do", "Ann", None, None),
+            (None, None, "...wrapped description...", None, None, None, None),
+            (None, None, None, None, None, None, None),
+            ("P", "P-2", "Two", "Done", "Bo", None, None),
+        ],
+    )
+    _, rows = read_export(path)
+    assert len(rows) == 2
+
+
+def test_a_cell_holding_the_pages_own_javascript_is_dropped(tmp_path):
+    """Jira renders some custom fields by shipping the script that draws them,
+    and its own rendering failures arrive as prose. A task whose Owner is a
+    jQuery call is worse than a task with no Owner."""
+    from scripts.from_jira_export import convert, read_export
+
+    path = _export(
+        tmp_path,
+        rows=[
+            ("P", "P-1", "One", "To Do",
+             'setTimeout(function(){ $(".x").remove(); })', None, None),
+            ("P", "P-2", "Two", "To Do",
+             "Error rendering 'aligned-strategy-customfield'.", None, None),
+            ("P", "P-3", "Three", "To Do", "Ann", None, None),
+        ],
+    )
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+    assert [r["Owner"] for r in records] == [None, None, "Ann"]
+
+
+def test_a_date_column_keeps_the_day_and_drops_the_time(tmp_path):
+    """Jira writes datetimes. This app compares dates, and carrying `19:22`
+    into a planned-finish column would suggest the plan is precise to the
+    minute when the PM chose a day."""
+    from datetime import date, datetime
+
+    from scripts.from_jira_export import convert, read_export
+
+    path = _export(
+        tmp_path,
+        rows=[("P", "P-1", "One", "To Do", "Ann", datetime(2026, 9, 30, 19, 22), None)],
+    )
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+    assert records[0]["Planned Finish"] == date(2026, 9, 30)
+
+
+def test_the_output_is_the_blank_template_and_nothing_else(tmp_path):
+    """The point of the converter: what it writes has to be the document the
+    upload route already accepts. If these drift, a conversion "succeeds" and
+    then ingests zero rows, which is the silent failure this whole path has
+    been bitten by before."""
+    from openpyxl import load_workbook
+
+    from app.ingest.sources.excel.reader import SCHEDULE_CONTRACT, find_sheet
+    from scripts.from_jira_export import convert, read_export, write_schedule
+
+    path = _export(
+        tmp_path,
+        rows=[("P", "P-1", "One", "To Do", "Ann", None, None)],
+    )
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+    out = tmp_path / "schedule.xlsx"
+    write_schedule(records, out)
+
+    written = load_workbook(out, read_only=True)
+    try:
+        first = [c for c in next(written["Activities"].iter_rows(values_only=True))]
+    finally:
+        written.close()
+    assert tuple(first) == SCHEDULE_CONTRACT.template_headers
+    # And the reader agrees it is a schedule, which is the claim that matters.
+    assert find_sheet(out, SCHEDULE_CONTRACT, preferred="Activities") == "Activities"
+
+
+def test_a_workbook_with_no_jira_table_is_refused_not_half_converted(tmp_path):
+    """`find_sheet` is deliberately forgiving about tab names, so the failure
+    to guard against is a workbook of notes converting into an empty schedule
+    that ingests silently."""
+    from openpyxl import Workbook
+
+    from scripts.from_jira_export import read_export
+
+    workbook = Workbook()
+    workbook.active.append(["some", "notes"])
+    path = tmp_path / "notes.xlsx"
+    workbook.save(path)
+
+    with pytest.raises(SystemExit):
+        read_export(path)
