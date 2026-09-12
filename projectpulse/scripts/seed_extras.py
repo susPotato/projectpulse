@@ -20,6 +20,8 @@ create them.
 
 from __future__ import annotations
 
+from datetime import date
+
 from scripts._bootstrap import bootstrap
 
 bootstrap()
@@ -28,28 +30,47 @@ from app.dashboard.service import seed_default_dashboard  # noqa: E402
 from app.db import session_scope  # noqa: E402
 from app.ids import domain_id  # noqa: E402
 from app.models.domain import Program, Project, Resource  # noqa: E402
+from app.scope import program_domain_id  # noqa: E402
 
 #: A second, empty Program - so `/api/programs` is a real list, not a
 #: single hardcoded row. Name matches the PM's own Programs-list mockup
 #: (`Layout_Program`, image12: "Cloud-First Initiative - 2 Projects" was
 #: their example; this one starts empty rather than inventing two more
 #: fabricated projects nobody asked to see).
-EXTRA_PROGRAM_ID = domain_id("manual", "Program", 0, "CLOUD")
+#: Keyed through `scope.program_domain_id` rather than `domain_id("manual", ...)`
+#: so every program in the database shares one source-neutral namespace. A
+#: program is not an artifact of the system its documents arrived from, and
+#: putting a source name in the id is what made one program exist twice.
+EXTRA_PROGRAM_ID = program_domain_id("CLOUD")
 EXTRA_PROGRAM_NAME = "Cloud-First Initiative"
 
-#: (resource_name, role, project canonical id, allocation_percent). Tran Quoc
-#: B is deliberately allocated on both HRMS and Example Project at a combined
-#: 130% - the overallocation the "Resource Conflict" cross-project tile
-#: exists to catch, and the same name already carries schedule rows on both
-#: projects' sheets, so the story is at least internally consistent.
-ALLOCATIONS: tuple[tuple[str, str, str, float], ...] = (
-    ("Tran Quoc B", "Environment Engineer", "excel:Project:1:HRMS", 80.0),
-    ("Tran Quoc B", "Environment Engineer", "excel:Project:1:EXPROJ", 50.0),
-    ("Pham Hong D", "Developer", "excel:Project:1:HRMS", 60.0),
-    ("Pham Hong D", "Developer", "excel:Project:1:EXPROJ", 40.0),
-    ("My Nguyen", "QA Lead", "excel:Project:1:HRMS", 50.0),
-    ("My Nguyen", "QA Lead", "excel:Project:1:SAIN", 40.0),
-    ("Hoach Bach", "Delivery Lead", "excel:Project:1:SAIN", 70.0),
+#: (resource_name, role, project canonical id, allocation_percent, window).
+#:
+#: **The windows are the point, not decoration.** Contention is the excess of
+#: demand over capacity *in a period*, and these four people are each a
+#: different case of it - together they are the regression test for the three
+#: ways the old "sum the percentages, flag over 100" check was wrong:
+#:
+#: * **Tran Quoc B** - 80% + 50% over the same three months. A real conflict,
+#:   caught before and caught now. The 130% figure the CLAUDE.md demo notes
+#:   quote is this one, unchanged.
+#: * **Pham Hong D** - 60% then 50%, in windows that do not overlap. 110%
+#:   nominal, and *not* a conflict: nobody is being asked to do two things at
+#:   once. The old check had no dates and would have flagged it.
+#: * **My Nguyen** - 50% + 40% over the same window. 90% nominal, so the old
+#:   check called it clean; but a person is not 100% available to project work,
+#:   and against a supply discounted for non-project load it is a genuine, small
+#:   shortfall. The case the old check missed.
+#: * **Hoach Bach** - one project. Never a conflict, and it should cost nothing
+#:   to say so.
+ALLOCATIONS: tuple[tuple[str, str, str, float, str, str], ...] = (
+    ("Tran Quoc B", "Environment Engineer", "excel:Project:1:HRMS", 80.0, "2026-02-01", "2026-04-30"),
+    ("Tran Quoc B", "Environment Engineer", "excel:Project:1:EXPROJ", 50.0, "2026-02-01", "2026-04-30"),
+    ("Pham Hong D", "Developer", "excel:Project:1:HRMS", 60.0, "2026-01-01", "2026-02-28"),
+    ("Pham Hong D", "Developer", "excel:Project:1:EXPROJ", 50.0, "2026-03-01", "2026-04-30"),
+    ("My Nguyen", "QA Lead", "excel:Project:1:HRMS", 50.0, "2026-02-01", "2026-04-30"),
+    ("My Nguyen", "QA Lead", "excel:Project:1:SAIN", 40.0, "2026-02-01", "2026-04-30"),
+    ("Hoach Bach", "Delivery Lead", "excel:Project:1:SAIN", 70.0, "2026-01-01", "2026-04-30"),
 )
 
 
@@ -60,7 +81,7 @@ ALLOCATIONS: tuple[tuple[str, str, str, float], ...] = (
 #: who just built the demo database. Only applied to a dashboard that has no
 #: tiles, so this never overwrites a layout somebody arranged.
 DASHBOARDS: tuple[tuple[str, str, str], ...] = (
-    ("program", "excel:Program:1:DEFAULT", "it_portfolio_dashboard"),
+    ("program", program_domain_id("DEFAULT"), "it_portfolio_dashboard"),
     ("project", "excel:Project:1:HRMS", "project_delivery_review"),
 )
 
@@ -72,7 +93,7 @@ def main() -> None:
 
         written = 0
         skipped = []
-        for name, role, project_id, allocation in ALLOCATIONS:
+        for name, role, project_id, allocation, start, end in ALLOCATIONS:
             if session.get(Project, project_id) is None:
                 # The excel sync that creates this project hasn't run yet -
                 # report it rather than writing a Resource row with a
@@ -87,6 +108,8 @@ def main() -> None:
                     resource_name=name,
                     role=role,
                     allocation_percent=allocation,
+                    period_start=date.fromisoformat(start),
+                    period_end=date.fromisoformat(end),
                 )
             )
             written += 1

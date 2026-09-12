@@ -1,4 +1,4 @@
-"""Which source ids are one delivery project.
+"""Which source ids are one delivery project, and which program owns it.
 
 Invariant 7: Jira and Excel each create their own `projects` row for the same
 piece of delivery, so analysing either alone throws away every cross-source
@@ -6,6 +6,24 @@ claim. `analyze_project(..., also=[...])` re-points them at one canonical id -
 and until now the pairing was a literal `also = ["jira:Project:1:HRMS"]` sitting
 in the API route, which meant the portfolio view had no way to know that two
 rows were one project and would have listed HRMS twice.
+
+**The same invariant applies one level up, and used not to.** Each convertor
+built its program id as `domain_id(SOURCE, "Program", connection_id, "DEFAULT")`,
+so one program became `excel:Program:1:DEFAULT` *and* `jira:Program:1:DEFAULT` -
+two rows, the same name, and HRMS's two source projects hanging off different
+ones. The Programs list papered over it by dropping an empty program that shared
+a *name* with a non-empty one, which is name-equality entity resolution in the
+display layer: exactly the fuzzy merge this module exists to avoid, and it left
+`/api/programs/jira:Program:1:DEFAULT` answering 200 with zero projects,
+indistinguishable from a program nobody has filed a project against yet.
+
+A program is not an artifact of the system a document arrived from. It is the
+thing the delivery is *for*, it is the tenant boundary (content addressing,
+retention, and the unit factors in `app/units.py` are all scoped to it), and
+its identity therefore cannot contain a source name. Programs are keyed
+`program:Program:0:<KEY>` - source-neutral, connection-neutral - and membership
+is declared here, in the one module that already owns "which ids are one
+thing", rather than invented by whichever collector happened to run first.
 
 This is that pairing, in one place. The demo project is a built-in seed;
 anything registered since - typically by uploading a document for a project
@@ -34,6 +52,45 @@ from dataclasses import dataclass, field
 log = logging.getLogger(__name__)
 
 
+#: The source component every program id carries. Not a source system - that
+#: is the defect this constant closes - but a namespace saying "this row is
+#: about a program, and no collector owns it".
+PROGRAM_SOURCE = "program"
+
+#: Connection id for programs. Zero because a program does not belong to a
+#: connection: that was the second half of the duplicate-program bug, since two
+#: connections to the same program produced two ids for it.
+PROGRAM_CONNECTION = 0
+
+
+def program_domain_id(key: str) -> str:
+    """The id of the program known by `key`.
+
+    One function so the convertors, the seed, the migration and the tests
+    cannot disagree about the format - the same reason `scripts/migrate_ids.py`
+    calls `domain_id` rather than doing string surgery.
+    """
+    from app.ids import domain_id
+
+    return domain_id(PROGRAM_SOURCE, "Program", PROGRAM_CONNECTION, key)
+
+
+@dataclass(frozen=True)
+class DeliveryProgram:
+    """A program: the thing projects are grouped under, and the tenant boundary.
+
+    Carries no source component (see the module docstring) and no
+    configuration: the unit factors and working-day calendar a program works in
+    live in `app/units.py`, keyed by `program_id`, because they are decisions
+    about a client rather than facts about a grouping.
+    """
+
+    program_id: str
+    name: str
+    owner: str | None = None
+    status: str = "Active"
+
+
 @dataclass(frozen=True)
 class DeliveryProject:
     """One project as a delivery manager thinks of it, whatever fed it."""
@@ -43,6 +100,12 @@ class DeliveryProject:
     name: str
     #: The same delivery project as other source systems call it.
     also: tuple[str, ...] = field(default_factory=tuple)
+    #: The program this project belongs to. Declared here rather than derived
+    #: from whichever collector created the row, which is what let one program
+    #: exist twice. `None` means nobody has said yet - a legitimate state for a
+    #: project registered by upload before its program was chosen, and the
+    #: reason the portfolio can still show it.
+    program_id: str | None = None
 
     @property
     def source_ids(self) -> tuple[str, ...]:
@@ -63,10 +126,36 @@ _SEED: tuple[DeliveryProject, ...] = (
         canonical_id="excel:Project:1:HRMS",
         name="HRMS Platform",
         also=("jira:Project:1:HRMS",),
+        program_id=program_domain_id("DEFAULT"),
     ),
-    DeliveryProject(canonical_id="excel:Project:1:SAIN", name="SAIN"),
     DeliveryProject(
-        canonical_id="excel:Project:1:EXPROJ", name="Example Project"
+        canonical_id="excel:Project:1:SAIN",
+        name="SAIN",
+        program_id=program_domain_id("DEFAULT"),
+    ),
+    DeliveryProject(
+        canonical_id="excel:Project:1:EXPROJ",
+        name="Example Project",
+        program_id=program_domain_id("DEFAULT"),
+    ),
+)
+
+#: The programs the demo ships with. `CLOUD` deliberately has no projects - a
+#: program somebody has set up and not yet filed anything against is a real
+#: state, and the Programs list has to render it as `no_data` rather than hide
+#: it. Note what is no longer needed to make that work: with programs keyed
+#: source-neutrally there is no duplicate to suppress, so the list no longer
+#: drops empty programs by name and an empty program is believed.
+_SEED_PROGRAMS: tuple[DeliveryProgram, ...] = (
+    DeliveryProgram(
+        program_id=program_domain_id("DEFAULT"),
+        name="Digital Transformation 2026",
+        status="Active",
+    ),
+    DeliveryProgram(
+        program_id=program_domain_id("CLOUD"),
+        name="Cloud-First Initiative",
+        status="Active",
     ),
 )
 
@@ -92,6 +181,7 @@ def _rows() -> list[DeliveryProject]:
                     RegisteredProject.canonical_id,
                     RegisteredProject.name,
                     RegisteredProject.also,
+                    RegisteredProject.program_id,
                 )
             ).all()
     except Exception as exc:  # noqa: BLE001 - see the docstring
@@ -99,7 +189,7 @@ def _rows() -> list[DeliveryProject]:
         return []
 
     out: list[DeliveryProject] = []
-    for canonical_id, name, also in rows:
+    for canonical_id, name, also, program_id in rows:
         if not canonical_id or not name:
             continue
         try:
@@ -108,7 +198,14 @@ def _rows() -> list[DeliveryProject]:
             # A pairing we cannot read is one project with one source id,
             # which is the conservative reading - never a dropped project.
             paired = ()
-        out.append(DeliveryProject(canonical_id=canonical_id, name=name, also=paired))
+        out.append(
+            DeliveryProject(
+                canonical_id=canonical_id,
+                name=name,
+                also=paired,
+                program_id=program_id or None,
+            )
+        )
     return out
 
 
@@ -121,7 +218,12 @@ def all_projects() -> tuple[DeliveryProject, ...]:
     return tuple(merged.values())
 
 
-def register(canonical_id: str, name: str, also: tuple[str, ...] = ()) -> DeliveryProject:
+def register(
+    canonical_id: str,
+    name: str,
+    also: tuple[str, ...] = (),
+    program_id: str | None = None,
+) -> DeliveryProject:
     """Add a project, or update its pairing/name if the id already exists.
 
     Called when a document is uploaded for a project id nobody has ingested
@@ -130,6 +232,13 @@ def register(canonical_id: str, name: str, also: tuple[str, ...] = ()) -> Delive
     actually ingested for it) without a restart, and so it is still there
     after the next deploy.
 
+    `program_id` is accepted here because the upload is the moment the choice
+    is available to make: a person adding a project knows which program it is
+    for, and deriving it afterwards from whichever collector ran is how one
+    program ended up existing twice. `None` is honest - an uploaded project
+    whose program nobody stated belongs to no program until somebody says so,
+    and the portfolio shows it either way.
+
     Unlike the read above, a failure here is **raised**: the caller is in the
     middle of accepting somebody's document and telling them it worked when
     the project was not recorded is the bug this whole change is about.
@@ -137,13 +246,19 @@ def register(canonical_id: str, name: str, also: tuple[str, ...] = ()) -> Delive
     from app.db import session_scope
     from app.models.uploads import RegisteredProject
 
-    entry = DeliveryProject(canonical_id=canonical_id, name=name, also=tuple(also))
+    entry = DeliveryProject(
+        canonical_id=canonical_id,
+        name=name,
+        also=tuple(also),
+        program_id=program_id,
+    )
     with session_scope() as session:
         session.merge(
             RegisteredProject(
                 canonical_id=canonical_id,
                 name=name,
                 also=json.dumps(list(also)),
+                program_id=program_id,
             )
         )
     return entry
@@ -179,6 +294,63 @@ def source_ids_for(source_id: str) -> list[str]:
     """
     project = resolve(source_id)
     return list(project.source_ids) if project else [source_id]
+
+
+def program_for(source_id: str) -> str | None:
+    """The program a project belongs to, given *any* of its source ids.
+
+    This is the fix for the duplicate program, and the `resolve` call is the
+    whole of it. `jira:Project:1:HRMS` and `excel:Project:1:HRMS` are one
+    delivery project (invariant 7), so they belong to one program; asking the
+    `projects` table directly returns whichever program the collector that
+    wrote that row invented, which is how the same program came to exist under
+    two ids with the same name.
+
+    Returns `None` for a project nobody has assigned, which callers must render
+    as "no program" rather than substituting an arbitrary one.
+    """
+    project = resolve(source_id)
+    return project.program_id if project is not None else None
+
+
+def all_programs() -> tuple[DeliveryProgram, ...]:
+    """Every program: the demo seed, plus any a registered project names.
+
+    A program reachable only because an uploaded project points at it still has
+    to appear in the list, or that project is filed somewhere the UI cannot
+    navigate to. Its name falls back to the key inside its id - better than a
+    blank row, and it disappears as soon as the program is given a real name.
+    """
+    merged: dict[str, DeliveryProgram] = {p.program_id: p for p in _SEED_PROGRAMS}
+    for project in all_projects():
+        pid = project.program_id
+        if pid and pid not in merged:
+            merged[pid] = DeliveryProgram(program_id=pid, name=_key_of(pid))
+    return tuple(merged.values())
+
+
+def find_program(program_id: str) -> DeliveryProgram | None:
+    return next((p for p in all_programs() if p.program_id == program_id), None)
+
+
+def projects_in(program_id: str) -> tuple[DeliveryProject, ...]:
+    """Every delivery project in one program.
+
+    The Program rollup's project set, resolved from the one place that knows
+    program membership rather than by filtering a `projects` table whose
+    `program_id` column is per-source.
+    """
+    return tuple(p for p in all_projects() if p.program_id == program_id)
+
+
+def _key_of(program_id: str) -> str:
+    """The trailing key of a program id, for a program with no declared name."""
+    from app.ids import parse_domain_id
+
+    try:
+        return parse_domain_id(program_id)[3][-1]
+    except (ValueError, IndexError):
+        return program_id
 
 
 def also_for(canonical_id: str) -> list[str]:

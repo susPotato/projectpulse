@@ -27,7 +27,8 @@ from datetime import date, datetime
 from sqlalchemy import select
 
 from app.ids import domain_id
-from app.models.domain import Milestone, Program, Project, QaItem, Task
+from app.ingest.programs import ensure_program
+from app.models.domain import Milestone, Project, QaItem, Task
 from app.models.tool import ToolExcelRow
 
 SOURCE = "excel"
@@ -85,12 +86,16 @@ def ensure_project(
     `project_id` is passed in rather than derived because the watched-sheet config
     already declares which project a sheet belongs to, and inventing a second
     identity for it here would split one project into two.
+
+    **The program is resolved, never invented.** This function used to build
+    `domain_id(SOURCE, "Program", connection_id, "DEFAULT")`, which put the
+    collector's name inside the program's identity - so the Jira convertor,
+    doing the same thing with its own `SOURCE`, created a second program row for
+    the same program, and HRMS's two source projects hung off different ones.
+    `app.scope` owns program membership for exactly the reason it owns project
+    pairing, and `ensure_program` is the shared path both convertors take.
     """
-    program_id = domain_id(SOURCE, "Program", connection_id, "DEFAULT")
-    if session.get(Program, program_id) is None:
-        session.add(
-            Program(id=program_id, name="Digital Transformation 2026", status="Active")
-        )
+    program_id = ensure_program(session, project_id)
 
     if session.get(Project, project_id) is None:
         session.add(

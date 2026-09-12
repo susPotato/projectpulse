@@ -13,9 +13,9 @@ from datetime import datetime
 from sqlalchemy import select
 
 from app.ids import domain_id
+from app.ingest.programs import ensure_program
 from app.models.domain import (
     PRECISION_EXACT,
-    Program,
     Project,
     StateChange,
     Task,
@@ -57,14 +57,20 @@ def _to_date(value: str | None):
 
 
 def ensure_project(session, *, connection_id: int, project_key: str, name: str) -> str:
-    """Create the program/project rows the tasks hang off, if absent."""
-    program_id = domain_id(SOURCE, "Program", connection_id, "DEFAULT")
-    if session.get(Program, program_id) is None:
-        session.add(
-            Program(id=program_id, name="Digital Transformation 2026", status="Active")
-        )
+    """Create the program/project rows the tasks hang off, if absent.
 
+    The program is resolved from `app.scope` rather than built from `SOURCE` -
+    see `app/ingest/programs.py`. Doing it the old way here is what created a
+    second program row for the program the Excel side had already created one
+    for, and it is why the Jira-side HRMS project belonged to a different
+    program than the Excel-side HRMS project that is the same delivery.
+
+    Order matters: the project id is needed *before* the program can be
+    resolved, because resolution goes through the project's pairing.
+    """
     project_id = domain_id(SOURCE, "Project", connection_id, project_key)
+    program_id = ensure_program(session, project_id)
+
     if session.get(Project, project_id) is None:
         session.add(
             Project(

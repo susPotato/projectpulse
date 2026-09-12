@@ -285,6 +285,91 @@ DEFAULT_TABLE = RuleTable(
                 "against, and it is the first thing a hand-maintained sheet loses."
             ),
         ),
+        # -- Cross-project contention (Channel 1) -------------------------
+        #
+        # Every rule here requires `has_program_context`. A project analysed
+        # outside its program has *unknown* contention, and a rule that fired
+        # on a zero would be asserting "no contention" from an absence of
+        # evidence - which is the confident-zero failure mode, applied to the
+        # one output the cross-project model exists to produce.
+        #
+        # The magnitudes are stated in effort-days, never in delay. Delay is a
+        # scenario that depends on how the organisation absorbs overload, and
+        # the absorption assumption travels with it (see `contention.py`).
+        Rule(
+            id="contention_breaches_overtime",
+            when=(
+                Condition("has_program_context", "==", True),
+                Condition("contention_breaches_overtime_limit", "==", True),
+            ),
+            category="resource_risk",
+            severity="critical",
+            headline=(
+                "This project is short {{contention_pressure_days}} effort-days "
+                "of shared people, and holding the date needs one of them at "
+                "{{contention_overtime_hours}} overtime hours in a single month - "
+                "past the {{contention_overtime_limit_hours}}-hour monthly "
+                "三六協定 ceiling."
+            ),
+            recommendation=(
+                "Re-sequence the shared work or add capacity in the role. This "
+                "one cannot be absorbed by asking the team to work harder: the "
+                "ceiling is statutory and carries penalties."
+            ),
+            rationale=(
+                "Overload is absorbed by overtime long before a date visibly "
+                "moves, so the honest question is not whether the plan slips but "
+                "whether the hours it needs are legal. In Japan that is a hard, "
+                "checkable number rather than a cultural expectation."
+            ),
+        ),
+        Rule(
+            id="contention_material",
+            when=(
+                Condition("has_program_context", "==", True),
+                Condition("contention_pressure_days", ">=", 3),
+                Condition("contention_breaches_overtime_limit", "==", False),
+            ),
+            category="resource_risk",
+            severity="high",
+            headline=(
+                "{{contention_people}} person(s) are committed to this project and "
+                "to others beyond their capacity: {{contention_pressure_days}} "
+                "effort-days of this project's work has no one to do it."
+            ),
+            recommendation=(
+                "Agree with the other project's manager which work moves. Left "
+                "alone the resolution happens by whoever asks loudest, not by "
+                "which project can least afford to wait."
+            ),
+            rationale=(
+                "The shortfall is this project's apportioned share of the excess "
+                "demand, not the whole of it - so it can be added to the other "
+                "projects' shares without double-counting the same overload."
+            ),
+        ),
+        Rule(
+            id="contention_minor",
+            when=(
+                Condition("has_program_context", "==", True),
+                Condition("contention_pressure_days", ">", 0),
+                Condition("contention_pressure_days", "<", 3),
+            ),
+            category="resource_risk",
+            severity="low",
+            headline=(
+                "{{contention_pressure_days}} effort-days of shared-resource "
+                "pressure across {{contention_people}} person(s)."
+            ),
+            recommendation=(
+                "Worth knowing, not worth escalating - watch it if the window "
+                "tightens."
+            ),
+            rationale=(
+                "Under a few effort-days is inside the noise of a resource plan "
+                "written in whole percentages."
+            ),
+        ),
     ),
 )
 

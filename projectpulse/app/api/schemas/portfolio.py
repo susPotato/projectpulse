@@ -26,8 +26,12 @@ from app.api.schemas.base import Response
 
 Band = Literal["critical", "watch", "healthy", "no_data"]
 
-#: The dimensions the design's heatmap shows, in its order.
-DIMENSIONS = ("schedule", "quality", "qa", "evidence")
+#: The dimensions the design's heatmap shows, in its order. `resource` is the
+#: cross-project one: it is banded from Channel 1 contention, so a project that
+#: is fine on its own and starved by a sibling reads amber here and nowhere
+#: else. It sits last because it is the only dimension whose cause lives
+#: outside the project.
+DIMENSIONS = ("schedule", "quality", "qa", "evidence", "resource")
 
 
 class ProjectRow(Response):

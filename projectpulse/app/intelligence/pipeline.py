@@ -53,9 +53,27 @@ from app.models.raw import RAW_TABLES
 from app.models.sync import RawReject, SyncRun
 
 if TYPE_CHECKING:  # pragma: no cover - annotation only
+    from app.intelligence.contention import ProgramContext
     from app.narration.client import Drafter
 
 log = logging.getLogger(__name__)
+
+
+class _Unset:
+    """Sentinel distinguishing "resolve the program" from "there is none".
+
+    `analyze_project(program=None)` has to mean *analyse this project alone* -
+    some callers genuinely want that, and a project that belongs to no program
+    reports exactly that way. So "the caller did not say" needs a third value,
+    or the correct default (analyse a project inside its program) cannot be the
+    default without taking the opt-out away.
+    """
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return "UNSET"
+
+
+UNSET = _Unset()
 
 
 def _known_fields() -> set[str]:
@@ -166,6 +184,7 @@ def analyze_project(
     table: RuleTable = DEFAULT_TABLE,
     engine: RulesEngine | None = None,
     narrator: "Drafter | None" = None,
+    program: "ProgramContext | None | _Unset" = UNSET,
 ) -> InsightBundle:
     """Everything the insight screen needs for one project.
 
@@ -176,6 +195,21 @@ def analyze_project(
     spreadsheet observation, which is precisely the cross-source claim neither
     source can make alone. Every entity is re-pointed at `project_id` below so
     the causal engine treats them as one.
+
+    `program` is the cross-project half, and it is the design's stated shape for
+    the program layer: *a context object passed into this same function*, not a
+    second computation over the same rows. That is what makes a Program rollup
+    unable to disagree with a project's own page - the rollup is this function's
+    output, folded up.
+
+    **Left unset it is resolved here**, from the project's own program. That is
+    the default because the alternative made the two screens contradict each
+    other: the portfolio built a context and banded HRMS red for contention,
+    while HRMS's own page - one of eight call sites that did not - showed no
+    contention finding at all. Passing `None` explicitly still means "analyse
+    this project alone", and then the contention scalars stay zero with
+    `has_program_context` false, so a project analysed alone reports contention
+    as *unknown* rather than as none.
 
     `narrator` is the one optional input. Without it the narrative is the
     deterministic template, which is complete; with it a model is asked to
@@ -231,6 +265,12 @@ def analyze_project(
 
     hours_since_sync = _hours_since_last_sync(session, generated_at)
 
+    if isinstance(program, _Unset):
+        from app.scope import program_for
+
+        resolved = program_for(project_id)
+        program = program_context(session, resolved) if resolved else None
+
     context = build_context(
         project_id=project_id,
         as_of=as_of,
@@ -243,6 +283,8 @@ def analyze_project(
         rows_rejected=rejected,
         stated_only_impact=stated_impact,
         data_age_hours=-1.0 if hours_since_sync is None else hours_since_sync,
+        program=program,
+        source_ids=project_ids,
     )
 
     engine = engine or RulesEngine(table, known_fields=_known_fields())
@@ -360,6 +402,7 @@ _DIMENSION_CATEGORIES = {
     "quality": ("quality_risk",),
     "qa": ("quality_risk",),
     "evidence": ("evidence_quality", "data_quality"),
+    "resource": ("resource_risk",),
 }
 
 #: Severity to band. `info` is not a problem, so it reads healthy.
@@ -382,7 +425,201 @@ def _band_for(severities: list[str]) -> str:
     return "healthy"
 
 
-def _project_row(session, entry) -> tuple["ProjectRow", str | None]:
+def load_allocations(session, program_id: str) -> list["Allocation"]:
+    """Every allocation on every project in one program, with a dated window.
+
+    Two things here are the fix for how resource conflict used to be computed.
+
+    **Allocations are found by every source id a project may carry.** The old
+    query filtered on canonical ids alone, so a `Resource` row written against
+    `jira:Project:1:HRMS` was invisible to HRMS's own rollup - invariant 7, one
+    level down from where `scope.source_ids_for` already solves it.
+
+    **A window with no dates is derived, not assumed to be "always".** A
+    resource plan that states no period is the common case in a hand-maintained
+    sheet, and treating it as unbounded makes every allocation overlap every
+    other, which is how a window-free conflict check gets both its false
+    positives and its false negatives. The fallback is the project's own
+    schedule span - real data, derived from tasks a human dated - and the
+    allocation records `window_source='derived_from_schedule'` so a disputed
+    finding can say where its dates came from.
+    """
+    from app.intelligence.contention import Allocation
+    from app.models.domain import Resource
+    from app.scope import projects_in
+
+    entries = projects_in(program_id)
+    if not entries:
+        return []
+
+    # Canonical id per source id, so an allocation filed under a paired id is
+    # attributed to the delivery project rather than to a second one.
+    canonical: dict[str, tuple[str, str]] = {}
+    for entry in entries:
+        for source_id in entry.source_ids:
+            canonical[source_id] = (entry.canonical_id, entry.name)
+
+    spans = _schedule_spans(session, list(canonical))
+
+    rows = session.scalars(
+        select(Resource).where(Resource.project_id.in_(list(canonical)))
+    ).all()
+
+    out: list[Allocation] = []
+    for row in rows:
+        project_id, project_name = canonical[row.project_id]
+        start, end = row.period_start, row.period_end
+        source = "stated"
+        if start is None or end is None:
+            derived = spans.get(project_id) or spans.get(row.project_id)
+            if derived is None:
+                # No stated window and no dated tasks to derive one from. The
+                # allocation cannot be placed in time, so it is dropped rather
+                # than defaulted into the assessed window - a demand invented at
+                # a date nobody stated is the confident-zero problem inverted.
+                log.info(
+                    "dropping undated allocation for %s on %s: no schedule to "
+                    "derive a window from",
+                    row.resource_name,
+                    row.project_id,
+                )
+                continue
+            start, end = derived
+            source = "derived_from_schedule"
+        out.append(
+            Allocation(
+                person=row.resource_name,
+                project_id=project_id,
+                project_name=project_name,
+                allocation_percent=float(row.allocation_percent or 0),
+                window_start=start,
+                window_end=end,
+                role=row.role,
+                window_source=source,
+            )
+        )
+    return out
+
+
+def _schedule_spans(session, source_ids: Sequence[str]) -> dict[str, tuple[date, date]]:
+    """First start and last finish per project, keyed by canonical-ish id.
+
+    Keyed by the `project_id` the tasks actually carry; the caller maps that
+    onto the delivery project. Projects with no dated tasks are absent rather
+    than present with a `None`, so the caller's `.get` is the whole check.
+    """
+    rows = session.execute(
+        select(
+            Task.project_id,
+            func.min(Task.start_date),
+            func.max(Task.due_date),
+        )
+        .where(Task.project_id.in_(list(source_ids)))
+        .group_by(Task.project_id)
+    ).all()
+
+    spans: dict[str, tuple[date, date]] = {}
+    for project_id, start, end in rows:
+        start = _as_date(start)
+        end = _as_date(end)
+        if start is not None and end is not None and end >= start:
+            spans[project_id] = (start, end)
+    return spans
+
+
+def _as_date(value) -> date | None:
+    """SQLite hands back strings where Postgres hands back dates."""
+    if value is None or isinstance(value, date) and not isinstance(value, datetime):
+        return value
+    if isinstance(value, datetime):
+        return value.date()
+    try:
+        return datetime.fromisoformat(str(value)[:10]).date()
+    except ValueError:
+        return None
+
+
+def program_context(
+    session,
+    program_id: str | None,
+    *,
+    window: "Window | None" = None,
+    priority: Sequence[str] | None = None,
+) -> "ProgramContext | None":
+    """Build the context one program's projects are analysed inside.
+
+    Returns `None` for a project that belongs to no program - which callers must
+    pass straight through to `analyze_project(program=None)` so the analysis
+    reports contention as unknown rather than as zero.
+
+    The assessed window defaults to the span the program's own schedules cover.
+    That is deliberately not "today forward": the demo timeline is fixed in the
+    past by design, and a window anchored on the wall clock would report no
+    contention at all on data that plainly contains some.
+
+    `priority` selects Mode B. It is not derived from anything in the database
+    on purpose - the design's default is that no trustworthy priority order
+    exists, because a written one is usually stale and the live one is
+    political, so Mode A runs unless a caller states an order explicitly.
+    """
+    from app.intelligence.contention import (
+        ProgramContext,
+        Window,
+        assess_periods,
+        month_periods,
+        pressure_by_project,
+    )
+    from app.models.domain import Program
+    from app.scope import find_program, projects_in
+    from app.units import units_for
+
+    if program_id is None:
+        return None
+
+    row = session.get(Program, program_id)
+    declared = find_program(program_id)
+    if row is None and declared is None:
+        return None
+
+    name = row.name if row is not None else declared.name  # type: ignore[union-attr]
+    entries = projects_in(program_id)
+    allocations = load_allocations(session, program_id)
+
+    # Assessed month by month, not over one span. A single window covering
+    # every allocation would pool demands that never coexist - the false
+    # positive the dated windows exist to remove - and would compare a
+    # multi-month overtime figure against a monthly statutory ceiling.
+    if window is None:
+        starts = [a.window_start for a in allocations]
+        ends = [a.window_end for a in allocations]
+        periods = month_periods(min(starts), max(ends)) if starts and ends else []
+    else:
+        periods = month_periods(window.start, window.end)
+
+    results = ()
+    if periods and allocations:
+        results = tuple(
+            assess_periods(
+                allocations,
+                periods,
+                program_id=program_id,
+                priority=priority,
+            )
+        )
+
+    return ProgramContext(
+        program_id=program_id,
+        program_name=name,
+        units=units_for(program_id),
+        contention=results,
+        pressure=pressure_by_project(results),
+        project_ids=frozenset(
+            source_id for e in entries for source_id in e.source_ids
+        ),
+    )
+
+
+def _project_row(session, entry, program: "ProgramContext | None" = None) -> tuple["ProjectRow", str | None]:
     """One project's `ProjectRow`, plus the `program_id` it resolved to.
 
     Factored out of `portfolio()` so `program_rollup()` can build the same row
@@ -390,12 +627,25 @@ def _project_row(session, entry) -> tuple["ProjectRow", str | None]:
     second and possibly-diverging aggregation. Runs `analyze_project` rather
     than a shortcut: a rollup then cannot disagree with the project view,
     because it *is* the project view, folded up.
+
+    `program` is passed through unchanged. A caller that has one gets rows whose
+    bands include cross-project contention; a caller that does not gets rows
+    that say so, via `has_program_context`. What no caller gets is a row that
+    silently reports zero contention because nobody looked.
     """
     from app.api.schemas.portfolio import DIMENSIONS, ProjectRow
     from app.models.domain import Project
 
-    project_row = session.get(Project, entry.canonical_id)
-    program_id = project_row.program_id if project_row is not None else None
+    # `scope` first, the `projects` column only as a fallback. The column is
+    # written per source, so reading it directly is what let one program exist
+    # twice and put the two source rows of one delivery project in different
+    # programs; `scope.program_for` resolves the pairing before answering.
+    # The fallback covers a project ingested before this change and not yet
+    # migrated - `scripts.migrate_programs` is what removes the need for it.
+    program_id = entry.program_id
+    if program_id is None:
+        project_row = session.get(Project, entry.canonical_id)
+        program_id = project_row.program_id if project_row is not None else None
 
     tasks = load_tasks(session, list(entry.source_ids))
     if not tasks:
@@ -411,7 +661,10 @@ def _project_row(session, entry) -> tuple["ProjectRow", str | None]:
         )
 
     bundle = analyze_project(
-        session, project_id=entry.canonical_id, also=list(entry.also)
+        session,
+        project_id=entry.canonical_id,
+        also=list(entry.also),
+        program=program,
     )
     edges = load_edges(session, list(entry.source_ids))
     impact = project_schedule(build_graph(tasks, edges))
@@ -469,8 +722,19 @@ def portfolio(session) -> "PortfolioBundle":
     #: Program existed; it stopped being fine the moment a second one did.
     program_names: set[str] = set()
 
+    #: One context per program, built once and shared by every project in it.
+    #: Building it per project would re-run the apportionment for each victim
+    #: and, worse, let two projects in one program disagree about the same
+    #: person's excess.
+    contexts: dict[str, "ProgramContext | None"] = {}
+
     for entry in all_projects():
-        row, program_id = _project_row(session, entry)
+        program_id = entry.program_id
+        if program_id and program_id not in contexts:
+            contexts[program_id] = program_context(session, program_id)
+        row, program_id = _project_row(
+            session, entry, contexts.get(program_id) if program_id else None
+        )
         rows.append(row)
         if program_id:
             program = session.get(Program, program_id)
@@ -509,30 +773,30 @@ def list_programs(session) -> "ProgramListBundle":
     from app.scope import all_projects
 
     rows_by_program: dict[str, list] = {}
+    contexts: dict[str, "ProgramContext | None"] = {}
     for entry in all_projects():
-        row, program_id = _project_row(session, entry)
+        program_id = entry.program_id
+        if program_id and program_id not in contexts:
+            contexts[program_id] = program_context(session, program_id)
+        row, program_id = _project_row(
+            session, entry, contexts.get(program_id) if program_id else None
+        )
         if program_id:
             rows_by_program.setdefault(program_id, []).append(row)
 
-    # `ensure_project` gives every *connection* its own DEFAULT program row
-    # (invariant 7: Jira and Excel each create their own `projects` row for
-    # HRMS, and each convertor's `ensure_project` creates its own program to
-    # hang it off). HRMS's Jira-side row is folded into its Excel-side
-    # canonical row for the portfolio, but the orphan `jira:Program:1:DEFAULT`
-    # this leaves behind still exists in the table, empty, same name as the
-    # real one. Drop an empty program that shares a name with a non-empty
-    # one - it is that duplicate, not a program worth showing.
-    names_with_projects = {
-        p.name for p in session.scalars(select(Program)).all()
-        if rows_by_program.get(p.id)
-    }
-
+    # There is no longer a duplicate to suppress here, and that is the point.
+    # This loop used to drop an empty program that shared a *name* with a
+    # non-empty one, because each convertor built its program id from its own
+    # `SOURCE` and so created a second row for the same program. That was
+    # name-equality entity resolution in the display layer - the exact fuzzy
+    # merge `app/scope.py` exists to avoid - and it hid the duplicate from this
+    # list while leaving it reachable at `/api/programs/<orphan id>`. Programs
+    # are now keyed source-neutrally (`app/ingest/programs.py`), so an empty
+    # program is believed: it is a program nobody has filed a project against.
     rank = {"critical": 0, "watch": 1, "healthy": 2, "no_data": 3}
     summaries: list[ProgramSummary] = []
     for program in session.scalars(select(Program)).all():
         rows = rows_by_program.get(program.id, [])
-        if not rows and program.name in names_with_projects:
-            continue
         band = min((r.band for r in rows), key=lambda b: rank.get(b, 9), default="no_data")
         ranked_rows = sorted(rows, key=lambda r: (rank.get(r.band, 9), -r.days_late, r.name))
         summaries.append(
@@ -566,24 +830,35 @@ def program_rollup(session, program_id: str) -> "ProgramRollupBundle | None":
     from app.api.schemas.programs import (
         ProgramRollupBundle,
         ProgramSummary,
+        ProjectShortfall,
         ResourceConflict,
         ResourceRow,
     )
-    from app.models.domain import Program, Project, Resource
-    from app.scope import all_projects
+    from app.intelligence.contention import normalize_person
+    from app.models.domain import Program, Resource
+    from app.scope import projects_in, source_ids_for
 
     program = session.get(Program, program_id)
     if program is None:
         return None
 
+    # One context for the whole program, built before the project rows so every
+    # row is banded against the same apportionment.
+    program_ctx = program_context(session, program_id)
+
+    entries = projects_in(program_id)
     rows = []
+    #: Every source id -> the delivery project's display name. Keyed by *all*
+    #: of a project's ids, not just the canonical one: a `Resource` row filed
+    #: against `jira:Project:1:HRMS` belongs to HRMS, and the old query - which
+    #: filtered on canonical ids alone - simply did not see it. Invariant 7, one
+    #: level below where `scope.source_ids_for` already solves it.
     project_names: dict[str, str] = {}
-    for entry in all_projects():
-        row, resolved_program_id = _project_row(session, entry)
-        if resolved_program_id != program_id:
-            continue
+    for entry in entries:
+        row, _ = _project_row(session, entry, program_ctx)
         rows.append(row)
-        project_names[entry.canonical_id] = entry.name
+        for source_id in source_ids_for(entry.canonical_id):
+            project_names[source_id] = entry.name
 
     rank = {"critical": 0, "watch": 1, "healthy": 2, "no_data": 3}
     rows.sort(key=lambda r: (rank.get(r.band, 9), -r.days_late, r.name))
@@ -610,22 +885,56 @@ def program_rollup(session, program_id: str) -> "ProgramRollupBundle | None":
         for r in resource_rows_db
     ]
 
-    by_name: dict[str, list[ResourceRow]] = defaultdict(list)
+    #: Nominal totals, for the label only. Grouped on the normalized name so one
+    #: person spelled two ways (full-width, different spacing, different case) is
+    #: one person - a raw `group by resource_name` silently halves their load.
+    nominal: dict[str, float] = defaultdict(float)
     for r in resources:
-        by_name[r.resource_name].append(r)
+        nominal[normalize_person(r.resource_name)] += r.allocation_percent or 0
 
+    # The conflicts are the contention results, not a re-derivation of them.
+    # Computing them here from allocation percentages is what let this screen
+    # disagree with the project pages about the same overload.
     conflicts = [
         ResourceConflict(
-            resource_name=name,
-            total_allocation_percent=round(
-                sum(r.allocation_percent or 0 for r in allocs), 1
+            resource_name=result.person,
+            total_allocation_percent=round(nominal[normalize_person(result.person)], 1),
+            projects=list(result.projects),
+            demand_days=round(result.demand_days, 2),
+            supply_days=round(result.supply_days, 2),
+            excess_days=round(result.excess_days, 2),
+            window_label=result.window.label(),
+            working_days=result.working_days,
+            mode=result.mode,
+            shortfalls=[
+                ProjectShortfall(
+                    project_id=s.project_id,
+                    project_name=s.project_name,
+                    effort_days=round(s.effort_days, 2),
+                    delay_days=round(s.delay_days, 2),
+                )
+                for s in result.shortfalls
+            ],
+            absorption=(
+                result.absorption.describe() if result.absorption is not None else ""
             ),
-            projects=[r.project_name for r in allocs],
+            overtime_hours=(
+                round(result.absorption.overtime_hours, 1)
+                if result.absorption is not None
+                else 0.0
+            ),
+            breaches_overtime_limit=(
+                result.absorption.breaches_monthly_limit
+                if result.absorption is not None
+                else False
+            ),
+            notes=list(result.notes),
         )
-        for name, allocs in by_name.items()
-        if len(allocs) > 1 and sum(r.allocation_percent or 0 for r in allocs) > 100
+        for result in (program_ctx.contention if program_ctx is not None else ())
     ]
-    conflicts.sort(key=lambda c: -c.total_allocation_percent)
+    # Worst excess first, tie-broken on the name so the order is deterministic
+    # (I1) rather than dependent on dict insertion.
+    conflicts.sort(key=lambda c: (-c.excess_days, c.resource_name))
 
     return ProgramRollupBundle(
         program=ProgramSummary(
@@ -643,6 +952,28 @@ def program_rollup(session, program_id: str) -> "ProgramRollupBundle | None":
         resource_conflicts=conflicts,
         generated_at=_date.today(),
     )
+
+
+def _single_program_name(session, program_ids) -> str:
+    """The program's name when there is exactly one in scope, else "Portfolio".
+
+    A header naming one program while showing several projects' data is a quiet
+    lie, and it is the shape `select(Program).first()` produced. Falls back to
+    the declaration in `app/scope.py` when the row is not in the database yet, so
+    a program that has been set up but not ingested against still has a name.
+    """
+    from app.models.domain import Program
+    from app.scope import find_program
+
+    ids = {pid for pid in program_ids if pid}
+    if len(ids) != 1:
+        return "Portfolio"
+    program_id = next(iter(ids))
+    row = session.get(Program, program_id)
+    if row is not None:
+        return row.name
+    declared = find_program(program_id)
+    return declared.name if declared is not None else "Portfolio"
 
 
 def program_config(session) -> "ProgramBundle":
@@ -663,9 +994,14 @@ def program_config(session) -> "ProgramBundle":
     from app.ingest.sources.excel.source import all_watched
     from app.models.domain import Program
     from app.models.sync import SheetScan
-    from app.scope import all_projects
+    from app.scope import all_projects, find_program
 
-    program = session.scalars(select(Program)).first()
+    #: Not `select(Program).first()`. That was fine when exactly one Program
+    #: existed and stopped being fine the moment a second one did - it names an
+    #: arbitrary row, and which row depends on insertion order. Same reasoning as
+    #: `portfolio()`: name the program when the projects in scope agree on one,
+    #: and say "Portfolio" when the view is honestly cross-program.
+    programs = {p.program_id for p in all_projects() if p.program_id}
     scans = session.scalars(select(SheetScan)).all()
 
     latest: dict[str, SheetScan] = {}
@@ -702,11 +1038,21 @@ def program_config(session) -> "ProgramBundle":
     )
 
     return ProgramBundle(
-        program_name=program.name if program else "Portfolio",
+        program_name=_single_program_name(session, programs),
         data_root=str(settings.data_root),
         sources=sources,
         scope=[
-            ScopeEntry(canonical_id=e.canonical_id, name=e.name, also=list(e.also))
+            ScopeEntry(
+                canonical_id=e.canonical_id,
+                name=e.name,
+                also=list(e.also),
+                program_id=e.program_id or "",
+                program_name=(
+                    (find_program(e.program_id).name if find_program(e.program_id) else "")
+                    if e.program_id
+                    else ""
+                ),
+            )
             for e in all_projects()
         ],
         rule_table=DEFAULT_TABLE.name,

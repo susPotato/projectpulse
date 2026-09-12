@@ -124,3 +124,10 @@ class RegisteredProject(Timestamped, Base):
     #: queries by it, and a join would only make `all_projects()` slower on a
     #: path that runs on every request.
     also: Mapped[str] = mapped_column(Text, default="[]")
+
+    #: Which program this project belongs to, recorded at the moment somebody
+    #: uploaded a document for it. Nullable and not a foreign key, for the same
+    #: reason `Risk.project_id` is not one: a project may be registered before
+    #: the program row exists, and refusing the registration for a row that has
+    #: not been created yet loses the document. `app/scope.py` owns the meaning.
+    program_id: Mapped[str | None] = mapped_column(String(255), default=None)

@@ -67,7 +67,8 @@ CATALOGUE: tuple[TileSpec, ...] = (
     ),
     TileSpec(
         "resource_conflict", "AI Resource Conflict", "New",
-        "People allocated over 100% combined, across this program's projects.",
+        "Where demand on a shared person exceeds their capacity in a month, in "
+        "effort-days, apportioned across the projects that lose out.",
         "program", "programs", default_w=4, default_h=3,
     ),
     TileSpec(

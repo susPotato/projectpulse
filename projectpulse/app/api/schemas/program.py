@@ -33,11 +33,19 @@ class WatchedSource(Response):
 
 
 class ScopeEntry(Response):
-    """Which source ids are one delivery project (invariant 7)."""
+    """Which source ids are one delivery project (invariant 7), and its program.
+
+    The program is carried because it is now *declared* in `app/scope.py` rather
+    than derived from whichever collector wrote the row - so this screen is where
+    a reader checks the declaration. Empty means the project belongs to no
+    program, which is a legitimate state for one registered by upload.
+    """
 
     canonical_id: str
     name: str
     also: list[str] = Field(default_factory=list)
+    program_id: str = ""
+    program_name: str = ""
 
 
 class RuleRow(Response):

@@ -21,7 +21,7 @@ import {
 } from "../api";
 import { Board, Page, Panel, Problem, Stat, Stats } from "../components/Shell";
 
-const DIMENSIONS = ["schedule", "quality", "qa", "evidence"] as const;
+const DIMENSIONS = ["schedule", "quality", "qa", "evidence", "resource"] as const;
 
 /* Spelled out rather than interpolated: Tailwind scans source text, so a class
    assembled at runtime gets no CSS emitted for it. Same trap as the board's

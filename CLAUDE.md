@@ -4,6 +4,67 @@ Read this first. It is the handoff between sessions.
 
 ---
 
+## ⚠️ DO THIS FIRST — deploy owed to production (added 2026-09-12)
+
+The Program↔Project relationship was fixed (section 0d below). **Production must
+run `scripts.migrate_programs --apply` with this deploy, not after it.**
+
+Why it is not optional, and why it is more urgent than `migrate_ids` was. The
+Programs list used to hide the duplicate program row by dropping an empty
+program that shared a *name* with a non-empty one. That suppression is **gone**
+— it was name-equality entity resolution in the display layer, which is the
+thing `app/scope.py` exists to avoid. So an unmigrated database now *shows* its
+duplicate: `/api/programs` lists "Digital Transformation 2026" twice, one of
+them with zero projects. Reading is otherwise safe; nothing is destroyed by
+deploying first, it just looks broken until step 2 runs.
+
+```bash
+# 0. Check before touching production.
+git pull
+cd projectpulse
+python -m pytest -q          # expect 776 passed
+cd web && npm run build      # committed bundle must not be stale
+cd ..
+
+# 1. Ship it.
+fly auth login               # a new machine needs its own login
+fly deploy
+
+# 2. NOT OPTIONAL. Reports without writing until --apply; safe to run twice.
+fly ssh console -C "python -m scripts.migrate_programs"
+fly ssh console -C "python -m scripts.migrate_programs --apply"
+
+# 3. Check the thing this was about: exactly two programs, no source prefixes.
+curl -s https://projectpulse.fly.dev/api/programs | python -m json.tool \
+  | grep -E '"id"|project_count'
+#    expect program:Program:0:DEFAULT (3 projects) and
+#           program:Program:0:CLOUD   (0 projects, correctly empty)
+#    Any id starting excel:Program or jira:Program means step 2 did not run.
+
+# 4. Task counts must be unchanged — this work did not touch ingestion.
+curl -s https://projectpulse.fly.dev/api/portfolio | python -m json.tool \
+  | grep -E 'project_id|task_count'
+#    HRMS 10, EXPROJ 3, SAIN 5 — same as the 2026-09-11 deploy.
+```
+
+The migration also adds `registered_projects.program_id`. That column matters
+more than it looks: `create_all()` on boot creates missing *tables* but never
+adds a column to an existing one, and `scope._rows()` degrades a failed read to
+"there are no registered projects" **by design** — so without the ALTER, every
+project somebody imported through the browser silently vanishes from the picker
+and the portfolio while its ingested rows sit on in Postgres. The migration does
+the ALTER; `--apply` is what performs it.
+
+⚠️ Still true from last time: `fly ssh console` exits 1 with "Error: The handle
+is invalid" after every command on Windows/Git-Bash. Local pty artifact, not a
+remote failure — the command's own stdout above it is the truth.
+
+⚠️ Still open and still the one to close before the judged window: `/console`
+is unauthenticated on the public deploy and its "Reset database" button calls
+`/api/reset`, which drops the schema. Untouched by this work.
+
+---
+
 ## ✅ Done — deploy steps owed to production, ran 2026-09-11
 
 Ran from the machine with `flyctl` installed: merged `web-self-sufficient-import`
@@ -103,6 +164,119 @@ trusting a provider switch, check `pip show anthropic` (or whichever vendor) ins
 container image, not just the dev venv** - `flyctl ssh console -C "python -c 'import
 anthropic'"` is the fast check, or just hit the deployed endpoint directly, which is what
 actually caught this (see §-1).
+
+---
+
+## 0d. This session — 2026-09-12: Program↔Project, and the contention model on top of it
+
+Worked from `ingestion-architecture-v3.md`. **776 tests pass** (was 735; +34 new
+in `tests/test_programs.py`, plus the existing suite unchanged).
+
+### The defect, which was one line in each convertor
+
+```python
+program_id = domain_id(SOURCE, "Program", connection_id, "DEFAULT")   # both convertors
+```
+
+The source system a document arrived from was *inside the program's identity*, so
+one program became two rows — `excel:Program:1:DEFAULT` and
+`jira:Program:1:DEFAULT`, same name — and HRMS's two `projects` rows (invariant 7:
+it is tracked in both a spreadsheet and Jira) hung off different programs.
+
+Four consequences, all measured on the demo database before the fix:
+
+1. `/api/programs/jira:Program:1:DEFAULT` answered **200 with zero projects** —
+   indistinguishable from a program nobody has filed against. Only the list view
+   suppressed the orphan, and it did so by matching on **name**, which is
+   name-equality entity resolution in the display layer.
+2. `app/scope.py` had **no notion of program at all**, so a project registered by
+   browser upload could not declare one and inherited whichever hardcoded
+   `DEFAULT` the collector invented.
+3. `program_rollup` queried resources by **canonical id only** — a `Resource` row
+   filed against `jira:Project:1:HRMS` was invisible to HRMS's own rollup.
+   Invariant 7 one level below where `scope.source_ids_for` already solves it.
+4. `portfolio()` iterated every project across every program and called the
+   result `program_name`, degrading to the literal string `"Portfolio"`.
+
+### The fix
+
+Programs are keyed `program:Program:0:<KEY>` — source-neutral, connection-neutral.
+Membership is **declared** in `app/scope.py` (`DeliveryProgram`, `program_for`,
+`projects_in`), which is already the module that owns "which ids are one thing".
+`app/ingest/programs.py` is now the single path a collector takes to attach a
+project to its program, and it *resolves* rather than invents: `program_for` goes
+through the pairing first, so both source ids of one delivery project reach one
+program. A project `scope` does not place gets `program_id = NULL` and is reported
+as unassigned — never filed under a program made up to satisfy a foreign key.
+
+The name-equality suppression in `list_programs` is **deleted**, not adjusted.
+There is no longer a duplicate to hide, so an empty program is now believed.
+
+### What came with it (§8 and §10 of the design doc)
+
+- **`app/units.py`** — the one owner of every effort conversion. Factors are
+  program-scoped (20 vs 22 person-days per 人月 must never pool), no unit has a
+  default (invariant I4), and every converted value records the factor it used.
+  Carries the working-day calendar including Japanese public holidays, so a slip
+  across Golden Week is two working days and not five.
+- **`app/intelligence/contention.py`** — Channel 1, apportionment not
+  replication. `Σ sᵢ = E` is asserted, not commented. Mode A (proportional,
+  nobody protected) is the default because a written priority order is usually
+  stale; Mode B walks a real waterfall and is *not* Mode A with the top project
+  lifted out. All five of the design doc's worked examples reproduce exactly,
+  including the overload case that previously needed a `min(E, Dv)` clamp — the
+  waterfall makes the clamp unreachable. `Δ` is derived for display, asserted
+  `≤ L`, and never summed.
+- **Program as a context object**, passed into the same `analyze_project()` —
+  the design's stated shape, so a rollup *is* the project view folded up and
+  cannot disagree with it.
+
+### Two bugs I introduced and caught, worth knowing about
+
+- **Assessing contention over one long window is wrong, but not for the obvious
+  reason.** Pro-rata overlap already stops a long window from *inventing*
+  contention. What it does instead is **hide** it: one person fully committed to
+  two projects for March and idle either side shows zero excess across the
+  quarter. Assessment is per **month** — also required because the 36協定
+  overtime ceiling is monthly, so a quarter's overtime against a month's limit
+  would breach on arithmetic alone. Pinned by
+  `test_a_pooled_window_averages_a_peak_away_and_monthly_periods_do_not`.
+- **Rounding does not conserve.** Three victims at 3.3333 sum to 9.9999, not to
+  an excess of 10 — which tripped the conservation assertion *and* would have
+  meant a PM totalling the column on screen did not get the excess back. The last
+  victim in the (deterministic) order absorbs the remainder.
+
+One misleading headline also got fixed before it shipped: it read "21.8
+effort-days, which is 84 overtime hours", implying a conversion. The first is the
+project's share summed over every person and month; the second is one person's
+worst single month. Not the same quantity, so the sentence now says which is
+which.
+
+### Demo data
+
+`seed_extras.py` allocations now carry **stated windows**, chosen so the three
+ways the old `sum(percent) > 100` check was wrong are each a live case on the
+demo: Tran Quoc B 80%+50% overlapping (a real conflict, **the documented 130% is
+unchanged**), Pham Hong D 60%→50% sequential (110% nominal, correctly *not* a
+conflict), My Nguyen 50%+40% simultaneous (90% nominal, correctly *is* one once
+supply is discounted for availability). Task counts are untouched: HRMS 10,
+EXPROJ 3, SAIN 5.
+
+`resource` is a fifth dimension on the portfolio heatmap, banded from contention —
+so a project that is fine alone and starved by a sibling reads amber there and
+nowhere else.
+
+### Not done, deliberately
+
+**Channel 2 (shared milestone float) and the dependency traversal are not built.**
+The design doc calls the missing traversal a structural gap and it still is:
+contention produces an effort shortfall, but nothing walks the dependency network
+to say whether the affected tasks are on the critical path — if they are not, the
+shortfall consumes float and the milestone does not move. So `contention_pressure`
+is honest and the `Δ` scenario is labelled as one, but **no impact chain claims a
+milestone date moves because of contention.** Building that needs the forward-pass
+CPM step (doc §12 step 5) first. Materiality is likewise still a column rather
+than `magnitude ÷ remaining float`, for the same reason — it needs float.
 
 ---
 

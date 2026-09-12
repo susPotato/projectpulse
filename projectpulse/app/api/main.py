@@ -919,6 +919,7 @@ async def upload_source(
     sheet_kind: str = Form(...),
     project_name: str = Form(""),
     project_id: str = Form(""),
+    program_id: str = Form(""),
 ) -> dict:
     """Ingest one Excel sheet for a project, from a file picked in the browser.
 
@@ -955,6 +956,18 @@ async def upload_source(
 
     project_id = project_id.strip()
     project_name = project_name.strip()
+    program_id = program_id.strip()
+
+    # Which program a new project belongs to is stated here or nowhere. Deriving
+    # it downstream from whichever collector ran is what let one program exist
+    # under two ids, so the choice is taken at the moment a person makes it -
+    # and an unknown program is refused rather than created, because a typo that
+    # silently invents a program is how a portfolio grows rows nobody meant.
+    if program_id:
+        if scope.find_program(program_id) is None:
+            raise HTTPException(
+                status_code=400, detail=f"unknown program {program_id!r}"
+            )
 
     #: Set for a project this upload would be the first sight of. Registered
     #: only once the workbook has been *accepted* - registering up here left a
@@ -1019,7 +1032,7 @@ async def upload_source(
 
     # Accepted - so the project may exist now.
     if register_new is not None:
-        scope.register(project_id, register_new)
+        scope.register(project_id, register_new, program_id=program_id or None)
 
     # The bytes go into the database with the registration, not onto the
     # container's disk. A Fly machine's filesystem does not survive a deploy,

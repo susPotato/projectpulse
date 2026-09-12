@@ -334,13 +334,41 @@ const ResourceConflictTile: ComponentType<TileProps> = ({ scopeId }) => {
       {bundle && (
         <div className="grid gap-2">
           {bundle.resource_conflicts.length === 0 && (
-            <p className="m-0 text-[12.5px] text-ink-3">No one is overallocated across projects.</p>
+            <p className="m-0 text-[12.5px] text-ink-3">
+              No one is committed beyond their capacity in any month.
+            </p>
           )}
+          {/*
+            Leads with the excess in effort-days, not with the allocation
+            percentage. The percentage is the number a PM recognises from their
+            own resource plan, so it stays - but it is a label now: the test is
+            windowed demand against discounted supply, and "130%" on its own says
+            nothing about whether the two claims overlap in time.
+
+            Keyed by name *and* window because contention is assessed per month,
+            so one person legitimately appears once per contended month.
+          */}
           {bundle.resource_conflicts.map((c) => (
-            <div key={c.resource_name} className="text-[12.5px]">
-              <b className="font-semibold text-orange">{c.total_allocation_percent}%</b>{" "}
-              <span className="text-ink">{c.resource_name}</span>
-              <div className="text-[11px] text-ink-3">{c.projects.join(" + ")}</div>
+            <div key={`${c.resource_name}:${c.window_label}`} className="text-[12.5px]">
+              <b className="font-semibold text-orange">{c.excess_days} effort-days</b>{" "}
+              <span className="text-ink">short · {c.resource_name}</span>
+              <div className="text-[11px] text-ink-3">
+                {c.projects.join(" + ")} · {c.window_label}
+              </div>
+              <div className="text-[11px] text-ink-3">
+                {c.total_allocation_percent}% allocated · demand {c.demand_days} vs supply{" "}
+                {c.supply_days} effort-days
+              </div>
+              {/* A delay figure never renders without its absorption assumption. */}
+              {c.absorption && (
+                <div
+                  className={`text-[11px] ${
+                    c.breaches_overtime_limit ? "text-orange" : "text-ink-3"
+                  }`}
+                >
+                  {c.absorption}
+                </div>
+              )}
             </div>
           ))}
         </div>

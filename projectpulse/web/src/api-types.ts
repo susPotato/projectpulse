@@ -1232,6 +1232,11 @@ export interface components {
              * @default
              */
             project_id: string;
+            /**
+             * Program Id
+             * @default
+             */
+            program_id: string;
         };
         /**
          * BurnPoint
@@ -2315,6 +2320,26 @@ export interface components {
             depends_on_inferred_edges: boolean;
         };
         /**
+         * ProjectShortfall
+         * @description One project's apportioned share of a person's excess demand.
+         *
+         *     `effort_days` is the conserved quantity and the only one safe to add up.
+         *     `delay_days` is a scenario: it holds only if the shortfall lands in a later
+         *     window that has room, and summing it across projects re-creates exactly the
+         *     replication error the apportionment exists to remove - so it is rendered per
+         *     row, never totalled.
+         */
+        ProjectShortfall: {
+            /** Project Id */
+            project_id: string;
+            /** Project Name */
+            project_name: string;
+            /** Effort Days */
+            effort_days: number;
+            /** Delay Days */
+            delay_days: number;
+        };
+        /**
          * RefusedEdge
          * @description A dependency the graph would not accept, and why.
          *
@@ -2476,11 +2501,20 @@ export interface components {
         };
         /**
          * ResourceConflict
-         * @description One person allocated over 100% combined, across this program's projects.
+         * @description One person whose committed demand exceeds their capacity in a window.
          *
          *     This is the "cross-project resource control" a delivery manager cannot see
          *     from any single project's own page - the whole reason it is a Program-level
          *     tile rather than a per-project one.
+         *
+         *     **It is no longer "allocated over 100%".** That test ignored the dates, so
+         *     two 60% allocations in non-overlapping quarters read as a 120% conflict that
+         *     did not exist, while a simultaneous 50% and 40% read as clean even though a
+         *     person is not 100% available to project work. What is computed now is the
+         *     excess of windowed demand over discounted supply, apportioned across the
+         *     projects that lose out. `total_allocation_percent` is kept because it is the
+         *     number a PM recognises from their own resource plan, but it is a label now,
+         *     not the test.
          */
         ResourceConflict: {
             /** Resource Name */
@@ -2489,6 +2523,55 @@ export interface components {
             total_allocation_percent: number;
             /** Projects */
             projects: string[];
+            /**
+             * Demand Days
+             * @default 0
+             */
+            demand_days: number;
+            /**
+             * Supply Days
+             * @default 0
+             */
+            supply_days: number;
+            /**
+             * Excess Days
+             * @default 0
+             */
+            excess_days: number;
+            /**
+             * Window Label
+             * @default
+             */
+            window_label: string;
+            /**
+             * Working Days
+             * @default 0
+             */
+            working_days: number;
+            /**
+             * Mode
+             * @default
+             */
+            mode: string;
+            /** Shortfalls */
+            shortfalls: components["schemas"]["ProjectShortfall"][];
+            /**
+             * Absorption
+             * @default
+             */
+            absorption: string;
+            /**
+             * Overtime Hours
+             * @default 0
+             */
+            overtime_hours: number;
+            /**
+             * Breaches Overtime Limit
+             * @default false
+             */
+            breaches_overtime_limit: boolean;
+            /** Notes */
+            notes: string[];
         };
         /**
          * ResourceRow
@@ -2786,7 +2869,12 @@ export interface components {
         };
         /**
          * ScopeEntry
-         * @description Which source ids are one delivery project (invariant 7).
+         * @description Which source ids are one delivery project (invariant 7), and its program.
+         *
+         *     The program is carried because it is now *declared* in `app/scope.py` rather
+         *     than derived from whichever collector wrote the row - so this screen is where
+         *     a reader checks the declaration. Empty means the project belongs to no
+         *     program, which is a legitimate state for one registered by upload.
          */
         ScopeEntry: {
             /** Canonical Id */
@@ -2795,6 +2883,16 @@ export interface components {
             name: string;
             /** Also */
             also: string[];
+            /**
+             * Program Id
+             * @default
+             */
+            program_id: string;
+            /**
+             * Program Name
+             * @default
+             */
+            program_name: string;
         };
         /** StepRequest */
         StepRequest: {

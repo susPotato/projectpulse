@@ -58,17 +58,61 @@ class ResourceRow(Response):
     allocation_percent: float | None = None
 
 
+class ProjectShortfall(Response):
+    """One project's apportioned share of a person's excess demand.
+
+    `effort_days` is the conserved quantity and the only one safe to add up.
+    `delay_days` is a scenario: it holds only if the shortfall lands in a later
+    window that has room, and summing it across projects re-creates exactly the
+    replication error the apportionment exists to remove - so it is rendered per
+    row, never totalled.
+    """
+
+    project_id: str
+    project_name: str
+    effort_days: float
+    delay_days: float
+
+
 class ResourceConflict(Response):
-    """One person allocated over 100% combined, across this program's projects.
+    """One person whose committed demand exceeds their capacity in a window.
 
     This is the "cross-project resource control" a delivery manager cannot see
     from any single project's own page - the whole reason it is a Program-level
     tile rather than a per-project one.
+
+    **It is no longer "allocated over 100%".** That test ignored the dates, so
+    two 60% allocations in non-overlapping quarters read as a 120% conflict that
+    did not exist, while a simultaneous 50% and 40% read as clean even though a
+    person is not 100% available to project work. What is computed now is the
+    excess of windowed demand over discounted supply, apportioned across the
+    projects that lose out. `total_allocation_percent` is kept because it is the
+    number a PM recognises from their own resource plan, but it is a label now,
+    not the test.
     """
 
     resource_name: str
     total_allocation_percent: float
     projects: list[str] = Field(default_factory=list)
+
+    #: Demand, supply and excess in effort-days over `window_label`. The excess
+    #: is the finding; the other two are what make it arguable.
+    demand_days: float = 0.0
+    supply_days: float = 0.0
+    excess_days: float = 0.0
+    window_label: str = ""
+    working_days: int = 0
+    #: 'proportional' (nobody protected - the default) or 'priority'.
+    mode: str = ""
+    shortfalls: list[ProjectShortfall] = Field(default_factory=list)
+    #: How the overload would be absorbed, in words, and what it costs in
+    #: overtime hours. A delay figure must never appear without this beside it.
+    absorption: str = ""
+    overtime_hours: float = 0.0
+    breaches_overtime_limit: bool = False
+    #: Caveats that belong next to the number - a derived rather than stated
+    #: allocation window, the availability factor applied to supply.
+    notes: list[str] = Field(default_factory=list)
 
 
 class ProgramRollupBundle(Response):
