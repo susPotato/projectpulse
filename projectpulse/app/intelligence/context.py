@@ -161,6 +161,21 @@ class DeliveryContext:
     avg_progress: float = 0.0
 
     # -- QA -----------------------------------------------------------------
+    #: Hours logged against hours planned, both from columns a person filled in
+    #: on the worklog.
+    #:
+    #: The *only* effort comparison this product will make. `api/schemas/team.py`
+    #: sets out why: productivity as output-per-effort needs an output measure,
+    #: and `progress` is self-reported, so a ratio built on it would present a
+    #: claim as a measurement. Logged against planned is two real columns and
+    #: its derivation can be shown, which is what makes it sayable at all.
+    hours_logged: float = 0.0
+    hours_planned: float = 0.0
+    #: `hours_logged / hours_planned`, or 0.0 when nothing was planned - an
+    #: overrun against no plan is not an overrun, it is an absent plan, and the
+    #: rules must not be able to read the second as the first.
+    effort_ratio: float = 0.0
+
     qa_count: int = 0
     qa_blocked: int = 0
     qa_blocked_ratio: float = 0.0
@@ -310,6 +325,9 @@ def build_context(
     recorded = [p.recorded_slip_days or 0 for p in projections]
 
     qa_blocked = sum(1 for q in qa_items if _status_of(q) in BLOCKED_STATES)
+
+    _logged = sum(float(getattr(q, "hours_spent", None) or 0) for q in qa_items)
+    _planned = sum(float(getattr(q, "estimate_hours", None) or 0) for q in qa_items)
     low_confidence = sum(
         1 for c in changes if getattr(c, "identity_confidence", "high") == "low"
     )
@@ -402,6 +420,9 @@ def build_context(
         project_slip_days=impact.project_slip_days or 0,
         milestones_at_risk=len(impact.affected_milestones),
         avg_progress=round(sum(progresses) / len(progresses), 2) if progresses else 0.0,
+        hours_logged=round(_logged, 2),
+        hours_planned=round(_planned, 2),
+        effort_ratio=round(_logged / _planned, 3) if _planned else 0.0,
         qa_count=len(qa_items),
         qa_blocked=qa_blocked,
         qa_blocked_ratio=_ratio(qa_blocked, len(qa_items)),

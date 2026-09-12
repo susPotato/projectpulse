@@ -254,6 +254,37 @@ DEFAULT_TABLE = RuleTable(
             ),
         ),
         Rule(
+            id="effort_overrun",
+            when=(
+                Condition("effort_ratio", ">=", 1.5),
+                #: Guarded on a real plan existing. An overrun against no
+                #: estimate is not an overrun, it is an absent estimate, and
+                #: `effort_ratio` is 0.0 in that case rather than infinite -
+                #: but a plan of two hours would still make any real work look
+                #: like a breach, so a floor is needed as well.
+                Condition("hours_planned", ">=", 8),
+            ),
+            category="quality_risk",
+            severity="medium",
+            headline=(
+                "{{hours_logged}} hours logged against {{hours_planned}} planned "
+                "on this project's worklog."
+            ),
+            recommendation=(
+                "Re-estimate the remaining items before the next commitment. "
+                "Whatever made these cost more is still in front of the work "
+                "that has not started."
+            ),
+            rationale=(
+                "Both halves are columns a person filled in, which is the whole "
+                "reason this comparison is made and a productivity figure is "
+                "not: output per unit of effort would need an output measure, "
+                "and `progress` is self-reported. Half again over plan is where "
+                "an estimate stops being a rounding error and starts being a "
+                "different plan."
+            ),
+        ),
+        Rule(
             id="single_owner_project",
             when=(
                 Condition("distinct_owners", "==", 1),
