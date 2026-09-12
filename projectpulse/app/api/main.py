@@ -888,15 +888,20 @@ async def upload_source(
     #: so everything downstream (the contract, the differ, the identity
     #: resolver, the watched-sheet registration) handles one shape and there is
     #: no second ingestion path to keep in step.
-    from_jira = kind == "jira_export"
+    #: `jira_export` becomes a schedule, `jira_worklog` a worklog - one export
+    #: legitimately carries both, because an issue row holds a plan (dates,
+    #: links) *and* a record of effort, and this app keeps those in separate
+    #: contracts the way a spreadsheet shop keeps them in separate files.
+    from_jira = kind in {"jira_export", "jira_worklog"}
+    jira_kind = "worklog" if kind == "jira_worklog" else "schedule"
     if from_jira:
-        kind = "schedule"
+        kind = jira_kind
     if kind not in SHEET_KINDS:
         raise HTTPException(
             status_code=400,
             detail=(
                 f"unknown sheet_kind {sheet_kind!r}; expected one of "
-                f"{[*SHEET_KINDS, 'jira_export']}"
+                f"{[*SHEET_KINDS, 'jira_export', 'jira_worklog']}"
             ),
         )
 
@@ -967,7 +972,7 @@ async def upload_source(
         )
 
         try:
-            payload, jira_coverage = convert_workbook(BytesIO(payload))
+            payload, jira_coverage = convert_workbook(BytesIO(payload), kind=jira_kind)
         except NotAJiraExport as exc:
             # 400 with the reason. The person picked the wrong kind for their
             # file, or exported without the fields - neither is a server fault,

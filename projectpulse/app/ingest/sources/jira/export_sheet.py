@@ -51,7 +51,7 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 
-from app.ingest.sources.excel.reader import SCHEDULE_CONTRACT
+from app.ingest.sources.excel.reader import SCHEDULE_CONTRACT, WORKLOG_CONTRACT
 
 #: How far down to look for the header row. Generous because the preamble is a
 #: report title and a "Displaying N issues" line today, and nothing promises a
@@ -166,6 +166,36 @@ SHAPE = {
 #: anyway is worse than not detecting it.
 DEMOTE_IF_EQUALS = {"Start": "Created"}
 
+#: The same export, read as a *worklog* instead of a schedule.
+#:
+#: Jira carries effort per issue - `Original Estimate` against `Time Spent` -
+#: and that is exactly the pair `app/api/schemas/team.py` argues is the only
+#: honest effort comparison available, because both are values a person entered
+#: rather than a ratio derived from self-reported progress. Without this the
+#: Jira path could describe a schedule and never say what it cost.
+#:
+#: One export therefore feeds two sheets. That is not duplication: an issue row
+#: genuinely carries both a plan (dates, links) and a record of effort, and the
+#: app keeps those in separate contracts because a spreadsheet-shop keeps them
+#: in separate files.
+WORKLOG_SOURCES: dict[str, tuple[str, ...]] = {
+    "Task ID": ("Key",),
+    "Summary": ("Summary",),
+    "Status": ("Status",),
+    # Jira has no single "blocked" column. `Flagged` is the closest thing that
+    # means it unambiguously; a status *called* Blocked is handled by the
+    # convertor's own vocabulary, so nothing is guessed at here.
+    "Blocked": ("Flagged", "Impediment"),
+    "Owner": ("Assignee",),
+    "Estimate": ("Original Estimate", "Σ Original Estimate"),
+    "Hours": ("Time Spent", "Σ Time Spent"),
+    # When the work was recorded, as near as an export gets: Jira does not put
+    # a worklog's own date in an issue export, and `Updated` is the last time
+    # anything on the issue moved. Named honestly in the coverage report rather
+    # than presented as a log date.
+    "Date": ("Updated",),
+}
+
 #: Jira renders some custom fields by shipping the page's own script, so the
 #: cell holds a function body rather than a value. Any cell that looks like this
 #: is dropped rather than written through - a task whose Owner is a jQuery call
@@ -175,7 +205,9 @@ SCRIPT_SMELL = re.compile(r"\$\(|function\s*\(|setTimeout|document\.ready", re.I
 #: Same idea for Jira's own rendering failures, which arrive as prose.
 ERROR_SMELL = re.compile(r"^Error rendering ", re.I)
 
-DATE_COLUMNS = frozenset({"Start", "Planned Finish", "Baseline Finish", "Last Updated"})
+DATE_COLUMNS = frozenset(
+    {"Start", "Planned Finish", "Baseline Finish", "Last Updated", "Date"}
+)
 
 
 class NotAJiraExport(ValueError):
@@ -245,6 +277,42 @@ def _as_percent(value):
     except (TypeError, ValueError):
         return None
     return number if 0 <= number <= 100 else None
+
+
+def _as_hours(value):
+    """Effort as hours, however this instance writes it.
+
+    Jira reports effort in **seconds** through the API and as a formatted string
+    ("3h 30m", "2d") in some exports, while a plain number in a spreadsheet is
+    usually already hours. Each form is read for what it is; anything else is
+    dropped rather than guessed, because an effort figure off by a factor of
+    3600 is worse than an absent one.
+    """
+    value = _clean(value)
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        #: A bare number is taken as hours, and **never** rescaled.
+        #:
+        #: Some Jira configurations write effort in seconds, and a threshold
+        #: that guessed which was which would be wrong by a factor of 3600 the
+        #: day it guessed wrong - a confident wrong number, which is the one
+        #: outcome this codebase will not trade for coverage. `coverage()`
+        #: instead says when a column *looks* like seconds and lets a person
+        #: decide, because they can see their own Jira and we cannot.
+        return float(value)
+    text = str(value).strip().lower()
+    total = 0.0
+    matched = False
+    for amount, unit in re.findall(r"(\d+(?:\.\d+)?)\s*([wdhm])", text):
+        matched = True
+        total += float(amount) * {"w": 40.0, "d": 8.0, "h": 1.0, "m": 1 / 60}[unit]
+    if matched:
+        return round(total, 2)
+    try:
+        return float(text)
+    except ValueError:
+        return None
 
 
 def _predecessors(cells: list) -> str | None:
@@ -337,8 +405,22 @@ def _index(headers: list[str]) -> dict[str, list[int]]:
     return positions
 
 
-def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str, str]]:
-    """`(records, chosen)` - the template rows, and which Jira column fed each."""
+def convert(
+    headers: list[str],
+    rows: list[tuple],
+    *,
+    sources: dict[str, tuple[str, ...]] | None = None,
+    columns: tuple[str, ...] | None = None,
+) -> tuple[list[dict], dict[str, str]]:
+    """`(records, chosen)` - the template rows, and which Jira column fed each.
+
+    Defaults to the schedule contract. Pass `sources`/`columns` to read the same
+    export as a worklog instead - one function rather than two, because every
+    rule below (shape ranking, repeated headers, dropped script cells) applies
+    identically and a second copy would drift.
+    """
+    sources = sources if sources is not None else SOURCES
+    columns = columns if columns is not None else SCHEDULE_CONTRACT.template_headers
     lookup = _index(headers)
 
     def _cells(row: tuple, name: str) -> list:
@@ -387,7 +469,7 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
     #: written for (`Due Date` vs `End date`, where an instance uses one or the
     #: other).
     chosen: dict[str, str] = {}
-    for column, candidates in SOURCES.items():
+    for column, candidates in sources.items():
         present = [c for c in candidates if c.casefold() in lookup]
         if not present:
             continue
@@ -413,7 +495,7 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
     records = []
     for row in rows:
         record = {}
-        for column in SCHEDULE_CONTRACT.template_headers:
+        for column in columns:
             source = chosen.get(column)
             if source is None:
                 record[column] = None
@@ -425,6 +507,8 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
                 record[column] = _predecessors(cells)
             elif column == "Progress":
                 record[column] = _as_percent(cells[0]) if cells else None
+            elif column in {"Estimate", "Hours"}:
+                record[column] = _as_hours(cells[0]) if cells else None
             elif column == "Milestone":
                 #: Prefer a cell that looks like a parent over merely the first
                 #: non-empty one, and refuse a URL outright - that is a link to
@@ -440,20 +524,21 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
     return records, chosen
 
 
-def _build(records: list[dict]) -> Workbook:
+def _build(records: list[dict], contract=None) -> Workbook:
     """The blank template's own shape, filled in.
 
     The tab is named `Activities` because that is what the contract prefers and
     `find_sheet` tries first - it would resolve a differently-named tab too, but
     only by searching, and there is no reason to make it search.
     """
+    contract = contract if contract is not None else SCHEDULE_CONTRACT
     workbook = Workbook()
     sheet = workbook.active
-    sheet.title = "Activities"
-    sheet.append(list(SCHEDULE_CONTRACT.template_headers))
+    sheet.title = "Worklog" if contract is WORKLOG_CONTRACT else "Activities"
+    sheet.append(list(contract.template_headers))
     for record in records:
-        sheet.append([record[h] for h in SCHEDULE_CONTRACT.template_headers])
-    for index, header in enumerate(SCHEDULE_CONTRACT.template_headers, start=1):
+        sheet.append([record[h] for h in contract.template_headers])
+    for index, header in enumerate(contract.template_headers, start=1):
         column = sheet.cell(row=1, column=index).column_letter
         sheet.column_dimensions[column].width = max(12, len(header) + 2)
     return workbook
@@ -464,7 +549,7 @@ def write_schedule(records: list[dict], out: Path) -> None:
     _build(records).save(out)
 
 
-def to_bytes(records: list[dict]) -> bytes:
+def to_bytes(records: list[dict], contract=None) -> bytes:
     """The same workbook as `write_schedule`, in memory.
 
     What the upload route needs: the converted sheet has to reach the existing
@@ -472,12 +557,16 @@ def to_bytes(records: list[dict]) -> bytes:
     workbook from their disk.
     """
     buffer = BytesIO()
-    _build(records).save(buffer)
+    _build(records, contract).save(buffer)
     return buffer.getvalue()
 
 
 def coverage(
-    records: list[dict], chosen: dict[str, str], headers: list[str], rows: list[tuple]
+    records: list[dict],
+    chosen: dict[str, str],
+    headers: list[str],
+    rows: list[tuple],
+    columns: tuple[str, ...] | None = None,
 ) -> dict:
     """What came across, what did not, and what that costs.
 
@@ -487,8 +576,9 @@ def coverage(
     mapping removes any of them.
     """
     total = len(records)
+    wanted = columns if columns is not None else SCHEDULE_CONTRACT.template_headers
     columns = []
-    for column in SCHEDULE_CONTRACT.template_headers:
+    for column in wanted:
         filled = sum(1 for r in records if r[column] not in (None, ""))
         columns.append(
             {
@@ -561,6 +651,24 @@ def coverage(
                 "what the export says; do not read Start as a plan."
             )
 
+    #: Effort that is implausible as hours is usually seconds. Said, not fixed -
+    #: see `_as_hours`. 2000 hours is a person-year on one issue, so anything
+    #: past it is a unit problem rather than a workload.
+    effort = [
+        v
+        for r in records
+        for v in (r.get("Estimate"), r.get("Hours"))
+        if isinstance(v, (int, float))
+    ]
+    if effort and max(effort) > 2000:
+        notes.append(
+            f"The largest effort value is {max(effort):,.0f}, which is implausible "
+            "as hours - this Jira probably reports effort in seconds. Nothing was "
+            "rescaled, because guessing wrong would be wrong by a factor of 3600. "
+            "Divide the column by 3600 in the export, or re-export with effort "
+            "formatted as '3h 30m'."
+        )
+
     owners = {r["Owner"] for r in records if r["Owner"]}
     if len(owners) <= 1:
         notes.append(
@@ -572,16 +680,34 @@ def coverage(
     return {"issues": total, "columns": columns, "notes": notes}
 
 
-def convert_workbook(source, sheet: str | None = None) -> tuple[bytes, dict]:
+def convert_workbook(
+    source, sheet: str | None = None, kind: str = "schedule"
+) -> tuple[bytes, dict]:
     """A Jira export in, a schedule workbook and its coverage report out.
 
     The one call both entry points make, so the CLI and the upload route cannot
     convert the same file two different ways.
     """
+    worklog = kind == "worklog"
     headers, rows = read_export(source, sheet)
-    records, chosen = convert(headers, rows)
+    records, chosen = convert(
+        headers,
+        rows,
+        sources=WORKLOG_SOURCES if worklog else SOURCES,
+        columns=WORKLOG_CONTRACT.template_headers if worklog else None,
+    )
     if not records:
         raise NotAJiraExport(
             "the export has a header row but no issues under it - nothing to load."
+        )
+    if worklog:
+        if not any(r.get("Hours") or r.get("Estimate") for r in records):
+            raise NotAJiraExport(
+                "no issue in this export carries Original Estimate or Time Spent, so "
+                "there is no effort to load. Export those fields, or import it as a "
+                "schedule instead."
+            )
+        return to_bytes(records, WORKLOG_CONTRACT), coverage(
+            records, chosen, headers, rows, columns=WORKLOG_CONTRACT.template_headers
         )
     return to_bytes(records), coverage(records, chosen, headers, rows)

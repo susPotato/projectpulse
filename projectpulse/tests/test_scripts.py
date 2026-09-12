@@ -1094,3 +1094,105 @@ def test_a_hostile_export_converts_without_raising(tmp_path):
     assert by["T-5"]["Predecessor"] == "T-5"
     assert len(by["T-6"]["Activity"]) == 5000
     assert "😀" in by["T-7"]["Activity"]
+
+# --------------------------------------------------------------------------
+# One Jira export, two sheets: the plan and what it cost.
+# --------------------------------------------------------------------------
+
+
+def _worklog(tmp_path, header, rows):
+    from app.ingest.sources.excel.reader import WORKLOG_CONTRACT
+    from app.ingest.sources.jira.export_sheet import (
+        WORKLOG_SOURCES,
+        convert,
+        read_export,
+    )
+
+    headers, data = read_export(_future_export(tmp_path, header, rows))
+    records, chosen = convert(
+        headers, data, sources=WORKLOG_SOURCES, columns=WORKLOG_CONTRACT.template_headers
+    )
+    return {r["Task ID"]: r for r in records}, chosen
+
+
+EFFORT_HEADER = ["Project", "Key", "Summary", "Status", "Assignee",
+                 "Original Estimate", "Time Spent", "Updated"]
+
+
+def test_one_export_reads_as_both_a_schedule_and_a_worklog(tmp_path):
+    """An issue row genuinely carries a plan *and* a record of effort. Without
+    the second, the Jira path could describe a schedule and never say what it
+    cost."""
+    from datetime import datetime
+
+    rows = [("P", "P-1", "Design", "In Progress", "Ann", 8, 12, datetime(2026, 9, 1))]
+
+    by_worklog, _ = _worklog(tmp_path, EFFORT_HEADER, rows)
+    assert by_worklog["P-1"]["Estimate"] == 8
+    assert by_worklog["P-1"]["Hours"] == 12
+    assert by_worklog["P-1"]["Owner"] == "Ann"
+
+    by_schedule, _ = _converted(tmp_path, EFFORT_HEADER, rows)
+    assert by_schedule["P-1"]["Activity"] == "Design"
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [(8, 8.0), (7.5, 7.5), ("3h 30m", 3.5), ("2d", 16.0), ("1w", 40.0),
+     ("nonsense", None), (28800, 28800.0)],
+)
+def test_effort_is_read_in_the_unit_it_was_written(tmp_path, raw, expected):
+    """28800 stays 28800 rather than becoming 8.
+
+    Some Jira configurations report effort in seconds. A threshold guessing
+    which was which would be wrong by a factor of 3600 the day it guessed
+    wrong - a confident wrong number, which is worse than an odd-looking one.
+    `coverage()` reports the suspicion instead."""
+    from datetime import datetime
+
+    by, _ = _worklog(
+        tmp_path, EFFORT_HEADER,
+        [("P", "P-1", "Design", "To Do", "Ann", raw, raw, datetime(2026, 9, 1))],
+    )
+    assert by["P-1"]["Estimate"] == expected
+
+
+def test_an_export_with_no_effort_is_refused_as_a_worklog(tmp_path):
+    """Rather than ingesting a worklog of empty rows, which would read as "this
+    project logged no hours" when the truth is "this export does not carry
+    them"."""
+    from app.ingest.sources.jira.export_sheet import NotAJiraExport, convert_workbook
+
+    path = _future_export(
+        tmp_path,
+        ["Project", "Key", "Summary", "Status"],
+        [("P", "P-1", "Design", "To Do")],
+    )
+    with pytest.raises(NotAJiraExport) as caught:
+        convert_workbook(path, kind="worklog")
+    assert "Original Estimate" in str(caught.value)
+
+
+def test_implausible_effort_is_reported_rather_than_rescaled(tmp_path):
+    from datetime import datetime
+
+    from app.ingest.sources.excel.reader import WORKLOG_CONTRACT
+    from app.ingest.sources.jira.export_sheet import (
+        WORKLOG_SOURCES,
+        convert,
+        coverage,
+        read_export,
+    )
+
+    headers, data = read_export(
+        _future_export(
+            tmp_path, EFFORT_HEADER,
+            [("P", "P-1", "Design", "To Do", "Ann", 28800, 43200, datetime(2026, 9, 1))],
+        )
+    )
+    records, chosen = convert(
+        headers, data, sources=WORKLOG_SOURCES, columns=WORKLOG_CONTRACT.template_headers
+    )
+    notes = " ".join(coverage(records, chosen, headers, data,
+                              columns=WORKLOG_CONTRACT.template_headers)["notes"])
+    assert "seconds" in notes and "3600" in notes
