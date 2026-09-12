@@ -188,6 +188,47 @@ actually caught this (see §-1).
 
 ---
 
+## 0i. Same session - a Jira export can be uploaded, not just converted
+
+The converter shipped in §0f was a **script**, which meant that on the deployed
+app there was no way to load a Jira export at all: Settings > Sources offered
+schedule and worklog, and getting from a Jira file to either needed a shell
+nobody has on Fly. Asked "how can I load the Jira in?", the honest answer was
+"you cannot, here".
+
+Settings > Sources now offers **"Jira issue export"**. The route converts the
+upload before anything else looks at the bytes, then treats it as a schedule
+sheet - so the contract, the differ, the identity resolver and the watched-sheet
+registration all handle one shape and there is no second ingestion path to keep
+in step.
+
+**What gets registered is the converted schedule**, and that is the part with a
+future in it: a later export of the same project is then a genuine second
+observation, because the differ compares it against this one. The baseline Jira
+cannot give us starts existing the moment somebody uploads twice, which is why
+the note on the form says "until a second export is uploaded" rather than
+"never".
+
+The conversion moved from `scripts/` to `app/ingest/sources/jira/export_sheet.py`:
+two entry points need it and must not convert the same file two different ways,
+pinned by a test that fails if the script grows its own parser back. It raises
+`NotAJiraExport` rather than `SystemExit` - a library that kills the process
+would take the API down instead of answering 400. The script survives as a thin
+CLI for batch conversion and for inspecting the sheet before ingesting.
+
+The coverage report rides back on the upload response and renders under the
+form, and the caveat is shown when the *kind is chosen* rather than after the
+upload: telling somebody their export has no baseline is only useful before
+they interpret a flat dashboard.
+
+Verified end to end on the real export (17 issues, 0 rejected, browser only),
+and all three refusals give the reason: a non-Jira workbook sent as
+`jira_export`, a raw Jira export sent as `schedule`, and an unknown kind. The
+two refused uploads left **no project behind**, which is the "register only
+after acceptance" rule in the route still holding.
+
+---
+
 ## 0h. Same session - the console is gone, and a health check went with it
 
 **807 tests pass.** Deployed and verified live: `/api/reset`, `/api/write-step`,
