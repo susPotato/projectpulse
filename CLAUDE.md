@@ -188,6 +188,64 @@ actually caught this (see §-1).
 
 ---
 
+## 0n. Same session - four more Jira tiles, and a hostile export that found three bugs
+
+**835 tests pass.** 36 tiles live. Deployed.
+
+### The hostile export is the technique worth keeping
+
+Rather than guess what tomorrow'''s data might contain, built a file with one row
+per way to fool the app - unknown statuses, text in date columns, a year-9999
+date, self-referencing and cyclic and dangling dependencies, progress of 9999
+and -50, a duplicate key, a 5000-character title, unicode, a blank row, a
+row with only a key, and a sheet not called `general_report`. Then ran it end to
+end through the real upload route and hit every surface.
+
+It found three real defects. **Speculating would have found none of them.**
+
+### 1. `Resolved` was counted as open
+
+One of the commonest states in a real Jira workflow fell through to `OTHER`, and
+every "is it finished?" test reads OTHER as no - so a finished task was reported
+overdue, in progress *and* stale at once. `Cancelled`, `Won'''t Do`, `Rejected`,
+`Duplicate` the same.
+
+Those now map to **`DROPPED`**, its own state rather than DONE: work that will
+not happen was not delivered, so counting it complete inflates completion and
+counting it open reports a cancelled task as late forever. `CLOSED_STATES` is
+the test for "still someone'''s problem"; `DONE_STATES` stays "actually
+delivered". A genuinely unknown status is still OTHER and still counted open -
+guessing which of to-do/in-progress/done it meant would be worse.
+
+### 2. A date at the edge of the calendar 500'''d two pages
+
+`date.max + timedelta(days=1)` **raises** rather than saturating. A tracker can
+hold 9999-12-31 as a no-due-date sentinel and it is trivial to mistype. It broke
+the schedule window - and then the due-soon window added in §0k, which was my
+own. One clamped `shift_date` in `context.py` now serves both.
+
+### 3. `GanttRow.assignee` was declared and never set
+
+Every row served `null` - typed, serialised, empty - since the schema was
+written. It surfaced the instant a tile grouped by owner and reported seventeen
+named tasks as "Unassigned". **The demo project has a real four-person split the
+Schedule page has never shown.** Populated from a keyed query rather than by
+widening `TaskNode`, which is deliberately only what scheduling needs.
+
+### Four tiles, all from `/api/gantt`
+
+None needs a baseline, a dependency or an hour logged - which is the point, that
+being exactly what one export leaves you with.
+
+| tile | what it shows |
+|---|---|
+| `overdue_and_due_soon` | lateness against the date on the task, measured against the *scan*, not the clock |
+| `deadline_load` | open tasks per due date - one tall bar is a day that carries the project |
+| `work_by_owner` | open tasks per person, late ones inside the same bar rather than beside it |
+| `status_breakdown` | by the normalised vocabulary, so "Done" and "Resolved" land in one row |
+
+---
+
 ## 0m. Same session - two more things one Jira export can say
 
 **824 tests pass.** Deployed; 32 tiles live.
