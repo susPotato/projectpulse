@@ -188,6 +188,44 @@ actually caught this (see §-1).
 
 ---
 
+## 0j. Same session - the Schedule page could not change project
+
+It fetched `/api/gantt` **bare**, so it always got the route's default. That is
+worse than "cannot switch": the project dashboard's own Schedule link passes
+`?project=`, which this page ignored, so opening SAIN's schedule from SAIN's
+dashboard showed **HRMS's tasks under SAIN's link**. The API was never wrong -
+`?project=` worked all along; only the page never sent it.
+
+`gantt.html` is the one hand-written page left, so it never got the React rail's
+`ProjectSwitcher` for free. It now reads the same ambient selection (`?project=`
+/ `?also=` first, then `localStorage["pulse.project"]`) using the **same key** as
+`web/src/api.ts#currentProject` - a second key here would mean picking a project
+on Schedule and then opening Insight showed two different projects, which is
+worse than not being able to pick. A picker in the app bar makes it changeable
+in place, filled from `/api/portfolio` so the list and the names match every
+other page.
+
+### Program-level schedule: a timeline, deliberately not a merged Gantt
+
+`program_timeline` draws every project's committed finish on one shared window,
+with the overrun the chain implies past it.
+
+Stacking several projects' task bars into one chart would imply a schedule they
+do not share. `driving_path` and `project_end_projected` are **per-project**
+forward-pass results, and there is no single critical chain across projects that
+only compete for *people* - drawing one would invent a dependency structure
+nobody stated, which is the identity-level claim `app/scope.py` refuses one
+layer down. What a program can honestly say about schedule is when each project
+lands, side by side. Every figure is a rollup row already computed for the
+Programs list, so it cannot disagree with the heatmap beside it, and each bar
+links to that project's own Schedule page where the real chain lives.
+
+**Not added to the default program board.** `program_delivery_control` packs
+into four exact 12-column rows and production's board is already arranged from
+it; the tile is in the catalogue under Schedule, one "+ Add Tiles" away.
+
+---
+
 ## 0i. Same session - a Jira export can be uploaded, not just converted
 
 The converter shipped in §0f was a **script**, which meant that on the deployed
