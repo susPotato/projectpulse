@@ -188,6 +188,65 @@ actually caught this (see §-1).
 
 ---
 
+## 0r. Same session - the same demo from Jira files, and a git near-miss
+
+**857 tests pass.** Asked whether the uploadable demo set could be done from a
+Jira file. Built it, tested it, and it reaches parity on everything except the
+one thing Jira cannot carry.
+
+### Identical schedule chaos, from Jira exports
+
+`scripts.gen_demo_jira` writes the same three projects in the shape Jira'''s
+**Excel (All fields)** export produces - preamble rows, a header well down the
+sheet, a tab not called `general_report`, and a repeated `Linked Issues` column.
+Measured against the Excel set: **5 / 3 / 0 inconsistent tasks, the same 7-edge
+chain, a 5-task driving path, Payments projected 20 days past plan, the same
+critical / critical / watch bands.**
+
+It works because inbound issue links become real dependency edges, and "the plan
+cannot hold" needs *edges and dates*, not a baseline.
+
+### The gap was effort, and closing it was the interesting half
+
+A Jira export became only a schedule, so a project could be described and never
+costed. Jira holds `Original Estimate` against `Time Spent` per issue - exactly
+the pair `api/schemas/team.py` argues is the only honest effort comparison, both
+being values a person entered rather than a ratio over self-reported progress.
+
+**One export now reads as either sheet**: `jira_export` for the plan,
+`jira_worklog` for what it cost. Not duplication - an issue row genuinely
+carries both, and this app keeps them in separate contracts the way a
+spreadsheet shop keeps them in separate files.
+
+**Effort is never rescaled.** Some Jira configurations report it in seconds, and
+a threshold guessing which would be wrong by a factor of 3600 the day it guessed
+wrong. `3h 30m`, `2d`, `1w` are unambiguous and parsed; a bare number is hours;
+an implausible figure is *reported* as probably-seconds rather than divided. A
+confident wrong number is not worth trading for coverage.
+
+Still impossible from one export: **a baseline**. Recorded slip and the forecast
+stay absent, confidence reads low, and the board says so.
+
+### ⚠️ I was committing to somebody else'''s branch without noticing
+
+Another instance checked out `docs-tech-stack-and-server-topology` in this
+working tree mid-session. `git push origin main` pushes the *local main ref*,
+not HEAD - so it kept succeeding **quietly while pushing nothing**, and four
+commits never reached GitHub. They reached *production* the whole time, because
+`fly deploy` ships the working tree rather than a git ref.
+
+Caught only when a real push was rejected. Fixed by fast-forwarding `main` onto
+the branch and pushing.
+
+**Check `git branch --show-current` before pushing in this repo** - it is shared
+with other instances that switch branches under you, and `push origin main` will
+not warn you.
+
+The merge also swept in generated demo workbooks: `data/*.xlsx` matched only the
+top level, so `data/upload_demo/` slipped through. Now `data/**/*.xlsx`.
+
+---
+
 ## 0q. Same session - a demo set you upload live, and the rule it exposed
 
 **846 tests pass.** `scripts.gen_demo_upload` writes six workbooks - a schedule
