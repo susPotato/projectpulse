@@ -188,6 +188,52 @@ actually caught this (see §-1).
 
 ---
 
+## 0p. Same session - removing a project
+
+**845 tests pass.** "Remove" on each row of the Projects page, in two steps.
+
+The first press asks the server what would go and shows real numbers - *19
+tasks, 1 milestone, 1 dependency, 4 rejected rows, 1 risk, 1 dashboard*. **"This
+deletes 2 risks you typed by hand" is a decision; "are you sure?" is a reflex**,
+and people click through reflexes. The irreplaceable half is called out
+separately, because a sync rebuilds tasks and nothing rebuilds a risk somebody
+entered or a board somebody arranged.
+
+`GET /api/projects/{id}/removal` is its own route so the preview costs nothing
+until somebody asks: it is several counting queries per project and a portfolio
+page should not run them for rows nobody is touching. It has no side effects, so
+pressing Remove and cancelling has done nothing.
+
+### A seed project is refused, not deleted
+
+HRMS, SAIN and Example Project are declared in `app/scope.py`, not registered.
+Deleting their ingested rows would **empty them without removing them** - a
+project left on the portfolio with nothing in it, indistinguishable from one
+awaiting its first sync, which is a worse state than the one being escaped.
+Removing a seed is a code change and should be. The refusal is served as that
+sentence, not as a status code.
+
+### Deliberately left behind
+
+- **`custom_tiles`** - not project-scoped (`CustomTileOut` has no `project_id`)
+  and the same tile can sit on several boards, so deleting one because a
+  referencing project went away would take it off the others.
+- **`programs`** - a program outliving its last project is a real state, and
+  removing one as a side effect is a decision nobody asked for.
+- **`narration_cache`** - keyed by a hash of project id plus template narrative,
+  so it is self-invalidating. Deleting it is pointless work inside a destructive
+  operation, and those should do the minimum asked.
+
+`state_changes` is the awkward one: keyed by the entity it describes, with no
+project column, so it is reached through the task and QA ids **before** those
+rows are deleted. Order matters throughout - children before the `projects` row
+they point at, or the foreign keys refuse.
+
+Verified end to end on a throwaway carrying a hand-typed risk and a fitted
+board: every table empty afterwards, every other project untouched.
+
+---
+
 ## 0o. Same session - fit a board to the data instead of assuming it
 
 **841 tests pass.** "New Dashboard" now opens on **Fit to this data**.
