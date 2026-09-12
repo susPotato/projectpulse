@@ -131,3 +131,31 @@ class RegisteredProject(Timestamped, Base):
     #: the program row exists, and refusing the registration for a row that has
     #: not been created yet loses the document. `app/scope.py` owns the meaning.
     program_id: Mapped[str | None] = mapped_column(String(255), default=None)
+
+
+class RegisteredProgram(Timestamped, Base):
+    """A program somebody created, as opposed to the built-in demo seed.
+
+    The counterpart of `RegisteredProject`, and here for the same reason: a
+    program created in the browser has to survive a deploy, and a Fly machine's
+    filesystem does not.
+
+    Kept apart from the `programs` domain table on purpose. That table is
+    *materialized* - a row appears there when a collector ingests something into
+    the program (`app/ingest/programs.py`) - while this one is *declared*: it is
+    somebody saying "this program exists", which is true before any document
+    has been seen for it. `app/scope.py` merges the two and owns the meaning, so
+    a program with no projects yet is a real, listable program rather than a
+    row nothing can create.
+    """
+
+    __tablename__ = "registered_programs"
+
+    #: `program:Program:0:<KEY>` - source-neutral, see `app/scope.py`.
+    program_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+
+    #: What a person calls it.
+    name: Mapped[str] = mapped_column(Text)
+
+    owner: Mapped[str | None] = mapped_column(Text, default=None)
+    status: Mapped[str] = mapped_column(String(50), default="Active")

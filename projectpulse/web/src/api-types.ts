@@ -552,7 +552,21 @@ export interface paths {
          */
         get: operations["programs_api_api_programs_get"];
         put?: never;
-        post?: never;
+        /**
+         * Create Program Route
+         * @description Create a program from the Programs tab.
+         *
+         *     Until now a program could only arrive from the built-in seed or be invented
+         *     by a collector mid-ingest, which is how one program came to exist under two
+         *     ids. Creating one is a deliberate act with a name attached, so it belongs on
+         *     a form rather than as a side effect of parsing somebody's spreadsheet.
+         *
+         *     The id is derived from the name, never accepted from the caller - see
+         *     `ProgramIn`. Re-posting a name that maps to an existing program renames it
+         *     in place and reports `existed: true`, rather than creating a near-duplicate
+         *     a person cannot tell apart on the list.
+         */
+        post: operations["create_program_route_api_programs_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -574,6 +588,35 @@ export interface paths {
         get: operations["program_detail_api_api_programs__program_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Project Route
+         * @description Create a project from the Projects tab, with no document yet.
+         *
+         *     A project used to exist only as a side effect of uploading a sheet for it,
+         *     so a PM could not set the portfolio up before the documents arrived. One
+         *     registered here and never ingested is correct and shows as `no_data` - it is
+         *     a project somebody has told us about, not one we have seen a sheet for.
+         *
+         *     The canonical id uses the same `scope.slugify` the upload route uses, on
+         *     purpose: uploading a schedule later for the same name fills *this* project
+         *     in rather than creating a second one beside it.
+         */
+        post: operations["create_project_route_api_projects_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1408,6 +1451,46 @@ export interface components {
             /** Error */
             error: string | null;
         };
+        /** CreatedProgram */
+        CreatedProgram: {
+            /** Program Id */
+            program_id: string;
+            /** Name */
+            name: string;
+            /** Owner */
+            owner: string | null;
+            /**
+             * Status
+             * @default Active
+             */
+            status: string;
+            /**
+             * Existed
+             * @default false
+             */
+            existed: boolean;
+        };
+        /**
+         * CreatedProject
+         * @description A project that now exists, as `app/scope.py` knows it.
+         *
+         *     Returns the derived `canonical_id` so the page can select the new project
+         *     immediately rather than guessing the id or re-fetching the whole portfolio
+         *     to find it.
+         */
+        CreatedProject: {
+            /** Canonical Id */
+            canonical_id: string;
+            /** Name */
+            name: string;
+            /** Program Id */
+            program_id: string | null;
+            /**
+             * Existed
+             * @default false
+             */
+            existed: boolean;
+        };
         /**
          * CustomChartDraft
          * @description A proposed `{title, chart_type, labels, values}` - not saved yet. The
@@ -2179,6 +2262,27 @@ export interface components {
              */
             rule_table: string;
         };
+        /**
+         * ProgramIn
+         * @description What the Programs tab's "Add program" form sends.
+         *
+         *     No `id` field, deliberately. The id is derived from the name
+         *     (`scope.slugify`), because a typed id is how a source system's name got
+         *     inside a program's identity in the first place - the defect the
+         *     `program:Program:0:<KEY>` namespace exists to close. A person names a
+         *     program; the system decides what it is called underneath.
+         */
+        ProgramIn: {
+            /** Name */
+            name: string;
+            /** Owner */
+            owner?: string | null;
+            /**
+             * Status
+             * @default Active
+             */
+            status: string;
+        };
         /** ProgramListBundle */
         ProgramListBundle: {
             /** Programs */
@@ -2237,6 +2341,22 @@ export interface components {
             band: "critical" | "watch" | "healthy" | "no_data";
             /** Projects */
             projects: components["schemas"]["ProjectRow"][];
+        };
+        /**
+         * ProjectIn
+         * @description What the Projects tab's "Add project" form sends.
+         *
+         *     `program_id` is optional and empty means "no program yet" - a real state,
+         *     and the honest one for a project somebody is adding before the portfolio is
+         *     organised. It is *not* silently filled with a default, because a project
+         *     quietly filed under an invented program is the bug this whole area was
+         *     fixed for.
+         */
+        ProjectIn: {
+            /** Name */
+            name: string;
+            /** Program Id */
+            program_id?: string | null;
         };
         /**
          * ProjectOption
@@ -3763,6 +3883,39 @@ export interface operations {
             };
         };
     };
+    create_program_route_api_programs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedProgram"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     program_detail_api_api_programs__program_id__get: {
         parameters: {
             query?: never;
@@ -3781,6 +3934,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramRollupBundle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_project_route_api_projects_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedProject"];
                 };
             };
             /** @description Validation Error */

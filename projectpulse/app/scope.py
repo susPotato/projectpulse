@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 
 log = logging.getLogger(__name__)
@@ -313,20 +314,127 @@ def program_for(source_id: str) -> str | None:
     return project.program_id if project is not None else None
 
 
-def all_programs() -> tuple[DeliveryProgram, ...]:
-    """Every program: the demo seed, plus any a registered project names.
+def _program_rows() -> list[DeliveryProgram]:
+    """Programs somebody created, or nothing at all if they cannot be read.
 
-    A program reachable only because an uploaded project points at it still has
-    to appear in the list, or that project is filed somewhere the UI cannot
-    navigate to. Its name falls back to the key inside its id - better than a
-    blank row, and it disappears as soon as the program is given a real name.
+    Degrades to "there are none" on every failure, exactly as `_rows` does and
+    for the same reason: this runs on the path of every request, and a database
+    that is down or a table that has not been created yet must leave the
+    built-in seed working rather than take the Programs list down with it.
+    """
+    from sqlalchemy import select
+
+    from app.db import session_scope
+    from app.models.uploads import RegisteredProgram
+
+    try:
+        with session_scope() as session:
+            rows = session.execute(
+                select(
+                    RegisteredProgram.program_id,
+                    RegisteredProgram.name,
+                    RegisteredProgram.owner,
+                    RegisteredProgram.status,
+                )
+            ).all()
+    except Exception as exc:  # noqa: BLE001 - see the docstring
+        log.warning("ignoring unreadable program registry: %s", exc)
+        return []
+
+    return [
+        DeliveryProgram(
+            program_id=program_id,
+            name=name,
+            owner=owner,
+            status=status or "Active",
+        )
+        for program_id, name, owner, status in rows
+        if program_id and name
+    ]
+
+
+def all_programs() -> tuple[DeliveryProgram, ...]:
+    """Every program: the demo seed, the ones somebody created, and any a
+    registered project names.
+
+    Three sources, in increasing order of authority. A program reachable only
+    because a project points at it still has to appear, or that project is
+    filed somewhere the UI cannot navigate to; its name then falls back to the
+    key inside its id, which is better than a blank row and disappears as soon
+    as the program is given a real name.
     """
     merged: dict[str, DeliveryProgram] = {p.program_id: p for p in _SEED_PROGRAMS}
+    for entry in _program_rows():
+        merged[entry.program_id] = entry
     for project in all_projects():
         pid = project.program_id
         if pid and pid not in merged:
             merged[pid] = DeliveryProgram(program_id=pid, name=_key_of(pid))
     return tuple(merged.values())
+
+
+def slugify(name: str) -> str:
+    """A name reduced to the key half of a domain id.
+
+    One function because two call sites derive an id from a typed name - adding
+    a project here and uploading the first document for a project nobody has
+    seen - and they must agree. If they drift, uploading a sheet for a project
+    somebody already added by name creates a *second* project rather than
+    filling in the one they made, which is the duplicate this module exists to
+    prevent, arriving through the front door.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
+    if slug:
+        return slug
+
+    # A name with no ASCII letters or digits in it - "工数管理", "予算" - slugs to
+    # nothing. Returning a constant here would map *every* such name onto one
+    # id, so the second Japanese-named program a client creates would silently
+    # become the first one. Fall back to a short stable digest of the name: ugly
+    # in a URL, distinct per name, and identical across processes and restarts,
+    # which a `hash()` would not be.
+    import hashlib
+
+    text = (name or "").strip()
+    if not text:
+        return "unnamed"
+    return "x" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:10]
+
+
+def register_program(
+    name: str, owner: str | None = None, status: str = "Active"
+) -> DeliveryProgram:
+    """Create a program, or rename one whose key the name already maps to.
+
+    The id is derived from the name rather than typed, so a program cannot be
+    created with a source system's name inside its identity - the defect this
+    whole namespace exists to close. Two programs whose names slug identically
+    ("Cloud First" and "cloud-first") are one program, deliberately: that is
+    almost always somebody creating the same thing twice, and the alternative
+    is two rows a person cannot tell apart on the list.
+
+    Raised on failure, never swallowed - unlike the read above. Somebody is
+    waiting on a form, and telling them it worked when nothing was written is
+    the class of bug this registry replaced.
+    """
+    program_id = program_domain_id(slugify(name).upper())
+
+    from app.db import session_scope
+    from app.models.uploads import RegisteredProgram
+
+    entry = DeliveryProgram(
+        program_id=program_id, name=name.strip(), owner=owner, status=status
+    )
+    with session_scope() as session:
+        session.merge(
+            RegisteredProgram(
+                program_id=program_id,
+                name=entry.name,
+                owner=entry.owner,
+                status=entry.status,
+            )
+        )
+    return entry
 
 
 def find_program(program_id: str) -> DeliveryProgram | None:

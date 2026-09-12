@@ -123,3 +123,56 @@ class ProgramRollupBundle(Response):
     resources: list[ResourceRow] = Field(default_factory=list)
     resource_conflicts: list[ResourceConflict] = Field(default_factory=list)
     generated_at: date | None = None
+
+
+class ProgramIn(Response):
+    """What the Programs tab's "Add program" form sends.
+
+    No `id` field, deliberately. The id is derived from the name
+    (`scope.slugify`), because a typed id is how a source system's name got
+    inside a program's identity in the first place - the defect the
+    `program:Program:0:<KEY>` namespace exists to close. A person names a
+    program; the system decides what it is called underneath.
+    """
+
+    name: str
+    owner: str | None = None
+    status: str = "Active"
+
+
+class ProjectIn(Response):
+    """What the Projects tab's "Add project" form sends.
+
+    `program_id` is optional and empty means "no program yet" - a real state,
+    and the honest one for a project somebody is adding before the portfolio is
+    organised. It is *not* silently filled with a default, because a project
+    quietly filed under an invented program is the bug this whole area was
+    fixed for.
+    """
+
+    name: str
+    program_id: str | None = None
+
+
+class CreatedProject(Response):
+    """A project that now exists, as `app/scope.py` knows it.
+
+    Returns the derived `canonical_id` so the page can select the new project
+    immediately rather than guessing the id or re-fetching the whole portfolio
+    to find it.
+    """
+
+    canonical_id: str
+    name: str
+    program_id: str | None = None
+    #: True when the id already existed, so the caller can say "updated" rather
+    #: than "created" instead of showing a second identical-looking row.
+    existed: bool = False
+
+
+class CreatedProgram(Response):
+    program_id: str
+    name: str
+    owner: str | None = None
+    status: str = "Active"
+    existed: bool = False

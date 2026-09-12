@@ -47,6 +47,8 @@ export type ReportSection = components["schemas"]["ReportSection"];
 export type ProgramSummary = components["schemas"]["ProgramSummary"];
 export type ProgramListBundle = components["schemas"]["ProgramListBundle"];
 export type ProgramRollupBundle = components["schemas"]["ProgramRollupBundle"];
+export type CreatedProgram = components["schemas"]["CreatedProgram"];
+export type CreatedProject = components["schemas"]["CreatedProject"];
 export type ResourceRow = components["schemas"]["ResourceRow"];
 export type ResourceConflict = components["schemas"]["ResourceConflict"];
 

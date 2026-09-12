@@ -107,6 +107,13 @@ def session_scope() -> Iterator[Session]:
 #: migration script (see `scripts/migrate_ids.py`), not an entry here.
 _ADDITIVE_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("custom_tiles", "live_source_json", "TEXT"),
+    # Which program a registered project belongs to. `scripts/migrate_programs.py`
+    # also adds this, because that script has to work on a database nobody has
+    # booted the new code against yet - but the entry belongs here too, so a
+    # deployment that skips the migration still self-heals rather than losing
+    # every browser-imported project: `scope._rows()` degrades an unreadable
+    # registry to "there are none" by design, which makes the failure silent.
+    ("registered_projects", "program_id", "VARCHAR(255)"),
 )
 
 

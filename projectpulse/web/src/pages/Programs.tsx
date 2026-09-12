@@ -13,7 +13,9 @@ import {
   load,
   programLink,
   projectLink,
+  send,
   type ApiProblem,
+  type CreatedProgram,
   type ProgramListBundle,
   type ProgramSummary,
 } from "../api";
@@ -84,14 +86,126 @@ function ProgramCard({ program }: { program: ProgramSummary }) {
   );
 }
 
-export function ProgramsView({ bundle }: { bundle: ProgramListBundle }) {
+/*
+  Creating a program, which until now nothing could do.
+
+  A program could only arrive from the built-in seed or be invented by a
+  collector mid-ingest - which is exactly how one program came to exist under
+  two ids. Naming one is a deliberate act, so it belongs on a form.
+
+  Note what the form does *not* ask for: an id. It is derived from the name
+  server-side, because a typed id is how a source system's name got inside a
+  program's identity in the first place.
+*/
+function AddProgramForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const [name, setName] = useState("");
+  const [owner, setOwner] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<ApiProblem | null>(null);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!name.trim() || busy) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      await send<CreatedProgram>("/api/programs", "POST", {
+        name: name.trim(),
+        owner: owner.trim() || null,
+      });
+      onDone();
+    } catch (error) {
+      setProblem(error as ApiProblem);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Panel span={12} className="content-start">
+      <form onSubmit={submit} className="grid gap-2.5">
+        <h3 className="m-0 text-[14px] font-semibold text-ink">New program</h3>
+        <div className="flex flex-wrap gap-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Program name"
+            aria-label="Program name"
+            autoFocus
+            className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+          />
+          <input
+            value={owner}
+            onChange={(e) => setOwner(e.target.value)}
+            placeholder="Owner (optional)"
+            aria-label="Program owner"
+            className="min-w-[180px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+          />
+        </div>
+        {problem && <Problem {...problem} />}
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={!name.trim() || busy}
+            className="action"
+            style={{ cursor: name.trim() && !busy ? "pointer" : "not-allowed", border: "none" }}
+          >
+            {busy ? "Creating..." : "Create program"}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-md border border-rule bg-surface px-3 py-1.5 text-[12.5px] text-ink-2"
+            style={{ cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+        </div>
+        {/* Said here rather than discovered later: a program with no projects
+            is a legitimate row, not a half-finished one. */}
+        <p className="m-0 text-[11.5px] text-ink-3">
+          A new program starts empty. Add projects to it from the Projects tab, or by
+          uploading a document for one.
+        </p>
+      </form>
+    </Panel>
+  );
+}
+
+export function ProgramsView({
+  bundle,
+  onChanged,
+}: {
+  bundle: ProgramListBundle;
+  onChanged?: () => void;
+}) {
+  const [adding, setAdding] = useState(false);
+
   return (
     <Page
       current="/programs"
       title="Programs"
       asof={`${bundle.programs.length} program(s)`}
+      action={
+        <button
+          type="button"
+          onClick={() => setAdding((open) => !open)}
+          className="action"
+          style={{ cursor: "pointer", border: "none" }}
+        >
+          {adding ? "Close" : "+ Add program"}
+        </button>
+      }
     >
       <Board>
+        {adding && (
+          <AddProgramForm
+            onDone={() => {
+              setAdding(false);
+              onChanged?.();
+            }}
+            onCancel={() => setAdding(false)}
+          />
+        )}
         {bundle.programs.map((program) => (
           <ProgramCard key={program.id} program={program} />
         ))}
@@ -103,10 +217,15 @@ export function ProgramsView({ bundle }: { bundle: ProgramListBundle }) {
 export function Programs() {
   const [bundle, setBundle] = useState<ProgramListBundle | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
+  //: Bumped after a create, to re-read the list. A counter rather than pushing
+  //: the new program into local state: the list carries bands and project
+  //: counts the server computes, so inventing a row here would show a program
+  //: that disagrees with the one a refresh produces.
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     load<ProgramListBundle>("/api/programs").then(setBundle, setProblem);
-  }, []);
+  }, [version]);
 
   if (problem) {
     return (
@@ -118,5 +237,5 @@ export function Programs() {
   if (!bundle) {
     return <Page current="/programs" title="Programs" subtitle="Loading..." children={null} />;
   }
-  return <ProgramsView bundle={bundle} />;
+  return <ProgramsView bundle={bundle} onChanged={() => setVersion((n) => n + 1)} />;
 }

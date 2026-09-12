@@ -18,7 +18,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   load,
   projectLink,
+  send,
   type ApiProblem,
+  type CreatedProject,
   type PortfolioBundle,
   type ProgramListBundle,
   type ProjectRow,
@@ -44,14 +46,119 @@ const BAND_STYLE: Record<string, string> = {
    to see which one needs you, and alphabetical order hides that. */
 const BAND_RANK: Record<string, number> = { critical: 0, watch: 1, healthy: 2, no_data: 3 };
 
+/*
+  Creating a project before any document exists for it.
+
+  A project used to appear only as a side effect of uploading a sheet, so the
+  portfolio could not be set up ahead of the documents arriving. One made here
+  and never ingested shows as `no_data`, which is the honest reading: somebody
+  has told us about it, we have not seen a sheet for it.
+
+  The program is optional and defaults to none. Filling it in with a default
+  would be the bug this area was fixed for - a project quietly filed under a
+  program nobody chose.
+*/
+function AddProjectForm({
+  programs,
+  onDone,
+  onCancel,
+}: {
+  programs: ProgramListBundle | null;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [programId, setProgramId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<ApiProblem | null>(null);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!name.trim() || busy) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      await send<CreatedProject>("/api/projects", "POST", {
+        name: name.trim(),
+        program_id: programId || null,
+      });
+      onDone();
+    } catch (error) {
+      setProblem(error as ApiProblem);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="mb-3.5 grid gap-2.5 rounded-lg border border-rule bg-surface p-3.5"
+    >
+      <h3 className="m-0 text-[14px] font-semibold text-ink">New project</h3>
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Project name"
+          aria-label="Project name"
+          autoFocus
+          className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+        />
+        <select
+          value={programId}
+          onChange={(e) => setProgramId(e.target.value)}
+          aria-label="Program"
+          className="min-w-[200px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+        >
+          {/* "No program" is a real choice, not a placeholder - so it is a
+              selectable option rather than a disabled prompt. */}
+          <option value="">No program</option>
+          {(programs?.programs ?? []).map((program) => (
+            <option key={program.id} value={program.id}>
+              {program.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      {problem && <Problem {...problem} />}
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={!name.trim() || busy}
+          className="action"
+          style={{ cursor: name.trim() && !busy ? "pointer" : "not-allowed", border: "none" }}
+        >
+          {busy ? "Creating..." : "Create project"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-md border border-rule bg-surface px-3 py-1.5 text-[12.5px] text-ink-2"
+          style={{ cursor: "pointer" }}
+        >
+          Cancel
+        </button>
+      </div>
+      <p className="m-0 text-[11.5px] text-ink-3">
+        It will show as <b>No data</b> until a document is ingested for it. Uploading a
+        schedule for the same name later fills in this project rather than creating a
+        second one.
+      </p>
+    </form>
+  );
+}
+
 export function ProjectsView({
   bundle,
   programs,
+  onChanged,
 }: {
   bundle: PortfolioBundle;
   programs: ProgramListBundle | null;
+  onChanged?: () => void;
 }) {
   const [query, setQuery] = useState("");
+  const [adding, setAdding] = useState(false);
 
   /* Which program owns each project, for the hint under its name - and for
      the search, so typing a program's name narrows to its projects. */
@@ -96,7 +203,28 @@ export function ProjectsView({
       title="Projects"
       subtitle="Every project in the portfolio. Pick one to open its dashboard - the selection carries into Insight, Schedule, Risk and the rest."
       asof={`${matched.length} of ${rows.length} shown`}
+      action={
+        <button
+          type="button"
+          onClick={() => setAdding((open) => !open)}
+          className="action"
+          style={{ cursor: "pointer", border: "none" }}
+        >
+          {adding ? "Close" : "+ Add project"}
+        </button>
+      }
     >
+      {adding && (
+        <AddProjectForm
+          programs={programs}
+          onDone={() => {
+            setAdding(false);
+            onChanged?.();
+          }}
+          onCancel={() => setAdding(false)}
+        />
+      )}
+
       <div className="mb-3.5">
         <input
           value={query}
@@ -164,12 +292,17 @@ export function Projects() {
   const [bundle, setBundle] = useState<PortfolioBundle | null>(null);
   const [programs, setPrograms] = useState<ProgramListBundle | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
+  //: Bumped after a create, to re-read both lists. A counter rather than
+  //: pushing the new row into local state: the portfolio row carries bands and
+  //: a finding count the server computes, so a locally invented one would
+  //: disagree with what a refresh shows.
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     load<PortfolioBundle>("/api/portfolio").then(setBundle, setProblem);
     // A hint, so its failure must not take the page down with it.
     load<ProgramListBundle>("/api/programs").then(setPrograms, () => setPrograms(null));
-  }, []);
+  }, [version]);
 
   if (problem) {
     return (
@@ -181,5 +314,11 @@ export function Projects() {
   if (!bundle) {
     return <Page current="/projects" title="Projects" subtitle="Loading..." children={null} />;
   }
-  return <ProjectsView bundle={bundle} programs={programs} />;
+  return (
+    <ProjectsView
+      bundle={bundle}
+      programs={programs}
+      onChanged={() => setVersion((n) => n + 1)}
+    />
+  );
 }

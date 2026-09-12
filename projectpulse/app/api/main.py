@@ -35,7 +35,14 @@ from app.api.schemas.explain import ExplainBundle
 from app.api.schemas.gantt import GanttBundle
 from app.api.schemas.portfolio import PortfolioBundle
 from app.api.schemas.program import ProgramBundle
-from app.api.schemas.programs import ProgramListBundle, ProgramRollupBundle
+from app.api.schemas.programs import (
+    CreatedProgram,
+    CreatedProject,
+    ProgramIn,
+    ProgramListBundle,
+    ProgramRollupBundle,
+    ProjectIn,
+)
 from app.api.schemas.dashboard import (
     CatalogueBundle,
     CustomChartDraft,
@@ -869,6 +876,82 @@ def program_detail_api(program_id: str) -> ProgramRollupBundle:
         return bundle
 
 
+@app.post("/api/programs", response_model=CreatedProgram, status_code=201)
+def create_program_route(body: ProgramIn) -> CreatedProgram:
+    """Create a program from the Programs tab.
+
+    Until now a program could only arrive from the built-in seed or be invented
+    by a collector mid-ingest, which is how one program came to exist under two
+    ids. Creating one is a deliberate act with a name attached, so it belongs on
+    a form rather than as a side effect of parsing somebody's spreadsheet.
+
+    The id is derived from the name, never accepted from the caller - see
+    `ProgramIn`. Re-posting a name that maps to an existing program renames it
+    in place and reports `existed: true`, rather than creating a near-duplicate
+    a person cannot tell apart on the list.
+    """
+    name = (body.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="a program needs a name")
+
+    program_id = scope.program_domain_id(scope.slugify(name).upper())
+    existed = scope.find_program(program_id) is not None
+
+    entry = scope.register_program(
+        name, owner=(body.owner or "").strip() or None, status=body.status or "Active"
+    )
+    return CreatedProgram(
+        program_id=entry.program_id,
+        name=entry.name,
+        owner=entry.owner,
+        status=entry.status,
+        existed=existed,
+    )
+
+
+@app.post("/api/projects", response_model=CreatedProject, status_code=201)
+def create_project_route(body: ProjectIn) -> CreatedProject:
+    """Create a project from the Projects tab, with no document yet.
+
+    A project used to exist only as a side effect of uploading a sheet for it,
+    so a PM could not set the portfolio up before the documents arrived. One
+    registered here and never ingested is correct and shows as `no_data` - it is
+    a project somebody has told us about, not one we have seen a sheet for.
+
+    The canonical id uses the same `scope.slugify` the upload route uses, on
+    purpose: uploading a schedule later for the same name fills *this* project
+    in rather than creating a second one beside it.
+    """
+    name = (body.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="a project needs a name")
+
+    program_id = (body.program_id or "").strip() or None
+    # An unknown program is refused, never created. A typo that silently invents
+    # a program is how a portfolio grows rows nobody meant.
+    if program_id is not None and scope.find_program(program_id) is None:
+        raise HTTPException(status_code=400, detail=f"unknown program {program_id!r}")
+
+    canonical_id = f"excel:Project:upload:{scope.slugify(name)}"
+    found = scope.find(canonical_id)
+    existed = found is not None
+
+    # Keep whatever pairing the project already had: a re-post that dropped
+    # `also` would split a two-source project back into two (invariant 7).
+    entry = scope.register(
+        canonical_id,
+        name,
+        also=found.also if found is not None else (),
+        program_id=program_id,
+    )
+    return CreatedProject(
+        canonical_id=entry.canonical_id,
+        name=entry.name,
+        program_id=entry.program_id,
+        existed=existed,
+    )
+
+
 @app.get("/team")
 def team_page() -> FileResponse:
     """Who is carrying what, and what moved."""
@@ -987,8 +1070,14 @@ async def upload_source(
                 status_code=400,
                 detail="project_name is required when project_id is not given",
             )
-        name_slug = re.sub(r"[^a-z0-9]+", "-", project_name.lower()).strip("-") or "project"
-        project_id = f"excel:Project:upload:{name_slug}"
+        # `scope.slugify`, not a second regex. `POST /api/projects` derives the
+        # same id from the same name, and if the two spellings drift then
+        # uploading a sheet for a project somebody already added by name creates
+        # a *second* project beside it rather than filling that one in.
+        # `slugify` also handles a name with no ASCII in it - "工数管理" - which
+        # the regex here collapsed to the constant "project", mapping every
+        # Japanese-named project onto one id.
+        project_id = f"excel:Project:upload:{scope.slugify(project_name)}"
         register_new = project_name
 
     id_slug = re.sub(r"[^a-z0-9]+", "-", project_id.lower()).strip("-")

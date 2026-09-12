@@ -582,3 +582,173 @@ def test_units_are_program_scoped():
 
     assert units_for("program:Program:0:DEFAULT").person_days_per_person_month == 20
     assert units_for("program:Program:0:VENDOR").person_days_per_person_month == 22
+
+
+# --------------------------------------------------------------------------
+# Creating a program and a project from the UI
+# --------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def client():
+    from fastapi.testclient import TestClient
+
+    return TestClient(__import__("app.api.main", fromlist=["app"]).app)
+
+
+@pytest.fixture(autouse=True)
+def _clean_registry():
+    """Empty the two registries around every test in this module.
+
+    They are database tables in one shared test database, so without this a
+    program created by one test is still there for the next - and the tests that
+    count rows or assert a program is absent would pass or fail depending on
+    which order pytest ran them in. Cleaned before *and* after, so a test that
+    fails part-way through does not poison its successors.
+    """
+    from sqlalchemy import delete
+
+    from app.db import session_scope
+    from app.models.uploads import RegisteredProgram, RegisteredProject
+
+    def wipe():
+        try:
+            with session_scope() as session:
+                session.execute(delete(RegisteredProgram))
+                session.execute(delete(RegisteredProject))
+        except Exception:  # noqa: BLE001 - a table that does not exist yet is fine
+            pass
+
+    wipe()
+    yield
+    wipe()
+
+
+def test_a_program_id_is_derived_from_the_name_never_accepted(client):
+    """The form has no id field, and this is why.
+
+    A typed id is how a source system's name got inside a program's identity.
+    The route derives it, so a caller cannot reintroduce the defect by posting
+    `{"id": "excel:Program:1:MINE"}`.
+    """
+    created = client.post("/api/programs", json={"name": "Cloud Migration FY27"})
+
+    assert created.status_code == 201
+    program_id = created.json()["program_id"]
+    assert program_id.startswith("program:Program:0:")
+    assert "excel" not in program_id and "jira" not in program_id
+
+
+def test_creating_the_same_program_twice_does_not_make_two(client):
+    """Two rows a person cannot tell apart on the list is worse than a rename."""
+    first = client.post("/api/programs", json={"name": "Cloud Migration"})
+    second = client.post("/api/programs", json={"name": "cloud   migration"})
+
+    assert first.json()["program_id"] == second.json()["program_id"]
+    assert first.json()["existed"] is False
+    assert second.json()["existed"] is True
+
+    listed = client.get("/api/programs").json()["programs"]
+    matching = [p for p in listed if p["id"] == first.json()["program_id"]]
+    assert len(matching) == 1
+
+
+def test_a_created_program_is_listed_and_openable_before_any_ingest(client):
+    """It has no `programs` row yet, and must not 404 or vanish.
+
+    The `programs` table is materialized by a collector; `app/scope.py` is where
+    a program is declared. Reading only the table would make the button that
+    creates a program look like it had done nothing.
+    """
+    program_id = client.post("/api/programs", json={"name": "Greenfield"}).json()[
+        "program_id"
+    ]
+
+    listed = {p["id"]: p for p in client.get("/api/programs").json()["programs"]}
+    assert program_id in listed
+    assert listed[program_id]["project_count"] == 0
+    assert listed[program_id]["band"] == "no_data"
+
+    rollup = client.get(f"/api/programs/{program_id}")
+    assert rollup.status_code == 200
+    assert rollup.json()["program"]["name"] == "Greenfield"
+
+
+def test_a_program_nobody_declared_or_materialized_is_still_a_404(client):
+    """The fallback must not turn every string into a program."""
+    assert client.get("/api/programs/program:Program:0:NOPE").status_code == 404
+
+
+def test_a_project_can_be_created_before_any_document_exists(client):
+    created = client.post("/api/projects", json={"name": "Identity Platform"})
+
+    assert created.status_code == 201
+    body = created.json()
+    assert body["canonical_id"] == "excel:Project:upload:identity-platform"
+    assert body["program_id"] is None
+
+    rows = {r["project_id"]: r for r in client.get("/api/portfolio").json()["projects"]}
+    assert body["canonical_id"] in rows
+    # Known, nothing ingested. `no_data`, never green.
+    assert rows[body["canonical_id"]]["band"] == "no_data"
+
+
+def test_a_created_project_lands_in_the_program_it_names(client):
+    program_id = client.post("/api/programs", json={"name": "Greenfield"}).json()[
+        "program_id"
+    ]
+    client.post(
+        "/api/projects", json={"name": "Identity Platform", "program_id": program_id}
+    )
+
+    rollup = client.get(f"/api/programs/{program_id}").json()
+
+    assert [p["name"] for p in rollup["projects"]] == ["Identity Platform"]
+    assert rollup["program"]["project_count"] == 1
+
+
+def test_a_project_naming_an_unknown_program_is_refused_not_invented(client):
+    """A typo must not create a program. That is how a portfolio grows rows
+    nobody meant, which is the whole defect one level up."""
+    response = client.post(
+        "/api/projects",
+        json={"name": "Stray", "program_id": "program:Program:0:NOPE"},
+    )
+
+    assert response.status_code == 400
+    assert "NOPE" in response.json()["detail"]
+    assert not [
+        p
+        for p in client.get("/api/programs").json()["programs"]
+        if p["id"] == "program:Program:0:NOPE"
+    ]
+
+
+def test_a_nameless_project_or_program_is_refused(client):
+    assert client.post("/api/projects", json={"name": "   "}).status_code == 400
+    assert client.post("/api/programs", json={"name": ""}).status_code == 400
+
+
+def test_adding_a_project_by_name_then_uploading_for_it_is_one_project(client):
+    """The two id derivations must not drift.
+
+    The upload route and this route both turn a typed name into a canonical id.
+    If their spellings differ, uploading a schedule for a project somebody
+    already added fills in a *second* project beside it - the duplicate this
+    module exists to prevent, arriving through the front door.
+    """
+    from app import scope
+
+    created = client.post("/api/projects", json={"name": "Identity Platform"}).json()
+
+    assert created["canonical_id"] == f"excel:Project:upload:{scope.slugify('Identity Platform')}"
+
+
+def test_two_japanese_names_do_not_collapse_onto_one_project(client):
+    """`slugify` strips non-ASCII, so both names would otherwise slug to the
+    same constant and the second project would silently become the first."""
+    first = client.post("/api/projects", json={"name": "工数管理"}).json()
+    second = client.post("/api/projects", json={"name": "予算管理"}).json()
+
+    assert first["canonical_id"] != second["canonical_id"]
+    assert first["existed"] is False and second["existed"] is False

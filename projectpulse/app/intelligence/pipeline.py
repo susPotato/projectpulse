@@ -770,7 +770,7 @@ def list_programs(session) -> "ProgramListBundle":
 
     from app.api.schemas.programs import ProgramListBundle, ProgramSummary
     from app.models.domain import Program
-    from app.scope import all_projects
+    from app.scope import all_programs, all_projects
 
     rows_by_program: dict[str, list] = {}
     contexts: dict[str, "ProgramContext | None"] = {}
@@ -793,20 +793,35 @@ def list_programs(session) -> "ProgramListBundle":
     # list while leaving it reachable at `/api/programs/<orphan id>`. Programs
     # are now keyed source-neutrally (`app/ingest/programs.py`), so an empty
     # program is believed: it is a program nobody has filed a project against.
+    # Declared programs *and* materialized ones. `app/scope.py` is where a
+    # program is declared - the demo seed, and anything somebody created on this
+    # screen - while the `programs` table is where one is materialized, by a
+    # collector ingesting into it. A program created a moment ago has no domain
+    # row yet and would be invisible here if this read only the table, so the
+    # button that creates it would look like it had done nothing.
+    declared = {p.program_id: p for p in all_programs()}
+    materialized = {p.id: p for p in session.scalars(select(Program)).all()}
+
     rank = {"critical": 0, "watch": 1, "healthy": 2, "no_data": 3}
     summaries: list[ProgramSummary] = []
-    for program in session.scalars(select(Program)).all():
-        rows = rows_by_program.get(program.id, [])
+    for program_id in {**declared, **materialized}:
+        program = materialized.get(program_id)
+        entry = declared.get(program_id)
+        rows = rows_by_program.get(program_id, [])
         band = min((r.band for r in rows), key=lambda b: rank.get(b, 9), default="no_data")
         ranked_rows = sorted(rows, key=lambda r: (rank.get(r.band, 9), -r.days_late, r.name))
         summaries.append(
             ProgramSummary(
-                id=program.id,
-                name=program.name,
-                owner=program.owner,
-                status=program.status,
-                start_date=program.start_date,
-                end_date=program.end_date,
+                id=program_id,
+                # The declaration wins on name and owner: it is what a person
+                # typed, and the domain row may carry a name a collector
+                # invented before anybody said otherwise.
+                name=(entry.name if entry is not None else program.name),
+                owner=(entry.owner if entry is not None else program.owner)
+                or (program.owner if program is not None else None),
+                status=(entry.status if entry is not None else program.status),
+                start_date=program.start_date if program is not None else None,
+                end_date=program.end_date if program is not None else None,
                 project_count=len(rows),
                 band=band,
                 projects=ranked_rows,
@@ -836,11 +851,23 @@ def program_rollup(session, program_id: str) -> "ProgramRollupBundle | None":
     )
     from app.intelligence.contention import normalize_person
     from app.models.domain import Program, Resource
-    from app.scope import projects_in, source_ids_for
+    from app.scope import find_program, projects_in, source_ids_for
 
+    # Declared or materialized - see `list_programs`. A program somebody created
+    # a moment ago has no `programs` row until a collector ingests into it, and
+    # 404ing it would mean the Programs list linked to a page that does not
+    # exist. Unknown to *both* is still a 404, which is what the old program ids
+    # correctly get after `scripts.migrate_programs`.
     program = session.get(Program, program_id)
-    if program is None:
+    declared = find_program(program_id)
+    if program is None and declared is None:
         return None
+
+    name = declared.name if declared is not None else program.name
+    owner = (declared.owner if declared is not None else None) or (
+        program.owner if program is not None else None
+    )
+    status = declared.status if declared is not None else program.status
 
     # One context for the whole program, built before the project rows so every
     # row is banded against the same apportionment.
@@ -938,12 +965,12 @@ def program_rollup(session, program_id: str) -> "ProgramRollupBundle | None":
 
     return ProgramRollupBundle(
         program=ProgramSummary(
-            id=program.id,
-            name=program.name,
-            owner=program.owner,
-            status=program.status,
-            start_date=program.start_date,
-            end_date=program.end_date,
+            id=program_id,
+            name=name,
+            owner=owner,
+            status=status,
+            start_date=program.start_date if program is not None else None,
+            end_date=program.end_date if program is not None else None,
             project_count=len(rows),
             band=band,
         ),
