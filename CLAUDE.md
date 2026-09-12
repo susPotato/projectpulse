@@ -188,6 +188,68 @@ actually caught this (see §-1).
 
 ---
 
+## 0o. Same session - fit a board to the data instead of assuming it
+
+**841 tests pass.** "New Dashboard" now opens on **Fit to this data**.
+
+Asked for a Jira button; built fitting instead, because the problem is not Jira.
+A template is a *guess about the data*: `project_delivery_review` assumes a
+baseline, a dependency graph and a worklog, and applied to a project imported
+from one issue export it lays out thirteen tiles of which most render an empty
+state. **A dashboard sparse because the inputs are sparse looks exactly like one
+sparse because the project is fine**, and those are opposite situations. The
+same mechanism then covers a brand-new program, a project awaiting its first
+sync, and anything else data-poor.
+
+### How it works
+
+Every `TileSpec` declares the `Signal`s it needs. That is a different question
+from `data_source`, which says which *bundle* a tile reads - all the schedule
+tiles read `/api/gantt`, and on a source with no baseline most are empty while a
+few are the only useful things on the page.
+
+`app/dashboard/fit.py` asks the database which signals exist with **counting
+queries, not `analyze_project`** - nobody pressing a layout button is waiting
+for a graph build, a rule pass and a model call.
+
+Measured on real data:
+
+| scope | fitted |
+|---|---|
+| Jira-only project | 13 of 24 |
+| HRMS (rich) | 21 of 24 |
+| demo program | 11 of 12 |
+| program with no projects | **3**, not twelve empty ones |
+
+### Two decisions worth keeping
+
+**A tile is hidden only when its *input* is absent, never when its numbers are
+zero.** "No risks logged yet" is a true and useful statement about a project
+that has a register; "this source cannot express a dependency" is a different
+statement, and only the second is a reason to leave a tile off. Pinned by a test
+over every subset of the signal vocabulary that a richer project can never get a
+*smaller* board.
+
+**It reports what it left off, not only what it placed** - "no baseline: would
+add Delivery Forecast, Schedule Variance, Delayed Tasks" - and the panel stays
+open after fitting. The interesting half of a fitted board is what is missing,
+and closing immediately would leave a person unable to tell whether a short
+board is their data or the product.
+
+### ⚠️ I overwrote the production HRMS board testing this
+
+Ran `fit` against HRMS on production, which **replaced the arranged demo board**
+- the exact thing §0e'''s own warning says not to do. The two hand-built custom
+tiles survived (they live in `custom_tiles`, not in the layout), so the board was
+rebuilt from `project_delivery_review` plus `custom:1`/`custom:2`. Their original
+sizes and positions are **gone and not recoverable** - `replace_dashboard` deletes
+tiles outright and nothing keeps history.
+
+Test layout changes against a throwaway project. The warning was already written
+down; it needed following.
+
+---
+
 ## 0n. Same session - four more Jira tiles, and a hostile export that found three bugs
 
 **835 tests pass.** 36 tiles live. Deployed.
