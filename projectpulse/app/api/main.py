@@ -804,10 +804,21 @@ async def upload_source(
     from app.models.tool import ToolExcelRow
 
     kind = sheet_kind.strip().lower()
+    #: A Jira export is not a sheet kind - it is a *format* that becomes the
+    #: schedule kind. Converted below, before anything else looks at the bytes,
+    #: so everything downstream (the contract, the differ, the identity
+    #: resolver, the watched-sheet registration) handles one shape and there is
+    #: no second ingestion path to keep in step.
+    from_jira = kind == "jira_export"
+    if from_jira:
+        kind = "schedule"
     if kind not in SHEET_KINDS:
         raise HTTPException(
             status_code=400,
-            detail=f"unknown sheet_kind {sheet_kind!r}; expected one of {list(SHEET_KINDS)}",
+            detail=(
+                f"unknown sheet_kind {sheet_kind!r}; expected one of "
+                f"{[*SHEET_KINDS, 'jira_export']}"
+            ),
         )
 
     if file.filename and not file.filename.lower().endswith((".xlsx", ".xlsm")):
@@ -863,6 +874,26 @@ async def upload_source(
     file_name = f"upload_{id_slug}_{kind}.xlsx"
 
     payload = await file.read()
+
+    #: The conversion, before the workbook is inspected or stored. What gets
+    #: registered and re-synced is the *converted* schedule, which is what makes
+    #: a later export of the same project a genuine second observation: the
+    #: differ compares it against this one, and the baseline Jira cannot give us
+    #: starts existing the moment somebody uploads twice.
+    jira_coverage: dict | None = None
+    if from_jira:
+        from app.ingest.sources.jira.export_sheet import (
+            NotAJiraExport,
+            convert_workbook,
+        )
+
+        try:
+            payload, jira_coverage = convert_workbook(BytesIO(payload))
+        except NotAJiraExport as exc:
+            # 400 with the reason. The person picked the wrong kind for their
+            # file, or exported without the fields - neither is a server fault,
+            # and a 500 here would read as "the product is broken".
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # Which tab holds the table, decided from the workbook's own contents.
     # Resolved here, once, rather than per scan: the answer is half the scope
@@ -950,6 +981,11 @@ async def upload_source(
         # This sheet's line first - the rest of the run is context, and a
         # previous upload's failure showing up first reads as this one's.
         "notes": ([mine] if mine else []) + [n for n in outcome.notes if n != mine],
+        # What a Jira export could NOT tell us, when that is what was uploaded.
+        # Returned rather than logged because it is the difference between a
+        # person thinking the import half-failed and knowing their export has no
+        # baseline column - and the page has no other way to find out.
+        "conversion": jira_coverage,
         "error": (mine or "this workbook produced no rows") if (rejected or rows == 0) else None,
     }
 

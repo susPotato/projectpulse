@@ -785,15 +785,57 @@ def test_the_output_is_the_blank_template_and_nothing_else(tmp_path):
 def test_a_workbook_with_no_jira_table_is_refused_not_half_converted(tmp_path):
     """`find_sheet` is deliberately forgiving about tab names, so the failure
     to guard against is a workbook of notes converting into an empty schedule
-    that ingests silently."""
+    that ingests silently.
+
+    Raises `NotAJiraExport`, not `SystemExit`: the conversion moved into `app/`
+    so the upload route could use it, and a library that kills the process
+    would take the API down instead of answering 400. Turning it into an exit
+    is the CLI's job, asserted below."""
     from openpyxl import Workbook
 
-    from scripts.from_jira_export import read_export
+    from app.ingest.sources.jira.export_sheet import NotAJiraExport, read_export
 
     workbook = Workbook()
     workbook.active.append(["some", "notes"])
     path = tmp_path / "notes.xlsx"
     workbook.save(path)
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(NotAJiraExport):
         read_export(path)
+
+
+def test_the_cli_turns_a_refusal_into_a_message_not_a_traceback(tmp_path, capsys):
+    """The reader is being told their file is the wrong shape, which is not a
+    crash - and a traceback would bury the one sentence that helps."""
+    import sys
+
+    from openpyxl import Workbook
+
+    from scripts.from_jira_export import main
+
+    workbook = Workbook()
+    workbook.active.append(["some", "notes"])
+    path = tmp_path / "notes.xlsx"
+    workbook.save(path)
+
+    argv = sys.argv
+    sys.argv = ["from_jira_export", str(path)]
+    try:
+        with pytest.raises(SystemExit) as caught:
+            main()
+    finally:
+        sys.argv = argv
+
+    assert "Key" in str(caught.value) and "Summary" in str(caught.value)
+
+
+def test_the_converter_has_one_implementation_not_two():
+    """The CLI and `POST /api/sources/upload` both convert Jira exports. If the
+    script grew its own copy they would drift, and the file a person uploads
+    would stop matching the file they converted by hand."""
+    source = (SCRIPTS / "from_jira_export.py").read_text(encoding="utf-8")
+
+    assert "from app.ingest.sources.jira.export_sheet import" in source
+    # The parsing itself must not live here any more.
+    assert "def read_export" not in source
+    assert "def convert(" not in source

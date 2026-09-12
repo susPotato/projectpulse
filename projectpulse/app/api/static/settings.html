@@ -349,7 +349,9 @@
       '<select id="up-kind">' +
         '<option value="schedule">Schedule (Activities)</option>' +
         '<option value="worklog">Worklog</option>' +
+        '<option value="jira_export">Jira issue export (converted on upload)</option>' +
       "</select>" +
+      '<div class="hint" id="up-kind-hint" style="margin-top:6px"></div>' +
       '<label for="up-file">Workbook</label>' +
       '<input type="file" id="up-file" accept=".xlsx,.xlsm">' +
       '<div class="row" style="margin-top:14px">' +
@@ -379,6 +381,23 @@
     syncNameField();
 
     document.getElementById("up-submit").addEventListener("click", uploadSource);
+
+    // Said before the upload, not after: a Jira export cannot carry a baseline
+    // or dependency edges, and finding that out from a flat dashboard is worse
+    // than being told while choosing the file.
+    var kindEl = document.getElementById("up-kind");
+    var kindHint = document.getElementById("up-kind-hint");
+    function describeKind() {
+      if (!kindHint) return;
+      kindHint.innerHTML = kindEl.value === "jira_export"
+        ? "Upload the workbook straight from Jira&rsquo;s <b>Excel (All fields)</b> export. " +
+          "It is converted into a schedule sheet here. Jira has no baseline or " +
+          "dependency column, so slip and the driving path stay empty until a " +
+          "<i>second</i> export is uploaded &mdash; the differ compares the two."
+        : "";
+    }
+    kindEl.addEventListener("change", describeKind);
+    describeKind();
   }
 
   function uploadSource() {
@@ -446,7 +465,8 @@
             (j.rows_rejected ? ", " + j.rows_rejected + " rejected" : "") +
             (j.sheet_name ? " &middot; read the <b>" + esc(j.sheet_name) + "</b> tab" : "") +
             "</div>" +
-            '<div class="hint" style="margin-top:4px">' + notes + "</div>";
+            '<div class="hint" style="margin-top:4px">' + notes + "</div>" +
+            conversionHtml(j.conversion);
         });
       })
       .catch(function (e) {
@@ -457,6 +477,22 @@
         var submit = document.getElementById("up-submit");
         if (submit) submit.disabled = false;
       });
+  }
+
+  // What a Jira export could not tell us. Rendered from the server's own
+  // report rather than restated here, so the page and the converter cannot
+  // disagree about which columns arrived empty.
+  function conversionHtml(cover) {
+    if (!cover) return "";
+    var empty = (cover.columns || []).filter(function (c) { return !c.filled; })
+      .map(function (c) { return c.column; });
+    var notes = (cover.notes || []).map(function (n) {
+      return '<div style="margin-top:4px">&bull; ' + esc(n) + "</div>";
+    }).join("");
+    return '<div class="hint" style="margin-top:8px">' +
+      "Converted " + cover.issues + " Jira issue(s) into a schedule sheet." +
+      (empty.length ? " Empty after conversion: <b>" + esc(empty.join(", ")) + "</b>." : "") +
+      notes + "</div>";
   }
 
   function renderRules() {
