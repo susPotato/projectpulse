@@ -17,6 +17,17 @@ data/demo/*.xlsx
 data/**/*.xlsx
 data/*.xlsx
 
+# ...except the two generated demo sets, which are committed on purpose so the
+# files can be grabbed without running the generator - on another machine, or
+# mid-demo. Negations for files work here because the rules above match *files*
+# rather than the directories, so these are not inside an excluded directory.
+#
+# They are dated relative to the day they were generated, so a committed copy
+# ages: re-run `scripts.gen_demo_upload` / `scripts.gen_demo_jira` for a fresh
+# set rather than trusting these to still read as "due next week".
+!data/upload_demo/*.xlsx
+!data/upload_demo_jira/*.xlsx
+
 # Trained model artefacts. Downloaded on request by `scripts.fetch_model`, never
 # committed - it is a third-party binary and the app treats its absence as a
 # complete state.
