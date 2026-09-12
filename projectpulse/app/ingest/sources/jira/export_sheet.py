@@ -118,6 +118,54 @@ INBOUND_LINK = re.compile(
 #: "blocks" links deserves to be told why no edges came of it.
 OUTBOUND_LINK = re.compile(r"\b(blocks|is\s+blocking|precedes|is\s+before|before)\b", re.I)
 
+#: A link, which a grouping label never is.
+URL = re.compile(r"^\s*(https?://|www\.)", re.I)
+
+
+def _looks_like_parent(value) -> bool:
+    """Does this value look like a reference to a parent issue?
+
+    Jira writes one as `Some Name [PROJ-123]`, or occasionally as a bare key.
+    Anything else - a URL, a person's name, free text - is some other field that
+    happens to sit under a parent-ish header.
+    """
+    text = _clean(value)
+    return isinstance(text, str) and bool(
+        PARENT_KEY.search(text) or re.fullmatch(r"[A-Z][A-Z0-9_]*-\d+", text.strip())
+    )
+
+
+def _looks_like_link(value) -> bool:
+    """Does this value name an issue at all? A predecessor column that does not
+    is not one."""
+    text = _clean(value)
+    return isinstance(text, str) and bool(ISSUE_KEY.search(text))
+
+
+#: How to recognise a column that means what its header claims, where "not
+#: empty" is not enough to tell.
+#:
+#: Jira defines every standard field whether or not it holds anything useful, so
+#: an export can carry a *populated* `Parent Link` holding a documentation URL
+#: beside a *populated* `Product` holding the real `Management [COWORKLOCAL-1]`.
+#: Ranking on non-emptiness alone picked the URL and made it a milestone name.
+SHAPE = {
+    "Milestone": _looks_like_parent,
+    "Predecessor": _looks_like_link,
+}
+
+#: A candidate that is identical to this other column, on every row that has it,
+#: is that column wearing a different name - and loses to any candidate that is
+#: not.
+#:
+#: `Planned Start` is the case: on an instance that does not use it, Jira stamps
+#: it at creation and never touches it, so it equals `Created` everywhere. The
+#: coverage report already said so - and the conversion went on choosing it over
+#: a populated `Start date` holding real, different dates, which meant warning
+#: about the very value it had just used. Detecting it and then preferring it
+#: anyway is worse than not detecting it.
+DEMOTE_IF_EQUALS = {"Start": "Created"}
+
 #: Jira renders some custom fields by shipping the page's own script, so the
 #: cell holds a function body rather than a value. Any cell that looks like this
 #: is dropped rather than written through - a task whose Owner is a jQuery call
@@ -303,6 +351,29 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
         """How many issues carry a value in any column of this name."""
         return sum(1 for r in rows if _cells(r, name))
 
+    def _plausible(column: str, name: str) -> int:
+        """How many of those values look like what `column` actually means.
+
+        Falls back to the plain count where no shape is declared, so a column
+        with no way to recognise itself behaves exactly as before.
+        """
+        shape = SHAPE.get(column)
+        if shape is None:
+            return _populated(name)
+        return sum(1 for r in rows if any(shape(c) for c in _cells(r, name)))
+
+    def _is_a_copy_of_another_column(column: str, name: str) -> bool:
+        """Is this candidate just some other column under a different header?"""
+        twin = DEMOTE_IF_EQUALS.get(column)
+        if twin is None or twin.casefold() not in lookup:
+            return False
+        pairs = [
+            (_cells(r, name)[0], _cells(r, twin)[0])
+            for r in rows
+            if _cells(r, name) and _cells(r, twin)
+        ]
+        return bool(pairs) and all(a == b for a, b in pairs)
+
     #: The candidate with the most data wins, not the first one that exists.
     #:
     #: Presence order was wrong and quietly so. A Jira instance defines every
@@ -320,7 +391,17 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
         present = [c for c in candidates if c.casefold() in lookup]
         if not present:
             continue
-        best = max(present, key=lambda name: (_populated(name), -present.index(name)))
+        #: Shape first, then how full, then the declared preference: a column
+        #: that looks right beats one that is merely non-empty.
+        best = max(
+            present,
+            key=lambda name: (
+                not _is_a_copy_of_another_column(column, name),
+                _plausible(column, name),
+                _populated(name),
+                -present.index(name),
+            ),
+        )
         if _populated(best) or not rows:
             chosen[column] = best
         else:
@@ -345,10 +426,14 @@ def convert(headers: list[str], rows: list[tuple]) -> tuple[list[dict], dict[str
             elif column == "Progress":
                 record[column] = _as_percent(cells[0]) if cells else None
             elif column == "Milestone":
-                value = _clean(cells[0]) if cells else None
-                record[column] = (
-                    PARENT_KEY.sub("", value) or None if isinstance(value, str) else value
-                )
+                #: Prefer a cell that looks like a parent over merely the first
+                #: non-empty one, and refuse a URL outright - that is a link to
+                #: a thing, not the name of one.
+                named = next((c for c in cells if _looks_like_parent(c)), None)
+                value = _clean(named if named is not None else (cells[0] if cells else None))
+                if isinstance(value, str):
+                    value = None if URL.match(value) else (PARENT_KEY.sub("", value) or None)
+                record[column] = value
             else:
                 record[column] = _clean(cells[0]) if cells else None
         records.append(record)

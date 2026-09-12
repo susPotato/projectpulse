@@ -946,3 +946,71 @@ def test_an_outbound_only_column_says_so_rather_than_reporting_no_links(tmp_path
     records, chosen = convert(headers, data)
     notes = " ".join(coverage(records, chosen, headers, data)["notes"])
     assert "outbound direction" in notes
+
+def test_a_populated_but_meaningless_column_loses_to_a_meaningful_one(tmp_path):
+    """"Not empty" is not enough to identify a column.
+
+    Jira defines every standard field whether or not it holds anything useful,
+    so an export can carry a populated `Parent Link` holding a documentation URL
+    beside a populated `Product` holding the real `Name [KEY]`. Ranking on
+    non-emptiness alone picked the URL and made it a milestone name.
+    """
+    by, chosen = _converted(
+        tmp_path,
+        ["Project", "Key", "Summary", "Status", "Parent Link", "Product"],
+        [("P", "P-1", "Design", "To Do", "https://example.com/docs", "Platform [P-100]")],
+    )
+    assert chosen["Milestone"] == "Product"
+    assert by["P-1"]["Milestone"] == "Platform"
+
+
+def test_a_url_is_never_a_milestone_name(tmp_path):
+    """Even when it is the only candidate. A link to a thing is not the name of
+    one, and a grouping band labelled `https://...` is worse than an unlabelled
+    one."""
+    by, _ = _converted(
+        tmp_path,
+        ["Project", "Key", "Summary", "Status", "Parent Link"],
+        [("P", "P-1", "Design", "To Do", "https://example.com/docs")],
+    )
+    assert by["P-1"]["Milestone"] is None
+
+
+def test_a_column_that_merely_copies_another_loses_to_a_real_one(tmp_path):
+    """`Planned Start` is stamped at creation on an instance that does not use
+    it, so it equals `Created` on every row.
+
+    The coverage report already detected that and said so - while the conversion
+    went on preferring it over a populated `Start date` holding real, different
+    dates. Detecting a field default and then choosing it anyway is worse than
+    not detecting it.
+    """
+    from datetime import datetime
+
+    created = datetime(2026, 9, 2, 19, 22)
+    by, chosen = _converted(
+        tmp_path,
+        ["Project", "Key", "Summary", "Status", "Created", "Planned Start", "Start date"],
+        [("P", "P-1", "Design", "To Do", created, created, datetime(2026, 9, 17))],
+    )
+    assert chosen["Start"] == "Start date"
+    assert by["P-1"]["Start"].isoformat() == "2026-09-17"
+
+
+def test_the_only_candidate_is_still_used_even_if_it_copies_another(tmp_path):
+    """Demotion is a preference between candidates, not a veto.
+
+    With no `Start date` to fall back on, `Planned Start` is all there is - and
+    the coverage note saying it is a field default is the honest way to serve it,
+    which is what the real export already does.
+    """
+    from datetime import datetime
+
+    created = datetime(2026, 9, 2, 19, 22)
+    by, chosen = _converted(
+        tmp_path,
+        ["Project", "Key", "Summary", "Status", "Created", "Planned Start"],
+        [("P", "P-1", "Design", "To Do", created, created)],
+    )
+    assert chosen["Start"] == "Planned Start"
+    assert by["P-1"]["Start"].isoformat() == "2026-09-02"
