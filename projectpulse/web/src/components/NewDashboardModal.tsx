@@ -6,7 +6,19 @@
 import { useState } from "react";
 import { send, type CatalogueBundle, type DashboardOut, type DashboardScope } from "../api";
 
-type Tab = "ai" | "templates" | "blank";
+type Tab = "fit" | "ai" | "templates" | "blank";
+
+/* What `POST /api/dashboards/fit` reports back.
+
+   Declared here rather than taken from the generated types: the server types it
+   as an open object, which is the right shape on the wire - the signal
+   vocabulary is the catalogue's to grow - and an unusable one to render from. */
+interface FitResult {
+  signals: string[];
+  placed: number;
+  of: number;
+  missing: Record<string, string[]>;
+}
 
 const SAMPLE_PROMPTS = [
   "Create a simple project cost/budget report",
@@ -28,10 +40,11 @@ export function NewDashboardModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [tab, setTab] = useState<Tab>("ai");
+  const [tab, setTab] = useState<Tab>("fit");
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [fallback, setFallback] = useState<string | null>(null);
+  const [fit, setFit] = useState<FitResult | null>(null);
   const query = `scope_type=${scopeType}&scope_id=${encodeURIComponent(scopeId)}`;
 
   async function createWithAi() {
@@ -49,6 +62,24 @@ export function NewDashboardModal({
       }
       onCreated();
     } catch {
+      setBusy(false);
+    }
+  }
+
+  /* Fit the board to what this project's data actually carries.
+
+     Does not close on success the way the other three do. The interesting half
+     of fitting a board is what was *left off*, and closing immediately would
+     throw that away - a person would see a shorter dashboard and have no idea
+     whether that is the data or the product. So the result stays up until they
+     dismiss it. */
+  async function useFit() {
+    setBusy(true);
+    try {
+      const dashboard = await send<DashboardOut>(`/api/dashboards/fit?${query}`, "POST");
+      setFit((dashboard.fit as unknown as FitResult) ?? null);
+      onCreated();
+    } finally {
       setBusy(false);
     }
   }
@@ -95,6 +126,7 @@ export function NewDashboardModal({
 
         <div className="mb-3 flex border-b border-rule">
           {([
+            ["fit", "Fit to this data"],
             ["ai", "Create with AI"],
             ["templates", "Browse Templates"],
             ["blank", "Blank Canvas"],
@@ -111,6 +143,43 @@ export function NewDashboardModal({
             </button>
           ))}
         </div>
+
+        {tab === "fit" && (
+          <div>
+            <p className="mt-0 mb-2 text-[12.5px] text-ink-2">
+              Places every tile this project&rsquo;s data can actually fill, and
+              leaves out the ones whose inputs are not there.
+            </p>
+            <p className="mt-0 mb-3 text-[11.5px] text-ink-3">
+              A template assumes a baseline, a dependency graph and a worklog. A
+              project imported from a single issue export has none of them, and
+              gets a board of empty tiles &mdash; which looks exactly like a
+              project with nothing wrong.
+            </p>
+            {fit && (
+              <div className="mb-3 rounded-md border border-rule bg-bg p-2.5">
+                <p className="m-0 text-[12px] text-ink">
+                  Placed <b>{fit.placed}</b> of {fit.of} tiles &middot; this data
+                  carries {(fit.signals ?? []).join(", ") || "nothing yet"}.
+                </p>
+                {Object.entries(fit.missing ?? {}).map(([signal, tiles]) => (
+                  <p key={signal} className="mt-1.5 mb-0 text-[11px] text-ink-3">
+                    No <b>{signal}</b> &mdash; would add{" "}
+                    {tiles.join(", ")}.
+                  </p>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={useFit}
+              className="w-full cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-surface disabled:opacity-50"
+            >
+              {busy ? "Fitting..." : fit ? "Fit again" : "Fit to this data"}
+            </button>
+          </div>
+        )}
 
         {tab === "ai" && (
           <div>

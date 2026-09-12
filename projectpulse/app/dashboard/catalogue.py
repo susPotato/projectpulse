@@ -41,6 +41,38 @@ DataSource = Literal[
 #: fetching every tile's real data just to draw a thumbnail.
 Preview = Literal["stat", "list", "heatmap", "brief", "chart"]
 
+#: What a tile needs before it has anything to draw.
+#:
+#: Not the same question as `data_source`, which says *which bundle* a tile
+#: reads. This says which **signals inside it** have to be present, and it
+#: exists because the two come apart badly on a data-poor project: every
+#: schedule tile reads `/api/gantt`, and on a source with no baseline and no
+#: dependencies most of them render an empty state while a few are the only
+#: useful things on the page.
+#:
+#: The point is a dashboard that is sparse because the *inputs* are sparse
+#: should not look like one that is sparse because the project is fine. Stating
+#: the requirement per tile lets the board be assembled from what the project
+#: actually has - see `app/dashboard/fit.py`.
+Signal = Literal[
+    #: Task rows exist at all.
+    "tasks",
+    #: At least one task carries an originally-committed date.
+    "baseline",
+    #: At least one dependency edge, stated or inferred.
+    "edges",
+    #: Worklog items - logged or planned hours.
+    "effort",
+    #: More than one observation, so the differ has something to compare.
+    "history",
+    #: At least one risk on the register.
+    "risks",
+    #: The project sits in a program alongside others.
+    "program",
+    #: The program has more than one project to roll up.
+    "siblings",
+]
+
 
 @dataclass(frozen=True)
 class TileSpec:
@@ -53,6 +85,10 @@ class TileSpec:
     default_w: int = 4
     default_h: int = 3
     preview: Preview = "list"
+    #: Every signal this tile needs. Empty means it always has something to
+    #: say - a narrative tile degrades to the deterministic template, a summary
+    #: tile to "nothing ingested yet", and both are worth showing.
+    requires: tuple[Signal, ...] = ()
 
 
 CATALOGUE: tuple[TileSpec, ...] = (
@@ -66,22 +102,26 @@ CATALOGUE: tuple[TileSpec, ...] = (
         "project_portfolio", "Project Portfolio", "Portfolio",
         "Every project in the program, ranked worst first.",
         "program", "programs", default_w=8, default_h=4,
+        requires=("siblings",),
     ),
     TileSpec(
         "project_health_heatmap", "Project Health Heatmap", "Portfolio",
         "Schedule / quality / QA / evidence bands, one row per project.",
         "program", "programs", default_w=8, default_h=4, preview="heatmap",
+        requires=("siblings",),
     ),
     TileSpec(
         "cross_project_risk", "AI Cross-Project Risk", "New",
         "The risk register rolled up across every project in the program.",
         "program", "risks", default_w=8, default_h=4,
+        requires=("risks",),
     ),
     TileSpec(
         "resource_conflict", "AI Resource Conflict", "New",
         "Where demand on a shared person exceeds their capacity in a month, in "
         "effort-days, apportioned across the projects that lose out.",
         "program", "programs", default_w=4, default_h=3,
+        requires=("program",),
     ),
     TileSpec(
         "ai_cross_project_brief", "AI Management Brief", "AI Intelligence",
@@ -103,12 +143,14 @@ CATALOGUE: tuple[TileSpec, ...] = (
         "sentence that says why - the rollup's own `headline`, not a summary "
         "of it.",
         "program", "programs", default_w=8, default_h=2,
+        requires=("siblings",),
     ),
     TileSpec(
         "top_delayed_projects", "Top Delayed Projects", "Portfolio",
         "The program's projects ranked by the slip their dependencies imply "
         "and their sheets do not show.",
         "program", "programs", default_w=4, default_h=3,
+        requires=("siblings", "edges"),
     ),
     TileSpec(
         "resource_contention_split", "Resource Contention Split", "Resource",
@@ -120,6 +162,7 @@ CATALOGUE: tuple[TileSpec, ...] = (
         # `app/intelligence/contention.py`, not hoped for - so it is the last
         # thing that may be allowed to fall off the bottom.
         "program", "programs", default_w=4, default_h=6,
+        requires=("program",),
     ),
     TileSpec(
         "team_allocation", "Team Allocation", "Resource",
@@ -129,6 +172,7 @@ CATALOGUE: tuple[TileSpec, ...] = (
         # is the line that stops the number being misread - so it must not be
         # the one that falls off the bottom.
         "program", "programs", default_w=6, default_h=6,
+        requires=("program",),
     ),
     TileSpec(
         "program_timeline", "Program Timeline", "Schedule",
@@ -139,27 +183,32 @@ CATALOGUE: tuple[TileSpec, ...] = (
         # an unlabelled tick on a shared axis is exactly the thing a reader
         # guesses wrong about.
         "program", "programs", default_w=8, default_h=5, preview="chart",
+        requires=("siblings", "tasks"),
     ),
     # --- Project scope ---------------------------------------------------
     TileSpec(
         "milestones_at_risk", "Milestones at Risk", "Schedule",
         "Milestones whose projected date has slipped past its baseline.",
         "project", "insight", default_w=4, default_h=2, preview="stat",
+        requires=("edges",),
     ),
     TileSpec(
         "blocking_qa", "Blocking QA", "Requirement/QA",
         "Open QA items marked blocked, and how long they have been aging.",
         "project", "insight", default_w=4, default_h=2, preview="stat",
+        requires=("effort",),
     ),
     TileSpec(
         "quality_health", "Quality Health", "Quality",
         "The project's quality band and the findings behind it.",
         "project", "insight", default_w=4, default_h=3,
+        requires=("effort",),
     ),
     TileSpec(
         "risk_matrix", "Risk Matrix", "Risk",
         "The 5x5 likelihood x impact heat-map for this project's risk register.",
         "project", "risks", default_w=6, default_h=4, preview="heatmap",
+        requires=("risks",),
     ),
     TileSpec(
         "ai_management_brief", "AI Management Brief", "AI Intelligence",
@@ -180,27 +229,32 @@ CATALOGUE: tuple[TileSpec, ...] = (
         "The top finding's causal chain, its downstream impact, and the "
         "recommended action.",
         "project", "insight", default_w=6, default_h=3, preview="brief",
+        requires=("history",),
     ),
     TileSpec(
         "schedule_gantt", "Gantt Chart", "Schedule",
         "The dependency-graphed schedule on one shared timeline.",
         "project", "gantt", default_w=8, default_h=6, preview="chart",
+        requires=("tasks",),
     ),
     TileSpec(
         "delivery_forecast", "Delivery Forecast", "Schedule",
         "A range of finish dates resampled from observed drift, by percentile.",
         "project", "forecast", default_w=5, default_h=4, preview="chart",
+        requires=("baseline",),
     ),
     TileSpec(
         "effort_burn", "Effort Burn", "Effort",
         "Cumulative hours logged over time, against the planned total.",
         "project", "team", default_w=5, default_h=4, preview="chart",
+        requires=("effort",),
     ),
     TileSpec(
         "team_effort", "Team Effort by Person", "Effort",
         "Hours logged against hours planned, one bar per person - real "
         "logged time, never a productivity figure nobody measured.",
         "project", "team", default_w=6, default_h=4, preview="chart",
+        requires=("effort",),
     ),
     # Added from the PM's own `(Project)Tiles List`: every one of these is
     # marked Phase 1 / Must or Should there, and every one is a slice of a
@@ -230,23 +284,27 @@ CATALOGUE: tuple[TileSpec, ...] = (
         "fortnight - lateness measured against the date on the task, which "
         "needs no baseline and no dependency graph.",
         "project", "gantt", default_w=6, default_h=5,
+        requires=("tasks",),
     ),
     TileSpec(
         "deadline_load", "Deadline Load", "Schedule",
         "How many open tasks fall due on each date - the shape of the plan, "
         "where a single tall bar means one day carries the project.",
         "project", "gantt", default_w=6, default_h=4, preview="chart",
+        requires=("tasks",),
     ),
     TileSpec(
         "work_by_owner", "Work by Owner", "Resource",
         "Open tasks per person, and how many of them are already late.",
         "project", "gantt", default_w=4, default_h=4, preview="chart",
+        requires=("tasks",),
     ),
     TileSpec(
         "status_breakdown", "Status Breakdown", "Project Information",
         "Every task by the status its own tracker reports, so a board where "
         "everything sits in one column is visible as one.",
         "project", "gantt", default_w=4, default_h=4, preview="chart",
+        requires=("tasks",),
     ),
     TileSpec(
         "project_summary", "Project Summary", "Project Information",
@@ -266,30 +324,35 @@ CATALOGUE: tuple[TileSpec, ...] = (
         "Slip somebody already recorded against the baseline, beside slip the "
         "dependency chain implies and nobody has written down.",
         "project", "gantt", default_w=4, default_h=5, preview="stat",
+        requires=("baseline",),
     ),
     TileSpec(
         "delayed_tasks", "Delayed Tasks", "Schedule",
         "The tasks carrying that slip, worst first, flagged when they sit on "
         "the chain that sets the project's finish.",
         "project", "gantt", default_w=6, default_h=4,
+        requires=("baseline",),
     ),
     TileSpec(
         "upcoming_milestones", "Upcoming Milestones", "Milestone",
         "Each milestone's planned date against the baseline it was committed "
         "to, soonest first.",
         "project", "gantt", default_w=6, default_h=5,
+        requires=("tasks",),
     ),
     TileSpec(
         "risk_register", "Risk Register", "Risk",
         "The registered risks as a table - rating, status, owner - which is "
         "what a PM reads next to the matrix, not instead of it.",
         "project", "risks", default_w=6, default_h=4,
+        requires=("risks",),
     ),
     TileSpec(
         "mitigation_effect", "Risk Before / After Mitigation", "Risk",
         "Each risk's pre- and post-treatment rating side by side: whether the "
         "mitigation somebody wrote down actually moves the assessment.",
         "project", "risks", default_w=6, default_h=4,
+        requires=("risks",),
     ),
     TileSpec(
         "ai_recommended_actions", "AI Recommended Actions", "AI Intelligence",

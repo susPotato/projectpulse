@@ -21,7 +21,13 @@ from app.api.schemas.dashboard import (
     TileOut,
     TileSpecOut,
 )
-from app.dashboard.catalogue import BY_KEY, CATALOGUE, DEFAULT_TEMPLATE, TEMPLATES
+from app.dashboard.catalogue import (
+    BY_KEY,
+    CATALOGUE,
+    DEFAULT_TEMPLATE,
+    TEMPLATES,
+    for_scope,
+)
 from app.models.dashboard import Dashboard, DashboardTile
 
 #: react-grid-layout's column count on every canvas - fixed rather than
@@ -199,6 +205,51 @@ def apply_default(session, scope_type: str, scope_id: str) -> DashboardOut | Non
     if template is None:
         return None
     return apply_template(session, scope_type, scope_id, template)
+
+
+def apply_fitted(session, scope_type: str, scope_id: str) -> DashboardOut:
+    """Fit a board to what this scope's data actually carries.
+
+    The third way to populate one, beside blank and a fixed template - and the
+    honest one for a data-poor project, where a template lays out tiles whose
+    inputs do not exist. See `app/dashboard/fit.py` for why that matters more
+    than it sounds.
+
+    Falls back to placing the always-available tiles rather than an empty board
+    if a project has nothing ingested at all: a canvas with "nothing has been
+    ingested for this project yet" on it is more use than a blank one, and it is
+    the same reasoning `get_dashboard` uses when it auto-creates.
+    """
+    from app.dashboard.fit import (
+        fitted_tiles,
+        missing_for,
+        program_signals,
+        project_signals,
+    )
+    from app.scope import source_ids_for
+
+    if scope_type == "program":
+        signals = program_signals(session, scope_id)
+    else:
+        signals = project_signals(session, source_ids_for(scope_id))
+
+    tiles = fitted_tiles(scope_type, signals)
+    out = replace_dashboard(
+        session, scope_type, scope_id,
+        name="Fitted To This Data",
+        source="fitted",
+        tiles=auto_layout([t.key for t in tiles]),
+    )
+    return out.model_copy(
+        update={
+            "fit": {
+                "signals": sorted(signals),
+                "placed": len(tiles),
+                "of": len(for_scope(scope_type)),  # type: ignore[arg-type]
+                "missing": missing_for(scope_type, signals),
+            }
+        }
+    )
 
 
 def seed_default_dashboard(

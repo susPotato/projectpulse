@@ -71,6 +71,15 @@ class DashboardOut(Response):
     source: str
     ai_prompt: str | None = None
     tiles: list[TileOut] = Field(default_factory=list)
+    #: Set only by `POST /api/dashboards/fit`: which signals the project's data
+    #: carries, how many tiles that filled, and which tiles each absent signal
+    #: is holding back.
+    #:
+    #: Returned rather than left implicit because the interesting half of
+    #: fitting a board is what was *left off*: a person who uploads a second
+    #: export tomorrow should be able to see that it unlocks three tiles without
+    #: having to press the button again to find out.
+    fit: dict[str, Any] | None = None
     #: Set only by `POST /api/dashboards/generate`: why the model's own tile
     #: picks were NOT used, when that happened - narration off, the call
     #: failed, or it returned nothing recognizable. `None` means either this

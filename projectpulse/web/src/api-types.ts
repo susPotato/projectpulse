@@ -874,6 +874,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboards/fit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fit Dashboard Api
+         * @description Build a board from the signals this scope's data actually carries.
+         *
+         *     Its own route rather than a template name, because the answer depends on the
+         *     database rather than on a list somebody wrote: the same call against two
+         *     projects legitimately produces two different boards.
+         */
+        post: operations["fit_dashboard_api_api_dashboards_fit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboards/generate": {
         parameters: {
             query?: never;
@@ -1503,6 +1527,10 @@ export interface components {
             ai_prompt: string | null;
             /** Tiles */
             tiles: components["schemas"]["TileOut"][];
+            /** Fit */
+            fit: {
+                [key: string]: unknown;
+            } | null;
             /** Fallback Reason */
             fallback_reason: string | null;
         };
@@ -4215,6 +4243,38 @@ export interface operations {
         };
     };
     apply_default_dashboard_api_api_dashboards_default_post: {
+        parameters: {
+            query: {
+                scope_type: string;
+                scope_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fit_dashboard_api_api_dashboards_fit_post: {
         parameters: {
             query: {
                 scope_type: string;

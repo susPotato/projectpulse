@@ -969,3 +969,96 @@ def test_chat_turn_falls_back_to_the_plain_error_when_the_agent_finds_nothing(se
             None, None, drafter=None,
             session=session, project_id=PROJECT, agent_cfg=None,
         )
+
+# --------------------------------------------------------------------------
+# Fitting a board to the data, rather than assuming it.
+# --------------------------------------------------------------------------
+
+
+def test_every_tile_declares_what_it_needs_or_declares_nothing():
+    """A `requires` naming a signal outside the vocabulary would silently never
+    be satisfied, and the tile would vanish from every fitted board with no
+    error anywhere."""
+    from typing import get_args
+
+    from app.dashboard.catalogue import CATALOGUE, Signal
+
+    known = set(get_args(Signal))
+    for tile in CATALOGUE:
+        unknown = set(tile.requires) - known
+        assert not unknown, f"{tile.key} requires unknown signal(s) {unknown}"
+
+
+def test_a_tile_with_no_requirement_is_always_fitted():
+    """The narrative and summary tiles degrade rather than break - a brief falls
+    back to the deterministic template, a summary says "nothing ingested yet" -
+    and both are worth showing on a board that would otherwise be empty."""
+    from app.dashboard.catalogue import for_scope
+    from app.dashboard.fit import fitted_tiles
+
+    fitted = {t.key for t in fitted_tiles("project", set())}
+    always = {t.key for t in for_scope("project") if not t.requires}
+
+    assert always, "no tile is unconditionally available"
+    assert always <= fitted
+
+
+def test_a_tile_is_left_off_only_when_its_input_is_absent():
+    """Not when its numbers are zero. "No risks logged yet" is a true statement
+    about a project with a register; "this source cannot express a dependency"
+    is a different one, and only the second is a reason to hide a tile."""
+    from app.dashboard.fit import fitted_tiles
+
+    without = {t.key for t in fitted_tiles("project", {"tasks"})}
+    with_baseline = {t.key for t in fitted_tiles("project", {"tasks", "baseline"})}
+
+    assert "schedule_variance" not in without
+    assert "schedule_variance" in with_baseline
+    # A richer set never removes a tile.
+    assert without < with_baseline
+
+
+def test_more_signals_never_means_fewer_tiles():
+    """Monotonicity, over every subset that matters. A board cannot shrink
+    because a project gained data."""
+    from itertools import combinations
+    from typing import get_args
+
+    from app.dashboard.catalogue import Signal
+    from app.dashboard.fit import fitted_tiles
+
+    signals = list(get_args(Signal))
+    for scope in ("project", "program"):
+        for size in range(len(signals)):
+            for subset in combinations(signals, size):
+                smaller = {t.key for t in fitted_tiles(scope, set(subset))}
+                for extra_signal in signals:
+                    if extra_signal in subset:
+                        continue
+                    bigger = {t.key for t in fitted_tiles(scope, {*subset, extra_signal})}
+                    assert smaller <= bigger, (scope, subset, extra_signal)
+
+
+def test_missing_for_names_the_tiles_each_absent_signal_holds_back():
+    """The interesting half of fitting a board is what was left off - a person
+    who uploads a second export should be able to see what it buys them."""
+    from app.dashboard.fit import missing_for
+
+    held = missing_for("project", {"tasks"})
+
+    assert "baseline" in held
+    assert "Schedule Variance" in held["baseline"]
+    # A signal that is present is not reported as holding anything back.
+    assert "tasks" not in held
+
+
+def test_fitting_a_scope_with_nothing_ingested_still_places_something(session):
+    """A canvas saying "nothing has been ingested yet" is more use than a blank
+    one, and it is the same reasoning `get_dashboard` uses when it auto-creates."""
+    from app.dashboard.service import apply_fitted
+
+    out = apply_fitted(session, "project", "excel:Project:1:NOTHING")
+
+    assert out.source == "fitted"
+    assert out.tiles, "an unfitted project got a blank board"
+    assert out.fit is not None and out.fit["placed"] == len(out.tiles)

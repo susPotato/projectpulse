@@ -1300,6 +1300,20 @@ def apply_default_dashboard_api(scope_type: str, scope_id: str) -> DashboardOut:
         return bundle
 
 
+@app.post("/api/dashboards/fit", response_model=DashboardOut)
+def fit_dashboard_api(scope_type: str, scope_id: str) -> DashboardOut:
+    """Build a board from the signals this scope's data actually carries.
+
+    Its own route rather than a template name, because the answer depends on the
+    database rather than on a list somebody wrote: the same call against two
+    projects legitimately produces two different boards.
+    """
+    from app.dashboard.service import apply_fitted
+
+    with session_scope() as session:
+        return apply_fitted(session, scope_type, scope_id)
+
+
 @app.post("/api/dashboards/generate", response_model=DashboardOut)
 def generate_dashboard_api(body: GenerateRequest) -> DashboardOut:
     """Create with AI: the model picks tiles from the catalogue, never data.
