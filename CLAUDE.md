@@ -62,10 +62,9 @@ not rebuildable by a sync. Make a throwaway project and press it there.
 after every command on Windows/Git-Bash. Local pty artifact, not a remote
 failure — the command's own stdout above it is the truth.
 
-⚠️ **Still open, still the one to close before the judged window**, and now the
-only thing on this list that is genuinely owed: `/console` is unauthenticated on
-the public deploy and its "Reset database" button calls `/api/reset`, which
-drops the schema. Untouched by every session so far.
+✅ **Closed (§0h).** `/console` and `/api/reset` were deleted outright and now
+404 on production, verified live. That was the last thing on this list that was
+genuinely owed — nothing here is outstanding.
 
 ---
 
@@ -186,6 +185,61 @@ trusting a provider switch, check `pip show anthropic` (or whichever vendor) ins
 container image, not just the dev venv** - `flyctl ssh console -C "python -c 'import
 anthropic'"` is the fast check, or just hit the deployed endpoint directly, which is what
 actually caught this (see §-1).
+
+---
+
+## 0h. Same session - the console is gone, and a health check went with it
+
+**807 tests pass.** Deployed and verified live: `/api/reset`, `/api/write-step`,
+`/api/write-jira`, `/api/sync`, `/api/state`, `/console` and `/explain` all 404
+on production; every real page still answers 200.
+
+`/console` was a live unauthenticated page that POSTed schema-dropping actions.
+Deleted with its four write routes and `/api/state`. The demo tour goes with it;
+`python -m scripts.replay` still replays the same timeline from the CLI, which
+is where a thing that rewrites source data belongs.
+
+Calc (`/explain`) deleted as an old page. **`/api/explain` was NOT deleted with
+it**, and that distinction is the whole care in the change: Insight's
+driving-path panel fetches that bundle, and the report's projection section
+calls the same function. Removing it would have taken a panel off Insight
+*silently*, because that fetch degrades to `null` rather than erroring. Caught
+only because regenerating the API types dropped `ForwardStep` while
+`Insight.tsx` still imported it - a type error stood in for a runtime symptom
+nobody would have seen.
+
+### Two ways this bit, both worth not repeating
+
+**Deleting a route block by "decorator to next decorator" silently ate the
+helpers between them.** `_spa()`, `APP_SHELL`, `XLSX_TYPE` and `DOCX_TYPE` all
+lived between two `@app.` decorators and went with the routes. The suite caught
+it (`NameError: _spa`), but the lesson is that route bodies are not the only
+thing in the gaps - diff what a bulk deletion actually removed before trusting
+it.
+
+**A deleted route took production down, and the app was never broken.**
+`fly.toml`'s health check pointed at `/api/state` - the console's own endpoint.
+With it gone the app kept serving every real page while Fly marked both
+machines unhealthy and the proxy refused to route: `could not find a good
+candidate within 40 attempts at load balancing`, and a 503 on every URL. Nothing
+in the code referenced `/api/state`; the reference was in deploy config, which
+no test and no grep of `app/` or `web/` would have found.
+
+The check now points at `/api/portfolio` - the landing page's own bundle, so a
+machine that passes it can answer the first request a visitor actually makes,
+which `/api/state` never proved. **When deleting a route, grep `fly.toml`,
+`Dockerfile` and `docker-compose.yml` too.**
+
+### Also cleaned up
+
+Both dead rail links from the hand-written pages (`gantt.html`,
+`settings.html`), the `/explain` snapshot from `scripts.publish`, and two
+`scripts.shots` entries. `publish.py` used to rewrite the console tab into the
+architecture page; with the console deleted there is nothing to rewrite, so it
+became a guard - a snapshot now refuses to publish any tab pointing at a route
+that no longer exists, matched by `href` rather than label for the reason its
+own comment already gave. `data/*.xlsx` is gitignored: workbooks converted from
+a customer's own export land there.
 
 ---
 
