@@ -407,7 +407,10 @@ def api_gantt(
 ) -> GanttBundle:
     """Tasks, milestones and dependency edges on one shared time window."""
     if also is None:
-        also = scope.also_for(project)
+        # Whichever of this project's source ids the caller holds, resolved to
+        # the canonical one plus the rest (invariant 7). Asking by the Jira id
+        # used to analyse the Jira rows alone and present that as the project.
+        project, also = scope.canonical_pairing(project)
 
     problem = check_connection()
     if problem is not None:
@@ -445,7 +448,10 @@ def api_explain(
 ) -> ExplainBundle:
     """The forward pass, with the working, for one project."""
     if also is None:
-        also = scope.also_for(project)
+        # Whichever of this project's source ids the caller holds, resolved to
+        # the canonical one plus the rest (invariant 7). Asking by the Jira id
+        # used to analyse the Jira rows alone and present that as the project.
+        project, also = scope.canonical_pairing(project)
 
     problem = check_connection()
     if problem is not None:
@@ -548,7 +554,7 @@ def _report_doc(
     if also is None:
         # Invariant 7 lives in `app.scope`, not in a literal here - a second
         # copy of the pairing is how the portfolio came to list HRMS twice.
-        also = scope.also_for(project)
+        project, also = scope.canonical_pairing(project)
 
     problem = check_connection()
     if problem is not None:
@@ -620,7 +626,10 @@ def forecast(
     would make the page render an error where the honest answer belongs.
     """
     if also is None:
-        also = scope.also_for(project)
+        # Whichever of this project's source ids the caller holds, resolved to
+        # the canonical one plus the rest (invariant 7). Asking by the Jira id
+        # used to analyse the Jira rows alone and present that as the project.
+        project, also = scope.canonical_pairing(project)
 
     problem = check_connection()
     if problem is not None:
@@ -971,7 +980,10 @@ def team(
     stretch in it mean "nothing was logged" instead of "we stopped looking".
     """
     if also is None:
-        also = scope.also_for(project)
+        # Whichever of this project's source ids the caller holds, resolved to
+        # the canonical one plus the rest (invariant 7). Asking by the Jira id
+        # used to analyse the Jira rows alone and present that as the project.
+        project, also = scope.canonical_pairing(project)
 
     problem = check_connection()
     if problem is not None:
@@ -1190,7 +1202,10 @@ def scenarios(
     recover then, and a list of zero-day scenarios reads as a broken feature.
     """
     if also is None:
-        also = scope.also_for(project)
+        # Whichever of this project's source ids the caller holds, resolved to
+        # the canonical one plus the rest (invariant 7). Asking by the Jira id
+        # used to analyse the Jira rows alone and present that as the project.
+        project, also = scope.canonical_pairing(project)
 
     problem = check_connection()
     if problem is not None:
@@ -1721,7 +1736,10 @@ def insight(
     # The demo portfolio is the same project in both sources; a real deployment
     # reads this pairing from scope config alongside the watched sheets.
     if also is None:
-        also = scope.also_for(project)
+        # Whichever of this project's source ids the caller holds, resolved to
+        # the canonical one plus the rest (invariant 7). Asking by the Jira id
+        # used to analyse the Jira rows alone and present that as the project.
+        project, also = scope.canonical_pairing(project)
 
     # Report an unreachable database as an unreachable database. Letting the
     # driver error propagate gives a 500 with a stack trace in the log and a bare

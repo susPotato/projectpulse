@@ -461,15 +461,53 @@ def _key_of(program_id: str) -> str:
         return program_id
 
 
-def also_for(canonical_id: str) -> list[str]:
-    """The other source ids for this project, for `analyze_project(also=...)`.
+def also_for(source_id: str) -> list[str]:
+    """The project's *other* source ids, for `analyze_project(also=...)`.
 
-    An unknown id gets an empty list rather than an error: a caller asking
-    about a project nobody has paired is asking a legitimate question, and the
-    answer is "just this one source".
+    Resolves rather than looks up, and that is the whole of a real defect this
+    used to have. It called `find`, which matches canonical ids only, so
+    `also_for("jira:Project:1:HRMS")` answered `[]` - not because that project
+    is unpaired but because the caller happened to hold the paired half. The
+    effect was silent and bad: `/api/insight?project=jira:Project:1:HRMS`
+    analysed one source of a two-source project and presented the result as the
+    whole project (measured on the demo: 1 finding instead of 10, 4 schedule
+    rows instead of 10, 0 logged hours instead of 28).
+
+    That is invariant 7 failing exactly the way `resolve` was written to
+    prevent - "telling it that project is unknown is how one project's data
+    ends up filed in two places" - and `risks/service.py` already resolved
+    while these callers did not.
+
+    An id genuinely nobody has paired still gets `[]`: that caller is asking a
+    legitimate question whose answer is "just this one source".
     """
-    project = find(canonical_id)
-    return list(project.also) if project else []
+    project = resolve(source_id)
+    if project is None:
+        return []
+    return [other for other in project.source_ids if other != source_id]
+
+
+def canonical_pairing(source_id: str) -> tuple[str, list[str]]:
+    """`(canonical_id, other_ids)` for whichever of a project's ids you hold.
+
+    The pair a project-scoped API route needs, in one call. `also_for` alone
+    fixes *which rows get analysed*; this also fixes *what the result is filed
+    under*, so a bundle fetched by the Jira id reports the same `project_id` as
+    one fetched by the Excel id instead of two bundles that describe one project
+    under two names. Same rule `resolve` states: anything written against a
+    project belongs under the returned `canonical_id`, not under whichever id
+    the caller happened to have.
+
+    An unknown id is returned as itself with no pairing - the caller is not
+    wrong to ask, and 404ing here would take a legitimate "I have not ingested
+    that yet" and turn it into "that is not a project".
+    """
+    project = resolve(source_id)
+    if project is None:
+        return source_id, []
+    return project.canonical_id, [
+        other for other in project.source_ids if other != project.canonical_id
+    ]
 
 
 def __getattr__(name: str):

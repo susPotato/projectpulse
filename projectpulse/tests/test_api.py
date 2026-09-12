@@ -630,3 +630,136 @@ def test_the_program_config_exposes_the_whole_rule_table(client):
     # rule, not about today's numbers.
     assert any("{{" in rule.headline for rule in bundle.rules)
     assert all(rule.conditions for rule in bundle.rules)
+
+
+# --------------------------------------------------------------------------
+# Invariant 7 through the API: whichever of a project's source ids a caller
+# holds, they get the same project.
+#
+# This was broken and nothing caught it. `scope.also_for` used `find`, which
+# matches canonical ids only, so a caller holding the *paired* id got an empty
+# pairing - and the route then analysed one source of a two-source project and
+# served that as the whole project. Measured on the demo before the fix: 1
+# finding instead of 10, 4 schedule rows instead of 10, 0 logged hours instead
+# of 28. Nothing errored; the numbers were quietly wrong, which is precisely
+# the failure `app/scope.py` exists to prevent.
+# --------------------------------------------------------------------------
+
+CANONICAL = "excel:Project:1:HRMS"
+PAIRED = "jira:Project:1:HRMS"
+
+
+def test_also_for_resolves_from_the_paired_id_not_just_the_canonical_one():
+    from app import scope
+
+    assert scope.also_for(CANONICAL) == [PAIRED]
+    # The half that was broken: holding the paired id must name the other one.
+    assert scope.also_for(PAIRED) == [CANONICAL]
+
+
+def test_also_for_never_returns_the_id_it_was_given():
+    """`analyze_project(project_id=x, also=[...])` would otherwise load x's rows
+    twice, which is one way a task count doubles."""
+    from app import scope
+
+    for source_id in (CANONICAL, PAIRED):
+        assert source_id not in scope.also_for(source_id)
+
+
+def test_an_unpaired_or_unknown_id_still_gets_an_empty_pairing():
+    """A project nobody has paired is a legitimate question whose answer is
+    "just this one source". It must not become an error."""
+    from app import scope
+
+    assert scope.also_for("excel:Project:1:SAIN") == []
+    assert scope.also_for("nothing:Project:9:NOPE") == []
+
+
+def test_canonical_pairing_answers_the_same_from_either_end():
+    from app import scope
+
+    assert scope.canonical_pairing(CANONICAL) == (CANONICAL, [PAIRED])
+    assert scope.canonical_pairing(PAIRED) == (CANONICAL, [PAIRED])
+
+
+def test_canonical_pairing_returns_an_unknown_id_as_itself():
+    """Not a 404. "I have not ingested that yet" is a different statement from
+    "that is not a project", and the route has to be able to make the first."""
+    from app import scope
+
+    assert scope.canonical_pairing("nothing:Project:9:NOPE") == (
+        "nothing:Project:9:NOPE",
+        [],
+    )
+
+
+@pytest.fixture()
+def paired_project():
+    """One delivery project with a task in each of its two source systems.
+
+    Deliberately different dates per source: if a route analyses only the id it
+    was handed, the two calls come back with different windows and the test
+    fails on content rather than on a status code.
+    """
+    from app.db import session_scope
+    from app.models.domain import Program, Project, Task
+
+    with session_scope() as session:
+        session.merge(Program(id="program:Program:0:DEFAULT", name="Test"))
+        for pid, name in ((CANONICAL, "HRMS Platform"), (PAIRED, "HRMS Platform")):
+            session.merge(
+                Project(id=pid, name=name, program_id="program:Program:0:DEFAULT")
+            )
+        session.merge(
+            Task(
+                id="excel:Task:1:PAIR-1", project_id=CANONICAL, title="From the sheet",
+                status="IN_PROGRESS", start_date=date(2026, 3, 1),
+                due_date=date(2026, 3, 10), baseline_end=date(2026, 3, 10),
+            )
+        )
+        session.merge(
+            Task(
+                id="jira:Task:1:PAIR-2", project_id=PAIRED, title="From Jira",
+                status="IN_PROGRESS", start_date=date(2026, 4, 1),
+                due_date=date(2026, 4, 20), baseline_end=date(2026, 4, 10),
+            )
+        )
+    return CANONICAL, PAIRED
+
+
+def test_the_schedule_is_the_same_project_from_either_source_id(client, paired_project):
+    """The regression at the surface a person actually hits.
+
+    Both tasks, one window, whichever id was asked for - and the same count, so
+    a route that silently analysed half would fail here rather than 200 with a
+    smaller answer."""
+    canonical, paired = paired_project
+
+    a = client.get("/api/gantt", params={"project": canonical})
+    b = client.get("/api/gantt", params={"project": paired})
+    assert a.status_code == 200 and b.status_code == 200
+
+    assert a.json() == b.json(), "the same project answered differently per source id"
+    labels = {row["title"] for row in a.json()["rows"]}
+    assert {"From the sheet", "From Jira"} <= labels, labels
+
+
+def test_no_project_scoped_route_resolves_its_pairing_by_lookup_alone():
+    """The fix was one line repeated in seven routes, so the failure to guard
+    against is fixing six of them.
+
+    Source inspection rather than seven live calls: some of those routes need
+    rich data to answer at all, and the thing worth pinning is that none of them
+    goes back to the canonical-only helper - which is a property of the text.
+    """
+    import re
+    from pathlib import Path
+
+    import app.api.main as main
+
+    source = Path(main.__file__).read_text(encoding="utf-8")
+    offenders = re.findall(r"^\s*also = scope\.also_for\(.*\)$", source, re.M)
+    assert not offenders, (
+        "a project-scoped route still resolves its pairing with the "
+        f"canonical-only helper: {offenders}"
+    )
