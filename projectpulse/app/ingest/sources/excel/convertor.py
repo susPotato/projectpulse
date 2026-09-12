@@ -48,6 +48,35 @@ STATUS_MAP = {
     "complete": "DONE",
     "completed": "DONE",
     "closed": "DONE",
+    # `Resolved` is one of the commonest states in a real Jira workflow and was
+    # falling through to OTHER, which every downstream count reads as *open* -
+    # so a finished task was reported overdue, in progress and stale at once.
+    "resolved": "DONE",
+    "fixed": "DONE",
+    "delivered": "DONE",
+    # Work that will not happen. Its own state rather than DONE, because it was
+    # not delivered - counting it as complete would inflate a completion figure,
+    # and counting it as open would report a cancelled task as late forever.
+    "cancelled": "DROPPED",
+    "canceled": "DROPPED",
+    "won't do": "DROPPED",
+    "wont do": "DROPPED",
+    "will not do": "DROPPED",
+    "rejected": "DROPPED",
+    "duplicate": "DROPPED",
+    "abandoned": "DROPPED",
+    "obsolete": "DROPPED",
+    # Common board columns that are unambiguously one of the three live states.
+    # Anything genuinely ambiguous is still left as OTHER rather than guessed:
+    # a wrong mapping is worse than an honest unknown.
+    "backlog": "TODO",
+    "new": "TODO",
+    "in review": "IN_PROGRESS",
+    "review": "IN_PROGRESS",
+    "in testing": "IN_PROGRESS",
+    "testing": "IN_PROGRESS",
+    "impeded": "BLOCKED",
+    "waiting": "BLOCKED",
 }
 
 #: A worklog row is blocked if either column says so. The sheets in the wild use

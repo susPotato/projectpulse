@@ -1858,6 +1858,252 @@ const AiRecommendedActions: ComponentType<TileProps> = ({ scopeId }) => {
   );
 };
 
+/* ---- Tiles a source with no baseline and no edges can still fill ---------
+
+   All four read `/api/gantt`, which carries status, owner, both dates and the
+   milestone grouping for every task. None of them needs a baseline, a
+   dependency or an hour logged - which is the point: a project ingested from a
+   single Jira export has exactly this and nothing else, and a dashboard that
+   stays blank for it is reporting the absence of *inputs* as the absence of
+   *risk*.
+
+   `as_of` comes off the bundle rather than the clock. The analysis reflects a
+   scan, and a tile that quietly measured "late" against the wall clock would
+   disagree with every finding beside it on a demo whose data is fixed in the
+   past. */
+
+function useAsOf(bundle: GanttBundle | null): string {
+  //: The bundle's own scan date, falling back to today only when it has none.
+  return bundle?.as_of ?? new Date().toISOString().slice(0, 10);
+}
+
+const DONE_LIKE = new Set(["done", "dropped"]);
+const isOpen = (row: { status?: string | null }) =>
+  !DONE_LIKE.has((row.status ?? "").toLowerCase());
+
+const OverdueAndDueSoon: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const asOf = useAsOf(bundle);
+  const soon = new Date(`${asOf}T00:00:00Z`);
+  soon.setUTCDate(soon.getUTCDate() + 14);
+  const soonIso = soon.toISOString().slice(0, 10);
+
+  const open = (bundle?.rows ?? []).filter((r) => isOpen(r) && r.planned_end);
+  const overdue = open
+    .filter((r) => r.planned_end! < asOf)
+    .sort((a, b) => a.planned_end!.localeCompare(b.planned_end!));
+  const dueSoon = open
+    .filter((r) => r.planned_end! >= asOf && r.planned_end! <= soonIso)
+    .sort((a, b) => a.planned_end!.localeCompare(b.planned_end!));
+
+  const line = (row: (typeof open)[number], late: boolean) => (
+    <div key={row.entity_id} className="flex items-baseline gap-2 text-[12px]">
+      <span className="min-w-0 flex-1 truncate text-ink" title={row.title ?? row.label}>
+        {row.title ?? row.label}
+      </span>
+      <span className={`shrink-0 text-[11px] ${late ? "text-red" : "text-ink-3"}`}>
+        {row.planned_end}
+      </span>
+    </div>
+  );
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      <div className="grid gap-1.5">
+        {overdue.length > 0 && (
+          <p className="m-0 text-[10.5px] font-bold tracking-[0.05em] text-red uppercase">
+            Overdue &middot; {overdue.length}
+          </p>
+        )}
+        {overdue.slice(0, 6).map((r) => line(r, true))}
+        {dueSoon.length > 0 && (
+          <p className="m-0 mt-1 text-[10.5px] font-bold tracking-[0.05em] text-ink-3 uppercase">
+            Due within a fortnight &middot; {dueSoon.length}
+          </p>
+        )}
+        {dueSoon.slice(0, 6).map((r) => line(r, false))}
+        {overdue.length + dueSoon.length === 0 && bundle && (
+          <p className="m-0 text-[12.5px] text-ink-3">
+            Nothing open is past its due date or falls due inside a fortnight.
+          </p>
+        )}
+        {bundle && (
+          <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+            Measured against {asOf}, the scan this analysis reflects.
+          </p>
+        )}
+      </div>
+    </TileShell>
+  );
+};
+
+/* The shape of the plan. One tall bar is a day that carries the project: it
+   cannot slip a little, only for everything on it at once. */
+const DeadlineLoad: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const counts = new Map<string, number>();
+  for (const row of bundle?.rows ?? []) {
+    if (isOpen(row) && row.planned_end) {
+      counts.set(row.planned_end, (counts.get(row.planned_end) ?? 0) + 1);
+    }
+  }
+  const days = Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  const worst = Math.max(1, ...days.map(([, n]) => n));
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {days.length > 0 ? (
+        <div className="grid gap-1">
+          {days.map(([day, n]) => (
+            <div key={day} className="flex items-center gap-2">
+              <span className="w-[74px] shrink-0 text-[11px] text-ink-3">{day}</span>
+              <div className="h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
+                <div
+                  className={`h-full rounded-sm ${n === worst && n > 2 ? "bg-orange" : "bg-navy"}`}
+                  style={{ width: `${(n / worst) * 100}%` }}
+                />
+              </div>
+              <span className="w-[18px] shrink-0 text-right text-[11px] text-ink-2">{n}</span>
+            </div>
+          ))}
+          <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+            Open tasks only - a date everything has already met is a delivered
+            milestone, not a pile-up.
+          </p>
+        </div>
+      ) : (
+        bundle && <p className="m-0 text-[12.5px] text-ink-3">No open task carries a due date.</p>
+      )}
+    </TileShell>
+  );
+};
+
+const WorkByOwner: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const asOf = useAsOf(bundle);
+
+  const byOwner = new Map<string, { open: number; late: number }>();
+  for (const row of bundle?.rows ?? []) {
+    if (!isOpen(row)) continue;
+    const who = (row.assignee ?? "").trim() || "Unassigned";
+    const entry = byOwner.get(who) ?? { open: 0, late: 0 };
+    entry.open += 1;
+    if (row.planned_end && row.planned_end < asOf) entry.late += 1;
+    byOwner.set(who, entry);
+  }
+  const people = Array.from(byOwner.entries()).sort((a, b) => b[1].open - a[1].open);
+  const most = Math.max(1, ...people.map(([, v]) => v.open));
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {people.length > 0 ? (
+        <div className="grid gap-1.5">
+          {people.map(([who, v]) => (
+            <div key={who} className="flex items-center gap-2">
+              <span className="w-[74px] shrink-0 truncate text-[11.5px] text-ink-2" title={who}>
+                {who}
+              </span>
+              <div className="relative h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
+                <div
+                  className="h-full rounded-sm bg-navy"
+                  style={{ width: `${(v.open / most) * 100}%` }}
+                />
+                {/* Late work sits inside the same bar rather than beside it:
+                    it is a part of that person's load, not a second series. */}
+                {v.late > 0 && (
+                  <div
+                    className="absolute top-0 h-full rounded-sm bg-red"
+                    style={{ width: `${(v.late / most) * 100}%` }}
+                    title={`${v.late} already past due`}
+                  />
+                )}
+              </div>
+              <span className="w-[46px] shrink-0 text-right text-[11px] text-ink-3">
+                {v.open}
+                {v.late > 0 ? ` / ${v.late}` : ""}
+              </span>
+            </div>
+          ))}
+          <p className="m-0 text-[10.5px] text-ink-3">open tasks / of those, overdue</p>
+        </div>
+      ) : (
+        bundle && <p className="m-0 text-[12.5px] text-ink-3">No open tasks.</p>
+      )}
+    </TileShell>
+  );
+};
+
+/* Every task by the status its own tracker reports.
+
+   Uses `status`, the normalised vocabulary the rules read, rather than the
+   vendor's raw string - so two boards calling the same state "Done" and
+   "Resolved" land in one row here, which is the whole reason the
+   normalisation exists. */
+const StatusBreakdown: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const counts = new Map<string, number>();
+  for (const row of bundle?.rows ?? []) {
+    const key = (row.status ?? "unknown").toLowerCase();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const order = ["todo", "in_progress", "blocked", "done", "dropped", "other", "unknown"];
+  const rows = Array.from(counts.entries()).sort(
+    (a, b) => order.indexOf(a[0]) - order.indexOf(b[0]),
+  );
+  const total = rows.reduce((sum, [, n]) => sum + n, 0) || 1;
+  const LABEL: Record<string, string> = {
+    todo: "To do",
+    in_progress: "In progress",
+    blocked: "Blocked",
+    done: "Done",
+    dropped: "Dropped",
+    other: "Unrecognised",
+    unknown: "No status",
+  };
+  const TONE: Record<string, string> = {
+    todo: "bg-rule",
+    in_progress: "bg-navy",
+    blocked: "bg-red",
+    done: "bg-green",
+    dropped: "bg-rule-2",
+    other: "bg-amber",
+    unknown: "bg-amber",
+  };
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {rows.length > 0 ? (
+        <div className="grid gap-1.5">
+          {rows.map(([key, n]) => (
+            <div key={key} className="flex items-center gap-2">
+              <span className="w-[80px] shrink-0 text-[11.5px] text-ink-2">
+                {LABEL[key] ?? key}
+              </span>
+              <div className="h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
+                <div
+                  className={`h-full rounded-sm ${TONE[key] ?? "bg-rule"}`}
+                  style={{ width: `${(n / total) * 100}%` }}
+                />
+              </div>
+              <span className="w-[22px] shrink-0 text-right text-[11px] text-ink-3">{n}</span>
+            </div>
+          ))}
+          {/* "Unrecognised" is a real answer, not a rendering gap: the tracker
+              used a status this app has no mapping for, and guessing which of
+              to-do / in-progress / done it meant would be worse. */}
+          {counts.has("other") && (
+            <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+              Unrecognised statuses are counted as open and never as complete.
+            </p>
+          )}
+        </div>
+      ) : (
+        bundle && <p className="m-0 text-[12.5px] text-ink-3">No tasks.</p>
+      )}
+    </TileShell>
+  );
+};
+
 /* ---- Custom tiles -------------------------------------------------------
    Keyed `custom:<id>`, not a fixed catalogue entry - `DashboardCanvas`
    special-cases the prefix and renders this directly rather than looking the
@@ -1937,4 +2183,8 @@ export const TILE_REGISTRY: Record<string, ComponentType<TileProps>> = {
   mitigation_effect: MitigationEffect,
   ai_recommended_actions: AiRecommendedActions,
   data_readiness: DataReadiness,
+  overdue_and_due_soon: OverdueAndDueSoon,
+  deadline_load: DeadlineLoad,
+  work_by_owner: WorkByOwner,
+  status_breakdown: StatusBreakdown,
 };

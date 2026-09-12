@@ -225,6 +225,30 @@ CATALOGUE: tuple[TileSpec, ...] = (
         "project", "insight", default_w=4, default_h=6,
     ),
     TileSpec(
+        "overdue_and_due_soon", "Overdue & Due Soon", "Schedule",
+        "Tasks past their own due date, then those falling due inside a "
+        "fortnight - lateness measured against the date on the task, which "
+        "needs no baseline and no dependency graph.",
+        "project", "gantt", default_w=6, default_h=5,
+    ),
+    TileSpec(
+        "deadline_load", "Deadline Load", "Schedule",
+        "How many open tasks fall due on each date - the shape of the plan, "
+        "where a single tall bar means one day carries the project.",
+        "project", "gantt", default_w=6, default_h=4, preview="chart",
+    ),
+    TileSpec(
+        "work_by_owner", "Work by Owner", "Resource",
+        "Open tasks per person, and how many of them are already late.",
+        "project", "gantt", default_w=4, default_h=4, preview="chart",
+    ),
+    TileSpec(
+        "status_breakdown", "Status Breakdown", "Project Information",
+        "Every task by the status its own tracker reports, so a board where "
+        "everything sits in one column is visible as one.",
+        "project", "gantt", default_w=4, default_h=4, preview="chart",
+    ),
+    TileSpec(
         "project_summary", "Project Summary", "Project Information",
         "The context a person needs on opening a project: band, what set it, "
         "committed against projected finish, and task / QA counts.",

@@ -38,6 +38,20 @@ if TYPE_CHECKING:  # pragma: no cover - annotation only
 #: Statuses that mean "not progressing", normalized to casefold.
 BLOCKED_STATES = frozenset({"blocked", "yes", "on hold", "impeded"})
 DONE_STATES = frozenset({"done", "complete", "completed", "closed"})
+
+#: Work that will not happen: cancelled, rejected, a duplicate. Neither
+#: delivered nor outstanding, so it is excluded from both counts.
+#:
+#: Counting it as done would inflate completion; counting it as open would
+#: report a cancelled task as overdue forever, which is the trap a real Jira
+#: export walks straight into - `Cancelled` and `Won't Do` used to normalise to
+#: OTHER and every "is it finished?" test read OTHER as no.
+DROPPED_STATES = frozenset({"dropped"})
+
+#: Not outstanding, whatever the reason. The right test for "is this task still
+#: someone's problem" - overdue, due soon, stale and in-progress all mean the
+#: open set, not the not-done set.
+CLOSED_STATES = DONE_STATES | DROPPED_STATES
 IN_PROGRESS_STATES = frozenset({"in progress", "in_progress", "wip", "doing"})
 
 #: What counts as "due soon". Two weeks because it is the horizon a PM can still
@@ -226,6 +240,25 @@ class DeliveryContext:
         return record
 
 
+def shift_date(value: date, days: int) -> date:
+    """`value` moved by `days`, clamped to what a `date` can represent.
+
+    `date.max + timedelta(days=1)` raises rather than saturating, so any date
+    arithmetic on a value that came from outside needs this. A source can hand
+    us 9999-12-31 - a real "no due date" sentinel in some trackers and a trivial
+    thing to mistype - and an unclamped `+` then takes down whichever page did
+    the arithmetic with a 500.
+
+    Saturating is the right answer for both callers: each wants a window bound,
+    and a bound already at the end of representable time does not need to go
+    further.
+    """
+    try:
+        return value + timedelta(days=days)
+    except OverflowError:
+        return date.max if days > 0 else date.min
+
+
 def _status_of(row) -> str:
     return (getattr(row, "status", None) or "").casefold()
 
@@ -287,8 +320,8 @@ def build_context(
     #: "overdue" measured from the wall clock would report every demo task as
     #: late and mean nothing.
     _today = as_of.date() if isinstance(as_of, datetime) else as_of
-    _soon = _today + timedelta(days=DUE_SOON_DAYS)
-    _open_tasks = [t for t in tasks if _status_of(t) not in DONE_STATES]
+    _soon = shift_date(_today, DUE_SOON_DAYS)
+    _open_tasks = [t for t in tasks if _status_of(t) not in CLOSED_STATES]
     _overdue = sum(
         1 for t in _open_tasks if t.planned_end is not None and t.planned_end < _today
     )

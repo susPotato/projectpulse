@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -37,7 +37,7 @@ from sqlalchemy import func, select
 from app.api.schemas.insight import DeliveryConfidence, EvidenceRef, InsightBundle
 from app.intelligence import confidence as confidence_calc
 from app.intelligence.assembler import build_bundle, entity_label
-from app.intelligence.context import build_context
+from app.intelligence.context import build_context, shift_date
 from app.intelligence.rules.engine import RulesEngine
 from app.intelligence.rules.tables import DEFAULT_TABLE, RuleTable
 from app.intelligence.schedule.graph import (
@@ -1493,6 +1493,22 @@ def gantt_project(
     from app.models.domain import Milestone
 
     project_ids = [project_id, *also]
+
+    #: Who each task belongs to, keyed by entity id.
+    #:
+    #: `GanttRow.assignee` has been in the schema from the start and nothing
+    #: ever set it, so every row served `null` - the field was declared, typed,
+    #: serialised and empty. It surfaced the moment a tile grouped by owner and
+    #: reported a project of seventeen named tasks as entirely "Unassigned".
+    #:
+    #: A dict rather than a field on `TaskNode`: the scheduler has no use for an
+    #: assignee, and widening the type it reasons over to carry display data is
+    #: how that type stops meaning "what scheduling needs".
+    owners = dict(
+        session.execute(
+            select(Task.id, Task.assignee).where(Task.project_id.in_(project_ids))
+        ).all()
+    )
     tasks = load_tasks(session, project_ids)
     edges = load_edges(session, project_ids)
 
@@ -1517,6 +1533,7 @@ def gantt_project(
                 label=entity_label(task.entity_id, title=task.title),
                 title=task.title,
                 status=task.status,
+                assignee=owners.get(task.entity_id),
                 start=task.start_date,
                 baseline_end=task.baseline_end,
                 planned_end=task.planned_end,
@@ -1533,9 +1550,16 @@ def gantt_project(
 
     # Earliest start to latest projected finish, so every bar fits. Padded by a
     # few days at each end: a bar flush against the frame reads as clipped.
+    #
+    # The padding is clamped, because a source can hand us a date at the edge of
+    # what a `date` can hold. A single task dated 9999-12-31 - a real sentinel in
+    # some trackers, and a trivial thing to type by accident - made this raise
+    # `OverflowError` and took the whole Schedule page down with a 500. The view
+    # is a window over whatever dates exist; it is not the place to decide that
+    # one of them is implausible.
     dates = [d for row in rows for d in (row.start, row.projected_end, row.baseline_end) if d]
-    window_start = min(dates) - timedelta(days=3) if dates else None
-    window_end = max(dates) + timedelta(days=3) if dates else None
+    window_start = shift_date(min(dates), -3) if dates else None
+    window_end = shift_date(max(dates), 3) if dates else None
 
     # The scan time the view reflects, not the moment it was rendered - the same
     # definition `analyze_project` uses, so the tabs cannot disagree about which

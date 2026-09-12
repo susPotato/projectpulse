@@ -1014,3 +1014,83 @@ def test_the_only_candidate_is_still_used_even_if_it_copies_another(tmp_path):
     )
     assert chosen["Start"] == "Planned Start"
     assert by["P-1"]["Start"].isoformat() == "2026-09-02"
+
+# --------------------------------------------------------------------------
+# Hostile input. Every case here crashed or lied before it was fixed.
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "status,expect_open,expect_done",
+    [
+        ("Done", False, True),
+        ("Closed", False, True),
+        # The one that mattered: `Resolved` is among the commonest states in a
+        # real Jira workflow and fell through to OTHER, which every count reads
+        # as open - so a finished task was reported overdue, in progress and
+        # stale at once.
+        ("Resolved", False, True),
+        # Work that will not happen is neither delivered nor outstanding.
+        # Counting it done inflates completion; counting it open reports a
+        # cancelled task as late forever.
+        ("Cancelled", False, False),
+        ("Won't Do", False, False),
+        ("Rejected", False, False),
+        ("In Progress", True, False),
+        ("Backlog", True, False),
+        # Genuinely unknown stays unknown rather than being guessed at.
+        ("Sausages", True, False),
+    ],
+)
+def test_a_real_jira_status_is_classified_not_guessed(status, expect_open, expect_done):
+    from app.ingest.sources.excel.convertor import _normalize_status
+    from app.intelligence.context import CLOSED_STATES, DONE_STATES
+
+    normalised = _normalize_status(status).casefold()
+    assert (normalised not in CLOSED_STATES) is expect_open, status
+    assert (normalised in DONE_STATES) is expect_done, status
+
+
+def test_a_date_at_the_edge_of_the_calendar_does_not_take_a_page_down():
+    """A tracker can hold 9999-12-31 as a "no due date" sentinel, and it is a
+    trivial thing to mistype. `date.max + timedelta(days=1)` raises rather than
+    saturating, so the schedule window and the due-soon window both 500'd on
+    one such row."""
+    from datetime import date
+
+    from app.intelligence.context import shift_date
+
+    assert shift_date(date.max, 3) == date.max
+    assert shift_date(date.min, -3) == date.min
+    assert shift_date(date(2026, 9, 12), 3) == date(2026, 9, 15)
+
+
+def test_a_hostile_export_converts_without_raising(tmp_path):
+    """One row per way to fool the converter. None of them may raise, and none
+    may become a confident wrong value."""
+    from datetime import datetime
+
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    header = ["Project", "Key", "Summary", "Status", "Due Date", "Start date",
+              "Progress", "Linked Issues"]
+    rows = [
+        ("T", "T-1", "text in a date", "To Do", "TBD", "N/A", None, None),
+        ("T", "T-2", "far future", "To Do", datetime(9999, 12, 31), None, None, None),
+        ("T", "T-3", "progress over 100", "To Do", None, None, 9999, None),
+        ("T", "T-4", "negative progress", "To Do", None, None, -50, None),
+        ("T", "T-5", "self dependency", "To Do", None, None, None, "is blocked by T-5"),
+        ("T", "T-6", "x" * 5000, "To Do", None, None, None, None),
+        ("T", "T-7", "unicode 工数 😀", "To Do", None, None, None, None),
+    ]
+    by, _ = _converted(tmp_path, header, rows)
+
+    assert by["T-1"]["Planned Finish"] is None and by["T-1"]["Start"] is None
+    assert by["T-2"]["Planned Finish"].year == 9999
+    assert by["T-3"]["Progress"] is None
+    assert by["T-4"]["Progress"] is None
+    # Kept as written - dropping a self-edge is `dependencies.py`'s job, and it
+    # does it. The converter must not silently rewrite what the source said.
+    assert by["T-5"]["Predecessor"] == "T-5"
+    assert len(by["T-6"]["Activity"]) == 5000
+    assert "😀" in by["T-7"]["Activity"]
