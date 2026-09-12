@@ -218,6 +218,13 @@ CATALOGUE: tuple[TileSpec, ...] = (
     #     chain that sets the finish, and `delayed_tasks` flags it as such -
     #     which is the honest half of that tile.
     TileSpec(
+        "data_readiness", "What This Data Can Answer", "Project Information",
+        "Which analyses this project's sources actually support, and what each "
+        "missing one would unlock - so a quiet dashboard reads as a gap in the "
+        "data rather than a clean bill of health.",
+        "project", "insight", default_w=4, default_h=6,
+    ),
+    TileSpec(
         "project_summary", "Project Summary", "Project Information",
         "The context a person needs on opening a project: band, what set it, "
         "committed against projected finish, and task / QA counts.",

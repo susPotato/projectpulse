@@ -232,6 +232,28 @@ DEFAULT_TABLE = RuleTable(
             ),
         ),
         Rule(
+            id="deadline_cluster",
+            when=(Condition("tasks_on_busiest_due_date", ">=", 4),),
+            category="schedule_risk",
+            severity="medium",
+            headline=(
+                "{{tasks_on_busiest_due_date}} open task(s) share a single due "
+                "date ({{busiest_due_date}})."
+            ),
+            recommendation=(
+                "Sequence them or move the ones that do not have to land that "
+                "day. Whatever happens to that date happens to all of them at "
+                "once."
+            ),
+            rationale=(
+                "Needs no baseline and no dependency graph, which is what makes "
+                "it available for a source that carries neither. A pile-up on "
+                "one day is usually a deadline everybody was handed rather than "
+                "a sequence anybody worked out - and it concentrates risk: the "
+                "date cannot slip a little, it can only slip for everything."
+            ),
+        ),
+        Rule(
             id="single_owner_project",
             when=(
                 Condition("distinct_owners", "==", 1),

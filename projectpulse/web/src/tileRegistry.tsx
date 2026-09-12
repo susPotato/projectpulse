@@ -1634,6 +1634,125 @@ const RiskRegister: ComponentType<TileProps> = ({ scopeId }) => {
   );
 };
 
+/* What this project's data can and cannot answer.
+
+   The tile that exists because of the Jira case. A project ingested from one
+   issue export trips few rules - not because it is healthy, but because half
+   the engine has no input. A dashboard that goes quiet for that reason looks
+   identical to one that is quiet because everything is fine, and those are
+   opposite situations.
+
+   So this reads the same `context` every rule fired on and says, per capability,
+   whether the input is present and what its absence costs. Nothing here is
+   computed: each row is a scalar the server already published, which is why the
+   tile cannot drift from the findings beside it.
+
+   The honest framing is deliberate - "not supplied" rather than "missing", and
+   a sentence naming what it would unlock rather than a red cross. A PM reading
+   this should come away knowing what to go and get, not feeling told off. */
+const DataReadiness: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useInsight(scopeId);
+  const c = (bundle?.context ?? {}) as Record<string, unknown>;
+  const num = (k: string) => Number(c[k] ?? 0);
+
+  const tasks = num("task_count");
+  const rows: {
+    label: string;
+    ready: boolean;
+    detail: string;
+    unlocks: string;
+  }[] = bundle
+    ? [
+        {
+          label: "Status & dates",
+          ready: tasks > 0,
+          detail: `${tasks} task(s) with status and a due date`,
+          unlocks: "overdue, due-soon and deadline-cluster findings",
+        },
+        {
+          label: "Baseline",
+          ready: num("tasks_with_baseline") > 0,
+          detail:
+            num("tasks_with_baseline") > 0
+              ? `${num("tasks_with_baseline")} of ${tasks} task(s) carry one`
+              : "no task carries an originally-committed date",
+          unlocks: "slip against what was promised, rather than against today",
+        },
+        {
+          label: "Dependencies",
+          ready: num("edges_total") > 0,
+          detail:
+            num("edges_total") > 0
+              ? `${num("edges_stated")} stated, ${num("edges_inferred")} inferred`
+              : "no predecessor is recorded on any task",
+          unlocks: "the projected finish, the driving path and milestones at risk",
+        },
+        {
+          label: "Effort",
+          ready: num("qa_count") > 0,
+          detail:
+            num("qa_count") > 0
+              ? `${num("qa_count")} worklog item(s)`
+              : "no logged or planned hours",
+          unlocks: "burn, effort variance and per-person load",
+        },
+        {
+          label: "Observed history",
+          ready: num("changes_total") > 0,
+          detail:
+            num("changes_total") > 0
+              ? `${num("changes_total")} change(s) seen across scans`
+              : "only one scan - nothing to compare against yet",
+          unlocks: "causal chains, and slip a person recorded",
+        },
+        {
+          label: "Program context",
+          ready: Boolean(c.has_program_context),
+          detail: c.has_program_context
+            ? "shared-resource demand is known"
+            : "this project is not in a program with others",
+          unlocks: "cross-project contention and the resource band",
+        },
+      ]
+    : [];
+
+  const ready = rows.filter((r) => r.ready).length;
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {bundle && (
+        <div className="grid gap-1.5">
+          <p className="m-0 text-[11px] text-ink-3">
+            {ready} of {rows.length} inputs present
+          </p>
+          {rows.map((row) => (
+            <div key={row.label} className="flex items-start gap-2 text-[12px]">
+              <span
+                className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${
+                  row.ready ? "bg-green" : "bg-rule"
+                }`}
+                aria-hidden
+              />
+              <span className="min-w-0 flex-1">
+                <span className={row.ready ? "text-ink" : "text-ink-2"}>{row.label}</span>
+                <span className="block text-[10.5px] text-ink-3">{row.detail}</span>
+                {/* Only for what is absent: naming what a *present* input
+                    unlocks is noise, since the tiles that use it are already
+                    on the page showing it. */}
+                {!row.ready && (
+                  <span className="block text-[10.5px] text-ink-3 italic">
+                    would unlock {row.unlocks}
+                  </span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </TileShell>
+  );
+};
+
 /* Does the mitigation somebody wrote down actually move the assessment?
 
    Only risks carrying *both* assessments appear. A post-treatment rating is a
@@ -1817,4 +1936,5 @@ export const TILE_REGISTRY: Record<string, ComponentType<TileProps>> = {
   risk_register: RiskRegister,
   mitigation_effect: MitigationEffect,
   ai_recommended_actions: AiRecommendedActions,
+  data_readiness: DataReadiness,
 };

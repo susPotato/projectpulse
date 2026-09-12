@@ -120,6 +120,15 @@ class DeliveryContext:
     #: earlier scan to diff it against.
     tasks_stale: int = 0
     stalest_task_days: int = 0
+    #: The most open tasks sharing a single due date, and which date that is.
+    #:
+    #: A schedule claim that needs no baseline and no edges: if half the project
+    #: is dated the same day, the dates are a deadline everybody was handed
+    #: rather than a sequence anybody worked out. That is visible in a snapshot,
+    #: which is what makes it worth computing for a source that carries nothing
+    #: else.
+    tasks_on_busiest_due_date: int = 0
+    busiest_due_date: str = ""
     #: Hours between `generated_at` and the most recent successful sync of any
     #: source, or -1 when nothing has ever synced. Not the age of the events
     #: the data describes - the demo timeline is fixed in the past by design -
@@ -300,6 +309,14 @@ def build_context(
     ]
     _stale = [age for age in _ages if age >= STALE_AFTER_DAYS]
 
+    #: Counted over *open* tasks only: a cluster of dates that have all been met
+    #: is a delivered milestone, not a pile-up.
+    _by_due: dict = {}
+    for _task in _open_tasks:
+        if _task.planned_end is not None:
+            _by_due[_task.planned_end] = _by_due.get(_task.planned_end, 0) + 1
+    _busiest = max(_by_due.items(), key=lambda kv: (kv[1], kv[0]), default=None)
+
     dependency_backed = sum(
         1
         for c in chains
@@ -339,6 +356,8 @@ def build_context(
         distinct_owners=len({(o or "").strip() for o in owners if (o or "").strip()}),
         tasks_stale=len(_stale),
         stalest_task_days=max(_ages, default=0),
+        tasks_on_busiest_due_date=_busiest[1] if _busiest else 0,
+        busiest_due_date=_busiest[0].isoformat() if _busiest else "",
         tasks_done=sum(1 for t in tasks if _status_of(t) in DONE_STATES),
         tasks_not_started=sum(1 for t in tasks if _status_of(t) == "not started"),
         tasks_with_baseline=with_baseline,
