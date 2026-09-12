@@ -188,6 +188,47 @@ actually caught this (see §-1).
 
 ---
 
+## 0q. Same session - a demo set you upload live, and the rule it exposed
+
+**846 tests pass.** `scripts.gen_demo_upload` writes six workbooks - a schedule
+and a worklog for each of three projects - in the app'''s own template shape, so
+they go in through Settings > Sources like any PM'''s sheets. Nothing seeds a
+domain row; the real reader, differ and schedule engine run over them.
+
+Dated **relative to today**, not on a fixed calendar, so the set cannot drift
+into the past and read as entirely overdue - the trap `tasks_overdue` is
+calibrated around.
+
+| project | what it demonstrates |
+|---|---|
+| Payments Core | a chain whose early slip propagates all the way down: 5 tasks dated earlier than their dependencies allow, 2 milestones behind unfinishable work, projected **20 days** past plan |
+| Customer Portal | waits on Payments through a hand-off it cannot see; 3 inconsistent, 2 milestones at risk, QA stalling |
+| Data Migration | schedule genuinely clean - and still not fine |
+
+### The third project needed a rule that did not exist
+
+There was **no effort comparison anywhere in the rule vocabulary**, so a project
+logging 61 hours against 23 planned came out `healthy` with zero findings.
+`effort_overrun` reads `hours_logged` / `hours_planned`, both columns a person
+filled in - which is exactly the comparison `api/schemas/team.py` argues for,
+and the reason it still refuses productivity: output per unit of effort needs an
+output measure and `progress` is self-reported. Guarded on a real plan existing,
+because an overrun against no estimate is an *absent estimate*.
+
+**The contrast is the deliverable.** A portfolio where everything is red teaches
+a reader to ignore the colour; a project green on schedule and amber on effort
+is the case a single health score flattens away. The set comes out
+critical / critical / watch with different band patterns.
+
+### Tested before shipping, which is how the gap was found
+
+Uploaded all six through the real route into a scratch database: **zero rejected
+rows** from the new files (the three rejects in the run are HRMS'''s own
+deliberately-messy demo sheets). The first pass is what showed Data Migration
+reporting nothing at all.
+
+---
+
 ## 0p. Same session - removing a project
 
 **845 tests pass.** "Remove" on each row of the Projects page, in two steps.
