@@ -1394,11 +1394,16 @@ def _draft_drafter():
                 #: seconds - the shared default - timed out on the first real
                 #: project it met, before the model had written a word.
                 timeout_seconds=240.0,
-                #: Lower than the 8000 narration allows. The answer is at most
-                #: eight short objects; the ceiling was only ever generous
-                #: because reasoning tokens are billed inside it, and a smaller
-                #: one bounds how long a single press can run.
-                max_tokens=4000,
+                #: Generous, and it has to be. Reasoning tokens are billed
+                #: *inside* this ceiling on every vendor, and the adapter asks
+                #: for adaptive thinking - so a budget sized to the answer
+                #: starves it: 4000 was spent thinking and the reply was cut
+                #: off before a single JSON object, which the adapter correctly
+                #: reported as "truncated at max_tokens". The answer itself is
+                #: at most eight short objects; everything above that is the
+                #: model's working, and refusing to pay for it buys nothing but
+                #: a guaranteed truncation.
+                max_tokens=16000,
             ),
         )
     except ValueError:
