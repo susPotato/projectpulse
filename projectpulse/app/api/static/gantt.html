@@ -227,30 +227,53 @@
     });
     var risky = bundle.milestones.filter(function (m) { return m.at_risk; }).length;
 
-    /* Three of these five are forward-pass results over a dependency graph.
-       With no edges they are not zero - they are unknown, and a zero here reads
-       as a clean bill of health for the one condition this product exists to
-       report. A source that states no links gets a dash and a label saying why,
-       which is the same bargain the Insight page's data-quality panel makes.
+    /* Three of these five are forward-pass results over a dependency graph, and
+       on a source that states no links they are not zero - nothing was
+       assessed. Reporting 0 was worse than useless: "0 milestones at risk" is a
+       clean bill of health nobody issued, which is the one thing this product
+       exists not to say.
 
-       `chain implies finish` is the subtlest of the three: with no chain it
-       equals the planned date exactly, so it showed a confident red date that
-       was really just the sheet's own number wearing a second hat. */
+       But a row of dashes is barely better. It is honest and it is unreadable -
+       three of five tiles saying "not available" tells a PM nothing they can do
+       anything about. So the tiles change to the strongest claims this data
+       *can* support: how much is past due, and how much of the project is not
+       on a timeline at all. Both need only a row and a date, both are exactly
+       what somebody opening a schedule wants to know, and neither pretends to a
+       graph that is not there.
+
+       `chain implies finish` goes with them. With no chain it equals the planned
+       date exactly, so it was the sheet's own number wearing a second hat and
+       coloured red for emphasis. */
     var linked = bundle.rows.some(function (r) {
       return (r.depends_on || []).length > 0;
     });
+    //: ISO dates compare correctly as strings, and `day()` lives inside
+    //: gantt.js's closure. Same comparison the chart makes, so the tile and the
+    //: red tails beside it cannot disagree about what "past due" means.
+    var scan = bundle.as_of || "";
+    var overdue = bundle.rows.filter(function (r) {
+      if (r.status === "DONE" || r.status === "DROPPED") return false;
+      return scan && r.planned_end && r.planned_end < scan;
+    }).length;
+    var undated = bundle.rows.filter(function (r) {
+      return !r.start && !r.planned_end;
+    }).length;
 
-    [[bundle.rows.length, "tasks", false],
-     [d(bundle.project_end_planned), "sheet says finish", false],
-     linked
-       ? [d(bundle.project_end_projected), "chain implies finish", true]
-       : ["-", "chain implies finish - no links stated", false],
-     linked
-       ? [worst + "d", "worst hidden slip", true]
-       : ["-", "hidden slip needs dependencies", false],
-     linked
-       ? [risky, "milestones at risk", risky > 0]
-       : ["-", "at-risk needs dependencies", false]].forEach(function (row) {
+    var tiles = [
+      [bundle.rows.length, "tasks", false],
+      [d(bundle.project_end_planned), "sheet says finish", false],
+      [overdue, "past due, still open", overdue > 0]
+    ];
+    if (linked) {
+      tiles.push([d(bundle.project_end_projected), "chain implies finish", true]);
+      tiles.push([worst + "d", "worst hidden slip", true]);
+      tiles.push([risky, "milestones at risk", risky > 0]);
+    } else {
+      //: Said once, here, rather than as three separate "not available" tiles.
+      tiles.push([undated, "carry no date - not on this chart", undated > 0]);
+      tiles.push(["none", "dependencies stated - no critical path", false]);
+    }
+    tiles.forEach(function (row) {
       var st = $("div", "stat" + (row[2] ? " bad" : ""));
       st.appendChild($("b", null, row[0]));
       st.appendChild($("span", null, row[1]));

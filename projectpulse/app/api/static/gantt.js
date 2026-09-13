@@ -278,7 +278,7 @@
      line so the two halves of the frame stay in step - every band the plot
      draws has to have exactly one label here at exactly the same height, and a
      row added to one and not the other shifts every label below it. */
-  function labelColumn(groups, undated) {
+  function labelColumn(groups, undated, scan) {
     var col = el("div", "g-left");
     groups.forEach(function (group) {
       var head = el("div", "g-group");
@@ -289,7 +289,14 @@
       col.appendChild(head);
 
       group.rows.forEach(function (row) {
-        var line = el("div", "g-row" + (row.on_driving_path ? " driving" : ""));
+        /* Past due, marked in the labels as well as on the plot. The red tail
+           is only visible if you are looking at that row's bar; a PM scanning
+           the list for what to chase should not have to read the chart to find
+           it. */
+        var late = scan && row.planned_end && row.planned_end < scan &&
+          row.status !== "DONE" && row.status !== "DROPPED";
+        var line = el("div", "g-row" + (row.on_driving_path ? " driving" : "") +
+          (late ? " late-row" : ""));
         /* A row with no Task ID is labelled by its own title (see
            `assembler.entity_label`), so printing both puts the same words
            twice - once in the code font meant for an id, once truncated. Show
@@ -301,6 +308,14 @@
         }
         if (row.propagated_days > 0) {
           line.appendChild(el("span", "g-slip", "+" + row.propagated_days + "d"));
+        } else if (late) {
+          //: How late, in days, where the chain cannot say. The one lateness
+          //: number available without a graph, in the same slot the propagated
+          //: figure uses so the column reads consistently either way.
+          var days = Math.round(
+            (Date.parse(scan) - Date.parse(row.planned_end)) / 86400000
+          );
+          line.appendChild(el("span", "g-late", days + "d late"));
         }
         line.title = tooltip(row);
         col.appendChild(line);
@@ -607,7 +622,11 @@
 
     var frame = el("div", "g-frame");
     frame.appendChild(
-      labelColumn(groups, bundle.rows.length - bundle.rows.filter(datable).length)
+      labelColumn(
+        groups,
+        bundle.rows.length - bundle.rows.filter(datable).length,
+        bundle.as_of || ""
+      )
     );
 
     var scroller = el("div", "g-plot");

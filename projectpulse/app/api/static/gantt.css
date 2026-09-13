@@ -97,6 +97,21 @@
   text-overflow: ellipsis;
 }
 
+/* Past due, in the label column. A left edge rather than a full-row wash: the
+   row still has to be readable, and a PM scanning for what to chase wants the
+   marks to line up down the edge of the list. */
+.late-row {
+  box-shadow: inset 3px 0 0 var(--viz-over);
+  padding-left: 7px;
+}
+
+.g-late {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--viz-over);
+}
+
 .g-slip {
   flex: 0 0 auto;
   color: var(--red);
