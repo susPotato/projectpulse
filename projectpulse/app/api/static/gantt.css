@@ -160,6 +160,24 @@
    and this needs only a calendar - so it is the same hue at lower weight rather
    than a sixth colour nobody can rank. */
 .late { fill: var(--viz-over); opacity: .38; }
+
+/* The undated mass. Hatched, because it is a quantity drawn on a time axis and
+   has to refuse to be read as a date range - nothing else on this chart is
+   hatched, so the texture itself is the "this is not a span" signal. */
+.undated {
+  fill: var(--rule-2);
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+/* Its label sits apart from the bands above: it belongs to no milestone, and
+   indenting it with them would imply it did. */
+.g-undated-row {
+  margin-top: 6px;
+  border-bottom: none;
+  color: var(--ink-3);
+  font-style: italic;
+}
 .g-key i.late { background: var(--viz-over); opacity: .38; }
 
 .g-key i.base { background: var(--viz-base); height: 4px; }

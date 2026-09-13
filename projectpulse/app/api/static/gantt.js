@@ -94,12 +94,111 @@
     return plan !== null && plan < scan ? plan : null;
   }
 
+  /* Rows that say the same thing, said once.
+
+     Sixteen planning tasks with the same start, the same status and one of two
+     due dates drew sixteen near-identical bars - a wall the eye reads as
+     "a lot of work" and takes nothing else from. Collapsed, the same fact is
+     three rows and the four genuinely distinct items stop being lost in it.
+
+     Nothing is hidden: the count is in the label and every member's name is in
+     the row's tooltip. What is given up is one bar per task, and a bar that is
+     pixel-identical to the fifteen above it was never carrying that task's
+     information anyway.
+
+     Two rows are only merged when there is nothing to tell them apart on this
+     chart - same band, same dates, same status - and never when either is on
+     the driving path or has an edge, because an arrow has to land on a row and
+     a merged row is not one. */
+  var COLLAPSE_AT = 3;
+
+  function mergeKey(row) {
+    if (row.on_driving_path) return null;
+    return [
+      row.start || "-", row.planned_end || "-", row.projected_end || "-",
+      row.baseline_end || "-", row.status || "-",
+      //: Predecessors are part of what makes two rows the same row here, not a
+      //: reason to refuse merging. Sixteen tasks that share dates *and* share
+      //: the same single predecessor are sixteen identical statements; keeping
+      //: them apart drew sixteen identical bars to preserve arrows that all
+      //: pointed at the same place.
+      //:
+      //: The cost, stated: an arrow cannot land on a merged row, because a
+      //: merged row has no `entity_id` to anchor to. That is the right trade -
+      //: a chain into a summary is not a chain anybody can trace, and the
+      //: members are named in the tooltip.
+      (row.depends_on || []).slice().sort().join(",")
+    ].join("|");
+  }
+
+  /* The name a collapsed row goes by.
+
+     A shared bracketed tag ("[Planning Task] ...") is the export's own way of
+     saying these are one kind of thing, so it is used when every member carries
+     it. Otherwise the count alone - inventing a category name for a set of
+     tasks is exactly the summarising this chart must not do. */
+  function mergedTitle(rows) {
+    var tag = null;
+    for (var i = 0; i < rows.length; i++) {
+      var m = /^\s*(\[[^\]]+\])/.exec(rows[i].title || "");
+      if (!m) return rows.length + " tasks, same dates";
+      if (tag === null) tag = m[1];
+      else if (tag !== m[1]) return rows.length + " tasks, same dates";
+    }
+    return rows.length + " x " + tag;
+  }
+
+  function collapse(rows) {
+    var order = [], byKey = {};
+    rows.forEach(function (row) {
+      var key = mergeKey(row);
+      if (key === null) { order.push({ solo: row }); return; }
+      if (!byKey[key]) { byKey[key] = []; order.push({ key: key }); }
+      byKey[key].push(row);
+    });
+    var out = [];
+    order.forEach(function (entry) {
+      if (entry.solo) { out.push(entry.solo); return; }
+      var members = byKey[entry.key];
+      if (!members || !members.length) return;
+      byKey[entry.key] = null;
+      if (members.length < COLLAPSE_AT) { out.push.apply(out, members); return; }
+      var first = members[0];
+      out.push({
+        //: No `entity_id`: a merged row is not a thing an arrow can land on,
+        //: and `mergeKey` has already refused to merge anything with an edge.
+        entity_id: null,
+        label: members.length + " x",
+        title: mergedTitle(members),
+        status: first.status,
+        assignee: null,
+        start: first.start,
+        baseline_end: first.baseline_end,
+        planned_end: first.planned_end,
+        projected_end: first.projected_end,
+        propagated_days: first.propagated_days,
+        recorded_slip_days: null,
+        is_inconsistent: false,
+        progress: null,
+        milestone_id: first.milestone_id,
+        milestone_name: first.milestone_name,
+        depends_on: [],
+        on_driving_path: false,
+        merged: members
+      });
+    });
+    return out;
+  }
+
   function grouped(bundle) {
     var order = [], byName = {};
     bundle.rows.filter(datable).forEach(function (row) {
       var name = row.milestone_name || "Not under a milestone";
       if (!byName[name]) { byName[name] = []; order.push(name); }
       byName[name].push(row);
+    });
+    Object.keys(byName).forEach(function (name) {
+      byName[name] = collapse(byName[name]);
     });
     order.sort(function (a, b) {
       if (a === "Not under a milestone") return 1;
@@ -132,11 +231,26 @@
     if (row.recorded_slip_days) {
       lines.push(row.recorded_slip_days + " day(s) already recorded vs baseline");
     }
+    /* Every task a collapsed row stands for, by name. This is what makes the
+       collapse a rendering rather than a summary - the rows are still here, and
+       the count in the label is checkable against them. */
+    if (row.merged) {
+      lines.push("");
+      lines.push("these " + row.merged.length + " tasks share those dates:");
+      row.merged.forEach(function (m) {
+        lines.push("  " + m.label + "  " + (m.title || ""));
+      });
+    }
     return lines.join("\n");
   }
 
-  /* The left column: full task titles, never truncated, never scrolled away. */
-  function labelColumn(groups) {
+  /* The left column: full task titles, never truncated, never scrolled away.
+
+     `undated` is the count of rows left off the plot; it gets its own label
+     line so the two halves of the frame stay in step - every band the plot
+     draws has to have exactly one label here at exactly the same height, and a
+     row added to one and not the other shifts every label below it. */
+  function labelColumn(groups, undated) {
     var col = el("div", "g-left");
     groups.forEach(function (group) {
       var head = el("div", "g-group");
@@ -164,6 +278,15 @@
         col.appendChild(line);
       });
     });
+    if (undated) {
+      var tail = el("div", "g-row g-undated-row");
+      tail.appendChild(el("span", "g-title", undated + " tasks, no dates"));
+      tail.title =
+        undated + " task(s) carry no start and no due date, so they have no " +
+        "position on this axis. They are counted in every figure on the " +
+        "Insight page.";
+      col.appendChild(tail);
+    }
     return col;
   }
 
@@ -179,9 +302,10 @@
     var span = Math.max(hi - lo, 1);
     var W = Math.max(Math.round(span * PX_PER_DAY), MIN_PLOT);
     var TOP = 26;
+    var undatedRows = bundle.rows.length - bundle.rows.filter(datable).length ? 1 : 0;
     var H = TOP + groups.reduce(function (acc, g) {
       return acc + GROUP + g.rows.length * ROW;
-    }, 0) + 8;
+    }, 0) + undatedRows * (ROW + 6) + 8;
     var x = function (d) { return ((d - lo) / span) * W; };
 
     var root = svg("svg", {
@@ -298,6 +422,16 @@
             width: Math.max(x(plan) - x(start), 3), height: BAR_H,
             rx: overrun ? 0 : 4, fill: "var(--viz-plan)"
           });
+          /* Not started, drawn hollow. The dates are a plan either way, so it
+             is the same bar - but a task nobody has picked up is a different
+             thing from one underway, and on a board where "In Progress" was a
+             bulk transition it is often the only honest distinction left. */
+          if (row.status === "TODO") {
+            bar.setAttribute("fill", "none");
+            bar.setAttribute("stroke", "var(--viz-plan)");
+            bar.setAttribute("stroke-width", "1.5");
+            bar.setAttribute("stroke-dasharray", "4 3");
+          }
           bar.appendChild(tip);
           g.appendChild(bar);
 
@@ -340,6 +474,36 @@
         y += ROW;
       });
     });
+
+    /* The undated, as volume rather than as a sentence.
+
+       These rows have no position in time and never will - that is why they are
+       off the plot above. But "170 of 190" as a line of text under the legend
+       reads as a caveat, and it is not a caveat: on this export it is most of
+       the project. A band the full width of the window, hatched so it cannot be
+       mistaken for a bar that means something, says the same number in the
+       units the rest of the chart is in.
+
+       Full width is not a claim that the work spans the window. Nothing else on
+       the chart is hatched, and the label says "no dates" - a bar that obviously
+       refuses to be read as a date range is the honest way to draw a quantity
+       on a time axis. */
+    var undatedCount = bundle.rows.length - bundle.rows.filter(datable).length;
+    if (undatedCount) {
+      y += 6;
+      var band = svg("g", { class: "prow" });
+      band.appendChild(svg("rect", {
+        class: "undated", x: 0, y: y + 4, width: W, height: BAR_H, rx: 3
+      }));
+      var ut = svg("title");
+      ut.textContent =
+        undatedCount + " task(s) carry no start and no due date.\n" +
+        "They have no position on this axis. Counted in every figure on the " +
+        "Insight page.";
+      band.appendChild(ut);
+      root.appendChild(band);
+      y += ROW;
+    }
 
     // Dependency arrows last, above the bars they connect.
     bundle.rows.forEach(function (row) {
@@ -414,7 +578,9 @@
     if (opts.key !== false) wrap.appendChild(key(bundle));
 
     var frame = el("div", "g-frame");
-    frame.appendChild(labelColumn(groups));
+    frame.appendChild(
+      labelColumn(groups, bundle.rows.length - bundle.rows.filter(datable).length)
+    );
 
     var scroller = el("div", "g-plot");
     if (body) scroller.appendChild(body);
