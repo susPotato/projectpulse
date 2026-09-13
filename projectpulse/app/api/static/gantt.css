@@ -153,6 +153,15 @@
   color: var(--ink-2);
 }
 
+/* Lateness: the gap between a date that has passed and the scan.
+
+   Deliberately not `--viz-over`, which means "the dependency chain implies this
+   cannot land". Same family of bad news, different evidence - one needs a graph
+   and this needs only a calendar - so it is the same hue at lower weight rather
+   than a sixth colour nobody can rank. */
+.late { fill: var(--viz-over); opacity: .38; }
+.g-key i.late { background: var(--viz-over); opacity: .38; }
+
 .g-key i.base { background: var(--viz-base); height: 4px; }
 .g-key i.plan { background: var(--viz-plan); }
 .g-key i.over { background: var(--viz-over); }

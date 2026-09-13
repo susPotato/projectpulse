@@ -9,6 +9,7 @@ button runs - against in-memory SQLite, no Docker.
 
 from __future__ import annotations
 
+from datetime import datetime
 import re
 from pathlib import Path
 
@@ -841,3 +842,89 @@ def test_the_fallback_never_bands_a_row_by_a_url(tmp_path):
     headers, rows = read_export(path)
     records, _ = convert(headers, rows)
     assert records[0]["Milestone"] is None
+
+
+def test_a_date_this_team_keeps_in_the_description_is_read(tmp_path):
+    """This Jira defines forty date columns and populates none of them; the
+    delivery rows carry `Ngay nhan:` inside the Description instead, as a fixed
+    `Label: value` block the team maintains by hand.
+
+    Reading it is the difference between four tasks drawn as bare dots and four
+    drawn as overdue bars - the worst news in the export. Jira stores the field
+    as a number, so the value arrives as a raw Excel serial.
+    """
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 0 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status", "Due Date", "Description"])
+    sheet.append(["P", None, "Refactor code BE", "In Progress", datetime(2026, 8, 31),
+                  "PO: HoachBV\nBA: FSG\nNgay nhan: 46246\nGhi chu: DuyLH19"])
+    path = tmp_path / "desc_date.xlsx"
+    book.save(path)
+
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+    assert records[0]["Start"].isoformat() == "2026-08-12"
+
+
+def test_a_real_start_column_beats_the_description(tmp_path):
+    """The block is a fallback for rows that have no column, never a source that
+    competes with one."""
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 0 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status", "Start date", "Description"])
+    sheet.append(["P", None, "Refactor", "In Progress", datetime(2026, 9, 1),
+                  "Ngay nhan: 46246"])
+    path = tmp_path / "column_wins.xlsx"
+    book.save(path)
+
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+    assert records[0]["Start"].isoformat() == "2026-09-01"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        # A number too small to be a date is a quantity. 7 as 1900-01-07 would be
+        # a confident wrong date on a chart.
+        "Ngay nhan: 7",
+        # A year, not a day.
+        "Ngay nhan: 2026",
+        "Ngay nhan: not a date",
+        # The words in passing, not as a labelled field.
+        "We agreed the ngay nhan would be next week.",
+        # A different label entirely.
+        "Ghi chu: 46246",
+    ],
+)
+def test_the_description_block_refuses_anything_that_is_not_a_date(tmp_path, body):
+    """It reads one labelled field, not prose. Widening it to anything that
+    parses would make every sentence in a Jira description a date source."""
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 0 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status", "Description"])
+    sheet.append(["P", None, "Refactor", "In Progress", body])
+    path = tmp_path / f"refused_{abs(hash(body))}.xlsx"
+    book.save(path)
+
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+    assert records[0]["Start"] is None

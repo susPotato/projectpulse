@@ -50,7 +50,7 @@ only one a person on the deployed app can reach.
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from hashlib import sha1
 from io import BytesIO
 from pathlib import Path
@@ -107,6 +107,46 @@ SOURCES: dict[str, tuple[str, ...]] = {
     # task actually involves, and it was being discarded on 189 of 191 rows.
     "Description": ("Description",),
 }
+
+#: Fields this Jira keeps in the Description because the instance has no column
+#: for them, as `Label: value` on its own line.
+#:
+#: Not a general free-text parser, and it must not become one. This export's
+#: forty-odd real date columns - `Start Date`, `Target start`, `Baseline start
+#: date`, `Requirement Received Date` - are populated on exactly zero rows,
+#: while every delivery row carries a fixed block:
+#:
+#:     PO: HoachBV
+#:     BA: FSG/QuanDh14
+#:     Developer: FSG
+#:     Ngay nhan: 46246
+#:     Ghi chu: TaiPH9,LocLP3,HieuHV1
+#:
+#: That is a schema a team maintains by hand, not prose to be mined. Reading it
+#: is the difference between four tasks drawn as bare dots and four drawn as
+#: thirteen-day-overdue bars - the worst news in the export.
+#:
+#: The rules that keep it from becoming guesswork: the label matches exactly and
+#: starts its own line, the value must parse as a date on its own, and a real
+#: column always wins - `_from_description` is consulted only for a row the
+#: chosen source left empty.
+DESCRIPTION_FIELDS = {
+    "Start": ("ngay nhan", "received"),
+}
+
+#: `Ngay nhan: 46246`. Jira stores this custom field as a number, so the
+#: Description carries a raw Excel serial rather than anything a reader would
+#: recognise as a date.
+DESCRIPTION_LINE = re.compile('^[ \\t]*([^:\\n]{1,40}?)[ \\t]*:[ \\t]*(.+?)[ \\t]*$', re.M)
+
+#: Excel's own epoch, including the 1900 leap-year bug every spreadsheet shares.
+EXCEL_EPOCH = date(1899, 12, 30)
+
+#: The serial range treated as a date at all - roughly 1990 to 2079. A bare 7 or
+#: 2024 in one of these fields is a quantity or a year, not a day, and turning
+#: it into 1900-01-07 would put a confident wrong date on a chart.
+SERIAL_MIN, SERIAL_MAX = 32874, 65380
+
 
 #: A Jira issue key, anywhere in a cell.
 ISSUE_KEY = re.compile(r"\b([A-Z][A-Z0-9_]*-\d+)\b")
@@ -294,6 +334,54 @@ def _as_date(value):
         return datetime.fromisoformat(str(value)[:10]).date()
     except ValueError:
         return None
+
+
+def _strip_accents(text: str) -> str:
+    """`Ngay nhan` from `Ngay nhan`. Matching is done on the folded form so one
+    entry covers a team that types the label with and without its diacritics -
+    which the same team does, in the same column."""
+    import unicodedata
+
+    return "".join(
+        c for c in unicodedata.normalize("NFD", text) if not unicodedata.combining(c)
+    ).casefold()
+
+
+def _as_serial_date(value):
+    """An Excel date serial as a date, or None.
+
+    Jira exports a numeric custom field as its raw number, so a date written
+    into one arrives as `46246` rather than `2026-08-12`. Bounded hard by
+    `SERIAL_MIN`/`SERIAL_MAX`: the same field could as easily hold a count, and
+    a small integer silently becoming a date in 1900 is the kind of confident
+    wrong value this module refuses everywhere else.
+    """
+    try:
+        serial = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    if not SERIAL_MIN <= serial <= SERIAL_MAX:
+        return None
+    return EXCEL_EPOCH + timedelta(days=serial)
+
+
+def _from_description(text, labels: tuple[str, ...]):
+    """A date this team keeps in the Description, under one of `labels`.
+
+    Only a line that *is* `Label: value` counts - the label is matched whole
+    against the part before the first colon, so a sentence mentioning the words
+    in passing contributes nothing. The value has to parse as a date on its own,
+    by serial or by the ordinary rules; anything else is skipped rather than
+    coerced.
+    """
+    if not isinstance(text, str):
+        return None
+    wanted = {_strip_accents(l) for l in labels}
+    for label, value in DESCRIPTION_LINE.findall(text):
+        if _strip_accents(label) not in wanted:
+            continue
+        return _as_serial_date(value) or _as_date(value)
+    return None
 
 
 def _as_percent(value):
@@ -537,6 +625,11 @@ def convert(
     #: `Activity` on a schedule, `Summary` on a worklog. It is what a synthesized
     #: Task ID is hashed from, so it must not be hardcoded to one contract.
     title_column = "Activity" if "Activity" in columns else "Summary"
+    #: Where the Description sits, for `DESCRIPTION_FIELDS`. Resolved from the
+    #: export's own headers rather than from `chosen`, because the block is read
+    #: even when the contract has no Description column of its own.
+    _desc = lookup.get("description") or []
+    description_at = _desc[0] if _desc else 0
 
     def _cells(row: tuple, name: str) -> list:
         """Every value this row carries under `name`, across repeated columns."""
@@ -625,12 +718,31 @@ def convert(
         record = {}
         for column in columns:
             source = chosen.get(column)
+
+            def _described():
+                """The Description block's answer for this column, if any.
+
+                Reached both when the chosen column left this row empty and when
+                the export has no such column at all - the second is the case
+                that matters, since an instance that keeps a date in prose is
+                unlikely to also define the field. Scoping this to "a column
+                exists but is blank" made it fire on the real export (which has
+                a `Planned Start`) and never on one that has no start column,
+                which is the shape the block exists for.
+                """
+                if column not in DESCRIPTION_FIELDS:
+                    return None
+                text = row[description_at] if description_at < len(row) else None
+                return _from_description(text, DESCRIPTION_FIELDS[column])
+
             if source is None:
-                record[column] = None
+                record[column] = _described() if column in DATE_COLUMNS else None
                 continue
             cells = _cells(row, source)
             if column in DATE_COLUMNS:
-                record[column] = _as_date(cells[0]) if cells else None
+                value = _as_date(cells[0]) if cells else None
+                #: Only where the column gave nothing. A real field always wins.
+                record[column] = value if value is not None else _described()
             elif column == "Predecessor":
                 record[column] = _predecessors(cells)
             elif column == "Progress":

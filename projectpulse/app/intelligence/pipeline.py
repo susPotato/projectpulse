@@ -1564,6 +1564,14 @@ def gantt_project(
     # The scan time the view reflects, not the moment it was rendered - the same
     # definition `analyze_project` uses, so the tabs cannot disagree about which
     # snapshot they are showing.
+    #
+    # Including its fallback, which this had been missing. `analyze_project`
+    # ends that expression with `default=generated_at`: a project nothing has
+    # ever been *observed* to change still has a scan date, namely now. Without
+    # it the Gantt got `as_of=None` on every project's first upload - no scan
+    # line, and nothing could be drawn as past due, while Insight computed
+    # `tasks_overdue` from the wall clock and reported six. The two tabs
+    # disagreed in exactly the way this comment says they cannot.
     entity_ids = {t.entity_id for t in tasks}
     observed = (
         session.scalar(
@@ -1574,6 +1582,8 @@ def gantt_project(
         if entity_ids
         else None
     )
+    if observed is None and tasks:
+        observed = datetime.now(timezone.utc)
 
     at_risk = set(impact.affected_milestones)
     milestones = [

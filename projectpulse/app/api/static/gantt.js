@@ -74,6 +74,26 @@
     return !!(row.start || row.planned_end);
   }
 
+  /* Open, and past the due date it gives itself.
+
+     The one lateness claim available to a source with no dependency graph.
+     `propagated_days` - the red "beyond the plan" segment - is a forward-pass
+     result over a DAG, so on an export with no links it is 0 on every row and
+     nothing on the chart is ever red. That is correct and it is also useless:
+     four tasks thirteen days past their due date drew as ordinary blue bars.
+
+     Deliberately a *different* mark from the overrun, because it is a different
+     claim. Overrun is "the chain implies this cannot land on time". This is
+     "the date named has passed and nobody closed it", which needs no chain and
+     no baseline - only the row and the scan date. Conflating them would let a
+     project with no graph appear to have one. */
+  function lateAsAt(row, scan) {
+    if (scan === null) return null;
+    if (row.status === "DONE" || row.status === "DROPPED") return null;
+    var plan = day(row.planned_end);
+    return plan !== null && plan < scan ? plan : null;
+  }
+
   function grouped(bundle) {
     var order = [], byName = {};
     bundle.rows.filter(datable).forEach(function (row) {
@@ -238,6 +258,15 @@
             fill: "var(--viz-plan)"
           });
           point.appendChild(tip);
+          var lateFrom = lateAsAt(row, asOf);
+          if (lateFrom !== null) {
+            /* Behind the marker, so the dot stays the thing the eye lands on -
+               the tail is how far, the dot is the date. */
+            g.appendChild(svg("rect", {
+              class: "late", x: x(lateFrom), y: y + 6,
+              width: Math.max(x(asOf) - x(lateFrom), 2), height: BAR_H - 4, rx: 2
+            }));
+          }
           g.appendChild(point);
           /* The date, and not the explanation. "- no start date" was true and
              repeated it on every such row; with a whole export of them it became
@@ -252,6 +281,14 @@
             g.appendChild(svg("rect", {
               x: x(start), y: y + 18, width: Math.max(x(base) - x(start), 2),
               height: 3, rx: 1.5, fill: "var(--viz-base)", opacity: ".55"
+            }));
+          }
+
+          var lateFrom = lateAsAt(row, asOf);
+          if (lateFrom !== null) {
+            g.appendChild(svg("rect", {
+              class: "late", x: x(lateFrom), y: y + 4,
+              width: Math.max(x(asOf) - x(lateFrom), 2), height: BAR_H, rx: 3
             }));
           }
 
@@ -341,6 +378,7 @@
     if (bundle.rows.some(function (r) { return !r.start && r.planned_end; })) {
       items.push(["point", "due date only - no start in the source"]);
     }
+    items.push(["late", "past due - from the date to the scan"]);
     items.forEach(function (pair) {
       var item = el("span");
       item.appendChild(el("i", pair[0]));
