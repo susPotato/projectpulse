@@ -870,9 +870,15 @@ export function InsightView({
       }
       /* The design's action slot, with something real behind it: the .docx the
          report exporter already produces. An action button that does nothing
-         is worse than an empty slot. */
+         is worse than an empty slot.
+
+         Scoped to the project on screen. Without `withProject` this hit the
+         route's own default - `excel:Project:1:HRMS` - so the button beside a
+         project's findings quietly downloaded a different project's report,
+         with nothing on the page or in the file to say so. The Reports page has
+         always built its links this way. */
       action={
-        <a className="action" href="/api/report.docx">
+        <a className="action" href={withProject("/api/report.docx")}>
           <svg viewBox="0 0 24 24">
             <path d="M14 2v6h6" />
             <path d="M4 22V4a2 2 0 0 1 2-2h8l6 6v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" />
