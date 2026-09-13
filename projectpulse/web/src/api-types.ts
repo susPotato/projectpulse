@@ -1492,6 +1492,8 @@ export interface components {
         CitedTask: {
             /** Task Id */
             task_id: string;
+            /** Label */
+            label: string | null;
             /** Title */
             title: string | null;
             /** Status */

@@ -144,7 +144,14 @@ class CitedTask(Response):
     than it needs to be.
     """
 
+    #: The full domain id, matching what `Risk.cited_task_ids` stores. It is the
+    #: join key, so it has to be the same string on both sides - carrying the
+    #: short key here instead made every lookup miss and rendered "(task not
+    #: found)" beside a citation that was perfectly valid.
     task_id: str
+    #: The same task as a person names it - the `Task ID` the sheet carried.
+    #: What to show; `task_id` is what to match on.
+    label: str | None = None
     title: str | None = None
     status: str | None = None
     #: The text the model was actually given, already excerpted to the same

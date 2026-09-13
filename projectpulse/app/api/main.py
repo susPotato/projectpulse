@@ -1438,7 +1438,8 @@ def _draft_bundle(session, project: str, reason: str | None = None) -> RiskDraft
         for task in session.scalars(select(Task).where(Task.id.in_(wanted))).all():
             cited.append(
                 CitedTask(
-                    task_id=_task_key(task),
+                    task_id=task.id,
+                    label=_task_key(task),
                     title=task.title,
                     status=task.original_status or task.status,
                     text=_clean_text(task.description, MAX_DESCRIPTION_CHARS) or None,

@@ -314,7 +314,12 @@ function ModelRead({ bundle }: { bundle: RiskDraftBundle }) {
               const task = byId.get(id);
               return (
                 <div key={id} className="border-t border-rule py-1.5 text-[12.5px]">
-                  <span className="font-mono text-ink-3">{id} </span>
+                  {/* The label, never the id. A citation is matched on the full
+                      domain id and *read* as the key the sheet carried - showing
+                      `excel:Task:1:excel%3AProject...:NOKEY-179826e5` puts 60
+                      characters of internal shape in front of a sentence a
+                      person is meant to judge. */}
+                  <span className="font-mono text-ink-3">{task?.label ?? id} </span>
                   {task?.title ?? "(task not found)"}
                   {task?.status && <span className="text-ink-3"> · {task.status}</span>}
                   {task?.text && (

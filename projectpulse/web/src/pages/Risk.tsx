@@ -7,6 +7,7 @@ import {
   type ApiProblem,
   type ProjectOption,
   type RiskBundle,
+  type CitedTask,
   type RiskDraftBundle,
   type RiskIn,
   type RiskOut,
@@ -631,6 +632,22 @@ function RiskTable({ bundle, risks, nameOf, onEdit, onChanged }: {
   Generating is a button, never automatic. It spends money and it asks a model
   to make a claim, and neither should happen because somebody opened a page.
 */
+/* Citations as the keys a person recognises.
+
+   `cited_task_ids` holds full domain ids because that is what a lookup has to
+   match on; a reader wants "NOKEY-179826e5, COWORKLOCAL-3". Falls back to the
+   id itself for a task the bundle did not carry, which is visible rather than
+   blank. */
+function labelsFor(draft: RiskOut, cited: CitedTask[]): string {
+  const byId = new Map(cited.map((t) => [t.task_id, t.label ?? t.task_id]));
+  return (draft.cited_task_ids ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .map((id) => byId.get(id) ?? id)
+    .join(", ");
+}
+
 function DraftsPanel({
   projectId,
   onAccepted,
@@ -720,7 +737,7 @@ function DraftsPanel({
           <div className="mb-2 text-[11.5px] text-ink-3">
             {draft.category ?? "no category"} ·{" "}
             <RatingBadge rating={draft.pre_rating} /> · read from{" "}
-            <span className="font-mono">{draft.cited_task_ids}</span>
+            <span className="font-mono">{labelsFor(draft, bundle?.cited_tasks ?? [])}</span>
           </div>
           <div className="flex gap-2">
             <button
