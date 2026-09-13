@@ -335,6 +335,49 @@ function ModelRead({ bundle }: { bundle: RiskDraftBundle }) {
   );
 }
 
+/*
+  The same proposals as `ModelRead`, at the altitude the Risk tab reads at.
+
+  Two renderings rather than one shared component, because the tabs ask
+  different questions. Risk asks "what might bite" - the claim, how it was
+  graded, how much it rests on. Evidence asks "should I believe it" - and that
+  needs the task text, which is exactly what makes it too long to sit in a list
+  of risks. Linking one to the other beats showing half of each.
+*/
+function ModelReadBrief({ bundle }: { bundle: RiskDraftBundle }) {
+  if (bundle.drafts.length === 0) {
+    return <Card>{bundle.reason ?? "Nothing proposed."}</Card>;
+  }
+  return (
+    <>
+      <Card className="mb-2.5 border-orange/40 bg-orange/5 text-[12.5px] leading-relaxed">
+        <strong>Read by a model from task text, not computed.</strong> These are
+        not findings and none is in the risk register. The Evidence tab shows
+        the task text each was read from; the Risk page is where they are
+        accepted or dismissed.
+      </Card>
+      {bundle.drafts.map((draft) => {
+        const cites = (draft.cited_task_ids ?? "").split(",").filter((s) => s.trim());
+        return (
+          <Card key={draft.id} className="mb-2 flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-semibold">{draft.title}</div>
+              <div className="mt-0.5 text-[11.5px] text-ink-3">
+                {draft.category ?? "no category"} · read from {cites.length} task(s)
+              </div>
+            </div>
+            {draft.pre_rating && (
+              <span className="whitespace-nowrap rounded-full border border-rule px-2 py-0.5 text-[11px] text-ink-2">
+                {draft.pre_rating}
+              </span>
+            )}
+          </Card>
+        );
+      })}
+    </>
+  );
+}
+
 function FindingCard({ finding }: { finding: Finding }) {
   const detail =
     finding.causal_link || finding.rule_trace || finding.evidence.length > 0;
@@ -894,6 +937,15 @@ export function InsightView({
                 ))}
               </>
             )}
+          </Section>
+
+          {/* Below the findings, never mixed into them. A finding is a rule that
+              fired on a computed number and carries its own trace; these are a
+              model's reading of prose. Interleaving them by severity would put
+              the two on one footing, and the severity on these is the model's
+              own suggestion. */}
+          <Section title="Proposed from task text">
+            {drafts ? <ModelReadBrief bundle={drafts} /> : <Card>Not loaded.</Card>}
           </Section>
         </>
       )}

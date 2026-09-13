@@ -11,7 +11,12 @@
 .gantt {
   --g-row: 30px;
   --g-group: 26px;
-  --g-gutter: 250px;
+  /* Wide enough that the title is what distinguishes a row.
+     250px left ~145px after the id, and a Jira export whose summaries all
+     begin "[Planning Task] " spent every one of those characters on the
+     prefix - sixteen rows reading "[Planning Task] Develo..." and differing
+     only in the part that was cut off. */
+  --g-gutter: 340px;
 
   /* The two data fills now live at `:root` in `shell.css` - every page loads
      it, and scoping them here made them resolve to nothing on any chart

@@ -239,8 +239,12 @@
           });
           point.appendChild(tip);
           g.appendChild(point);
+          /* The date, and not the explanation. "- no start date" was true and
+             repeated it on every such row; with a whole export of them it became
+             the loudest text on the chart. The legend carries the meaning once,
+             which is where a thing that is true of every marker belongs. */
           g.appendChild(svgText(
-            { x: px + 10, y: y + 14, class: "dim" }, "due " + row.planned_end + " - no start date"
+            { x: px + 10, y: y + 14, class: "dim" }, "due " + row.planned_end
           ));
         } else if (start !== null && plan !== null) {
           // Baseline: a recessive strip beneath the bar, not a competing hue.
