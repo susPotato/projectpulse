@@ -546,7 +546,12 @@ function Outlook({
 function DrivingPath({ explain }: { explain: ExplainBundle }) {
   const onPath = new Set(explain.driving_path);
   const steps = explain.steps.filter((step) => onPath.has(step.entity_id));
-  if (steps.length === 0) return null;
+  /* Two steps, or it is not a chain. With no dependency edges the driving path
+     is whichever single task finishes last, and rendering that under "the chain
+     that moves the date" - one row, labelled "origin", pointing at nothing -
+     claims a sequence the data does not contain. It was the first panel on the
+     page and it was furniture. */
+  if (steps.length < 2) return null;
 
   return (
     <Panel caption="The chain that moves the date" span={5} className="content-start">
@@ -888,39 +893,96 @@ export function InsightView({
             {cause && <AiAnalysis finding={cause} />}
             <SeverityBreakdown findings={findings} />
             {scenarios && <Scenarios bundle={scenarios} />}
-            {forecast && <Forecast bundle={forecast} />}
+            {/* Only when there is a range to draw. The unavailable state is a
+                paragraph explaining what the data lacks, which belongs on the
+                Evidence tab with the rest of that - leading the page a reader
+                opens for "what should I do" with a panel about what cannot be
+                done is how Overview came to say nothing actionable. */}
+            {forecast?.available && <Forecast bundle={forecast} />}
           </Board>
 
+          {/* The findings, on the tab people land on.
+              They were only on the Risk tab, so Overview showed analysis *about*
+              findings - a severity bar, a driving path, a narrative - without
+              ever showing one. The prose below is a summary of this list; a
+              summary printed above the thing it summarises, on a page whose
+              first question is "what do I do", is backwards. */}
+          <Section title="Findings">
+            {findings.length === 0 ? (
+              <Card>Nothing breaches a delivery threshold.</Card>
+            ) : (
+              findings.map((finding) => (
+                <FindingCard key={finding.id} finding={finding} />
+              ))
+            )}
+          </Section>
+
+          {/* Folded. The narrative is complete prose and worth having - it is
+              what gets read aloud - but five paragraphs restating the cards
+              above them pushed everything else off the screen. Open by choice,
+              not by default. */}
           <Section title={`Summary — ${bundle.narration_source}`}>
-            <Narrative bundle={bundle} />
+            <details className="rounded-lg border border-rule bg-surface px-3.5 py-2.5">
+              <summary className="cursor-pointer text-[12.5px] text-ink-2">
+                Read the written summary
+              </summary>
+              <div className="mt-3">
+                <Narrative bundle={bundle} />
+              </div>
+            </details>
           </Section>
         </>
       )}
 
       {view === "Risk" && (
         <>
+          {/* The same correction the Schedule tiles needed, for the same reason.
+              `milestones_at_risk` and `tasks_inconsistent` are forward-pass
+              results over a dependency graph and `qa_blocked` needs a worklog:
+              on a source carrying none of the three, all three read 0 and a
+              reader is told there is nothing to worry about. Nothing was
+              assessed.
+
+              So each is shown only when the data behind it exists, and what
+              takes their place is what this data *can* say - past due, not yet
+              started, no date at all. A panel called "where the pressure is"
+              has to name pressure, not decline to. */}
           <Section title="Where the pressure is">
             <Stats>
               <Stat
-                value={String(bundle.context.milestones_at_risk ?? 0)}
-                label="milestones at risk"
-                bad={Number(bundle.context.milestones_at_risk ?? 0) > 0}
+                value={String(bundle.context.tasks_overdue ?? 0)}
+                label="past due, still open"
+                bad={Number(bundle.context.tasks_overdue ?? 0) > 0}
               />
               <Stat
-                value={`${bundle.context.qa_blocked ?? 0} / ${bundle.context.qa_count ?? 0}`}
-                label="QA items blocked"
-                bad={Number(bundle.context.qa_blocked ?? 0) > 0}
+                value={String(bundle.context.tasks_due_soon ?? 0)}
+                label="due within a fortnight"
               />
+              {Number(bundle.context.edges_total ?? 0) > 0 && (
+                <Stat
+                  value={String(bundle.context.milestones_at_risk ?? 0)}
+                  label="milestones at risk"
+                  bad={Number(bundle.context.milestones_at_risk ?? 0) > 0}
+                />
+              )}
+              {Number(bundle.context.edges_total ?? 0) > 0 && (
+                <Stat
+                  value={String(bundle.context.tasks_inconsistent ?? 0)}
+                  label="tasks whose dates cannot hold"
+                  bad={Number(bundle.context.tasks_inconsistent ?? 0) > 0}
+                />
+              )}
+              {Number(bundle.context.qa_count ?? 0) > 0 && (
+                <Stat
+                  value={`${bundle.context.qa_blocked ?? 0} / ${bundle.context.qa_count ?? 0}`}
+                  label="QA items blocked"
+                  bad={Number(bundle.context.qa_blocked ?? 0) > 0}
+                />
+              )}
               <Stat
-                value={String(bundle.context.tasks_inconsistent ?? 0)}
-                label="tasks whose dates cannot hold"
-                bad={Number(bundle.context.tasks_inconsistent ?? 0) > 0}
+                value={`${bundle.context.tasks_done ?? 0} / ${bundle.context.task_count ?? 0}`}
+                label="complete"
               />
-              <Stat
-                value={String(bundle.context.changes_total ?? 0)}
-                label="state changes observed"
-              />
-              <Stat value={String(bundle.context.task_count ?? 0)} label="tasks in the graph" />
             </Stats>
           </Section>
 
