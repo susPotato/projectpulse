@@ -4,12 +4,14 @@ import {
   load,
   type ApiProblem,
   type CausalLink,
+  type CitedTask,
   type DeliveryConfidence,
   type EvidenceRef,
   type ExplainBundle,
   type Finding,
   type ForecastBundle,
   type InsightBundle,
+  type RiskDraftBundle,
   type Scenario,
   type ScenarioBundle,
   type RuleTrace,
@@ -258,6 +260,73 @@ function Evidence({ refs }: { refs: EvidenceRef[] }) {
         </a>
       ))}
     </div>
+  );
+}
+
+/*
+  What a model read out of the task text, and the rows it read it from.
+
+  On the Evidence tab rather than beside the findings, and that placement is the
+  argument. A finding is a rule that fired on a number this app computed, and
+  its evidence is the source row the number came from. This is neither: nobody
+  computed it, and the only thing under it is prose somebody typed into Jira.
+  Putting it here says what it is - something to go and check - and keeps it out
+  of the list a reader is entitled to trust without checking.
+
+  Nothing here can become a risk by being looked at. Accepting one is on the
+  Risk page, because that is where the register lives and accepting is the act
+  that makes a suggestion into a record.
+*/
+function ModelRead({ bundle }: { bundle: RiskDraftBundle }) {
+  const byId = new Map<string, CitedTask>(bundle.cited_tasks.map((t) => [t.task_id, t]));
+
+  if (bundle.drafts.length === 0) {
+    return <Card>{bundle.reason ?? "Nothing proposed."}</Card>;
+  }
+
+  return (
+    <>
+      <Card className="mb-2.5 border-orange/40 bg-orange/5 text-[12.5px] leading-relaxed">
+        <strong>Read by a model from task text. Not computed, and not evidence.</strong>{" "}
+        Each item below is a suggestion drawn from what somebody wrote in the
+        tracker, shown with the rows it was drawn from so you can judge both.
+        None of it is in the risk register until you accept it there.
+      </Card>
+      {bundle.drafts.map((draft) => {
+        const cites = (draft.cited_task_ids ?? "")
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean);
+        return (
+          <Card key={draft.id} className="mb-2.5">
+            <div className="mb-1 text-[13px] font-semibold">{draft.title}</div>
+            {draft.description && (
+              <div className="mb-2 text-[12.5px] leading-relaxed text-ink-2">
+                {draft.description}
+              </div>
+            )}
+            <div className="mb-2 flex flex-wrap gap-1.5 text-[11.5px] text-ink-3">
+              {draft.category && <span>{draft.category}</span>}
+              {draft.pre_rating && <span>· suggested {draft.pre_rating}</span>}
+            </div>
+            <BlockLabel>Read from — {cites.length} task(s)</BlockLabel>
+            {cites.map((id) => {
+              const task = byId.get(id);
+              return (
+                <div key={id} className="border-t border-rule py-1.5 text-[12.5px]">
+                  <span className="font-mono text-ink-3">{id} </span>
+                  {task?.title ?? "(task not found)"}
+                  {task?.status && <span className="text-ink-3"> · {task.status}</span>}
+                  {task?.text && (
+                    <div className="mt-1 leading-relaxed text-ink-2">{task.text}</div>
+                  )}
+                </div>
+              );
+            })}
+          </Card>
+        );
+      })}
+    </>
   );
 }
 
@@ -703,6 +772,7 @@ export function InsightView({
   explain = null,
   scenarios = null,
   forecast = null,
+  drafts = null,
   view: initialView = "Overview",
 }: {
   bundle: InsightBundle;
@@ -713,6 +783,11 @@ export function InsightView({
   /* Optional for the same reason as `explain`: a failure to load the scenarios
      drops one panel, never the findings. */
   scenarios?: ScenarioBundle | null;
+  /* Optional, and from a different endpoint on purpose. `app/intelligence/`
+     must not read the risk register - a rule conditioning on an opinion is not
+     deterministic - so the model's readings cannot ride along on
+     `/api/insight`. Two fetches keeps that boundary where it is. */
+  drafts?: RiskDraftBundle | null;
   /* Optional for the same reason again. A forecast that fails to load must
      never take the proven figures down with it. */
   forecast?: ForecastBundle | null;
@@ -824,6 +899,14 @@ export function InsightView({
             <Quality bundle={bundle} />
           </Section>
 
+          <Section title="Read from task text by a model">
+            {drafts ? (
+              <ModelRead bundle={drafts} />
+            ) : (
+              <Card>Not loaded.</Card>
+            )}
+          </Section>
+
           <Section title="Every finding's source rows">
             {findings.filter((f) => f.evidence.length > 0).length === 0 ? (
               <Card>No finding carries a source row.</Card>
@@ -850,6 +933,7 @@ export function Insight() {
   const [explain, setExplain] = useState<ExplainBundle | null>(null);
   const [scenarios, setScenarios] = useState<ScenarioBundle | null>(null);
   const [forecast, setForecast] = useState<ForecastBundle | null>(null);
+  const [drafts, setDrafts] = useState<RiskDraftBundle | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
 
   useEffect(() => {
@@ -859,6 +943,10 @@ export function Insight() {
     load<ExplainBundle>(withProject("/api/explain")).then(setExplain, () => setExplain(null));
     load<ScenarioBundle>(withProject("/api/scenarios")).then(setScenarios, () => setScenarios(null));
     load<ForecastBundle>(withProject("/api/forecast")).then(setForecast, () => setForecast(null));
+    // A plain read - it never asks a model, so opening Insight costs nothing.
+    load<RiskDraftBundle>(withProject("/api/risks/drafts")).then(setDrafts, () =>
+      setDrafts(null),
+    );
   }, []);
 
   if (problem) {
@@ -877,6 +965,7 @@ export function Insight() {
       explain={explain}
       scenarios={scenarios}
       forecast={forecast}
+      drafts={drafts}
     />
   );
 }

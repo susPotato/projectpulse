@@ -38,6 +38,25 @@ class Settings:
         "true",
         "yes",
     }
+    #: Whether a model may *propose risks* by reading issue text. Its own
+    #: switch, and emphatically not `narration_model_enabled`.
+    #:
+    #: The two are different permissions, not two volumes of one. Narration
+    #: lets a model phrase findings it did not compute, behind a fence whose
+    #: prompt contains no digit and whose output is validated token by token -
+    #: the model asserts nothing. This lets a model *read free text and say
+    #: something new*, which that fence exists to forbid. Turning on prose must
+    #: not silently turn on claims, so a deployment can run one without the
+    #: other and the demo can show either alone.
+    #:
+    #: Credentials are shared with narration (`narration.store`), because they
+    #: are the same account - it is the permission that is separate, not the
+    #: key.
+    risk_drafts_enabled: bool = os.getenv("PULSE_RISK_DRAFTS", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     #: Which vendor phrases it. The fence around the model is identical for all
     #: three, so this is a one-word change rather than a code path.
     narration_provider: str = os.getenv("PULSE_NARRATION_PROVIDER", "anthropic")

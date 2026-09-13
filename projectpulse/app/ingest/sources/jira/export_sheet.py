@@ -99,6 +99,13 @@ SOURCES: dict[str, tuple[str, ...]] = {
     # feeding a critical path and a projected date.
     "Predecessor": ("Linked Issues",),
     "Last Updated": ("Updated", "Last Viewed"),
+    # The issue body. Carried for the advisory lane in `app/risks/drafts.py`
+    # and for a reader; no rule reads it, and the differ does not track it.
+    #
+    # Worth having even though it is the column most likely to be long: on the
+    # export this was written against it is the *only* field that says what a
+    # task actually involves, and it was being discarded on 189 of 191 rows.
+    "Description": ("Description",),
 }
 
 #: A Jira issue key, anywhere in a cell.

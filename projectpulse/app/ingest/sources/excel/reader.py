@@ -292,6 +292,11 @@ SCHEDULE_CONTRACT = SheetContract(
         # is the only movement signal a *single* export carries: with no earlier
         # scan there is nothing for the differ to compare against yet.
         "Last Updated",
+        # Last because it is the only free-text column here and the only one no
+        # rule will ever read. It is carried for `app/risks/drafts.py`, the
+        # advisory lane, and for a person reading a row and wondering what it
+        # actually means.
+        "Description",
     ),
     columns={
         "task id": "task_id",
@@ -316,6 +321,10 @@ SCHEDULE_CONTRACT = SheetContract(
         "% complete": "progress",
         "predecessor": "predecessor",
         "predecessors": "predecessor",
+        # The issue body. Read but never *tracked* - see `tracked_fields` above
+        # and `Task.description`: prose being edited is not a delivery event.
+        "description": "description",
+        "notes": "description",
     },
 )
 

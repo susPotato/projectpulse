@@ -482,6 +482,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{project_id}/removal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview Project Removal
+         * @description What removing this project would destroy, without removing anything.
+         *
+         *     Its own request so a confirmation can name real numbers rather than a
+         *     generic warning. "This deletes 17 tasks and 2 risks you typed by hand" is a
+         *     decision; "are you sure?" is a reflex.
+         */
+        get: operations["preview_project_removal_api_projects__project_id__removal_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Project Route
+         * @description Remove a project and everything that was only ever about it.
+         *
+         *     There is no undo and nothing rebuilds a risk somebody typed or a board
+         *     somebody arranged, so the reason to refuse is served as a sentence rather
+         *     than a status code alone - see `app/projects.py` for what is deliberately
+         *     left behind.
+         */
+        delete: operations["remove_project_route_api_projects__project_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/team": {
         parameters: {
             query?: never;
@@ -735,6 +784,77 @@ export interface paths {
         post?: never;
         /** Delete Risk Route */
         delete: operations["delete_risk_route_api_risks__risk_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/risks/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Risk Drafts
+         * @description Proposals waiting on a person for one project, with the rows they cite.
+         *
+         *     A plain read: it never asks a model, so opening the page costs nothing and
+         *     a reload does not quietly spend money. Generating is a POST, because it is
+         *     an action somebody takes.
+         */
+        get: operations["read_risk_drafts_api_risks_drafts_get"];
+        put?: never;
+        /**
+         * Generate Risk Drafts
+         * @description Read this project's task text and propose risks from it.
+         *
+         *     Answers 200 with a `reason` rather than an error when the model cannot be
+         *     reached or finds nothing worth proposing. That is the same bargain
+         *     `narrate` makes: an optional feature being absent is a state to describe,
+         *     not a failure to raise, and a 500 here would make a page that works look
+         *     broken.
+         */
+        post: operations["generate_risk_drafts_api_risks_drafts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/risks/drafts/{risk_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Risk Draft
+         * @description Promote one proposal into the register. The act that makes it a risk.
+         */
+        post: operations["accept_risk_draft_api_risks_drafts__risk_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/risks/drafts/{risk_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Dismiss Risk Draft */
+        delete: operations["dismiss_risk_draft_api_risks_drafts__risk_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1359,6 +1479,25 @@ export interface components {
             ok: boolean;
             /** Error */
             error: string | null;
+        };
+        /**
+         * CitedTask
+         * @description One task a draft was read from, as the Evidence tab shows it.
+         *
+         *     Served beside the drafts rather than joined into them because several
+         *     proposals routinely cite the same task, and repeating a description under
+         *     each would make the panel unreadable and the payload several times larger
+         *     than it needs to be.
+         */
+        CitedTask: {
+            /** Task Id */
+            task_id: string;
+            /** Title */
+            title: string | null;
+            /** Status */
+            status: string | null;
+            /** Text */
+            text: string | null;
         };
         /** CreatedProgram */
         CreatedProgram: {
@@ -2641,6 +2780,33 @@ export interface components {
             projects: components["schemas"]["ProjectOption"][];
         };
         /**
+         * RiskDraftBundle
+         * @description The proposals waiting on a person, and everything needed to check them.
+         *
+         *     `enabled` and `reason` are why this is a bundle rather than a bare list.
+         *     "The feature is off", "there is no text to read" and "nobody has generated
+         *     any yet" are three different states that all render as zero drafts, and a
+         *     panel that cannot tell them apart teaches people the feature is broken.
+         */
+        RiskDraftBundle: {
+            /** Drafts */
+            drafts: components["schemas"]["RiskOut"][];
+            /** Cited Tasks */
+            cited_tasks: components["schemas"]["CitedTask"][];
+            /**
+             * Enabled
+             * @default false
+             */
+            enabled: boolean;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Readable Tasks
+             * @default 0
+             */
+            readable_tasks: number;
+        };
+        /**
          * RiskIn
          * @description What a PM may set when creating or editing a risk.
          *
@@ -2656,7 +2822,7 @@ export interface components {
             /** Risk No */
             risk_no?: string | null;
             /** Status */
-            status?: ("Active" | "Closed" | "Retired") | null;
+            status?: ("Active" | "Closed" | "Retired" | "Draft") | null;
             /** Key Risk */
             key_risk?: boolean | null;
             /** Description */
@@ -2735,7 +2901,7 @@ export interface components {
              * @default Active
              * @enum {string}
              */
-            status: "Active" | "Closed" | "Retired";
+            status: "Active" | "Closed" | "Retired" | "Draft";
             /**
              * Key Risk
              * @default false
@@ -2747,6 +2913,10 @@ export interface components {
             category: string | null;
             /** Secondary Categories */
             secondary_categories: string | null;
+            /** Origin */
+            origin: string | null;
+            /** Cited Task Ids */
+            cited_task_ids: string | null;
             /** Review Date */
             review_date: string | null;
             /** Possible Realise Date */
@@ -3699,6 +3869,72 @@ export interface operations {
             };
         };
     };
+    preview_project_removal_api_projects__project_id__removal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_project_route_api_projects__project_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     team_page_team_get: {
         parameters: {
             query?: never;
@@ -4057,6 +4293,128 @@ export interface operations {
         };
     };
     delete_risk_route_api_risks__risk_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                risk_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_risk_drafts_api_risks_drafts_get: {
+        parameters: {
+            query: {
+                project: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskDraftBundle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_risk_drafts_api_risks_drafts_post: {
+        parameters: {
+            query: {
+                project: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskDraftBundle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_risk_draft_api_risks_drafts__risk_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                risk_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_risk_draft_api_risks_drafts__risk_id__delete: {
         parameters: {
             query?: never;
             header?: never;

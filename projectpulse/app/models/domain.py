@@ -85,6 +85,17 @@ class Task(DomainEntity, Base):
         ForeignKey("milestones.id"), default=None
     )
     title: Mapped[str | None] = mapped_column(Text, default=None)
+    #: The issue's own body text, carried verbatim and never parsed.
+    #:
+    #: Deliberately **not** in `SCHEDULE_CONTRACT.tracked_fields`: a description
+    #: being edited is not a delivery event, and letting it into the differ
+    #: would build causal chains out of somebody tidying their prose.
+    #:
+    #: Nothing in `app/intelligence/` reads it, and that is the point - a rule
+    #: conditioning on free text could not call itself deterministic. Its one
+    #: reader is `app/risks/drafts.py`, which is explicitly the advisory lane
+    #: and whose output a person has to accept before it is a risk at all.
+    description: Mapped[str | None] = mapped_column(Text, default=None)
     #: The sheet's own Phase column - "Planning", "Development", "Testing".
     #: Carried because it is the vocabulary a delivery constraint is written in
     #: ("a Testing task needs an Environment predecessor"); a rule of that shape
@@ -284,6 +295,23 @@ class Risk(Base, Timestamped):
     description: Mapped[str | None] = mapped_column(Text, default=None)
     category: Mapped[str | None] = mapped_column(String(50), default=None)
     secondary_categories: Mapped[str | None] = mapped_column(Text, default=None)
+
+    #: Who proposed this row. `None` - the only value existing rows have, and
+    #: the only one `POST /api/risks` writes - means a person typed it. The
+    #: sole other value is `ai_draft`, set by `app/risks/drafts.py`.
+    #:
+    #: Kept after a draft is accepted rather than cleared. Provenance is not
+    #: undone by agreement: a reader six weeks later is entitled to know the
+    #: sentence began as a model's reading of an issue body, and a column that
+    #: erased itself on accept would quietly turn a suggestion into testimony.
+    origin: Mapped[str | None] = mapped_column(String(20), default=None)
+    #: The task ids whose text the draft was read from, comma-separated.
+    #:
+    #: A proposal that cites nothing is discarded rather than shown - see
+    #: `drafts.py`. This column is what makes that checkable afterwards, and
+    #: what the Evidence tab renders: the claim is only as good as the rows
+    #: under it, and a reader must be able to go and look at them.
+    cited_task_ids: Mapped[str | None] = mapped_column(Text, default=None)
 
     review_date: Mapped[date | None] = mapped_column(Date, default=None)
     possible_realise_date: Mapped[date | None] = mapped_column(Date, default=None)

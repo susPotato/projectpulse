@@ -18,7 +18,11 @@ from pydantic import Field
 
 from app.api.schemas.base import Response
 
-RiskStatus = Literal["Active", "Closed", "Retired"]
+#: `Draft` is the state a model-proposed risk sits in until a person accepts
+#: it - see `app/risks/drafts.py`. In the same Literal as the register's own
+#: states rather than a separate field, because it *is* this row's status and a
+#: parallel boolean would let a row be both accepted and a draft.
+RiskStatus = Literal["Active", "Closed", "Retired", "Draft"]
 Likelihood = Literal["Almost Certain", "Likely", "Possible", "Unlikely", "Rare"]
 Impact = Literal["Insignificant", "Minor", "Moderate", "Major", "Severe"]
 
@@ -67,6 +71,14 @@ class RiskOut(Response):
     description: str | None = None
     category: str | None = None
     secondary_categories: str | None = None
+    #: `None` for a risk a person typed, which is every row the register had
+    #: before drafts existed. The only other value is `ai_draft`, and it
+    #: survives acceptance - see `Risk.origin`.
+    origin: str | None = None
+    #: The `Task ID`s a proposal was read from, comma-separated. Empty for a
+    #: typed risk, and never empty for a draft: one that cites nothing is
+    #: discarded rather than stored.
+    cited_task_ids: str | None = None
     review_date: date | None = None
     possible_realise_date: date | None = None
     retired_date: date | None = None
@@ -121,3 +133,45 @@ class RiskBundle(Response):
     #: Every project a risk can belong to - the vocabulary of the one field a
     #: person used to have to type from memory.
     projects: list[ProjectOption] = Field(default_factory=list)
+
+
+class CitedTask(Response):
+    """One task a draft was read from, as the Evidence tab shows it.
+
+    Served beside the drafts rather than joined into them because several
+    proposals routinely cite the same task, and repeating a description under
+    each would make the panel unreadable and the payload several times larger
+    than it needs to be.
+    """
+
+    task_id: str
+    title: str | None = None
+    status: str | None = None
+    #: The text the model was actually given, already excerpted to the same
+    #: length. Serving the full body would show a reader more than the model
+    #: saw, which makes checking the claim against it misleading in the one
+    #: direction that matters.
+    text: str | None = None
+
+
+class RiskDraftBundle(Response):
+    """The proposals waiting on a person, and everything needed to check them.
+
+    `enabled` and `reason` are why this is a bundle rather than a bare list.
+    "The feature is off", "there is no text to read" and "nobody has generated
+    any yet" are three different states that all render as zero drafts, and a
+    panel that cannot tell them apart teaches people the feature is broken.
+    """
+
+    drafts: list[RiskOut] = Field(default_factory=list)
+    #: Keyed by `task_id`, covering every id named in every draft's
+    #: `cited_task_ids`.
+    cited_tasks: list[CitedTask] = Field(default_factory=list)
+    #: Whether a model may be asked at all here - `settings.risk_drafts_enabled`.
+    enabled: bool = False
+    #: Why there is nothing to show, in words fit for the page. `None` when
+    #: there is something to show.
+    reason: str | None = None
+    #: How many tasks on this project carry text a model could read. Shown so
+    #: "generate" is not a button that might do nothing without saying why.
+    readable_tasks: int = 0

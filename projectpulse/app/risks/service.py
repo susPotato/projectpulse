@@ -18,6 +18,7 @@ from app.api.schemas.risk import (
     RiskOut,
 )
 from app.models.domain import Risk
+from app.risks.drafts import DRAFT_STATUS
 from app.risks.matrix import IMPACTS, LIKELIHOODS, rating_for
 
 #: The org's standard risk categories, from `Layout/fpt-pm-risk.html`. Served
@@ -69,6 +70,8 @@ def _to_out(risk: Risk) -> RiskOut:
         description=risk.description,
         category=risk.category,
         secondary_categories=risk.secondary_categories,
+        origin=risk.origin,
+        cited_task_ids=risk.cited_task_ids,
         review_date=risk.review_date,
         possible_realise_date=risk.possible_realise_date,
         retired_date=risk.retired_date,
@@ -130,8 +133,13 @@ def build_matrix(session, project_ids: list[str] | None = None) -> list[RiskMatr
     pre-treatment assessment - the register's convention, see the mockup)
     landed in it."""
     project_ids = _widen(project_ids)
-    query = select(Risk.pre_likelihood, Risk.pre_impact, func.count()).group_by(
-        Risk.pre_likelihood, Risk.pre_impact
+    query = (
+        select(Risk.pre_likelihood, Risk.pre_impact, func.count())
+        #: A proposal is not an assessment. A model's guess at a likelihood
+        #: would otherwise land in a heat-map cell and read as a judgement
+        #: somebody made, which is the one thing the matrix is for.
+        .where(Risk.status != DRAFT_STATUS)
+        .group_by(Risk.pre_likelihood, Risk.pre_impact)
     )
     if project_ids is not None:
         query = query.where(Risk.project_id.in_(project_ids))
@@ -154,7 +162,15 @@ def list_risks(session, project_ids: list[str] | None = None) -> RiskBundle:
     view (`Layout/fpt-pm-risk.html` lists several projects in one table),
     with `project_ids` narrowing it when a caller wants one project."""
     widened = _widen(project_ids)
-    query = select(Risk).order_by(Risk.project_id, Risk.risk_no)
+    #: Drafts are excluded here, not filtered in the front end. The register is
+    #: the record of what a person decided; a row nobody has accepted yet has
+    #: not been decided, and one query that forgot the filter would put a
+    #: model's suggestion into a document that gets sent to a customer.
+    query = (
+        select(Risk)
+        .where(Risk.status != DRAFT_STATUS)
+        .order_by(Risk.project_id, Risk.risk_no)
+    )
     if widened is not None:
         query = query.where(Risk.project_id.in_(widened))
     rows = session.scalars(query).all()
@@ -232,6 +248,60 @@ def update_risk(session, risk_id: int, data: RiskIn) -> RiskOut | None:
 def delete_risk(session, risk_id: int) -> bool:
     risk = session.get(Risk, risk_id)
     if risk is None:
+        return False
+    session.delete(risk)
+    return True
+
+
+def list_drafts(session, project_ids: list[str] | None = None) -> list[RiskOut]:
+    """The proposals waiting on somebody, newest first.
+
+    Its own function rather than a flag on `list_risks`, so that a caller has
+    to *ask* for drafts. The register's readers - the report section, the
+    dashboard tile, the program rollup - keep the shape they had and cannot
+    acquire a model's suggestion by forgetting a parameter.
+    """
+    widened = _widen(project_ids)
+    query = (
+        select(Risk)
+        .where(Risk.status == DRAFT_STATUS)
+        .order_by(Risk.created_at.desc(), Risk.id.desc())
+    )
+    if widened is not None:
+        query = query.where(Risk.project_id.in_(widened))
+    return [_to_out(r) for r in session.scalars(query).all()]
+
+
+def accept_draft(session, risk_id: int) -> RiskOut | None:
+    """Promote one proposal into the register, as the person who read it.
+
+    Three things change and one deliberately does not. It leaves `Draft` for
+    `Active`, so every reader of the register now sees it; it is given the next
+    sequence number, because until now it had none and a register numbers its
+    rows; and `updated_at` moves. `origin` stays `ai_draft` - see the column's
+    own note: agreeing with a sentence does not change where it came from, and
+    a reader later is entitled to know a model wrote the first version.
+
+    `None` for a risk that does not exist or is not a draft, which the route
+    turns into a 404 - accepting an already-accepted risk is a stale page
+    pressing a button twice, not an error worth a 500.
+    """
+    risk = session.get(Risk, risk_id)
+    if risk is None or risk.status != DRAFT_STATUS:
+        return None
+    risk.status = "Active"
+    risk.risk_no = risk.risk_no or _next_risk_no(session, risk.project_id)
+    session.flush()
+    return _to_out(risk)
+
+
+def dismiss_draft(session, risk_id: int) -> bool:
+    """Throw one proposal away. Deleted rather than marked, because a rejected
+    suggestion is not a record of anything - nobody asked for it, and keeping a
+    pile of them would make the drafts list a place where the same bad idea
+    reappears every time somebody looks."""
+    risk = session.get(Risk, risk_id)
+    if risk is None or risk.status != DRAFT_STATUS:
         return False
     session.delete(risk)
     return True

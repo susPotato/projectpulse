@@ -239,6 +239,11 @@ def _convert_task(
         project_id=project_id,
         milestone_id=(milestones or {}).get(name),
         title=payload.get("title"),
+        # The issue body, verbatim and untouched. Nothing derives anything from
+        # it - see `Task.description` - so there is no normalizing to do and
+        # any would only put distance between what a reader checks and what the
+        # source said.
+        description=payload.get("description"),
         # The sheet's own Phase column. Parsed by the reader and dropped here
         # until now, which left `Task.phase` permanently null. It is what a
         # constraint like "a Testing task needs an Environment predecessor"

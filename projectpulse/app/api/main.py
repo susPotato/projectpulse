@@ -92,7 +92,13 @@ from app.api.schemas.scenario import ScenarioBundle
 from app.api.schemas.forecast import ForecastBundle
 from app.api.schemas.agent import ChatRequest, ChatResponse
 from app.api.schemas.insight import InsightBundle
-from app.api.schemas.risk import RiskBundle, RiskIn, RiskOut
+from app.api.schemas.risk import (
+    CitedTask,
+    RiskBundle,
+    RiskDraftBundle,
+    RiskIn,
+    RiskOut,
+)
 from app.api.schemas.report import (
     ReportBlock,
     ReportFormatOption,
@@ -1347,6 +1353,168 @@ def delete_risk_route(risk_id: int) -> Response:
     with session_scope() as session:
         if not delete_risk(session, risk_id):
             raise HTTPException(status_code=404, detail=f"no risk with id {risk_id}")
+    return Response(status_code=204)
+
+
+def _draft_drafter():
+    """The model used to propose risks, or a reason it cannot be.
+
+    Separate from `_narrator()` on purpose, and the difference is the first
+    line: this checks `risk_drafts_enabled`, not narration's own switch. The
+    two are different permissions - see `app/config.py` - and a deployment that
+    wants prose without claims has to be able to have exactly that.
+
+    Credentials are narration's, because they are the same account. Only the
+    permission is separate.
+    """
+    from app.config import settings as live_settings
+
+    if not live_settings.risk_drafts_enabled:
+        return None, (
+            "Reading task text for risks is switched off. Set PULSE_RISK_DRAFTS=1 "
+            "to turn it on. It is separate from narration deliberately: this lets "
+            "a model make a claim, which the narration fence exists to forbid."
+        )
+
+    from app.narration.providers import ModelConfig, drafter_for
+    from app.narration.store import load
+
+    current = load()
+    try:
+        drafter = drafter_for(
+            current.provider,
+            ModelConfig(
+                model=current.model,
+                api_key=current.api_key,
+                base_url=current.base_url,
+            ),
+        )
+    except ValueError:
+        return None, f"unknown model provider {current.provider!r} in settings."
+    return drafter, None
+
+
+def _draft_bundle(session, project: str, reason: str | None = None) -> RiskDraftBundle:
+    """The drafts panel for one project, whatever state it is in.
+
+    One builder for both the read and the generate route, so a freshly
+    generated panel and a reloaded one cannot disagree about what they show.
+    """
+    from app.config import settings as live_settings
+    from app.risks.drafts import readable_tasks
+    from app.risks.service import list_drafts
+
+    drafts = list_drafts(session, project_ids=[project])
+
+    wanted: list[str] = []
+    for draft in drafts:
+        for task_id in (draft.cited_task_ids or "").split(","):
+            task_id = task_id.strip()
+            if task_id and task_id not in wanted:
+                wanted.append(task_id)
+
+    cited: list[CitedTask] = []
+    if wanted:
+        from app.models.domain import Task
+        from app.risks.drafts import MAX_DESCRIPTION_CHARS, _clean_text, _task_key
+
+        for task in session.scalars(select(Task).where(Task.id.in_(wanted))).all():
+            cited.append(
+                CitedTask(
+                    task_id=_task_key(task),
+                    title=task.title,
+                    status=task.original_status or task.status,
+                    text=_clean_text(task.description, MAX_DESCRIPTION_CHARS) or None,
+                )
+            )
+
+    readable = len(readable_tasks(session, scope.source_ids_for(project)))
+    if reason is None and not drafts:
+        if not live_settings.risk_drafts_enabled:
+            reason = (
+                "Reading task text for risks is switched off (PULSE_RISK_DRAFTS)."
+            )
+        elif not readable:
+            reason = (
+                "No task on this project carries a description, so there is no "
+                "text to read."
+            )
+        else:
+            reason = f"Nothing proposed yet. {readable} task(s) carry text to read."
+
+    return RiskDraftBundle(
+        drafts=drafts,
+        cited_tasks=cited,
+        enabled=live_settings.risk_drafts_enabled,
+        reason=reason,
+        readable_tasks=readable,
+    )
+
+
+@app.get("/api/risks/drafts", response_model=RiskDraftBundle)
+def read_risk_drafts(project: str) -> RiskDraftBundle:
+    """Proposals waiting on a person for one project, with the rows they cite.
+
+    A plain read: it never asks a model, so opening the page costs nothing and
+    a reload does not quietly spend money. Generating is a POST, because it is
+    an action somebody takes.
+    """
+    if scope.resolve(project) is None:
+        raise HTTPException(status_code=400, detail=f"unknown project {project!r}")
+    with session_scope() as session:
+        return _draft_bundle(session, project)
+
+
+@app.post("/api/risks/drafts", response_model=RiskDraftBundle)
+def generate_risk_drafts(project: str) -> RiskDraftBundle:
+    """Read this project's task text and propose risks from it.
+
+    Answers 200 with a `reason` rather than an error when the model cannot be
+    reached or finds nothing worth proposing. That is the same bargain
+    `narrate` makes: an optional feature being absent is a state to describe,
+    not a failure to raise, and a 500 here would make a page that works look
+    broken.
+    """
+    from app.risks.drafts import DraftsUnavailable, propose
+    from app.risks.service import CATEGORIES
+
+    if scope.resolve(project) is None:
+        raise HTTPException(status_code=400, detail=f"unknown project {project!r}")
+
+    drafter, refusal = _draft_drafter()
+    with session_scope() as session:
+        if drafter is None:
+            return _draft_bundle(session, project, reason=refusal)
+        try:
+            propose(session, project, drafter, list(CATEGORIES))
+        except DraftsUnavailable as exc:
+            return _draft_bundle(session, project, reason=str(exc))
+        return _draft_bundle(session, project)
+
+
+@app.post("/api/risks/drafts/{risk_id}/accept", response_model=RiskOut)
+def accept_risk_draft(risk_id: int) -> RiskOut:
+    """Promote one proposal into the register. The act that makes it a risk."""
+    from app.risks.service import accept_draft
+
+    with session_scope() as session:
+        accepted = accept_draft(session, risk_id)
+        if accepted is None:
+            raise HTTPException(
+                status_code=404, detail=f"no draft risk with id {risk_id}"
+            )
+        return accepted
+
+
+@app.delete("/api/risks/drafts/{risk_id}", status_code=204)
+def dismiss_risk_draft(risk_id: int) -> Response:
+    from app.risks.service import dismiss_draft
+
+    with session_scope() as session:
+        if not dismiss_draft(session, risk_id):
+            raise HTTPException(
+                status_code=404, detail=f"no draft risk with id {risk_id}"
+            )
     return Response(status_code=204)
 
 

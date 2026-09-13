@@ -7,6 +7,7 @@ import {
   type ApiProblem,
   type ProjectOption,
   type RiskBundle,
+  type RiskDraftBundle,
   type RiskIn,
   type RiskOut,
 } from "../api";
@@ -618,6 +619,132 @@ function RiskTable({ bundle, risks, nameOf, onEdit, onChanged }: {
   );
 }
 
+/*
+  Risks a model proposed from task text, waiting on somebody.
+
+  Kept out of the table above and out of the matrix, in the query rather than
+  in this file (`list_risks` filters them) - so a screen that forgot to filter
+  cannot put a suggestion into a register that gets exported into a report and
+  sent to a customer. Accepting is what moves a row across; until then this is
+  a reading list.
+
+  Generating is a button, never automatic. It spends money and it asks a model
+  to make a claim, and neither should happen because somebody opened a page.
+*/
+function DraftsPanel({
+  projectId,
+  onAccepted,
+}: {
+  projectId: string | null;
+  onAccepted: () => void;
+}) {
+  const [bundle, setBundle] = useState<RiskDraftBundle | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+
+  //: Built from the project this panel was handed, never from `withProject`.
+  //: The filter above changes which project is being looked at, and an ambient
+  //: helper would have gone on reading whichever one the app was last scoped
+  //: to - so the drafts shown would belong to a different project from the
+  //: table beside them.
+  const url = projectId
+    ? `/api/risks/drafts?project=${encodeURIComponent(projectId)}`
+    : null;
+
+  function refresh() {
+    if (!url) return;
+    load<RiskDraftBundle>(url).then(setBundle, () => setBundle(null));
+  }
+
+  useEffect(refresh, [projectId]);
+
+  if (!projectId) {
+    return (
+      <Card>
+        Pick one project above to read its task text. Proposals cite the rows
+        they came from, and a row belongs to a project.
+      </Card>
+    );
+  }
+
+  async function generate() {
+    setBusy(true);
+    setFailure(null);
+    try {
+      setBundle(await send<RiskDraftBundle>(url!, "POST"));
+    } catch (error) {
+      setFailure((error as ApiProblem).detail ?? "could not reach the model");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function accept(id: number) {
+    await send(`/api/risks/drafts/${id}/accept`, "POST");
+    refresh();
+    onAccepted();
+  }
+
+  async function dismiss(id: number) {
+    await send(`/api/risks/drafts/${id}`, "DELETE");
+    refresh();
+  }
+
+  return (
+    <div>
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <div className="text-[12px] text-ink-2">
+          {bundle?.reason ?? `${bundle?.drafts.length ?? 0} proposal(s) waiting`}
+        </div>
+        <button
+          type="button"
+          onClick={generate}
+          disabled={busy || !(bundle?.readable_tasks ?? 0)}
+          className="action"
+          style={{ cursor: busy ? "wait" : "pointer", border: "none" }}
+        >
+          {busy ? "Reading..." : "Read task text"}
+        </button>
+      </div>
+
+      {failure && <Card className="mb-2.5 text-red">{failure}</Card>}
+
+      {(bundle?.drafts ?? []).map((draft) => (
+        <Card key={draft.id} className="mb-2.5">
+          <div className="mb-1 text-[13px] font-semibold">{draft.title}</div>
+          {draft.description && (
+            <div className="mb-2 text-[12.5px] leading-relaxed text-ink-2">
+              {draft.description}
+            </div>
+          )}
+          <div className="mb-2 text-[11.5px] text-ink-3">
+            {draft.category ?? "no category"} ·{" "}
+            <RatingBadge rating={draft.pre_rating} /> · read from{" "}
+            <span className="font-mono">{draft.cited_task_ids}</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => accept(draft.id)}
+              className="action"
+              style={{ cursor: "pointer", border: "none" }}
+            >
+              Accept into register
+            </button>
+            <button
+              type="button"
+              onClick={() => dismiss(draft.id)}
+              className="cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-[12px] text-ink-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export function Risk() {
   const [bundle, setBundle] = useState<RiskBundle | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
@@ -701,6 +828,19 @@ export function Risk() {
           ))}
         </select>
       </div>
+
+      <Section title="Proposed from task text">
+        <Note>
+          Read by a model out of what people wrote in the tracker, and shown
+          with the tasks it was read from. Nothing here is in the register or on
+          the matrix above until you accept it - a risk is still something a
+          person decided.
+        </Note>
+        <DraftsPanel
+          projectId={filter || currentProject()?.id || null}
+          onAccepted={refresh}
+        />
+      </Section>
 
       <Board className="mb-6">
         <Matrix bundle={bundle} />

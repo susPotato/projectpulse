@@ -114,6 +114,16 @@ _ADDITIVE_COLUMNS: tuple[tuple[str, str, str], ...] = (
     # every browser-imported project: `scope._rows()` degrades an unreadable
     # registry to "there are none" by design, which makes the failure silent.
     ("registered_projects", "program_id", "VARCHAR(255)"),
+    # The issue body, and the two columns that let a model-proposed risk be
+    # told apart from a typed one and checked against the rows it was read
+    # from. All three nullable with no default, so a database that predates
+    # them self-heals on boot - which is what keeps this off the deploy
+    # checklist entirely. `/api/portfolio` is `fly.toml`'s health check and
+    # SELECTs tasks, so a column added any other way would 503 the whole app
+    # between the deploy and the migration.
+    ("tasks", "description", "TEXT"),
+    ("risks", "origin", "VARCHAR(20)"),
+    ("risks", "cited_task_ids", "TEXT"),
 )
 
 
