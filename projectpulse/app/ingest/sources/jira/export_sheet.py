@@ -9,7 +9,12 @@ for a header row rather than assuming one, so that half would have worked.
 
 **One issue is not one row.** An export with a rich-text Description writes each
 issue across a block of rows, the fields on the first and the wrapped text
-below. Rows are therefore collected by "has a Key", never by position or stride.
+below. Rows are therefore collected by what they carry, never by position or
+stride: a Key, or - for a backlog somebody appended *below* the export, which
+Jira never wrote and so never numbered - a Summary and a Status together, which
+no wrapping produces. The second kind gets a derived `Task ID`; see
+`_synthetic_id`, and `coverage()` says how many, because reading rows Jira did
+not write changes what every count downstream is counting.
 
 **Four hundred columns, and the ones this app needs are mostly not there.** The
 export carries every custom field the Jira instance defines - most empty,
@@ -46,6 +51,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
+from hashlib import sha1
 from io import BytesIO
 from pathlib import Path
 
@@ -165,6 +171,29 @@ SHAPE = {
 #: about the very value it had just used. Detecting it and then preferring it
 #: anyway is worse than not detecting it.
 DEMOTE_IF_EQUALS = {"Start": "Created"}
+
+#: Where to look for a grouping label on a row whose chosen source has none.
+#:
+#: Deliberately a *fallback* rather than another entry in `SOURCES`. `SHAPE`
+#: gates the Milestone candidates on looking like a parent reference, and that
+#: gate is load-bearing - it is what stops a documentation URL in `Parent Link`
+#: becoming a milestone name, and `Component/s` would never pass it. Widening
+#: the gate to admit free text would give that bug its column back.
+#:
+#: So the ranking is untouched: a real parent still wins, and still names the
+#: band for every row that has one. This only answers the row that has *none* -
+#: an appended backlog row, which carries no parent and cannot, but does carry
+#: the feature area it belongs to. The alternative is what it replaced: 174 of
+#: 190 rows stacked under "NOT UNDER A MILESTONE", which is a grouping column
+#: doing no grouping.
+#:
+#: A component is not a parent issue and the two do land in one column here.
+#: They are the same *kind* of thing for the only purpose this column serves -
+#: the band a row sits under on the Gantt - and nothing downstream reads a
+#: milestone as an issue that could be opened.
+GROUPING_FALLBACK: dict[str, tuple[str, ...]] = {
+    "Milestone": ("Component/s", "Component", "Fix Version/s"),
+}
 
 #: The same export, read as a *worklog* instead of a schedule.
 #:
@@ -333,6 +362,59 @@ def _predecessors(cells: list) -> str | None:
     return ", ".join(keys) if keys else None
 
 
+def _is_keyless_record(row: tuple, summary_at: int, status_at: int | None) -> bool:
+    """Is this a work item somebody appended, or the previous issue's rich text?
+
+    A Jira export writes a wrapped Description across rows that carry *only*
+    that one column - the key, the summary and the status stay on the first row
+    of the block. So a row with no Key but a Summary **and** a Status is not
+    spill: nothing in Jira's own wrapping produces that pair, and it is exactly
+    the shape of a backlog pasted in below the export.
+
+    Requiring both is the load-bearing part. Summary alone would swallow every
+    continuation row in an export whose rich text happens to sit under a
+    summary-ish column, turning one issue into nine tasks - which is the failure
+    the key-only rule was written to avoid, and it must not come back.
+    """
+    if status_at is None:
+        return False
+    if summary_at >= len(row) or status_at >= len(row):
+        return False
+    return bool(_clean(row[summary_at])) and bool(_clean(row[status_at]))
+
+
+#: Marks a Task ID this module derived rather than read. Deliberately not
+#: shaped like a Jira key (`PROJ-12`), so nothing downstream - and nobody
+#: reading a Gantt label - can mistake a synthesized id for one that exists in
+#: the tracker and could be opened.
+SYNTHETIC_PREFIX = "NOKEY-"
+
+
+def _synthetic_id(summary, taken: set[str]) -> str | None:
+    """A stable Task ID for a row the export gave no Key.
+
+    Hashed from the summary rather than numbered by position, because `Task ID`
+    is the schedule contract's key field: the differ matches this upload's rows
+    against last upload's by it, so an id that moves when somebody sorts the
+    sheet would report every task as deleted and re-added. The text is the only
+    thing about these rows that is theirs.
+
+    Collisions - two rows with the identical summary - get a suffix rather than
+    being merged, because they are two items on the board however they are
+    named.
+    """
+    text = _clean(summary)
+    if not isinstance(text, str):
+        return None
+    digest = sha1(text.casefold().encode("utf-8")).hexdigest()[:8]
+    candidate = f"{SYNTHETIC_PREFIX}{digest}"
+    suffix = 2
+    while candidate in taken:
+        candidate = f"{SYNTHETIC_PREFIX}{digest}-{suffix}"
+        suffix += 1
+    return candidate
+
+
 def _find_header(grid: list[tuple]) -> int | None:
     """The row holding the export's column names.
 
@@ -372,13 +454,17 @@ def read_export(source, sheet: str | None = None) -> tuple[list[str], list[tuple
             headers = [("" if c is None else str(c).strip()) for c in grid[header_at]]
             key_at = [h.casefold() for h in headers].index("key")
 
+            labels = [h.casefold() for h in headers]
+            summary_at = labels.index("summary")
+            status_at = labels.index("status") if "status" in labels else None
+
             rows = []
             for index, row in enumerate(worksheet.iter_rows(values_only=True)):
                 if index <= header_at:
                     continue
-                # One issue is one row *with a Key*. Everything between is the
-                # previous issue's wrapped rich text.
                 if key_at < len(row) and _clean(row[key_at]):
+                    rows.append(row)
+                elif _is_keyless_record(row, summary_at, status_at):
                     rows.append(row)
             return headers, rows
     finally:
@@ -422,6 +508,28 @@ def convert(
     sources = sources if sources is not None else SOURCES
     columns = columns if columns is not None else SCHEDULE_CONTRACT.template_headers
     lookup = _index(headers)
+    def _grouping_fallback(row: tuple, column: str) -> str | None:
+        """A band for a row the chosen source gave none - see `GROUPING_FALLBACK`.
+
+        Takes the first value that is not a link, in the declared order, so a
+        component beats a fix version and neither is reached while a parent
+        exists. Multi-valued cells (`UI/UX, Core Platform`) are left whole: the
+        first is not more true than the second, and splitting one row across two
+        bands would double-count it.
+        """
+        for name in GROUPING_FALLBACK.get(column, ()):
+            if name.casefold() not in lookup:
+                continue
+            for cell in _cells(row, name):
+                text = _clean(cell)
+                if isinstance(text, str) and not URL.match(text):
+                    return PARENT_KEY.sub("", text) or None
+        return None
+
+    #: Whichever of the two contracts calls the issue's own text its title -
+    #: `Activity` on a schedule, `Summary` on a worklog. It is what a synthesized
+    #: Task ID is hashed from, so it must not be hardcoded to one contract.
+    title_column = "Activity" if "Activity" in columns else "Summary"
 
     def _cells(row: tuple, name: str) -> list:
         """Every value this row carries under `name`, across repeated columns."""
@@ -493,6 +601,19 @@ def convert(
             chosen[column] = present[0]
 
     records = []
+    #: Every id already spoken for, so a synthesized one cannot land on a real
+    #: Jira key or on another synthesized one. Seeded with the real keys before
+    #: the loop rather than filled as it goes, because the rows arrive in sheet
+    #: order and an appended backlog sits *below* the keyed issues - checking
+    #: only what has been seen so far would miss a clash with a key further up.
+    taken = {
+        str(_clean(row[at]))
+        for name in (chosen.get("Task ID"),)
+        if name
+        for at in lookup.get(name.casefold(), [])
+        for row in rows
+        if at < len(row) and _clean(row[at])
+    }
     for row in rows:
         record = {}
         for column in columns:
@@ -517,9 +638,21 @@ def convert(
                 value = _clean(named if named is not None else (cells[0] if cells else None))
                 if isinstance(value, str):
                     value = None if URL.match(value) else (PARENT_KEY.sub("", value) or None)
+                if value is None:
+                    value = _grouping_fallback(row, column)
                 record[column] = value
             else:
                 record[column] = _clean(cells[0]) if cells else None
+        #: A row the export gave no Key still has to carry one: `Task ID` is the
+        #: schedule contract's key field, and a blank there is a row the reader
+        #: rejects. Derived from the summary and marked as derived - see
+        #: `_synthetic_id` - so the row reaches the board instead of being
+        #: dropped, which is the whole point of reading it.
+        if not record.get("Task ID"):
+            made = _synthetic_id(record.get(title_column), taken)
+            if made:
+                taken.add(made)
+                record["Task ID"] = made
         records.append(record)
     return records, chosen
 
@@ -591,6 +724,27 @@ def coverage(
 
     missing = {c["column"] for c in columns if not c["filled"]}
     notes: list[str] = []
+
+    #: Said first, because it changes what every count below is counting. A
+    #: person who exported 17 issues and sees 191 tasks needs to know where the
+    #: other 174 came from before they read a completion figure derived from
+    #: them.
+    synthesized = sum(
+        1
+        for r in records
+        if isinstance(r.get("Task ID"), str)
+        and r["Task ID"].startswith(SYNTHETIC_PREFIX)
+    )
+    if synthesized:
+        notes.append(
+            f"{synthesized} of {total} row(s) carry no Jira Key - they were "
+            "appended to the sheet below the export rather than written by it. "
+            "They were read, with a Task ID derived from their summary and "
+            f"prefixed {SYNTHETIC_PREFIX!r} so it is not mistaken for an issue "
+            "you can open. Re-word a summary and that row reads as a new task, "
+            "because the text is the only stable thing about it - the fix is to "
+            "raise them in Jira so they arrive with keys of their own."
+        )
 
     if "Baseline Finish" in missing:
         notes.append(

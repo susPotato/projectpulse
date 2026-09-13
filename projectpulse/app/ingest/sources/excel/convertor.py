@@ -54,6 +54,13 @@ STATUS_MAP = {
     "resolved": "DONE",
     "fixed": "DONE",
     "delivered": "DONE",
+    # The terminal state in the FPT Jira workflow this app reads: the work is
+    # shipped. Spelled as an instruction rather than a state, which is why it
+    # read as ambiguous and fell through to OTHER - and OTHER is counted as
+    # *open* everywhere downstream, so 142 released items on one board were
+    # reporting as unfinished work and suppressing every completion figure.
+    "release it": "DONE",
+    "released": "DONE",
     # Work that will not happen. Its own state rather than DONE, because it was
     # not delivered - counting it as complete would inflate a completion figure,
     # and counting it as open would report a cancelled task as late forever.

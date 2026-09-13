@@ -9,6 +9,7 @@ button runs - against in-memory SQLite, no Docker.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -663,3 +664,180 @@ def test_the_upload_form_offers_one_jira_option_not_two():
     )
     assert html.count('value="jira_export"') == 1
     assert "jira_worklog" not in html
+
+
+def test_a_backlog_appended_below_the_export_is_read_rather_than_dropped(tmp_path):
+    """The case this was written for: a sheet that is a Jira export *plus* rows
+    somebody pasted underneath it.
+
+    Jira numbers every issue it writes, so "one issue is one row with a Key"
+    reads an export correctly - and silently discards a backlog appended below
+    one, which is how a 191-row sheet arrived as 17 tasks with nothing finished.
+    """
+    from datetime import datetime
+
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import read_export
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 1 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status", "Assignee", "Due Date",
+                  "Description"])
+    sheet.append(["P", "P-1", "Design", "To Do", "Ann", datetime(2026, 9, 30), "a"])
+    # The export's own wrapped rich text: the Description column and nothing else.
+    sheet.append([None, None, None, None, None, None, "continued on this row"])
+    # Appended by hand: no Key, but a Summary and a Status, which no wrapping
+    # produces.
+    sheet.append(["P", None, "Ship the thing", "Release it", None, None, None])
+    path = tmp_path / "appended.xlsx"
+    book.save(path)
+
+    _, rows = read_export(path)
+    assert len(rows) == 2
+    assert [r[2] for r in rows] == ["Design", "Ship the thing"]
+
+
+def test_an_appended_row_gets_a_derived_id_that_cannot_pass_for_a_jira_key(tmp_path):
+    """`Task ID` is the schedule contract's key field, so a keyless row needs
+    one - but it must not look like an issue somebody can open, and it has to
+    survive the sheet being re-sorted or the differ reports every task as
+    deleted and re-added."""
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import (
+        SYNTHETIC_PREFIX,
+        convert,
+        read_export,
+    )
+
+    def _sheet(order):
+        book = Workbook()
+        page = book.active
+        page.append(["Filter"])
+        page.append(["Displaying 0 issues at 13/Sep/26 9:00 AM."])
+        page.append(["Project", "Key", "Summary", "Status"])
+        for summary in order:
+            page.append(["P", None, summary, "Release it"])
+        path = tmp_path / f"{'_'.join(order)}.xlsx"
+        book.save(path)
+        return path
+
+    def _ids(order):
+        headers, rows = read_export(_sheet(order))
+        records, _ = convert(headers, rows)
+        return {r["Activity"]: r["Task ID"] for r in records}
+
+    ids = _ids(["Ship it", "Test it"])
+    assert all(v.startswith(SYNTHETIC_PREFIX) for v in ids.values())
+    # Not shaped like PROJ-12, so nothing downstream treats it as a real issue.
+    assert not any(re.fullmatch(r"[A-Z][A-Z0-9_]*-\d+", v) for v in ids.values())
+    # Hashed from the summary, so re-ordering the sheet does not rename anything.
+    assert _ids(["Test it", "Ship it"]) == ids
+
+
+def test_a_derived_id_never_collides_with_a_real_key_further_up_the_sheet(tmp_path):
+    """The keyed issues sit *above* the appended ones, so a check against only
+    what has been seen so far would be looking the wrong way."""
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 2 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status"])
+    sheet.append(["P", "P-1", "Design", "To Do"])
+    # Two appended rows sharing a summary: two items on the board, not one.
+    sheet.append(["P", None, "Ship it", "Release it"])
+    sheet.append(["P", None, "Ship it", "Release it"])
+    path = tmp_path / "collide.xlsx"
+    book.save(path)
+
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+    ids = [r["Task ID"] for r in records]
+    assert len(ids) == len(set(ids)) == 3
+
+
+def test_the_coverage_report_says_when_it_derived_the_ids(tmp_path):
+    """Reading rows Jira did not write changes what every count below is
+    counting, so it is named rather than left for somebody to notice."""
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import convert_workbook
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 1 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status"])
+    sheet.append(["P", "P-1", "Design", "To Do"])
+    sheet.append(["P", None, "Ship it", "Release it"])
+    path = tmp_path / "reported.xlsx"
+    book.save(path)
+
+    _, cover = convert_workbook(path, kind="schedule")
+    assert any("carry no Jira Key" in n for n in cover["notes"])
+
+
+def test_a_shipped_status_counts_as_done_rather_than_as_open_work():
+    """`Release it` is the terminal state in the Jira workflow this app reads.
+    Unmapped it became OTHER, which every downstream count reads as open - so a
+    released board reported nothing finished and suppressed four findings that
+    are gated on exactly that."""
+    from app.ingest.sources.excel.convertor import _normalize_status
+
+    assert _normalize_status("Release it") == "DONE"
+    assert _normalize_status("Released") == "DONE"
+    # Unchanged: an ambiguous status is still an honest unknown.
+    assert _normalize_status("Ready for release") == "OTHER"
+
+
+def test_a_row_with_no_parent_is_banded_by_its_component(tmp_path):
+    """A grouping column that groups nothing is not doing its job: an appended
+    backlog row carries no parent issue and cannot, but it does say which
+    feature area it belongs to."""
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 1 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status", "Product", "Component/s"])
+    # A real parent still wins, and the component beside it is not consulted.
+    sheet.append(["P", "P-1", "Design", "To Do", "Platform [P-9]", "UI/UX"])
+    sheet.append(["P", None, "Ship it", "Release it", None, "Cowork Chat"])
+    path = tmp_path / "banded.xlsx"
+    book.save(path)
+
+    headers, rows = read_export(path)
+    records, chosen = convert(headers, rows)
+    assert chosen["Milestone"] == "Product"
+    assert [r["Milestone"] for r in records] == ["Platform", "Cowork Chat"]
+
+
+def test_the_fallback_never_bands_a_row_by_a_url(tmp_path):
+    """Same refusal the chosen source makes: a link to a thing is not the name
+    of one."""
+    from openpyxl import Workbook
+
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 0 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(["Project", "Key", "Summary", "Status", "Component/s"])
+    sheet.append(["P", None, "Ship it", "Release it", "https://wiki/components"])
+    path = tmp_path / "url_band.xlsx"
+    book.save(path)
+
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+    assert records[0]["Milestone"] is None
