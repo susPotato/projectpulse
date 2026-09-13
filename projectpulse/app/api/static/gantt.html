@@ -227,11 +227,30 @@
     });
     var risky = bundle.milestones.filter(function (m) { return m.at_risk; }).length;
 
+    /* Three of these five are forward-pass results over a dependency graph.
+       With no edges they are not zero - they are unknown, and a zero here reads
+       as a clean bill of health for the one condition this product exists to
+       report. A source that states no links gets a dash and a label saying why,
+       which is the same bargain the Insight page's data-quality panel makes.
+
+       `chain implies finish` is the subtlest of the three: with no chain it
+       equals the planned date exactly, so it showed a confident red date that
+       was really just the sheet's own number wearing a second hat. */
+    var linked = bundle.rows.some(function (r) {
+      return (r.depends_on || []).length > 0;
+    });
+
     [[bundle.rows.length, "tasks", false],
      [d(bundle.project_end_planned), "sheet says finish", false],
-     [d(bundle.project_end_projected), "chain implies finish", true],
-     [worst + "d", "worst hidden slip", true],
-     [risky, "milestones at risk", risky > 0]].forEach(function (row) {
+     linked
+       ? [d(bundle.project_end_projected), "chain implies finish", true]
+       : ["-", "chain implies finish - no links stated", false],
+     linked
+       ? [worst + "d", "worst hidden slip", true]
+       : ["-", "hidden slip needs dependencies", false],
+     linked
+       ? [risky, "milestones at risk", risky > 0]
+       : ["-", "at-risk needs dependencies", false]].forEach(function (row) {
       var st = $("div", "stat" + (row[2] ? " bad" : ""));
       st.appendChild($("b", null, row[0]));
       st.appendChild($("span", null, row[1]));

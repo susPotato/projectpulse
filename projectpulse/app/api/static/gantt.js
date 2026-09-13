@@ -131,21 +131,49 @@
     ].join("|");
   }
 
-  /* The name a collapsed row goes by.
+  /* The name a collapsed row goes by: the tasks in it.
 
-     A shared bracketed tag ("[Planning Task] ...") is the export's own way of
-     saying these are one kind of thing, so it is used when every member carries
-     it. Otherwise the count alone - inventing a category name for a set of
-     tasks is exactly the summarising this chart must not do. */
-  function mergedTitle(rows) {
-    var tag = null;
-    for (var i = 0; i < rows.length; i++) {
-      var m = /^\s*(\[[^\]]+\])/.exec(rows[i].title || "");
-      if (!m) return rows.length + " tasks, same dates";
-      if (tag === null) tag = m[1];
-      else if (tag !== m[1]) return rows.length + " tasks, same dates";
+     The first attempt used the bracketed tag every member shared - "7 x
+     [Planning Task]" - which is exactly backwards. A tag is only worth printing
+     when it tells rows apart, and a tag shared by all sixteen tells you nothing
+     except that you are looking at a project whose summaries all begin the same
+     way. It read as a category nobody can act on.
+
+     So the shared prefix is stripped and what is left - the part that actually
+     differs - is listed until the gutter runs out. A PM scanning for "Develop
+     CM Plan" can find it; "7 x [Planning Task]" made that impossible without
+     hovering. The remainder is counted, never dropped silently. */
+  var LABEL_BUDGET = 44;
+
+  function sharedPrefix(rows) {
+    var first = rows[0].title || "";
+    var end = first.length;
+    for (var i = 1; i < rows.length; i++) {
+      var other = rows[i].title || "", j = 0;
+      while (j < end && j < other.length && first[j] === other[j]) j++;
+      end = j;
     }
-    return rows.length + " x " + tag;
+    //: Only cut at a word boundary, so "Define OSS"/"Define ISMS" does not
+    //: become "OSS"/"ISMS Keyword" split mid-word.
+    var cut = first.slice(0, end);
+    var space = cut.lastIndexOf(" ");
+    return space > 0 ? first.slice(0, space + 1) : "";
+  }
+
+  function mergedTitle(rows) {
+    var prefix = sharedPrefix(rows);
+    var names = rows.map(function (r) {
+      return (r.title || r.label || "").slice(prefix.length).trim() || r.label;
+    });
+    var shown = [], used = 0;
+    for (var i = 0; i < names.length; i++) {
+      if (used + names[i].length + 2 > LABEL_BUDGET) break;
+      shown.push(names[i]);
+      used += names[i].length + 2;
+    }
+    if (!shown.length) return rows.length + " tasks, same dates";
+    var rest = names.length - shown.length;
+    return shown.join(", ") + (rest ? " +" + rest + " more" : "");
   }
 
   function collapse(rows) {
