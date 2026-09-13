@@ -273,3 +273,48 @@ def test_intelligence_does_not_import_the_drafts_module():
         text = source.read_text(encoding="utf-8")
         assert "risks.drafts" not in text, source
         assert "from app.risks" not in text, source
+
+
+def test_a_vendor_timeout_becomes_a_reason_rather_than_escaping():
+    """The failure that shipped: the Anthropic SDK raises its own
+    `APITimeoutError`, not `NarrationUnavailable`, so it escaped `propose`
+    entirely - the route answered 500 and the button span forever.
+
+    An optional feature being unreachable is a state to describe, never an
+    exception to leak, and the catch has to be wide enough to mean it.
+    """
+
+    class APITimeoutError(Exception):
+        """Stands in for the vendor's own class, which is what matters: it is
+        not one of ours and nothing here may assume it is."""
+
+    def timing_out(system, user):
+        raise APITimeoutError("Request timed out or interrupted.")
+
+    with session_scope() as session:
+        with pytest.raises(DraftsUnavailable, match="could not be reached"):
+            propose(session, PROJECT, timing_out, list(CATEGORIES))
+
+
+def test_the_prompt_is_bounded_even_on_a_backlog_of_hundreds():
+    """The prompt has to stay inside a single request's patience. Pinned as a
+    size rather than a task count, because that is the thing that actually
+    timed out."""
+    from app.risks.drafts import MAX_DESCRIPTION_CHARS, MAX_TASKS
+
+    tasks = []
+    for n in range(400):
+        tasks.append(
+            Task(
+                id=f"excel:Task:1:{PROJECT}:BIG-{n}",
+                project_id=PROJECT,
+                title="A task with a long name " * 4,
+                status="TODO",
+                description="Procedure text. " * 200,
+            )
+        )
+    prompt = build_prompt(tasks, list(CATEGORIES))
+
+    assert prompt.count("- id:") == MAX_TASKS
+    # Four fields per task, none longer than its own cap, plus a short preamble.
+    assert len(prompt) < MAX_TASKS * (MAX_DESCRIPTION_CHARS + 500)

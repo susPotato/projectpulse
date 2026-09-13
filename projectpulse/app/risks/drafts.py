@@ -63,12 +63,22 @@ ORIGIN_AI = "ai_draft"
 #: How many tasks to send. Enough to see a pattern across a backlog, small
 #: enough that the whole prompt stays reviewable by a person who wants to know
 #: what was asked.
-MAX_TASKS = 120
+#:
+#: Was 120, which timed out on the first real project it met: 120 tasks of
+#: procedure text is ~26KB, and a reasoning model chewing that exceeded the
+#: request timeout before writing a word. Sixty still spans a backlog - the
+#: point is to see a pattern, and a pattern visible in 120 rows is visible in
+#: 60 - and it roughly halves the time to first token.
+MAX_TASKS = 60
 
 #: How much of one description to send. Jira bodies run to procedures and
 #: acceptance criteria; the first paragraphs carry the intent, and a limit per
 #: task keeps one essay from crowding out a hundred other tasks.
-MAX_DESCRIPTION_CHARS = 600
+#:
+#: Lowered with `MAX_TASKS` and for the same reason. A risk that is only
+#: visible in the fifth paragraph of an acceptance criterion is not one this
+#: feature was ever going to find.
+MAX_DESCRIPTION_CHARS = 400
 
 #: How many proposals to keep. A model asked for risks will happily produce
 #: thirty, and a register nobody can read is the same as an empty one.
@@ -263,6 +273,22 @@ def propose(
         answer = drafter(SYSTEM, build_prompt(tasks, categories))
     except NarrationUnavailable as exc:
         raise DraftsUnavailable(str(exc)) from exc
+    except Exception as exc:
+        #: Everything the vendor SDK can raise, which is not only
+        #: `NarrationUnavailable`. A timeout arrives as the SDK's own
+        #: `APITimeoutError` and used to escape this function entirely, so the
+        #: route answered 500 and the button span forever - the one outcome
+        #: this module promises not to produce, because an optional feature
+        #: being unreachable is a state to describe rather than a failure to
+        #: raise. This one line is wholly vendor territory: anything thrown
+        #: here means the model was not reached, which is exactly what
+        #: `DraftsUnavailable` says.
+        log.warning("risk drafts: model call failed", exc_info=True)
+        raise DraftsUnavailable(
+            f"the model could not be reached: {type(exc).__name__}. "
+            "If this was a timeout, the export is large - try again, or read a "
+            "project with fewer described tasks."
+        ) from exc
 
     proposals = _parse(answer)
     if not proposals:

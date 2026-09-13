@@ -1387,6 +1387,18 @@ def _draft_drafter():
                 model=current.model,
                 api_key=current.api_key,
                 base_url=current.base_url,
+                #: Far longer than narration's default, because this is not
+                #: narration's job. That one rephrases a handful of findings
+                #: already in hand; this one reads a whole backlog and writes
+                #: structured JSON about it, on a reasoning model. Sixty
+                #: seconds - the shared default - timed out on the first real
+                #: project it met, before the model had written a word.
+                timeout_seconds=240.0,
+                #: Lower than the 8000 narration allows. The answer is at most
+                #: eight short objects; the ceiling was only ever generous
+                #: because reasoning tokens are billed inside it, and a smaller
+                #: one bounds how long a single press can run.
+                max_tokens=4000,
             ),
         )
     except ValueError:
