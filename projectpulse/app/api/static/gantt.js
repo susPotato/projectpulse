@@ -58,9 +58,25 @@
 
   /* Group rows under their milestone, keeping unassigned tasks last rather
      than inventing a bucket that looks like a real milestone. */
+  /* A row that can be placed on a time axis. Neither date means there is no
+     position to place it at, and the previous behaviour - an empty row, then
+     the next one - was not neutral: a Jira export whose backlog carries no
+     dates drew 170 blank rows around 20 real ones, and the 4 tasks that were
+     genuinely overdue became impossible to find. Blank rows do not read as
+     "no date"; they read as a broken chart.
+
+     Left off the plot and counted in the legend instead, which is the same
+     bargain the rest of this product makes: say what could not be used rather
+     than rendering an absence as if it were a value. Nothing is hidden - the
+     count is stated, and every one of these rows is on the Insight page, in
+     the findings and in the report. */
+  function datable(row) {
+    return !!(row.start || row.planned_end);
+  }
+
   function grouped(bundle) {
     var order = [], byName = {};
-    bundle.rows.forEach(function (row) {
+    bundle.rows.filter(datable).forEach(function (row) {
       var name = row.milestone_name || "Not under a milestone";
       if (!byName[name]) { byName[name] = []; order.push(name); }
       byName[name].push(row);
@@ -136,6 +152,9 @@
   function plot(bundle, groups) {
     var lo = day(bundle.window_start), hi = day(bundle.window_end);
     if (lo === null || hi === null) return null;
+    /* Every row undated. An empty axis with month labels and nothing under it
+       reads as a chart that failed to load; `render` says it in words. */
+    if (!groups.length) return null;
 
     var span = Math.max(hi - lo, 1);
     var W = Math.max(Math.round(span * PX_PER_DAY), MIN_PLOT);
@@ -324,6 +343,20 @@
       item.appendChild(document.createTextNode(pair[1]));
       wrap.appendChild(item);
     });
+
+    /* Said plainly, because a chart that quietly drops rows is worse than one
+       that draws them badly. The number is the whole point: 170 of 190 is a
+       statement about the source, not about the chart. */
+    var undated = bundle.rows.length - bundle.rows.filter(datable).length;
+    if (undated) {
+      var note = el("span", "g-omitted");
+      note.appendChild(document.createTextNode(
+        undated + " of " + bundle.rows.length +
+        " task(s) carry no start and no due date, so they are not on this " +
+        "chart. They are counted everywhere else."
+      ));
+      wrap.appendChild(note);
+    }
     return wrap;
   }
 
@@ -343,7 +376,11 @@
 
     var scroller = el("div", "g-plot");
     if (body) scroller.appendChild(body);
-    else scroller.appendChild(el("p", "g-empty", "No dated tasks to draw."));
+    else scroller.appendChild(el("p", "g-empty",
+      bundle.rows.length
+        ? "None of the " + bundle.rows.length + " task(s) here carries a start " +
+          "or a due date, so there is nothing to place on a time axis."
+        : "No dated tasks to draw."));
     frame.appendChild(scroller);
 
     wrap.appendChild(frame);

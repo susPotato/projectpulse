@@ -140,6 +140,14 @@
   flex: none;
 }
 
+/* The count of rows left off the plot. Given the whole width so it reads as a
+   sentence about the source rather than a fifth legend swatch - it is not a
+   thing on the chart, it is a statement about what is missing from it. */
+.g-key span.g-omitted {
+  flex-basis: 100%;
+  color: var(--ink-2);
+}
+
 .g-key i.base { background: var(--viz-base); height: 4px; }
 .g-key i.plan { background: var(--viz-plan); }
 .g-key i.over { background: var(--viz-over); }
