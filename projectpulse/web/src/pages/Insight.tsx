@@ -10,6 +10,7 @@ import {
   type ExplainBundle,
   type Finding,
   type ForecastBundle,
+  type GanttBundle,
   type InsightBundle,
   type RiskDraftBundle,
   type Scenario,
@@ -375,6 +376,122 @@ function ModelReadBrief({ bundle }: { bundle: RiskDraftBundle }) {
         );
       })}
     </>
+  );
+}
+
+/* The project in one row, before anything interprets it.
+
+   Overview had no counts at all - it opened on a severity bar and a narrative,
+   so "how big is this and how much of it is done" took a trip to another tab.
+   Every figure here is already in `context`; none is computed in this file. */
+function AtAGlance({ bundle }: { bundle: InsightBundle }) {
+  const c = bundle.context;
+  const n = (key: string) => Number(c[key] ?? 0);
+  return (
+    <Stats>
+      <Stat value={`${n("tasks_done")} / ${n("task_count")}`} label="complete" />
+      <Stat value={String(n("tasks_in_progress"))} label="in progress" />
+      <Stat
+        value={String(n("tasks_overdue"))}
+        label="past due, still open"
+        bad={n("tasks_overdue") > 0}
+      />
+      <Stat value={String(n("tasks_due_soon"))} label="due within a fortnight" />
+      <Stat
+        value={String(n("distinct_owners"))}
+        label={n("distinct_owners") === 1 ? "owner - no distribution" : "distinct owners"}
+        bad={n("distinct_owners") === 1 && n("task_count") > 5}
+      />
+      {n("tasks_stale") > 0 && (
+        <Stat
+          value={String(n("tasks_stale"))}
+          label={`untouched a week+ (worst ${n("stalest_task_days")}d)`}
+        />
+      )}
+    </Stats>
+  );
+}
+
+/* The tasks behind the count.
+
+   A finding says "6 task(s) are past their own due date". The next question a
+   reader has is which six, and until now the answer was on the Schedule page -
+   so the page that tells you something is wrong could not tell you what to open.
+   Read from the same snapshot the Schedule draws, so the two lists cannot
+   disagree. */
+function PastDue({ tasks, asOf }: { tasks: GanttBundle; asOf: string }) {
+  const scan = String(asOf).slice(0, 10);
+  const late = tasks.rows
+    .filter(
+      (r) =>
+        r.planned_end &&
+        r.planned_end < scan &&
+        r.status !== "DONE" &&
+        r.status !== "DROPPED",
+    )
+    .map((r) => ({
+      ...r,
+      days: Math.round(
+        (Date.parse(scan) - Date.parse(r.planned_end as string)) / 86400000,
+      ),
+    }))
+    .sort((a, b) => b.days - a.days);
+
+  if (!late.length) return null;
+
+  return (
+    <Panel caption={`Past due — ${late.length} open`} span={7} className="content-start min-w-0">
+      <div className="grid min-w-0 gap-1.5">
+        {late.map((row) => (
+          <div
+            key={row.entity_id}
+            className="flex min-w-0 items-baseline gap-3 text-[12.5px]"
+          >
+            <span className="w-[112px] shrink-0 truncate font-mono text-[11.5px] text-ink-3">
+              {row.label}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-ink">{row.title ?? ""}</span>
+            <span className="shrink-0 text-[11.5px] text-ink-3">{row.planned_end}</span>
+            <span className="w-[62px] shrink-0 text-right font-bold text-red">
+              {row.days}d late
+            </span>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+/* Where the dates pile up. A cluster is only actionable if you know what is in
+   it - "8 tasks share 2026-10-02" is a warning, the eight names are a to-do
+   list. Capped, because a band of thirty would take the page over. */
+function Cluster({ tasks, bundle }: { tasks: GanttBundle; bundle: InsightBundle }) {
+  const date = String(bundle.context.busiest_due_date ?? "");
+  if (!date) return null;
+  const rows = tasks.rows.filter(
+    (r) => r.planned_end === date && r.status !== "DONE" && r.status !== "DROPPED",
+  );
+  if (rows.length < 2) return null;
+
+  return (
+    <Panel caption={`All due ${date} — ${rows.length}`} span={5} className="content-start min-w-0">
+      <div className="grid min-w-0 gap-1.5">
+        {rows.slice(0, 10).map((row) => (
+          <div
+            key={row.entity_id}
+            className="flex min-w-0 items-baseline gap-2.5 text-[12.5px]"
+          >
+            <span className="w-[112px] shrink-0 truncate font-mono text-[11.5px] text-ink-3">
+              {row.label}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-ink">{row.title ?? ""}</span>
+          </div>
+        ))}
+        {rows.length > 10 && (
+          <div className="text-[11.5px] text-ink-3">and {rows.length - 10} more</div>
+        )}
+      </div>
+    </Panel>
   );
 }
 
@@ -826,6 +943,7 @@ export function InsightView({
   scenarios = null,
   forecast = null,
   drafts = null,
+  tasks = null,
   view: initialView = "Overview",
 }: {
   bundle: InsightBundle;
@@ -841,6 +959,10 @@ export function InsightView({
      deterministic - so the model's readings cannot ride along on
      `/api/insight`. Two fetches keeps that boundary where it is. */
   drafts?: RiskDraftBundle | null;
+  /* Optional, and from the schedule endpoint: `InsightBundle` carries counts,
+     not rows. Fetched separately so a failure costs the two task lists rather
+     than the findings. */
+  tasks?: GanttBundle | null;
   /* Optional for the same reason again. A forecast that fails to load must
      never take the proven figures down with it. */
   forecast?: ForecastBundle | null;
@@ -891,7 +1013,11 @@ export function InsightView({
 
       {view === "Overview" && (
         <>
+          <AtAGlance bundle={bundle} />
+
           <Board className="mb-6">
+            {tasks && <PastDue tasks={tasks} asOf={String(bundle.as_of)} />}
+            {tasks && <Cluster tasks={tasks} bundle={bundle} />}
             {explain && (
               <Outlook explain={explain} confidence={bundle.delivery_confidence} />
             )}
@@ -1059,6 +1185,11 @@ export function Insight() {
   const [scenarios, setScenarios] = useState<ScenarioBundle | null>(null);
   const [forecast, setForecast] = useState<ForecastBundle | null>(null);
   const [drafts, setDrafts] = useState<RiskDraftBundle | null>(null);
+  /* The task rows, for naming the tasks a finding counts. A finding says "6
+     task(s) are past their own due date"; the one question a reader has next is
+     "which six", and the answer was on another page. Same snapshot the Schedule
+     draws, so the two cannot disagree about which tasks those are. */
+  const [tasks, setTasks] = useState<GanttBundle | null>(null);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
 
   useEffect(() => {
@@ -1072,6 +1203,7 @@ export function Insight() {
     load<RiskDraftBundle>(withProject("/api/risks/drafts")).then(setDrafts, () =>
       setDrafts(null),
     );
+    load<GanttBundle>(withProject("/api/gantt")).then(setTasks, () => setTasks(null));
   }, []);
 
   if (problem) {
@@ -1091,6 +1223,7 @@ export function Insight() {
       scenarios={scenarios}
       forecast={forecast}
       drafts={drafts}
+      tasks={tasks}
     />
   );
 }
