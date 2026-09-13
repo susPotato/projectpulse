@@ -30,6 +30,7 @@ def row(
     end: date | None = None,
     confidence: str = CONFIDENCE_HIGH,
     index: int = 0,
+    milestone: str | None = None,
 ) -> ResolvedRow:
     return ResolvedRow(
         row_key=key,
@@ -40,6 +41,7 @@ def row(
             "predecessor": predecessor,
             "start_date": start,
             "baseline_end": end,
+            "milestone": milestone,
         },
         row_index=index,
     )
@@ -391,3 +393,37 @@ def test_every_edge_names_the_row_that_carried_it():
     )
 
     assert result.edges[0].stated_by_key == "B"
+
+
+def test_no_edge_is_inferred_when_several_rows_claim_one_predecessor():
+    """"The previous activity" is singular. Several rows equally entitled to the
+    same predecessor makes it ambiguous, and the whole fan is dropped rather
+    than hedged - the same choice this module makes everywhere else.
+
+    The case that prompted it: sixteen PM-checklist tasks all starting 2 Sep
+    attached themselves to one delivery task finishing 31 Aug, asserting the
+    checklist waited on work it does not reference anywhere.
+    """
+    result = resolve_edges(
+        [
+            row("A", start=date(2026, 1, 1), end=date(2026, 1, 10), index=1),
+            row("B", start=date(2026, 1, 12), end=date(2026, 1, 20), index=2),
+            row("C", start=date(2026, 1, 12), end=date(2026, 1, 21), index=3),
+        ]
+    )
+
+    assert result.edges == []
+
+
+def test_a_one_to_one_hand_off_is_still_inferred():
+    """The guard narrows the rule; it must not switch it off. A genuine
+    phase-to-phase hand-off is one predecessor and one successor."""
+    result = resolve_edges(
+        [
+            row("A", start=date(2026, 1, 1), end=date(2026, 1, 10), index=1),
+            row("B", start=date(2026, 1, 12), end=date(2026, 1, 20), index=2),
+            row("C", start=date(2026, 1, 22), end=date(2026, 1, 30), index=3),
+        ]
+    )
+
+    assert pairs(result) == {("A", "B"), ("B", "C")}

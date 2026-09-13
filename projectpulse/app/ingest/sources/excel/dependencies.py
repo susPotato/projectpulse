@@ -244,7 +244,7 @@ def _infer_wbs_edges(
     backwards for the nearest row that actually *finishes* by the time this one
     starts.
 
-    Two guards keep this from becoming fiction:
+    Three guards keep this from becoming fiction:
 
     * A row that already carries a stated predecessor is left alone. A human's
       answer always beats ours.
@@ -252,6 +252,18 @@ def _infer_wbs_edges(
       genuinely holds. Two rows running in parallel produce no edge at all, which
       is the correct answer - and it is why this returns fewer edges than there
       are rows.
+    * **A predecessor may gain only one inferred successor.** The rule above says
+      "each activity starts when the *previous one* finishes" - singular, a
+      chain. When several rows would all attach to the same predecessor, "the
+      previous activity" is ambiguous and the whole fan is dropped rather than
+      hedged, which is what this module does everywhere else.
+
+      This is the guard that a real Jira export needed. Sixteen PM-checklist
+      tasks all starting 2 Sep attached themselves to one delivery task that
+      finished 31 Aug, asserting the checklist waited on work it does not
+      reference anywhere - a projected finish computed over those edges would
+      be confidently wrong. A genuine phase-to-phase hand-off (one activity
+      ending, one beginning) is one successor and survives.
     """
 
     def end_of(row: ResolvedRow) -> date | None:
@@ -297,7 +309,24 @@ def _infer_wbs_edges(
             )
             existing_pairs.add(pair)
             break
-    return edges
+
+    #: Drop any predecessor that acquired more than one successor - see the
+    #: docstring's third guard. "Each activity starts when the previous one
+    #: finishes" describes a chain; a row that sixteen others all claim to
+    #: follow is a date boundary between two unrelated bodies of work, and the
+    #: rule has no opinion about which of the sixteen is "next".
+    #:
+    #: The whole fan goes, not all-but-one. Keeping an arbitrary member would
+    #: assert exactly the edge this cannot justify, and picking by row order
+    #: would make the graph depend on how somebody sorted their spreadsheet.
+    fan: dict[str, int] = {}
+    for edge in edges:
+        fan[edge.predecessor_key] = fan.get(edge.predecessor_key, 0) + 1
+    kept = [e for e in edges if fan[e.predecessor_key] == 1]
+    for edge in edges:
+        if fan[edge.predecessor_key] != 1:
+            existing_pairs.discard(edge.pair)
+    return kept
 
 
 # --------------------------------------------------------------------------
