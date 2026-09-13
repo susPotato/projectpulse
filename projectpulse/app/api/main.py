@@ -357,6 +357,14 @@ def _report_doc(
             from app.risks.service import list_risks
 
             risks = list_risks(session, project_ids=[project, *also])
+        drafts = None
+        if "model_read" in chosen:
+            #: A read, never a generation. Exporting a report must not call a
+            #: model - it would make a download slow, cost money per click, and
+            #: produce a document whose contents differ from the page the person
+            #: was just looking at. What is in the report is what somebody has
+            #: already generated on the Risk page.
+            drafts = _draft_bundle(session, found.canonical_id if found else project)
 
     if not bundle.findings and not bundle.context.get("task_count"):
         raise HTTPException(
@@ -373,6 +381,7 @@ def _report_doc(
         scenarios=scenarios,
         forecast=forecast,
         risks=risks,
+        drafts=drafts,
         sections=chosen,
         project_name=found.name if found else "",
     )
@@ -466,12 +475,23 @@ def report_options(project: str = "excel:Project:1:HRMS") -> ReportOptions:
 
     with session_scope() as session:
         risk_count = _risk_count(session, project)
+        #: Drafts, like the register, exist only once somebody has made them -
+        #: generation is a button on the Risk page, never automatic. Offering
+        #: the tick box before then would download a heading over a sentence
+        #: explaining that nothing has been proposed.
+        from app.risks.service import list_drafts
+
+        draft_count = len(list_drafts(session, project_ids=[project]))
 
     def available(requires: str) -> bool:
         # `explain` and `scenarios` are computed from the schedule, which any
         # analysable project has; `risks` is a register a person fills in, and
         # is genuinely empty until they do.
-        return risk_count > 0 if requires == "risks" else True
+        if requires == "risks":
+            return risk_count > 0
+        if requires == "drafts":
+            return draft_count > 0
+        return True
 
     return ReportOptions(
         project_id=project,

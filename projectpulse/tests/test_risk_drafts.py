@@ -318,3 +318,63 @@ def test_the_prompt_is_bounded_even_on_a_backlog_of_hundreds():
     assert prompt.count("- id:") == MAX_TASKS
     # Four fields per task, none longer than its own cap, plus a short preamble.
     assert len(prompt) < MAX_TASKS * (MAX_DESCRIPTION_CHARS + 500)
+
+
+def _bundle(drafts, cited=(), reason=None):
+    from app.api.schemas.risk import RiskDraftBundle
+
+    return RiskDraftBundle(
+        drafts=list(drafts), cited_tasks=list(cited), enabled=True, reason=reason
+    )
+
+
+def test_the_report_section_prints_every_proposal_with_what_it_cites():
+    """A claim in a document that leaves the building has to carry its own
+    check. The citation is what turns "a model said this" into something a
+    reader can verify against their own tracker in a minute."""
+    from app.api.schemas.risk import CitedTask
+    from app.exports.document import _model_read_blocks
+
+    _propose(
+        [{"title": "Sandbox has no timeout", "cites": ["D-1"],
+          "category": "Security", "likelihood": "Possible", "impact": "Major"}]
+    )
+    with session_scope() as session:
+        drafts = list_drafts(session, project_ids=[PROJECT])
+
+    cited = [
+        CitedTask(
+            task_id=f"excel:Task:1:{PROJECT}:D-1",
+            label="D-1",
+            title="Code runner with sandboxed execution",
+            status="In Progress",
+            text="Run generated code in a sandbox. No timeout is specified.",
+        )
+    ]
+    blocks = _model_read_blocks(_bundle(drafts, cited))
+    flat = "\n".join(
+        str(b.text or "") + "\n" + "\n".join(" ".join(map(str, r)) for r in (b.rows or ()))
+        for b in blocks
+    )
+
+    assert "Sandbox has no timeout" in flat
+    # The readable key, not the internal id.
+    assert "D-1" in flat and "excel:Task:1:" not in flat
+    # And the text the model was actually given, so what is checked is what was read.
+    assert "No timeout is specified" in flat
+    # Said plainly that nobody has agreed to it.
+    assert "not in the risk register" in flat.lower()
+
+
+def test_an_accepted_proposal_leaves_the_model_section_for_the_register():
+    """Accepting is what moves a row across. A proposal printed in both places
+    would be counted twice by a reader."""
+    from app.exports.document import _model_read_blocks
+
+    _propose([{"title": "Sandbox has no timeout", "cites": ["D-1"]}])
+    with session_scope() as session:
+        accept_draft(session, list_drafts(session, project_ids=[PROJECT])[0].id)
+        remaining = list_drafts(session, project_ids=[PROJECT])
+
+    blocks = _model_read_blocks(_bundle(remaining, reason="Nothing proposed yet."))
+    assert any("Nothing proposed yet." in str(b.text or "") for b in blocks)

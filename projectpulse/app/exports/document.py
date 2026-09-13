@@ -163,6 +163,13 @@ SECTIONS: tuple[SectionSpec, ...] = (
         requires="risks",
     ),
     SectionSpec(
+        "model_read",
+        "Proposed from task text by a model",
+        "Risks a model read out of the issue text, each with the tasks it cites. "
+        "Suggestions only - nothing here has been accepted into the register.",
+        requires="drafts",
+    ),
+    SectionSpec(
         "data_quality",
         "What this analysis could not use",
         "Rejected rows, uncertain identities and inferred dependencies. Kept in "
@@ -199,7 +206,7 @@ PRESETS: tuple[Preset, ...] = (
         "weekly",
         "Weekly status",
         "For the delivery team. Everything, including the source rows.",
-        ("summary", "findings", "evidence", "projection", "data_quality"),
+        ("summary", "findings", "evidence", "projection", "model_read", "data_quality"),
     ),
     Preset(
         "steering",
@@ -213,6 +220,7 @@ PRESETS: tuple[Preset, ...] = (
             "forecast",
             "scenarios",
             "risks",
+            "model_read",
             "data_quality",
         ),
     ),
@@ -639,6 +647,102 @@ def _risk_blocks(risks) -> tuple[Block, ...]:
     )
 
 
+def _model_read_blocks(drafts) -> tuple[Block, ...]:
+    """Risks a model proposed from task text, with the rows it read them from.
+
+    Its own section, below the register and below the findings, and the ordering
+    is the argument. A finding is a rule firing on a computed number. A register
+    entry is a judgement a person made and signed. This is neither: nobody
+    computed it and nobody has agreed to it yet, and a reader who cannot tell
+    the three apart cannot act on any of them.
+
+    So the claims are never merged into either list, the heading says where they
+    came from, and every one is printed with the tasks it cites. The citation is
+    the whole point - it is what turns "a model said this" into something a
+    reader can check in a minute against their own tracker. A proposal that
+    cannot point at a row never reaches the register and never reaches this
+    section either; `app/risks/drafts.py` discards it at source.
+
+    Accepted proposals are not here. Accepting one moves it into the register
+    above, which is exactly what accepting means.
+    """
+    if not drafts.drafts:
+        reason = (drafts.reason or "").strip()
+        return (
+            Block(
+                "paragraph",
+                reason or "Nothing has been proposed from this project's task text.",
+            ),
+        )
+
+    label = {t.task_id: (t.label or t.task_id) for t in drafts.cited_tasks}
+    text = {t.task_id: t for t in drafts.cited_tasks}
+
+    blocks: list[Block] = [
+        Block(
+            "paragraph",
+            "Read by a model from what people wrote in the tracker. Not computed, "
+            "not evidence, and not in the risk register: each is a suggestion "
+            "shown with the tasks it was drawn from so both can be judged. "
+            "Nothing here has been accepted by anyone.",
+        ),
+        Block(
+            "table",
+            columns=("Proposed risk", "Category", "Suggested rating", "Read from"),
+            rows=tuple(
+                (
+                    draft.title,
+                    draft.category or "-",
+                    draft.pre_rating or "not rated",
+                    ", ".join(
+                        label.get(i.strip(), i.strip())
+                        for i in (draft.cited_task_ids or "").split(",")
+                        if i.strip()
+                    )
+                    or "-",
+                )
+                for draft in drafts.drafts
+            ),
+        ),
+    ]
+
+    #: The task text itself, once per task rather than once per citation - the
+    #: same task is routinely cited by three proposals, and repeating its body
+    #: under each would treble the appendix and bury the claims it supports.
+    cited_ids: list[str] = []
+    for draft in drafts.drafts:
+        for raw in (draft.cited_task_ids or "").split(","):
+            task_id = raw.strip()
+            if task_id and task_id not in cited_ids:
+                cited_ids.append(task_id)
+
+    if cited_ids:
+        blocks.append(
+            Block(
+                "paragraph",
+                "The task text each proposal was read from, as the model saw it "
+                "- excerpted to the same length, so what is checked is what was "
+                "read.",
+            )
+        )
+        blocks.append(
+            Block(
+                "table",
+                columns=("Task", "Title", "Status", "Text the model was given"),
+                rows=tuple(
+                    (
+                        label.get(task_id, task_id),
+                        (text[task_id].title or "-") if task_id in text else "-",
+                        (text[task_id].status or "-") if task_id in text else "-",
+                        (text[task_id].text or "-") if task_id in text else "(task not found)",
+                    )
+                    for task_id in cited_ids
+                ),
+            )
+        )
+    return tuple(blocks)
+
+
 def _data_quality_blocks(bundle: InsightBundle) -> tuple[Block, ...]:
     """What the analysis could not use.
 
@@ -695,6 +799,7 @@ def build_document(
     scenarios=None,
     forecast=None,
     risks=None,
+    drafts=None,
     sections: Sequence[str] | None = None,
     project_name: str = "",
     generated_at: datetime | None = None,
@@ -749,6 +854,8 @@ def build_document(
             blocks = _forecast_blocks(forecast) if forecast is not None else ()
         elif spec.id == "risks":
             blocks = _risk_blocks(risks) if risks is not None else ()
+        elif spec.id == "model_read":
+            blocks = _model_read_blocks(drafts) if drafts is not None else ()
         elif spec.id == "data_quality":
             blocks = _data_quality_blocks(bundle)
         else:  # pragma: no cover - SECTIONS and this branch move together
