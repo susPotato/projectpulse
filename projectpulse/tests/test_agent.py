@@ -19,7 +19,14 @@ import types
 
 import pytest
 
-from app.agent.chat import ChatTurn, ChatUnavailable, _anthropic_chat, _gemini_chat, chat
+from app.agent.chat import (
+    SYSTEM_PROMPT,
+    ChatTurn,
+    ChatUnavailable,
+    _anthropic_chat,
+    _gemini_chat,
+    chat,
+)
 
 
 # --------------------------------------------------------------------------
@@ -41,7 +48,13 @@ def test_chat_dispatches_to_anthropic(monkeypatch):
     reply = chat([ChatTurn(role="user", content="hi")], provider="anthropic")
 
     assert reply == "hi from claude"
-    assert calls == [("anthropic", {"model": "claude-opus-5", "api_key": None, "base_url": None})]
+    assert len(calls) == 1
+    vendor, kw = calls[0]
+    assert vendor == "anthropic"
+    assert kw["model"] == "claude-opus-5"
+    assert kw["api_key"] is None and kw["base_url"] is None
+    # No project was named, so the system prompt is the bare one - no brief.
+    assert kw["system"] == SYSTEM_PROMPT
 
 
 def test_chat_dispatches_to_gemini(monkeypatch):
@@ -54,7 +67,38 @@ def test_chat_dispatches_to_gemini(monkeypatch):
     reply = chat([ChatTurn(role="user", content="hi")], provider="gemini")
 
     assert reply == "hi from gemini"
-    assert calls == [("gemini", {"model": "gemini-3.8-flash", "api_key": None})]
+    assert len(calls) == 1
+    vendor, kw = calls[0]
+    assert vendor == "gemini"
+    assert kw["model"] == "gemini-3.8-flash"
+    assert kw["api_key"] is None
+    assert kw["system"] == SYSTEM_PROMPT
+
+
+def test_a_project_brief_reaches_the_system_prompt_and_not_the_transcript(monkeypatch):
+    """Where the brief goes is the whole of this test.
+
+    A user turn is something the person said. Folding project data into one
+    would make "why did it answer that?" unanswerable, and the client resends
+    the transcript every turn - so the next request would carry it back as
+    though they had typed it.
+    """
+    captured: dict = {}
+    monkeypatch.setattr(
+        "app.agent.chat._anthropic_chat",
+        lambda turns, **kw: captured.update(kw, turns=turns) or "ok",
+    )
+
+    chat(
+        [ChatTurn(role="user", content="what is late?")],
+        provider="anthropic",
+        context="PROJECT: Demo\n6 past due.",
+    )
+
+    assert "6 past due." in captured["system"]
+    assert "PROJECT BRIEF" in captured["system"]
+    # The person's own words, unchanged.
+    assert [t.content for t in captured["turns"]] == ["what is late?"]
 
 
 def test_chat_names_the_provider_it_cannot_handle_yet():

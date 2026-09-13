@@ -97,6 +97,12 @@ export function Agent() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Which project the last reply was actually answered from, as the server
+      reports it. Read back rather than assumed: "a project is selected" and
+      "the model was given its data" are different claims, and showing the
+      first while meaning the second is how somebody comes to trust an answer
+      that was never grounded. */
+  const [grounded, setGrounded] = useState<string>("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -155,8 +161,13 @@ export function Agent() {
     try {
       const result = await send<ChatResponse>("/api/agent/chat", "POST", {
         messages: next,
+        /* Sent every turn, not captured once: nothing is held server-side, and
+           somebody who switches project mid-conversation means the next
+           question is about the new one. */
+        project: currentProject()?.id ?? "",
       });
       if (result.ok) {
+        setGrounded(result.grounded_in || "");
         setMessages([...next, { role: "assistant", content: result.reply }]);
       } else {
         setError(result.error || "The model could not be reached.");
@@ -202,9 +213,23 @@ export function Agent() {
         <>
           <Note>
             Unlike Insight or Risk, nothing here is checked against a rule or a
-            graph. The model can be wrong, and it has not been given this
-            project&rsquo;s live data - ask it about the schedule or the risk
-            register and it will say so rather than guess.
+            graph - the model can be wrong.{" "}
+            {grounded ? (
+              <>
+                It <strong>has</strong> been given {grounded}&rsquo;s computed
+                snapshot: task counts, what is past due, the milestones and what
+                the data cannot support. It is told to quote those figures
+                rather than work any out, so its answers should agree with the
+                Insight and Schedule pages - if one disagrees, those pages are
+                the ones that are right.
+              </>
+            ) : (
+              <>
+                Pick a project above and its computed snapshot is sent with each
+                question. Without one the model has no project data and will say
+                so rather than guess.
+              </>
+            )}
           </Note>
 
           <Card className="mt-4 flex h-[60vh] flex-col gap-3 overflow-y-auto">

@@ -1464,6 +1464,11 @@ export interface components {
         ChatRequest: {
             /** Messages */
             messages?: components["schemas"]["ChatMessage"][];
+            /**
+             * Project
+             * @default
+             */
+            project: string;
         };
         /** ChatResponse */
         ChatResponse: {
@@ -1472,6 +1477,11 @@ export interface components {
              * @default
              */
             reply: string;
+            /**
+             * Grounded In
+             * @default
+             */
+            grounded_in: string;
             /**
              * Ok
              * @default true

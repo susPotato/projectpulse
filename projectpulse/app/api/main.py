@@ -1802,6 +1802,7 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
     reply would repeat both the latency and the token cost for no new
     information.
     """
+    from app.agent.brief import build_brief
     from app.agent.chat import ChatTurn, ChatUnavailable, chat as run_chat
     from app.agent.link_fetch import fetch_and_extract, find_first_url
     from app.narration.store import load as load_narration_settings
@@ -1811,6 +1812,19 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
 
     settings_ = load_narration_settings()
     turns = [ChatTurn(role=m.role, content=m.content) for m in body.messages]
+
+    #: Rebuilt every turn rather than once per conversation. The snapshot moves
+    #: under a chat - an upload lands, a draft is accepted - and a brief pinned
+    #: at the first question would have the agent answering from data the pages
+    #: beside it stopped showing.
+    context = None
+    grounded_in = ""
+    if body.project.strip():
+        found = scope.resolve(body.project.strip())
+        if found is not None:
+            with session_scope() as session:
+                context = build_brief(session, found.canonical_id)
+            grounded_in = found.name or found.canonical_id
 
     last = turns[-1]
     if last.role == "user":
@@ -1832,11 +1846,12 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
             model=settings_.model,
             api_key=settings_.api_key or None,
             base_url=settings_.base_url or None,
+            context=context,
         )
     except ChatUnavailable as exc:
         return ChatResponse(reply="", ok=False, error=str(exc))
 
-    return ChatResponse(reply=reply, ok=True)
+    return ChatResponse(reply=reply, ok=True, grounded_in=grounded_in)
 
 
 @app.get("/api/insight", response_model=InsightBundle)

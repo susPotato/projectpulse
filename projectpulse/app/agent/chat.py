@@ -39,11 +39,25 @@ SYSTEM_PROMPT = """You are the assistant on ProjectPulseAI's Agent tab.
 
 ProjectPulseAI's other pages (Insight, Schedule, Risk) show only what a
 deterministic engine computed from real data - rules, dependency graphs and
-arithmetic over dates a person typed. You are different and must say so when
-it matters: you have not been given this project's live data, so you must
-never invent specific figures, dates or task statuses as if you had looked
-them up. If asked something only the Insight or Risk page could answer,
-say that plainly and suggest checking there instead of guessing.
+arithmetic over dates a person typed.
+
+When a PROJECT BRIEF block appears below, it is that same computed snapshot,
+for the project the user is looking at. Answer from it directly: name the
+tasks, quote the dates and counts it gives you. Two rules:
+
+- Quote, never recompute. Every figure in the brief was produced by the same
+  engine that drew the pages beside you, so repeating one keeps you consistent
+  with them and working one out yourself does not.
+- The brief's "WHAT THIS PROJECT'S DATA CANNOT SUPPORT" section is binding. If
+  it says there are no dependency edges, then this project has no critical
+  path and no blockers to describe, however reasonable a chain would sound.
+  Say the data does not carry it.
+
+If a question needs something the brief does not contain, say so plainly
+instead of estimating. Never invent a figure, date or status.
+
+With no PROJECT BRIEF below, you have not been given any project data - say so
+if asked something only the Insight or Risk page could answer.
 
 Be concise and direct. You may discuss project management, general
 questions, or anything else the user asks.
@@ -71,6 +85,7 @@ def chat(
     model: str = "",
     api_key: str | None = None,
     base_url: str | None = None,
+    context: str | None = None,
 ) -> str:
     """One reply, given the whole conversation so far - dispatched to
     whichever vendor `provider` names, the same set `narration/providers.py`
@@ -81,10 +96,22 @@ def chat(
     name = (provider or "").strip().lower()
     resolved_model = model or DEFAULT_MODELS.get(name, "")
 
+    #: The brief goes in the *system* prompt, not into a user turn. A user turn
+    #: is something the person said, and a transcript that quietly puts words in
+    #: their mouth makes "why did it say that?" unanswerable - and on the next
+    #: turn the client would resend it as though they had typed it.
+    system = SYSTEM_PROMPT
+    if context:
+        system = "\n".join(
+            [SYSTEM_PROMPT, "", "--- PROJECT BRIEF ---", context, "--- end of brief ---"]
+        )
+
     if name == "anthropic":
-        return _anthropic_chat(turns, model=resolved_model, api_key=api_key, base_url=base_url)
+        return _anthropic_chat(
+            turns, model=resolved_model, api_key=api_key, base_url=base_url, system=system
+        )
     if name == "gemini":
-        return _gemini_chat(turns, model=resolved_model, api_key=api_key)
+        return _gemini_chat(turns, model=resolved_model, api_key=api_key, system=system)
     raise ChatUnavailable(
         f"chat is not wired up for {provider!r} yet - only anthropic and "
         "gemini support the Agent tab's free-form chat today. Switch "
@@ -93,7 +120,12 @@ def chat(
 
 
 def _anthropic_chat(
-    turns: list[ChatTurn], *, model: str, api_key: str | None, base_url: str | None
+    turns: list[ChatTurn],
+    *,
+    model: str,
+    api_key: str | None,
+    base_url: str | None,
+    system: str = SYSTEM_PROMPT,
 ) -> str:
     try:
         import anthropic
@@ -110,7 +142,7 @@ def _anthropic_chat(
         response = client.messages.create(
             model=model or DEFAULT_MODELS["anthropic"],
             max_tokens=MAX_OUTPUT_TOKENS,
-            system=SYSTEM_PROMPT,
+            system=system,
             messages=[
                 {"role": "assistant" if t.role == "assistant" else "user", "content": t.content}
                 for t in turns
@@ -129,7 +161,13 @@ def _anthropic_chat(
     return text
 
 
-def _gemini_chat(turns: list[ChatTurn], *, model: str, api_key: str | None) -> str:
+def _gemini_chat(
+    turns: list[ChatTurn],
+    *,
+    model: str,
+    api_key: str | None,
+    system: str = SYSTEM_PROMPT,
+) -> str:
     """One reply, given the whole conversation so far.
 
     Stateless on purpose - the caller (the API route) holds no server-side
@@ -163,7 +201,7 @@ def _gemini_chat(turns: list[ChatTurn], *, model: str, api_key: str | None) -> s
             model=model or DEFAULT_MODELS["gemini"],
             contents=contents,
             config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
+                system_instruction=system,
                 max_output_tokens=MAX_OUTPUT_TOKENS,
             ),
         )
