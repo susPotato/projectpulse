@@ -1,0 +1,31 @@
+{
+    "generation_info": {
+        "timestamp": "2026-09-15T13:23:48.137632+00:00",
+        "main_model": "claude-sonnet-5",
+        "generator_version": "1.0.1",
+        "repo_path": "C:\\Users\\Potato\\Downloads\\hackathon\\pimsathon-main",
+        "commit_id": ""
+    },
+    "statistics": {
+        "total_components": 2080,
+        "leaf_nodes": 167,
+        "max_depth": 2
+    },
+    "files_generated": [
+        "overview.md",
+        "module_tree.json",
+        "first_module_tree.json",
+        "Agent_Orchestration_&_Execution_Engine.md",
+        "Application_Shell_&_Global_State.md",
+        "Codebase_Intelligence_&_Structure_Graph.md",
+        "Identity,_Accounts_&_Permissions.md",
+        "LLM_Provider_Abstraction_&_Model_Routing.md",
+        "Scheduling_&_External_Integrations.md",
+        "Security_&_Sandbox_Enforcement.md",
+        "UI_Administration_&_Management_Panels.md",
+        "UI_Content_Editors_&_Viewers.md",
+        "UI_Shared_Dialogs_&_Widgets.md",
+        "UI_Workflow_&_Task_Builder.md",
+        "UI_Workspace_&_Conversational_Interface.md"
+    ]
+}

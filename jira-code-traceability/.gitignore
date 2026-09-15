@@ -1,0 +1,29 @@
+# Virtualenv — 398 MB, regenerate with:
+#   uv venv --python 3.12 .venv-codewiki && uv pip install ./CodeWiki
+.venv-codewiki/
+__pycache__/
+*.pyc
+
+# Archive — 134 MB, over GitHub's 100 MB per-file limit
+hackathon.7z
+
+# Separate project (ProjectPulseAI, 788 MB), not part of this analysis
+hackathon/
+
+# Upstream clones — install from source instead of vendoring:
+#   CodeWiki: https://github.com/FSoft-AI4Code/CodeWiki
+#   LiSSA:    https://github.com/ardoco/lissa   (evaluated, dropped from pipeline)
+CodeWiki/
+lissa/
+
+# Generated/ephemeral
+traceability/codewiki-docs/temp/
+*.log
+
+# Credentials never belong in the repo; the Anthropic key lives in
+# Windows Credential Manager via `codewiki config set`
+.env
+credentials.json
+
+# LibreOffice lock files
+.~lock.*#

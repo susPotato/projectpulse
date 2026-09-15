@@ -1,0 +1,65 @@
+sandbox:
+  enabled: true
+  default_backend: appcontainer
+  allow_direct_fallback: false
+  allow_docker_fallback: false
+  block_network_by_default: true
+  deny_on_unknown_risk: true
+
+  backends:
+    appcontainer:
+      enabled: true
+      require_windows_version: "10_1809"
+      combine_with_job_object: true
+      default_timeout_sec: 120
+      default_memory_mb: 1024
+      default_cpu_percent: 50
+
+    windows_sandbox:
+      enabled: true
+      require_windows_edition:
+        - Pro
+        - Enterprise
+      require_windows_version: "10_1903"
+      default_timeout_sec: 300
+      default_memory_mb: 1024
+      disable_network: true
+      disable_clipboard: true
+      disable_printer: true
+      disable_audio_input: true
+      disable_video_input: true
+      disable_vgpu: true
+
+    integrity_job_wfp:
+      enabled: true
+      default_timeout_sec: 120
+      default_memory_mb: 512
+      default_cpu_percent: 50
+      block_network_with_wfp: true
+
+    chromium_style:
+      enabled: false
+      phase: 4
+
+risk_routing:
+  safe: integrity_job_wfp
+  moderate: integrity_job_wfp
+  high: appcontainer
+  critical: windows_sandbox
+  unknown: blocked
+
+limits:
+  max_actions_per_task: 10
+  max_tool_calls: 20
+  max_mcp_calls: 10
+  max_runtime_sec: 300
+  max_retry_count: 3
+
+policy:
+  block_source_code_access: true
+  block_system_discovery: true
+  block_secret_access: true
+  block_agent_discovery: true
+  block_mcp_discovery: true
+  block_prompt_injection: true
+  block_code_generation_in_cowork_mode: true

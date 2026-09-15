@@ -1,0 +1,61 @@
+# Sample Auto Model Assessment & Routing config (REFERENCE / DOCUMENTATION).
+#
+# NOTE: The running app stores config as JSON at ~/.cowork_local/config.json
+# (see config.py) — this YAML mirrors that structure only to document the
+# routing schema in the shape the original spec described. Copy the values into
+# the JSON "routing" section (or edit them in Settings → "Auto Model Routing").
+#
+# API keys are NEVER stored here — each provider reads its key from an env var
+# named by `api_key_env`; the app resolves it at call time and never logs it.
+
+providers:
+  - name: anthropic
+    api_key_env: ANTHROPIC_API_KEY
+    base_url: https://api.anthropic.com
+    models:
+      - id: claude-opus-4-8
+        tier: powerful
+      - id: claude-haiku-4-5-20251001
+        tier: fast
+  - name: codex                       # OpenAI-compatible
+    api_key_env: OPENAI_API_KEY
+    base_url: https://api.openai.com/v1
+    models:
+      - id: gpt-4o
+        tier: balanced
+      - id: gpt-4o-mini
+        tier: fast
+
+# Behaviour of the router (maps to config.json → "routing").
+routing:
+  switch_mode: manual          # "off" | "auto" | "manual" (global default)
+  policy: balanced             # "quality" | "cost" | "latency" | "balanced"
+  min_score_gain: 0.05         # only propose a switch if new model beats current by >= this
+  confirm_timeout_sec: 60      # (manual) keep current model if not confirmed in time
+  reassess_interval_hours: 24  # periodic reassess cadence; 0 disables it
+  per_provider_concurrency: 2  # max concurrent probe calls per provider (rate-limit safety)
+  judge_provider: anthropic    # provider of the fixed judge model ("" = active provider)
+  judge_model: claude-haiku-4-5-20251001   # one cheap judge for ALL candidates (fair grading)
+  auto_reassess_on_add: true   # reassess a newly-added model immediately
+
+  # Explicit candidate set to assess. Leave empty to auto-discover from each
+  # provider's currently-configured model.
+  candidates:
+    - {provider: anthropic, model_id: claude-opus-4-8, tier: powerful}
+    - {provider: anthropic, model_id: claude-haiku-4-5-20251001, tier: fast}
+    - {provider: codex,     model_id: gpt-4o,          tier: balanced}
+    - {provider: codex,     model_id: gpt-4o-mini,     tier: fast}
+
+  # Per-chat-screen Off/Auto/Manual toggle state. "" = follow switch_mode above.
+  surface_modes:
+    cowork: ""
+    co4e: ""
+    ai_edit: ""
+
+# Assessment results are written by the system (do NOT hand-edit) — the app
+# keeps them in ~/.cowork_local/assessments.json, with versioned backups under
+# assessments_history/<timestamp>.json. Shown here for reference only:
+assessments:
+  last_updated: null           # ISO-8601 UTC, e.g. "2026-07-22T09:30:00+00:00"
+  policy: balanced
+  results: {}                  # { "anthropic/claude-opus-4-8": { ...ModelAssessment... }, ... }
