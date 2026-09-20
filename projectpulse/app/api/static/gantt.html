@@ -82,6 +82,7 @@
   <a href="/projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Projects</span></a>
   <a href="/gantt" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
   <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
+  <a href="/traceability"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="4" cy="18" r="1.6"/></svg><span>Trace</span></a>
   <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
   <a href="/team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 20a6 6 0 0 0-2-4.5"/></svg><span>Team</span></a>
   <a href="/reports"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Reports</span></a>
@@ -108,6 +109,13 @@
   </div>
   <p class="sub" id="sub">loading...</p>
   <div id="main"></div>
+
+  <!-- Traceability folded onto the same rows the chart draws. Rendered here
+       rather than inside the chart on purpose: `gantt.js` is shared with the
+       React Calculation tab, so a column added there would appear on a screen
+       that has no traceability data and no way to explain it. Absent unless
+       this project has a run. -->
+  <div id="trace-panel" hidden></div>
 </div>
 
 <script>
@@ -387,11 +395,252 @@
         }
         try {
           render(res.body);
+          drawTraceability(res.body);
         } catch (e) {
           fail("Could not draw the schedule", e.message, null);
         }
       });
     });
+
+  /* What the code says about the work each schedule row stands for.
+
+     The chart's rows are the tracker's keyed issues; the features live in the
+     unkeyed rows beneath them. `/api/traceability/rollup` folds the verdicts
+     onto those keys so a bar can report how much of its work the code backs
+     up. Silent when this project has no traceability run - most do not, and
+     an empty panel on every other project would be noise. */
+  function drawTraceability(bundle) {
+    var panel = document.getElementById("trace-panel");
+    if (!panel) return;
+    var project = (bundle && bundle.project_id) || currentProject();
+    var url = "/api/traceability/rollup" +
+      (project ? "?project=" + encodeURIComponent(project) : "");
+
+    fetch(url).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.run || !data.parents) return;
+        var keys = Object.keys(data.parents);
+        if (!keys.length) return;
+
+        var rows = (bundle && bundle.rows) || [];
+        /* Every row on the chart, in the chart's order - including the ones
+           with no features. Listing only the rows that carry work would hide
+           the finding: that sixteen of seventeen issues carry none. Any key
+           the export has but the chart does not is appended after. */
+        var ordered = rows.map(function (r) { return r.label; });
+        keys.forEach(function (k) {
+          if (ordered.indexOf(k) === -1) ordered.push(k);
+        });
+
+        var titles = {};
+        rows.forEach(function (r) { titles[r.label] = r.title || ""; });
+
+        var total = 0, carried = 0;
+        keys.forEach(function (k) {
+          total += data.parents[k].features;
+          if (data.parents[k].features > 0) carried += 1;
+        });
+
+        /* Which rows are drawn as bars, and which of the rows that actually
+           carry work are not. This is the comparison worth making: a chart
+           can look complete while the row holding every feature is missing
+           from it, because an undated row is correctly kept off the Gantt
+           and then reads as nothing rather than as an omission. */
+        var isDated = {};
+        rows.forEach(function (r) {
+          isDated[r.label] = !!(r.start || r.planned_end);
+        });
+        var undatedCarriers = keys.filter(function (k) {
+          return data.parents[k].features > 0 && !isDated[k];
+        });
+        var featuresOffChart = undatedCarriers.reduce(function (n, k) {
+          return n + data.parents[k].features;
+        }, 0);
+
+        /* Every status the export uses, in the order the chart's own rows
+           report them, so the bar below is labelled with the team's words
+           rather than a done/not-done split we invented. Deciding which of
+           "Release it" / "In Progress" / "To Do" counts as finished is the
+           tracker owner's call, not this page's. */
+        var statusNames = [];
+        keys.forEach(function (k) {
+          Object.keys(data.parents[k].statuses || {}).forEach(function (s) {
+            if (statusNames.indexOf(s) === -1) statusNames.push(s);
+          });
+        });
+        var FILLS = ["var(--viz-plan)", "var(--amber)", "var(--ink-3)",
+                     "var(--purple)", "var(--blue)"];
+
+        var html = '<h2 style="font-size:15px;margin:26px 0 4px">' +
+          "What the code says about these rows</h2>";
+
+        if (undatedCarriers.length) {
+          html += '<p class="sub" style="border-left:3px solid var(--orange);' +
+            'padding-left:10px"><b>' + featuresOffChart +
+            " of the " + total + " feature rows in this backlog are not on the " +
+            "chart above.</b> They sit under " +
+            undatedCarriers.map(function (k) { return "<b>" + k + "</b>"; }).join(", ") +
+            ", which carr" + (undatedCarriers.length === 1 ? "ies" : "y") +
+            " no dates and " + (undatedCarriers.length === 1 ? "is" : "are") +
+            " therefore drawn as nothing. The bars you can see are the " +
+            (rows.length - undatedCarriers.length) +
+            " planning tasks, which carry no product work at all.</p>";
+        } else {
+          html += '<p class="sub">' + total + " feature rows sit beneath " +
+            carried + " of the " + ordered.length + " issues on this chart.</p>";
+        }
+
+        // Claimed-versus-verified, for the issues that carry work.
+        keys.forEach(function (key) {
+          var p = data.parents[key];
+          if (!p.features) return;
+          var adjudicated = p.corroborated + p.contradicted + p.unverified;
+          var segs = statusNames.map(function (s, i) {
+            var n = (p.statuses || {})[s] || 0;
+            if (!n) return "";
+            return '<span title="' + s + ': ' + n + '" style="display:inline-block;' +
+              "height:12px;width:" + (100 * n / p.features) + "%;background:" +
+              FILLS[i % FILLS.length] + ';"></span>';
+          }).join("");
+
+          html += '<div style="margin:14px 0 4px"><b>' + key + "</b> " +
+            '<span class="asof">' + (titles[key] || "") +
+            (isDated[key] ? "" : " · no dates, so not on the chart") +
+            "</span></div>" +
+            '<div style="display:flex;width:100%;border-radius:3px;overflow:hidden;' +
+            'background:var(--rule-2)">' + segs + "</div>" +
+            '<p class="sub" style="margin:4px 0 0">' +
+            statusNames.filter(function (s) { return (p.statuses || {})[s]; })
+              .map(function (s, i) {
+                return '<span style="display:inline-block;width:8px;height:8px;' +
+                  "background:" + FILLS[statusNames.indexOf(s) % FILLS.length] +
+                  ';margin-right:4px;border-radius:2px"></span>' +
+                  s + " " + p.statuses[s];
+              }).join(" &nbsp; ") +
+            " &nbsp;&mdash;&nbsp; of " + p.features + " features, <b>" +
+            p.corroborated + "</b> are backed by code" +
+            /* Of those, how many had every cited name checked against the
+               source. The distinction the rest of this page cannot make:
+               one number is the model's conclusion, the other was verified
+               without it. */
+            (p.grounded ? ' (<b style="color:var(--green)">' + p.grounded +
+              "</b> with every cited name found in the file)" : "") +
+            (p.unverified ? ", " + p.unverified + " could not be verified " +
+              "from the candidate code" : "") +
+            (p.conflicts ? ', <b style="color:var(--orange)">' + p.conflicts +
+              " status conflict" + (p.conflicts === 1 ? "" : "s") + "</b>" : "") +
+            ".</p>";
+        });
+
+        // The rest of the chart's rows, named, so "carries nothing" is
+        // visible as a fact about them rather than an omission.
+        var bare = ordered.filter(function (k) {
+          return !data.parents[k] || !data.parents[k].features;
+        });
+        if (bare.length) {
+          html += '<p class="sub" style="margin-top:14px">The other ' +
+            bare.length + " issue" + (bare.length === 1 ? "" : "s") +
+            " carry no feature rows, so no code should back them: " +
+            bare.map(function (k) {
+              return "<b>" + k + "</b>" +
+                (titles[k] ? " " + titles[k].replace(/^\[Planning Task\]\s*/, "") : "");
+            }).join("; ") + ".</p>";
+        }
+
+        html += '<p class="sub" style="margin-top:10px">' +
+          "&ldquo;Backed by code&rdquo; means code exists that plausibly " +
+          "implements the feature. It does not mean the feature works — " +
+          "the analysis reads code, it does not run it. " +
+          '<a href="/traceability?project=' + encodeURIComponent(project) +
+          '">Open Traceability</a></p>';
+
+        panel.innerHTML = html;
+        panel.hidden = false;
+        markTraceability(data, isDated);
+      })
+      .catch(function () { /* no traceability is not a schedule failure */ });
+  }
+
+  /* Put what the code says onto the chart itself.
+
+     Done by decorating the rendered label column rather than by teaching
+     `gantt.js` about verdicts: that renderer is shared with the React
+     Calculation tab, which has no traceability data, and a chart component
+     that knows about Jira statuses would be the wrong shape for both.
+
+     Matching is on the row's own key text, so a row that `gantt.js` merged
+     or dropped simply does not get a badge - it cannot end up on the wrong
+     row.
+
+     Two things are marked, and the second matters even when the first finds
+     nothing. Conflicts are the alarm. The coverage badge is the ordinary
+     state of the world: how much of the work a row stands for the code
+     actually backs up. A chart that only lit up on conflicts would read as
+     "all clear" on a project where nothing had been checked at all. */
+  function markTraceability(data, isDated) {
+    var left = document.querySelector("#main .g-left");
+    if (!left) return;
+
+    function span(cls, text, title) {
+      var s = document.createElement("span");
+      s.className = cls;
+      s.textContent = text;
+      if (title) s.title = title;
+      return s;
+    }
+
+    function decorate(line, key, p) {
+      if (!p || !p.features) return;
+      var adjudicated = p.corroborated + p.contradicted + p.unverified;
+      line.appendChild(span(
+        "g-coverage",
+        p.corroborated + "/" + p.features + " in code" +
+        (p.grounded ? " ✓" + p.grounded : ""),
+        p.features + " feature rows sit under " + key + ". " +
+        p.corroborated + " are backed by code" +
+        (p.grounded ? " (" + p.grounded + " with every cited name checked "
+          + "against the source)" : "") +
+        (p.unverified ? ", " + p.unverified + " could not be verified" : "") +
+        (adjudicated < p.features
+          ? ", " + (p.features - adjudicated) + " not yet analysed" : "") +
+        ". Backed by code means code exists that plausibly implements it - " +
+        "not that it works."));
+      if (p.conflicts) {
+        line.appendChild(span(
+          "g-conflict", p.conflicts + " conflict" + (p.conflicts === 1 ? "" : "s"),
+          "Tracker status and code disagree on " + p.conflicts + " of them. " +
+          "See the Traceability page."));
+      }
+    }
+
+    Array.prototype.forEach.call(left.querySelectorAll(".g-row"), function (line) {
+      var idEl = line.querySelector(".g-id");
+      if (!idEl) return;
+      var key = idEl.textContent.trim();
+      decorate(line, key, data.parents[key]);
+    });
+
+    /* The rows with no dates are collapsed by `gantt.js` into one grey
+       "N tasks, no dates" strip. That is right for tasks nobody dated and
+       nobody is waiting on - and wrong when one of them is the issue the
+       entire product backlog hangs off, which is exactly this export. Name
+       the carriers there so the most important row on the page stops
+       reading as a footnote. */
+    var offChart = Object.keys(data.parents).filter(function (k) {
+      return data.parents[k].features && !isDated[k];
+    });
+    if (!offChart.length) return;
+    var band = left.querySelector(".g-undated-row");
+    if (!band) return;
+
+    var title = band.querySelector(".g-title");
+    if (title) {
+      title.textContent = offChart.join(", ") + " · no dates";
+      title.className = "g-title g-carrier";
+    }
+    band.className = "g-row g-undated-row g-carrier-row";
+    offChart.forEach(function (k) { decorate(band, k, data.parents[k]); });
+  }
 })();
 </script>
 </main>

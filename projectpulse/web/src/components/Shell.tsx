@@ -28,6 +28,11 @@ const TABS = [
   { href: "/projects", label: "Projects" },
   { href: "/gantt", label: "Schedule" },
   { href: "/insight", label: "Insight" },
+  /* Traceability is served as a hand-written page, not by this bundle (it
+     reads another repository's run directory - see app/api/tracelink_view.py).
+     It still belongs in the rail: a page reachable only by typing its URL is
+     a page nobody opens. A plain <a> leaves the bundle and that is correct. */
+  { href: "/traceability", label: "Trace" },
   { href: "/risk", label: "Risk" },
   { href: "/team", label: "Team" },
   { href: "/reports", label: "Reports" },
@@ -83,6 +88,14 @@ const ICONS: Record<string, ReactNode> = {
     <>
       <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
       <path d="M14 3v5h5M9 13h6M9 17h4" />
+    </>
+  ),
+  "/traceability": (
+    <>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <circle cx="4" cy="6" r="1.6" />
+      <circle cx="4" cy="12" r="1.6" />
+      <circle cx="4" cy="18" r="1.6" />
     </>
   ),
   "/agent": (

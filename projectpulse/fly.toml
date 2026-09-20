@@ -12,6 +12,10 @@ primary_region = 'sin'
 [env]
   PORT = '8080'
   PULSE_NARRATION = '0'
+  # Where the Traceability page looks for run snapshots. Baked into the image
+  # by the Dockerfile; a project with no run there reads "Not traced" rather
+  # than erroring.
+  TRACELINK_RUNS = '/app/traceability_runs'
 
 [http_service]
   internal_port = 8080

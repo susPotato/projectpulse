@@ -42,6 +42,7 @@ const PROJECT_LINKS = [
   { href: "/project/dashboard", label: "Dashboard" },
   { href: "/gantt", label: "Schedule" },
   { href: "/insight", label: "Insight" },
+  { href: "/traceability", label: "Trace" },
   { href: "/risk", label: "Risk" },
   { href: "/team", label: "Team" },
   { href: "/reports", label: "Reports" },

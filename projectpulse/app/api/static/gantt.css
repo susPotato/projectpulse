@@ -120,6 +120,57 @@
   font-size: 11.5px;
 }
 
+/* Status conflicts, put on the chart by gantt.html after the render. Styled
+   here beside the other row badges so the label column has one visual
+   vocabulary - `.g-slip` is schedule slip, `.g-late` is overdue, this is the
+   tracker disagreeing with the code. */
+/* How much of the work a row stands for is backed by code. Quiet by design:
+   this is the ordinary state of the world, shown on every carrying row, and
+   it must not compete with `.g-late` or `.g-conflict`, which are exceptions. */
+.g-coverage {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0 6px;
+  margin-left: 6px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The undated band when it turns out to be carrying real work. `gantt.js`
+   greys it out as a footnote, which is right for tasks nobody dated and
+   wrong when the row holds the whole backlog. */
+/* The label gutter is a fixed width, and this row carries more than the
+   others: a name plus two badges. Let it grow and wrap instead of crushing
+   its own text, which is what happened when it was pinned to one row
+   height - the badges broke mid-word and the name truncated to an ellipsis. */
+.g-carrier-row {
+  opacity: 1;
+  height: auto;
+  min-height: var(--g-row);
+  flex-wrap: wrap;
+  row-gap: 2px;
+  padding-bottom: 4px;
+}
+.g-carrier {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.g-conflict {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--orange);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0 6px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
 .g-empty { color: var(--ink-3); padding: 20px; }
 
 /* --- plot -------------------------------------------------------------- */

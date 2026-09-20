@@ -27,6 +27,10 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY app ./app
 COPY scripts ./scripts
+# Traceability run snapshots. Unlike everything under `data/`, these cannot be
+# regenerated in the container - producing one costs money and needs an API key
+# the image does not have - so they ship as artifacts. See traceability_runs/README.md.
+COPY traceability_runs ./traceability_runs
 
 # Editable, deliberately: it leaves the code at /app so `_bootstrap.REPO`,
 # `settings.data_root` and `scripts.replay`'s subprocess cwd all point at a real

@@ -1,0 +1,43 @@
+{
+ "schema_version": 1,
+ "produced_by": "shadow",
+ "meta": {},
+ "payload": {
+  "counts": {
+   "eligible_files": 158,
+   "cited": 77,
+   "retrieved_only": 61,
+   "unclaimed": 20
+  },
+  "groups": [
+   {
+    "directory": "ui",
+    "n_symbols": 22,
+    "files": [
+     "ui/co4e_agent_dialog.py",
+     "ui/ext_connector_dialog.py",
+     "ui/mcp_servers_dialog.py",
+     "ui/osutil.py"
+    ]
+   },
+   {
+    "directory": "core/routing",
+    "n_symbols": 14,
+    "files": [
+     "core/routing/selector.py",
+     "core/routing/scorer.py",
+     "core/routing/classifier.py"
+    ]
+   },
+   {
+    "directory": "core",
+    "n_symbols": 9,
+    "files": [
+     "core/cron.py",
+     "core/agent_roles.py"
+    ]
+   }
+  ],
+  "described": null
+ }
+}

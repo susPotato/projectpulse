@@ -1,0 +1,222 @@
+{
+ "schema_version": 1,
+ "produced_by": "diagnosis",
+ "meta": {
+  "source": "../Jira Cowork Local_0913.xlsx",
+  "rows_scope": "unkeyed",
+  "project": "CoWorkLocal"
+ },
+ "payload": {
+  "rows": 173,
+  "columns": 421,
+  "populated": [
+   [
+    "Project",
+    173,
+    1
+   ],
+   [
+    "Summary",
+    173,
+    173
+   ],
+   [
+    "Issue Type",
+    173,
+    1
+   ],
+   [
+    "Status",
+    173,
+    3
+   ],
+   [
+    "Description",
+    173,
+    11
+   ],
+   [
+    "Component/s",
+    171,
+    28
+   ],
+   [
+    "Fix Version/s",
+    149,
+    3
+   ],
+   [
+    "Due Date",
+    4,
+    1
+   ]
+  ],
+  "constant": [
+   [
+    "Project",
+    "CoWorkLocal"
+   ],
+   [
+    "Issue Type",
+    "Task"
+   ]
+  ],
+  "relationships": {
+   "Sub-Tasks": 0,
+   "Linked Issues": 0,
+   "Related Issue ID": 0,
+   "Related JIRA ID": 0,
+   "Epic Name": 0,
+   "Sprint": 0,
+   "Epic Link": 0,
+   "Parent Link": 0
+  },
+  "schedule": {
+   "Due Date": 4,
+   "Original Estimate": 0,
+   "Remaining Estimate": 0,
+   "Time Spent": 0,
+   "Progress": 0,
+   "Σ Progress": 0,
+   "Σ Time Spent": 0,
+   "Σ Remaining Estimate": 0,
+   "Σ Original Estimate": 0,
+   "Discussion / Progress Update": 0,
+   "Task progress": 0,
+   "Story Points": 0,
+   "Original story points": 0,
+   "Target start": 0,
+   "Target end": 0,
+   "Start Date": 0,
+   "Plan Start Date": 0,
+   "Planned End Date": 0,
+   "Baseline start date": 0,
+   "Baseline end date": 0,
+   "Planned Start": 0,
+   "PercentDone": 0
+  },
+  "automatic": {
+   "Created": 0,
+   "Last Viewed": 0,
+   "Updated": 0,
+   "Resolved": 0,
+   "Resolved Date": 0
+  },
+  "partitions": [
+   [
+    "Status",
+    3,
+    1.0
+   ],
+   [
+    "Description",
+    11,
+    1.0
+   ],
+   [
+    "Component/s",
+    28,
+    0.988
+   ],
+   [
+    "Fix Version/s",
+    3,
+    0.861
+   ]
+  ],
+  "order_runs": {
+   "Status": [
+    24,
+    3
+   ],
+   "Description": [
+    11,
+    11
+   ],
+   "Component/s": [
+    44,
+    28
+   ],
+   "Fix Version/s": [
+    10,
+    3
+   ]
+  },
+  "text_structure": {
+   "Description": {
+    "date_serials": {
+     "46244": "2026-08-10",
+     "46246": "2026-08-12"
+    },
+    "inline_fields": {
+     "BA": 173,
+     "Developer": 168,
+     "PO": 152,
+     "Ngày nhận": 4,
+     "Ghi chú": 4
+    }
+   }
+  },
+  "title_convention": {
+   "titles": 173,
+   "with_separator": 148,
+   "distinct_heads": 141,
+   "shared_heads": 6,
+   "rows_under_a_shared_head": 38,
+   "worst": [
+    [
+     "Cowork Chat",
+     10
+    ],
+    [
+     "Monitoring",
+     9
+    ],
+    [
+     "Dashboard",
+     6
+    ],
+    [
+     "AI Edit",
+     6
+    ],
+    [
+     "Workspace",
+     5
+    ]
+   ]
+  },
+  "findings": [
+   {
+    "level": "note",
+    "topic": "sparse export",
+    "detail": "Only 8 of 421 columns carry any value. The rest are the tracker's global field catalogue, not this project's data."
+   },
+   {
+    "level": "blocker",
+    "topic": "no recorded dependencies",
+    "detail": "Every relationship field is empty (Epic Link, Epic Name, Linked Issues, Parent Link, Related Issue ID, Related JIRA ID). Nothing in this export says which work item depends on which, so any dependency shown downstream is inferred and must be labelled as such."
+   },
+   {
+    "level": "note",
+    "topic": "row order is structure",
+    "detail": "The 173 rows form only 11 contiguous runs of 'Description' (11 distinct values). The sheet was written in blocks of Description, which is ordering no field records."
+   },
+   {
+    "level": "note",
+    "topic": "row order is structure",
+    "detail": "The 173 rows form only 44 contiguous runs of 'Component/s' (28 distinct values). The sheet was written in blocks of Component/s, which is ordering no field records."
+   },
+   {
+    "level": "warning",
+    "topic": "dates buried in text",
+    "detail": "'Description' contains raw spreadsheet date serials (46244, 46246 = 2026-08-10, 2026-08-12). They are invisible to every date field in the tracker."
+   },
+   {
+    "level": "note",
+    "topic": "fields inlined in text",
+    "detail": "'Description' carries key:value pairs — BA (173), Developer (168), PO (152), Ngày nhận (4). These are real fields the export does not have columns for."
+   }
+  ]
+ }
+}

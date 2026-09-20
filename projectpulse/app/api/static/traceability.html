@@ -1,0 +1,803 @@
+<!doctype html>
+<!--
+  Jira-to-code traceability.
+
+  Hand-written rather than part of the React app, for the same reason as
+  /settings: the data comes from a different repository's run directory, and
+  the bundle must not acquire a dependency on that pipeline existing. It uses
+  the shared shell tokens, so it follows the theme like every other page.
+
+  Read-only. The page never triggers a model call - every figure on it was
+  produced by a `tracelink` run that already happened and already reported
+  what it cost.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Traceability - ProjectPulse</title>
+  <!-- Sets data-theme before the stylesheet paints anything, so a saved or
+       system dark preference does not flash light first. Kept identical
+       across all rail copies - see theme.js. -->
+  <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <link rel="stylesheet" href="/static/shell.css">
+  <script src="/static/theme.js" defer></script>
+  <style>
+    body { margin: 0; background: var(--bg); color: var(--ink);
+           font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 22px 20px 70px; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    .sub { color: var(--ink-2); font-size: 13px; margin-bottom: 18px; }
+    .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
+           text-transform: uppercase; color: var(--ink-3); }
+
+    .tiles { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .tile { background: var(--surface); border: 1px solid var(--rule);
+            border-radius: 8px; padding: 9px 13px; min-width: 96px; }
+    .tile b { display: block; font-size: 19px; font-weight: 650; }
+    .tile .lbl { margin-top: 1px; }
+
+    .subtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule);
+               margin-bottom: 16px; }
+    .subtabs button { background: none; border: 0; border-bottom: 2px solid transparent;
+                      color: var(--ink-2); font: inherit; font-size: 13px;
+                      padding: 8px 14px; cursor: pointer; }
+    .subtabs button[aria-current=page] { color: var(--ink); font-weight: 600;
+                                         border-bottom-color: var(--navy); }
+
+    .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+           margin-bottom: 14px; }
+    input[type=search], select { padding: 7px 10px; font: inherit; font-size: 13px;
+      color: var(--ink); background: var(--surface);
+      border: 1px solid var(--rule); border-radius: 6px; }
+    input[type=search] { min-width: 260px; }
+
+    details.card { background: var(--surface); border: 1px solid var(--rule);
+                   border-radius: 8px; margin-bottom: 8px; }
+    details.card > summary { padding: 10px 13px; cursor: pointer; display: flex;
+                             gap: 9px; align-items: center; list-style: none; }
+    details.card > summary::-webkit-details-marker { display: none; }
+    details.card[open] > summary { border-bottom: 1px solid var(--rule-2); }
+    .body { padding: 13px; }
+    .sum { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px;
+           border: 1px solid var(--rule); color: var(--ink-3); white-space: nowrap; }
+    .t-corroborated { color: var(--green); border-color: currentColor; }
+    .t-contradicted { color: var(--red); border-color: currentColor; }
+    .t-unverified { color: var(--ink-3); }
+    .t-conflict { color: var(--orange); border-color: currentColor; font-weight: 600; }
+    .t-scope { color: var(--purple); border-color: currentColor; }
+
+    code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                  font-size: 12.5px; }
+    ul.files { margin: 5px 0 0; padding-left: 18px; }
+    ul.files li { margin: 2px 0; }
+    .why { color: var(--ink-3); font-size: 11.5px; }
+    .ev { border-left: 2px solid var(--rule); padding: 3px 0 3px 10px; margin: 6px 0; }
+    .muted { color: var(--ink-2); }
+    .empty { padding: 44px; text-align: center; color: var(--ink-3);
+             background: var(--surface); border: 1px solid var(--rule);
+             border-radius: 8px; }
+    .note { background: var(--surface); border: 1px solid var(--rule);
+            border-left: 3px solid var(--amber); border-radius: 6px;
+            padding: 10px 13px; margin-bottom: 14px; font-size: 12.5px;
+            color: var(--ink-2); }
+    h3 { margin: 15px 0 5px; font-size: 11px; letter-spacing: .07em;
+         text-transform: uppercase; color: var(--ink-3); }
+  </style>
+</head>
+<body>
+<div class="shell">
+<nav class="rail" aria-label="Sections">
+  <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
+  <button type="button" class="theme-toggle" data-theme-toggle><svg viewBox="0 0 24 24"></svg></button>
+  <a href="/programs"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Program</span></a>
+  <a href="/projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Projects</span></a>
+  <a href="/gantt"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
+  <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
+  <a href="/traceability" aria-current="page"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="4" cy="18" r="1.6"/></svg><span>Trace</span></a>
+  <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
+  <a href="/team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 20a6 6 0 0 0-2-4.5"/></svg><span>Team</span></a>
+  <a href="/reports"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Reports</span></a>
+  <a href="/agent"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 14h6"/></svg><span>Agent</span></a>
+  <a href="/settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a>
+</nav>
+<main>
+<div class="wrap">
+  <h1>Traceability</h1>
+  <div class="sub" id="sub">Loading&hellip;</div>
+
+  <!-- Which project this page shows. Same rule as /gantt, and deliberately
+       the same localStorage key: picking a project here and then clicking
+       Schedule or Insight must not show two different projects. -->
+  <div class="bar" style="margin-bottom:16px">
+    <label for="project" class="lbl" style="align-self:center">Project</label>
+    <select id="project"></select>
+    <span class="muted" id="runinfo"></span>
+  </div>
+
+  <div id="gaps"></div>
+  <div class="tiles" id="tiles"></div>
+
+  <nav class="subtabs" id="subtabs">
+    <button type="button" data-view="conflicts" aria-current="page">Status conflicts</button>
+    <button type="button" data-view="tickets">Tickets</button>
+    <button type="button" data-view="code">Code</button>
+    <button type="button" data-view="shadow">Shadow scope</button>
+  </nav>
+
+  <div id="main"><div class="empty">Loading&hellip;</div></div>
+</div>
+</main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var D = null, view = "conflicts", q = "", fVerdict = "", fStatus = "";
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function tiles() {
+    var t = D.totals, c = D.corpus;
+    var items = [
+      ["tickets", t.tickets], ["with candidates", t.with_candidates],
+      ["adjudicated", t.adjudicated], ["status conflicts", t.conflicts],
+      ["corroborated", t.corroborated], ["contradicted", t.contradicted],
+      ["unverified", t.unverified], ["files", c ? c.files : "—"],
+      ["verified in source", D.has_grounding ? (t.grounded + "/" + t.corroborated) : "—"],
+      ["inferred links", (D.links || []).length], ["run cost", "$" + t.cost]
+    ];
+    document.getElementById("tiles").innerHTML = items.map(function (kv) {
+      return '<div class="tile"><b>' + esc(kv[1]) + '</b><div class="lbl">' +
+             esc(kv[0]) + "</div></div>";
+    }).join("");
+    document.getElementById("sub").textContent =
+      D.run + (c ? " · " + c.symbols + " symbols across " + c.files +
+                   " files, via " + c.analyzer : "");
+    document.getElementById("gaps").innerHTML =
+      (D.gaps.length
+        ? '<div class="note"><b>Not produced yet.</b> ' +
+          D.gaps.map(esc).join("<br>") + "</div>"
+        : "") + sourceNotes();
+  }
+
+  /* What the source export can and cannot support.
+
+     Shown at the top rather than buried in a report, because it governs how
+     everything below should be read: on an export with no recorded links,
+     "related work" is an inference and a reader has to know that before
+     they act on one. Blockers and warnings only - the notes are detail for
+     whoever runs the diagnostic. */
+  function sourceNotes() {
+    var d = D.diagnosis || {};
+    var findings = (d.findings || []).filter(function (f) {
+      return f.level === "blocker" || f.level === "warning";
+    });
+    if (!findings.length) return "";
+    return '<div class="note"><b>About the source export</b> — ' +
+      d.rows + " rows, " + (d.populated || []).length + " of " + d.columns +
+      " columns carry anything." +
+      findings.map(function (f) {
+        return "<br><b>" + esc(f.level) + ":</b> " + esc(f.detail);
+      }).join("") + "</div>";
+  }
+
+  /* How to find this ticket again in the source.
+
+     The tracker key first when there is one. In this export there is not:
+     the 173 feature rows are unkeyed sub-rows, which is itself the finding,
+     so the locator that always works is where the row physically sits in
+     the sheet. `T0032` is ours and stable within a run - enough to name a
+     ticket in a conversation - but it means nothing outside this tool, so
+     it is shown last and dimmed. */
+  function locator(r) {
+    var bits = [];
+    if (r.key) bits.push('<span class="tag">' + esc(r.key) + "</span>");
+    if (r.source_row) {
+      bits.push('<span class="tag" title="Row ' + r.source_row +
+        " of the exported sheet" + (r.source_sheet ? " ‘" +
+        esc(r.source_sheet) + "’" : "") + '">' +
+        (r.source_sheet ? esc(r.source_sheet) + "!" : "") +
+        "row " + r.source_row + "</span>");
+    }
+    if (!r.key && r.parent) {
+      bits.push('<span class="why" title="This row carries no key of its own; ' +
+        'it sits under this issue">under ' + esc(r.parent) + "</span>");
+    }
+    bits.push('<span class="why">' + esc(r.uid) + "</span>");
+
+    /* People and dates the export inlined into its description field. Shown
+       beside the locator because that is what they are: the only record of
+       who owns this and when it arrived, and they exist nowhere the tracker
+       can filter on. */
+    var inline = r.inline || {};
+    Object.keys(inline).forEach(function (k) {
+      if (/\(date\)$/.test(k)) return;               // shown via its label
+      var v = inline[k];
+      var decoded = inline[k + " (date)"];
+      bits.push('<span class="why" title="From the description text, not a ' +
+        'tracker field">' + esc(k) + ": " + esc(decoded || v) +
+        (decoded ? " (raw " + esc(v) + ")" : "") + "</span>");
+    });
+    return bits.join(" ");
+  }
+
+  /* Whether the names a verdict cited are actually in the files it named.
+
+     This is the only claim on the page that was checked rather than
+     produced: no model, no network, just the source. It is shown next to
+     the verdict precisely because the verdict is the part that cannot be
+     checked — a reader deserves to see which of the two they are looking
+     at. Silent when `verify` has not been run, rather than implying a
+     clean result nobody established. */
+  function groundTag(r) {
+    var g = r.grounding;
+    if (!g || g.status === "uncited") return "";
+    if (g.status === "grounded") {
+      var n = (g.checks || []).length;
+      return '<span class="tag t-corroborated" title="All ' + n +
+        " cited name(s) were found in the files named. Checked against the " +
+        'source, not asserted by the model.">\u2713 cited names verified</span>';
+    }
+    return '<span class="tag t-contradicted" title="A name this verdict ' +
+      'cites is not in the file it names.">citation not found</span>';
+  }
+
+  function groundNote(r) {
+    var g = r.grounding;
+    if (!g || !g.checks || !g.checks.length) return "";
+    var ok = g.checks.filter(function (c) {
+      return c.status === "defined" || c.status === "present";
+    }).length;
+    return ' <span class="why">\u2014 ' + ok + " of " + g.checks.length +
+      " checked against the source</span>";
+  }
+
+  /* Per-citation, because a verdict can be right about one file and wrong
+     about another, and "partly grounded" at the card level does not say
+     which. `present` is not a fault: the name is in the file but not as a
+     definition, which usually means a call site. */
+  function citeMark(r, e) {
+    var g = r.grounding;
+    if (!g || !g.checks) return "";
+    var file = String(e.file || "").split("\\").join("/");
+    var hits = g.checks.filter(function (c) { return c.file === file; });
+    if (!hits.length) return "";
+    var worst = hits.some(function (c) { return c.status === "absent"; }) ? "absent"
+      : hits.some(function (c) { return c.status === "no-file"; }) ? "no-file"
+      : hits.some(function (c) { return c.status === "present"; }) ? "present"
+      : hits.some(function (c) { return c.status === "defined"; }) ? "defined"
+      : "";
+    var line = (hits.find(function (c) { return c.line; }) || {}).line;
+    if (worst === "defined") {
+      return ' <span class="why" title="Found as a definition in this file">' +
+        "\u2713 defined" + (line ? " line " + line : "") + "</span>";
+    }
+    if (worst === "present") {
+      return ' <span class="why" title="The name is in the file but not as a ' +
+        'definition \u2014 probably a call site">\u25cb present' +
+        (line ? " line " + line : "") + "</span>";
+    }
+    if (worst === "absent" || worst === "no-file") {
+      return ' <span class="tag t-contradicted" title="This name is not in ' +
+        'that file">not found</span>';
+    }
+    return "";
+  }
+
+  function verdictTag(v) {
+    if (!v) return '<span class="tag">not adjudicated</span>';
+    return '<span class="tag t-' + v.verdict + '">' + esc(v.verdict) +
+           " · " + esc(v.confidence) + "</span>";
+  }
+
+  function ticketCard(r, open) {
+    var v = r.verdict, h = "";
+    h += '<p style="margin:0 0 8px">' + locator(r) + "</p>";
+    /* The tracker's own words stay the headline; the English is shown under
+       them and labelled. Showing only the translation would mean a reader
+       searching Jira for the text on this page would find nothing. */
+    if (r.summary_en && r.summary_en !== r.summary) {
+      h += '<p style="margin:0 0 6px"><b>' + esc(r.summary_en) + "</b> " +
+        '<span class="tag" title="Machine translation, used for matching. ' +
+        'The original above is what the tracker says.">translated from ' +
+        esc(r.lang) + "</span></p>";
+    }
+    if (r.description) h += '<p class="muted">' + esc(r.description) + "</p>";
+    if (r.description_en && r.description_en !== r.description) {
+      h += '<p class="muted">' + esc(r.description_en) + "</p>";
+    }
+    if (v) h += "<h3>Reasoning</h3><p>" + esc(v.reasoning) + "</p>";
+    if (v && v.evidence && v.evidence.length) {
+      h += "<h3>Cited evidence" + groundNote(r) + "</h3>" +
+        v.evidence.map(function (e) {
+          return '<div class="ev"><code>' + esc(e.file) +
+                 (e.symbol ? "::" + esc(e.symbol) : "") + "</code>" +
+                 citeMark(r, e) + "<div class=\"muted\">" +
+                 esc(e.why) + "</div></div>";
+        }).join("");
+    }
+    /* Relationships nobody recorded. Always labelled as inferred, always
+       with the file or import that produced them, so a reader can reject a
+       bad one instead of having to trust the whole set. */
+    if (r.related && r.related.length) {
+      var titles = {};
+      (D.tickets || []).forEach(function (x) { titles[x.uid] = x; });
+      h += "<h3>Related work (inferred from the code, not the tracker)</h3>" +
+        '<ul class="files">' + r.related.slice(0, 8).map(function (rel) {
+          var other = titles[rel.other];
+          var phrase = rel.kind === "depends-on"
+            ? (rel.direction === "to" ? "depends on" : "is depended on by")
+            : "shares code with";
+          return "<li>" + esc(phrase) + " <b>" +
+            esc(other ? other.summary : rel.other) + "</b>" +
+            (other && other.source_row
+              ? ' <span class="why">row ' + other.source_row + "</span>" : "") +
+            ' <span class="tag">' + esc(rel.confidence) + "</span>" +
+            '<div class="why">via ' + esc(rel.via.slice(0, 2).join(", ")) +
+            "</div></li>";
+        }).join("") + "</ul>";
+    }
+
+    if (r.candidates.length) {
+      h += "<h3>Candidate files</h3><ul class=\"files mono\">" +
+        r.candidates.map(function (p) {
+          return "<li>" + esc(p) + ' <span class="why">' +
+                 esc((r.why[p] || []).join(", ")) + "</span></li>";
+        }).join("") + "</ul>";
+    } else {
+      h += '<p class="muted">The retriever proposed nothing for this ticket, so a ' +
+           "verdict here would be a guess.</p>";
+    }
+    return "<details class=\"card\"" + (open ? " open" : "") + "><summary>" +
+      (v && v.status_conflict ? '<span class="tag t-conflict">status conflict</span>' : "") +
+      '<span class="tag" title="' +
+        (r.key ? "Tracker key" : "No tracker key — row position in the export") +
+        '">' + esc(r.key || ("row " + (r.source_row || "?"))) + "</span>" +
+      '<span class="tag">' + esc(r.status || "—") + "</span>" +
+      '<span class="sum">' + esc(r.summary) + "</span>" +
+      (r.head_collision ? '<span class="tag">shared head</span>' : "") +
+      groundTag(r) +
+      (r.related && r.related.length
+        ? '<span class="tag" title="Inferred from the code, not recorded in ' +
+          'the tracker">' + r.related.length + " related</span>" : "") +
+      verdictTag(v) + "</summary><div class=\"body\">" + h + "</div></details>";
+  }
+
+  function renderShadow(el) {
+    var s = D.shadow || {};
+    if (!s.counts) {
+      el.innerHTML = '<div class="empty">No shadow pass yet. Run: ' +
+        "<code>tracelink shadow --describe</code></div>";
+      return;
+    }
+    var c = s.counts;
+    var h = '<div class="tiles">' +
+      '<div class="tile"><b>' + c.cited + '</b><div class="lbl">cited by a verdict</div></div>' +
+      '<div class="tile"><b>' + c.retrieved_only + '</b><div class="lbl">retrieved, never cited</div></div>' +
+      '<div class="tile"><b>' + c.unclaimed + '</b><div class="lbl">never retrieved</div></div>' +
+      "</div>" +
+      '<p class="muted">Of ' + c.eligible_files + " eligible files. " +
+      "&ldquo;Retrieved but never cited&rdquo; is deliberately neither side: the " +
+      "matcher proposed the file and no verdict relied on it.</p>";
+
+    var desc = s.described;
+    if (desc && desc.length) {
+      var scope = desc.filter(function (d) { return d.user_facing; }).length;
+      h += "<h3>" + scope + " of " + desc.length +
+           " untracked areas look like real scope</h3>";
+      h += desc.slice().sort(function (a, b) {
+        return (b.user_facing ? 1 : 0) - (a.user_facing ? 1 : 0);
+      }).map(function (d) {
+        return '<details class="card" open><summary>' +
+          '<span class="tag ' + (d.user_facing ? "t-scope" : "") + '">' +
+          (d.user_facing ? "looks like scope" : "plumbing") + "</span>" +
+          '<span class="sum"><code>' + esc(d.directory) + "/</code></span>" +
+          '<span class="tag">' + d.n_symbols + " symbols</span>" +
+          '<span class="tag">' + esc(d.confidence) + "</span></summary>" +
+          '<div class="body"><p>' + esc(d.capability) + "</p>" +
+          (d.suggested_ticket
+            ? "<p><b>Suggested ticket:</b> " + esc(d.suggested_ticket) + "</p>" : "") +
+          '<ul class="files mono">' + d.files.map(function (f) {
+            return "<li>" + esc(f) + "</li>";
+          }).join("") + "</ul></div></details>";
+      }).join("");
+    } else {
+      h += "<h3>Unclaimed areas by symbol count</h3>" +
+        '<p class="muted">Run <code>tracelink shadow --describe</code> to have the ' +
+        "model name each capability.</p>" +
+        (s.groups || []).map(function (g) {
+          return '<details class="card"><summary><span class="tag">' + g.n_symbols +
+            ' symbols</span><span class="sum"><code>' + esc(g.directory) +
+            "/</code></span></summary><div class=\"body\"><ul class=\"files mono\">" +
+            g.files.map(function (f) { return "<li>" + esc(f) + "</li>"; }).join("") +
+            "</ul></div></details>";
+        }).join("");
+    }
+    el.innerHTML = h;
+  }
+
+  /* Which code each area of the backlog maps to.
+
+     Organised by the tracker's own Component field, not by directory. The
+     first version of this view listed 163 file paths with their tickets
+     nested underneath, which is accurate and unreadable: a reader arrives
+     holding a feature in mind, not a path. Twenty-nine components is a list
+     somebody can scan; 163 paths is a list somebody closes.
+
+     The code side is summarised as directories rather than files for the
+     same reason, and only *cited* evidence counts toward it - a keyword hit
+     that no verdict relied on is not a mapping, and showing it as one would
+     overstate how much of this backlog is actually anchored in code. */
+  function renderCode(el) {
+    var rows = D.tickets || [];
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">No tickets in this run.</div>';
+      return;
+    }
+
+    var needle = q.toLowerCase();
+    var groups = {};
+    rows.forEach(function (r) {
+      var name = r.component || "(no component)";
+      var g = groups[name] || (groups[name] = {
+        name: name, tickets: [], built: 0, unverified: 0,
+        conflicts: 0, notAdjudicated: 0, dirs: {}
+      });
+      g.tickets.push(r);
+      var v = r.verdict;
+      if (!v) { g.notAdjudicated += 1; return; }
+      if (v.verdict === "corroborated") g.built += 1;
+      else if (v.verdict === "unverified") g.unverified += 1;
+      if (v.status_conflict) g.conflicts += 1;
+      (v.evidence || []).forEach(function (e) {
+        var f = String(e.file || "").split("\\").join("/");
+        var d = f.indexOf("/") === -1 ? "(root)" : f.slice(0, f.lastIndexOf("/"));
+        g.dirs[d] = (g.dirs[d] || 0) + 1;
+      });
+    });
+
+    var names = Object.keys(groups).filter(function (n) {
+      if (!needle) return true;
+      if (n.toLowerCase().indexOf(needle) !== -1) return true;
+      return groups[n].tickets.some(function (t) {
+        return t.summary.toLowerCase().indexOf(needle) !== -1 ||
+          t.candidates.join(" ").toLowerCase().indexOf(needle) !== -1;
+      });
+    }).sort(function (a, b) {
+      return groups[b].tickets.length - groups[a].tickets.length ||
+             a.localeCompare(b);
+    });
+
+    document.getElementById("count").textContent =
+      names.length + " of " + Object.keys(groups).length + " areas";
+
+    var anchored = 0;
+    Object.keys(groups).forEach(function (n) {
+      if (Object.keys(groups[n].dirs).length) anchored += 1;
+    });
+
+    // Plain-language summaries, if `tracelink explain` has been run. Keyed by
+    // component so an area with no summary simply shows the counts.
+    var said = {};
+    (D.explain || []).forEach(function (e) { said[e.component] = e; });
+
+    var html = '<p class="muted">' + Object.keys(groups).length +
+      " areas in this backlog, " + anchored +
+      " of them anchored in code by at least one verdict. " +
+      "Code areas below count <b>cited</b> evidence only \u2014 a keyword " +
+      "match that no verdict relied on is not a mapping.</p>";
+    if (!D.explain || !D.explain.length) {
+      html += '<p class="muted">Run <code>tracelink explain</code> to add a ' +
+        "plain-language summary to each area.</p>";
+    }
+
+    if (!names.length) {
+      el.innerHTML = html + '<div class="empty">Nothing matches.</div>';
+      return;
+    }
+
+    html += names.map(function (n) {
+      var g = groups[n];
+      var dirs = Object.keys(g.dirs).sort(function (a, b) {
+        return g.dirs[b] - g.dirs[a] || a.localeCompare(b);
+      });
+      var top = dirs.slice(0, 4).map(function (d) {
+        return "<code>" + esc(d) + "/</code> " +
+          '<span class="why">' + g.dirs[d] + "</span>";
+      }).join(" &nbsp; ");
+
+      var head = '<details class="card"><summary>' +
+        '<span class="sum">' + esc(n) +
+        (said[n] ? ' <span class="why">— ' +
+          esc(said[n].headline.split(/[;.]\s/)[0]).slice(0, 96) + "</span>" : "") +
+        "</span>" +
+        '<span class="tag">' + g.tickets.length + " tickets</span>" +
+        (g.built ? '<span class="tag t-corroborated">' + g.built + " built</span>" : "") +
+        (g.unverified ? '<span class="tag t-unverified">' + g.unverified +
+          " unverified</span>" : "") +
+        (g.conflicts ? '<span class="tag t-conflict">' + g.conflicts +
+          " conflict</span>" : "") +
+        "</summary><div class=\"body\">";
+
+      /* The plain-language summary goes first and gets the most room: it is
+         the only part of this page a reader who does not know the codebase
+         can act on. The counts and paths below it are the audit trail for
+         anyone who wants to check it. */
+      var e = said[n];
+      var body = e
+        ? '<p style="font-size:14px;margin:0 0 10px">' + esc(e.headline) + "</p>" +
+          '<div style="display:grid;gap:8px;grid-template-columns:1fr 1fr;' +
+          'margin-bottom:4px">' +
+          '<div><h3 style="margin-top:0">What the code shows</h3><div>' +
+          esc(e.what_is_there) + "</div></div>" +
+          '<div><h3 style="margin-top:0">What is unclear</h3><div>' +
+          esc(e.what_is_unclear) + "</div></div></div>" +
+          (e.suggested_action
+            ? '<p style="margin:8px 0 0"><b>Next step:</b> ' +
+              esc(e.suggested_action) + "</p>" : "") +
+          (e.caveat
+            ? '<p class="note" style="margin:8px 0 0"><b>Caveat:</b> ' +
+              esc(e.caveat) + "</p>" : "")
+        : "";
+
+      body += dirs.length
+        ? "<h3>Code this area maps to</h3><p>" + top +
+          (dirs.length > 4 ? ' <span class="why">+' + (dirs.length - 4) +
+            " more</span>" : "") + "</p>"
+        : '<p class="muted">No verdict in this area rested on any file, so ' +
+          "nothing here is anchored in code yet.</p>";
+
+      body += "<h3>Tickets</h3>";
+      body += g.tickets.slice().sort(function (a, b) {
+        var av = (a.verdict || {}), bv = (b.verdict || {});
+        return (bv.status_conflict ? 1 : 0) - (av.status_conflict ? 1 : 0) ||
+               (bv.evidence || []).length - (av.evidence || []).length;
+      }).map(function (t) {
+        var v = t.verdict;
+        var cited = v && v.evidence && v.evidence.length
+          ? v.evidence.map(function (e) {
+              return "<code>" + esc(e.file) +
+                (e.symbol ? "::" + esc(e.symbol) : "") + "</code>";
+            }).join(", ")
+          : "";
+        return '<div style="margin:9px 0">' +
+          (v && v.status_conflict
+            ? '<span class="tag t-conflict">status conflict</span> ' : "") +
+          '<span class="tag" title="' +
+            (t.key ? "Tracker key" : "No tracker key \u2014 row in the export") +
+            '">' + esc(t.key || ("row " + (t.source_row || "?"))) + "</span> " +
+          '<span class="tag">' + esc(t.status || "\u2014") + "</span> " +
+          esc(t.summary) +
+          (v ? ' <span class="tag t-' + v.verdict + '">' + v.verdict + "</span>" : "") +
+          (cited
+            ? '<div class="why" style="padding-left:2px;margin-top:2px">' +
+              cited + "</div>"
+            : '<div class="why" style="padding-left:2px;margin-top:2px">' +
+              (t.candidates.length
+                ? "no verdict rested on a file; the matcher proposed " +
+                  t.candidates.length + " candidate" +
+                  (t.candidates.length === 1 ? "" : "s")
+                : "no candidate files were found") + "</div>") +
+          "</div>";
+      }).join("");
+
+      return head + body + "</div></details>";
+    }).join("");
+
+    el.innerHTML = html;
+  }
+
+  function render() {
+    var el = document.getElementById("main");
+    Array.prototype.forEach.call(
+      document.querySelectorAll("#subtabs button"), function (b) {
+        if (b.dataset.view === view) b.setAttribute("aria-current", "page");
+        else b.removeAttribute("aria-current");
+      });
+
+    if (view === "shadow") { renderShadow(el); return; }
+    if (view === "code") { renderCode(el); return; }
+
+    var rows = D.tickets;
+
+    if (view === "conflicts") {
+      rows = rows.filter(function (r) {
+        return r.verdict && r.verdict.status_conflict;
+      });
+      if (!rows.length) {
+        el.innerHTML = '<div class="empty">No status conflicts' +
+          (D.totals.adjudicated ? "." : " — nothing adjudicated yet.") + "</div>";
+        return;
+      }
+      var rank = { high: 0, medium: 1, low: 2 };
+      rows.sort(function (a, b) {
+        return rank[a.verdict.confidence] - rank[b.verdict.confidence];
+      });
+      el.innerHTML = '<p class="muted">The tracker and the code disagree about what ' +
+        "is done. Ranked by confidence — read these first.</p>" +
+        rows.map(function (r) { return ticketCard(r, true); }).join("");
+      return;
+    }
+
+    var needle = q.toLowerCase();
+    rows = rows.filter(function (r) {
+      if (fStatus && r.status !== fStatus) return false;
+      if (fVerdict === "none" && r.verdict) return false;
+      if (fVerdict && fVerdict !== "none" &&
+          (!r.verdict || r.verdict.verdict !== fVerdict)) return false;
+      if (!needle) return true;
+      return (r.summary + " " + r.component + " " + r.candidates.join(" "))
+        .toLowerCase().indexOf(needle) !== -1;
+    });
+    el.innerHTML = rows.length
+      ? rows.map(function (r) { return ticketCard(r, false); }).join("")
+      : '<div class="empty">Nothing matches.</div>';
+    document.getElementById("count").textContent =
+      rows.length + " of " + D.tickets.length;
+  }
+
+  function buildBar() {
+    var statuses = [];
+    D.tickets.forEach(function (r) {
+      if (r.status && statuses.indexOf(r.status) === -1) statuses.push(r.status);
+    });
+    statuses.sort();
+    var bar = document.createElement("div");
+    bar.className = "bar";
+    bar.id = "bar";
+    bar.innerHTML =
+      '<input type="search" id="q" placeholder="search summary, component, file…">' +
+      '<select id="fv"><option value="">any verdict</option>' +
+        ["corroborated", "contradicted", "unverified", "none"].map(function (v) {
+          return "<option>" + v + "</option>"; }).join("") + "</select>" +
+      '<select id="fs"><option value="">any status</option>' +
+        statuses.map(function (s) {
+          return "<option>" + esc(s) + "</option>"; }).join("") + "</select>" +
+      '<span class="muted" id="count"></span>';
+    return bar;
+  }
+
+  function mountBar() {
+    var host = document.getElementById("subtabs");
+    var bar = buildBar();
+    host.parentNode.insertBefore(bar, host.nextSibling);
+    // Listeners live on the persistent bar, so typing never loses focus the
+    // way it would if the input were re-rendered with the results.
+    document.getElementById("q").addEventListener("input", function (e) {
+      q = e.target.value; render();
+    });
+    document.getElementById("fv").addEventListener("change", function (e) {
+      fVerdict = e.target.value; render();
+    });
+    document.getElementById("fs").addEventListener("change", function (e) {
+      fStatus = e.target.value; render();
+    });
+  }
+
+  function showBar(which) {
+    var b = document.getElementById("bar");
+    if (!b) return;
+    var on = which === "tickets" || which === "code";
+    b.style.display = on ? "flex" : "none";
+    // A verdict filter means nothing on the Code tab, and a control that
+    // silently does nothing is worse than no control.
+    var fv = document.getElementById("fv"), fs = document.getElementById("fs"),
+        q = document.getElementById("q");
+    if (fv) fv.style.display = which === "tickets" ? "" : "none";
+    if (fs) fs.style.display = which === "tickets" ? "" : "none";
+    if (q) q.placeholder = which === "code"
+      ? "search area, ticket or path…" : "search summary, component, file…";
+    // The count belongs to whichever list is showing. Left alone it follows
+    // you onto Shadow scope and reports a file count next to unrelated rows.
+    var c = document.getElementById("count");
+    if (c && !on) c.textContent = "";
+  }
+
+  Array.prototype.forEach.call(
+    document.querySelectorAll("#subtabs button"), function (b) {
+      b.addEventListener("click", function () {
+        view = b.dataset.view;
+        showBar(view);
+        render();
+      });
+    });
+
+  /* Which project this page shows.
+
+     A `?project=` in the URL wins and is persisted; otherwise the last one
+     picked anywhere in the app is reused. The key is shared with /gantt and
+     the React pages on purpose - picking a project here and then clicking
+     Insight must not show two different projects. */
+  var STORAGE_KEY = "pulse.project";
+
+  function wantedProject() {
+    var fromUrl = new URLSearchParams(location.search).get("project");
+    if (fromUrl) { try { localStorage.setItem(STORAGE_KEY, fromUrl); } catch (e) {} return fromUrl; }
+    try { return localStorage.getItem(STORAGE_KEY) || ""; } catch (e) { return ""; }
+  }
+
+  function choose(id) {
+    try { localStorage.setItem(STORAGE_KEY, id); } catch (e) {}
+    var params = new URLSearchParams(location.search);
+    params.set("project", id);
+    history.replaceState(null, "", location.pathname + "?" + params.toString());
+    load(id);
+  }
+
+  /* The picker lists every delivery project, not only the traced ones - the
+     point of the page is partly to show which projects have no traceability
+     at all, and a picker that hid them would hide that. */
+  function buildPicker(traced, current) {
+    var sel = document.getElementById("project");
+    fetch("/api/portfolio").then(function (r) {
+      return r.ok ? r.json() : { projects: [] };
+    }).catch(function () {
+      return { projects: [] };
+    }).then(function (bundle) {
+      var rows = (bundle && bundle.projects) || [];
+      var known = {};
+      rows.forEach(function (p) { known[p.project_id] = p.name; });
+      // A run whose project is not in the portfolio still deserves an entry,
+      // or its findings become unreachable from the UI.
+      traced.forEach(function (t) {
+        if (t.project_id && !known[t.project_id]) {
+          known[t.project_id] = (t.project_name || t.name) + " (not in portfolio)";
+        }
+      });
+      var tracedIds = {};
+      traced.forEach(function (t) { if (t.project_id) tracedIds[t.project_id] = true; });
+
+      sel.innerHTML = Object.keys(known).map(function (id) {
+        return '<option value="' + esc(id) + '"' +
+          (id === current ? " selected" : "") + ">" + esc(known[id]) +
+          (tracedIds[id] ? "" : " — not traced") + "</option>";
+      }).join("");
+      sel.onchange = function () { choose(sel.value); };
+    });
+  }
+
+  function load(project) {
+    var url = "/api/traceability" + (project ? "?project=" + encodeURIComponent(project) : "");
+    fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+      var traced = data.available || [];
+      buildPicker(traced, project || data.project_id || "");
+      document.getElementById("runinfo").textContent =
+        traced.length + (traced.length === 1 ? " run available" : " runs available");
+
+      if (!data.run) {
+        document.getElementById("sub").textContent = "";
+        document.getElementById("tiles").innerHTML = "";
+        document.getElementById("gaps").innerHTML = "";
+        showBar(null);
+        document.getElementById("main").innerHTML =
+          '<div class="empty"><p><b>Not traced.</b></p><p>' + esc(data.detail) +
+          "</p><p>Attach a run to this project by reading its backlog with " +
+          "<code>tracelink tickets &lt;export&gt; --project-id " +
+          esc(project || "&lt;this project&gt;") + "</code>.</p></div>";
+        return;
+      }
+      D = data;
+      tiles();
+      if (!document.getElementById("bar")) mountBar();
+      showBar(view);
+      render();
+    }).catch(function (err) {
+      document.getElementById("main").innerHTML =
+        '<div class="empty"><p><b>Could not read traceability.</b></p><p>' +
+        esc(err.message) + "</p></div>";
+    });
+  }
+
+  load(wantedProject());
+})();
+</script>
+</body>
+</html>

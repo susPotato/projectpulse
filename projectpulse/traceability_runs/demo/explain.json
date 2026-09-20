@@ -1,0 +1,251 @@
+{
+ "schema_version": 1,
+ "produced_by": "explain",
+ "meta": {
+  "model": "claude-opus-5"
+ },
+ "payload": [
+  {
+   "component": "Task Management",
+   "tickets": 15,
+   "cost_usd": 0.0,
+   "headline": "Task Management covers 15 tickets all marked ready for release; the code review confirmed 6 of them — the background scheduler, task dependencies, the Kanban board, Excel bulk import, the calendar view and the AI task planner — while the remaining 9 could not be settled from the files the analysis examined.",
+   "what_is_there": "There is a working background scheduler that wakes on a timer and runs due tasks on separate threads, task-to-task dependencies where a task waits for all its prerequisites, a drag-and-drop Kanban board with add/edit/context menus, a calendar view of scheduled tasks, Excel-based bulk task import, and an AI planner that turns a plain-English description into scheduled tasks.",
+   "what_is_unclear": "Nine items — the underlying task record and its statuses/priorities, recurring and cron scheduling, holiday and working-day rules, task chaining modes, input/output modes and artifact storage, the execution worker with per-task model and skill selection, the approval gate, Teams/Outlook/in-app notifications, and the task editor form — were not confirmed, mostly because the files pulled for review turned out to be unrelated or none were retrieved at all; this says nothing about whether they exist. Two confirmed items also had a detail left open: the three-concurrent-task limit and dependency cycle detection were not visible in the portions read.",
+   "suggested_action": "Ask the team to point to the specific code for the nine unconfirmed items — particularly the task record/status model, recurrence and holiday scheduling, and notifications — so a second pass can look in the right place.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "Co4E Workflow",
+   "tickets": 14,
+   "cost_usd": 0.0269,
+   "headline": "Co4E is a visual workflow builder that lets users lay out multi-step AI agent workflows and run them; of the 14 tickets in this area, 7 are backed up by code we read and 7 could not be confirmed from the parts of the codebase examined.",
+   "what_is_there": "The code shows a working node-graph workflow studio: a drag-and-drop canvas with zoom and pan, an execution engine that runs steps in dependency order and passes each step's output into the next, fan-out to multiple sub-agents with a join stage, custom agent personas, automatic self-verification rounds with a configurable limit, and run history with progress tracking and restore-on-startup.",
+   "what_is_unclear": "The analysis could not confirm the finer workflow features — the full set of node types (Start, End, Join, IF/Switch), conditional branching and the skipping of gated branches, the Auto/Plan/Manual run modes, permission presets, workflow import/export between instances, and the newer attachment-folder and URL inputs on a step — mainly because the central workflow definition module and step editor were not among the files reviewed. Some searches also surfaced an unrelated model-routing 'switch' feature, which added noise rather than evidence.",
+   "suggested_action": "Ask the team to walk through the core workflow definition module and the step editor screen, which between them should settle most of the seven open items in one pass.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "UI/UX",
+   "tickets": 12,
+   "cost_usd": 0.024555,
+   "headline": "The desktop interface area covers 12 tickets; the code backs up 8 of them, including theming, settings, the collapsible sidebar, notifications, charts and permission prompts, while 4 could not be confirmed from the code that was examined.",
+   "what_is_there": "Confirmed in the code: dark and light themes with accent colours, a settings screen reached from the top bar that re-applies theme/language/provider, a collapsible navigation sidebar with sub-tabs, in-app pop-up notifications, an on/off/auto model routing toggle, a smooth line chart used on the metrics dashboard, a file editing dialog, and an end-to-end permission request and confirmation flow.",
+   "what_is_unclear": "The first-run welcome dialog (nickname/email setup) and the workspace member management dialog could not be confirmed because no interface code for them appeared in the subset that was read, and two broad tickets — the general 'Update UI/UX' item and the effort to improve the AI flow experience — contain no specific claim to check against code. For a few confirmed items, only the surrounding wiring was visible rather than the dialog itself, so sub-details like model selection and attachment limits in settings remain unconfirmed.",
+   "suggested_action": "Ask the team to point to where the welcome dialog and workspace member management screens live, and to restate the two open UI/UX improvement tickets as specific, checkable outcomes. Separately, confirm whether the file editing dialog ticket should be closed, since the feature already appears built despite being marked To Do.",
+   "caveat": "",
+   "confidence": "high"
+  },
+  {
+   "component": "Cowork Chat",
+   "tickets": 11,
+   "cost_usd": 0.0,
+   "headline": "Cowork Chat is the product's collaborative AI workspace — chat with streaming replies, file deliverables, a code agent, a terminal and an output view — and of its 11 tickets the code review could back up 3 (streaming chat, auto-saved file deliverables, and stop/cancel), while the other 8 could not be confirmed either way from the files examined.",
+   "what_is_there": "The backend of the Cowork conversation is visibly built: messages stream back incrementally, history is retained, the agent can save real files (spreadsheets, documents, slides, markdown) into an output folder and tidy away intermediate drafts, and there is working plumbing to cancel a running turn. Sandbox and safety policy for code execution exists as configuration.",
+   "what_is_unclear": "Almost everything that lives in the on-screen interface — the message composer with attachments, per-tab model picker and skill attachment, the file output tree, the terminal panel — was not part of the files the analysis read, so it could not be confirmed or ruled out. The code agent's file read/write/edit tools, the sandboxed code runner, multi-file revision, and the in-progress 'Superpowers' item are likewise unsettled rather than shown to be absent.",
+   "suggested_action": "Ask the team to point the analysis at the Cowork tab interface code and the code-agent/runner implementation, then re-run the check so the eight open questions can be resolved.",
+   "caveat": "One sandbox configuration setting blocks code generation in Cowork mode and a rulebook forbids the Cowork agent from coding tasks, which sits oddly beside a 'Cowork Chat code runner' ticket — though a separate Code agent appears to exist, so this may simply be a naming overlap worth confirming.",
+   "confidence": "medium"
+  },
+  {
+   "component": "Security & Sandbox",
+   "tickets": 11,
+   "cost_usd": 0.02919,
+   "headline": "Security and sandboxing is the largest confirmed area of the product — process containment, resource caps, network blocking, certificate trust and the configurable security rulebase are all backed by code, while five items including the Hyper-V sandbox, prompt-injection fencing, audit retention and role-based permissions could not be confirmed from what was reviewed.",
+   "what_is_there": "The code shows untrusted commands being run inside a restricted Windows container with CPU, memory and disk caps, timeouts and network access blocked by default, plus a lower-privilege execution mode and routing of commands to different containment levels by risk. There is also automatic trust handling for self-signed certificates with a certificate-bundle override, a configurable security rulebase that feeds into prompt, attachment and command checks, and action logging of tool calls, permission decisions and blocked actions.",
+   "what_is_unclear": "The review could not settle five items: the Hyper-V-based sandbox VM (configuration for it exists but no implementing code was seen), prompt-injection detection and fencing, the retention half of the audit log ticket (logging is present, automatic pruning or rotation was not seen), role-based access control for workspaces and tasks, and an in-progress review of the rulebase constraints, which by nature leaves no trace in code. Note also that the ticket for file integrity verification is backed by code that does privilege-level isolation rather than file checksum verification, and the URL-guard and macro-blocking parts of the network ticket were not visible.",
+   "suggested_action": "Ask the team to confirm three specific points: whether the Hyper-V sandbox is actually built or only configured, whether audit logs are pruned on any schedule, and whether the 'Integrity Sandbox' ticket was meant to cover file integrity checking or privilege isolation. Also confirm whether the TLS certificate trust work, which looks complete in the code, can be moved off 'In Progress'.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "Agent Platform",
+   "tickets": 10,
+   "cost_usd": 0.023155,
+   "headline": "The Agent Platform — chat agents with configurable roles, a tool registry, custom personas, admin and manager screens, and an in-app help assistant — is largely backed by code, with two of ten tickets (agent security controls and the command approval workflow) not confirmed from what was examined.",
+   "what_is_there": "The code shows a working chat agent that can take on different roles, a central registry of tools that separates read-only actions from ones that write or run commands, user-defined agent personas with custom instructions and saved settings, two admin/management screens for creating and editing agents, a floating in-app help assistant, and email alerts when a guardrail blocks an agent action. There is also plumbing that packages skills as reusable, versioned assets seeded into each user's library, even though that ticket is still marked To Do.",
+   "what_is_unclear": "Two security-related tickets could not be settled: permission gates, command risk classification and audit logging exist as a written policy document but the supporting code was not among the files examined, and the file named for command execution only handles persona directives rather than any approval workflow. This does not mean the work is missing — the analysis only saw part of the codebase.",
+   "suggested_action": "Ask the team to point to where permission gates, audit logging and the command approval step actually live, and confirm whether the reusable skills ticket should be moved off To Do given the plumbing already present.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "Monitoring & Admin",
+   "tickets": 10,
+   "cost_usd": 0.0,
+   "headline": "The Monitoring & Admin area covers a dedicated Monitoring section of the app with sub-pages for system overview, security events, MCP call history, action logs, agent status and several admin tabs; of its 10 tickets marked as released, 2 are backed by the code that was read and 8 could not be confirmed from the portion of the code examined.",
+   "what_is_there": "The code shows a Monitoring section wired into the app's main navigation that loads on demand and holds multiple sub-pages, plus configuration that names Security Events, MCP History, Action Logs and Agent Status as monitoring tabs and controls which of them a sub-administrator can see. There is also a dedicated tool-governance setting explicitly tied to a Tools tab under Monitoring, supporting the Agent Status and Tools Admin tickets.",
+   "what_is_unclear": "The file that actually builds the Monitoring pages was not among the code the analysis retrieved, so the content and behaviour of the individual pages — the overview health metrics, real-time security alerts, MCP call history, log filtering, sandbox capacity management, icon management and skill create/edit/delete — could not be checked either way. Nothing in the code contradicted any of these tickets; they simply were not settled.",
+   "suggested_action": "Ask the team to point to the Monitoring section's main implementation, then re-run the check against it so the eight open questions can be resolved in one pass.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "Knowledge & RAG",
+   "tickets": 9,
+   "cost_usd": 0.020655,
+   "headline": "Knowledge & RAG covers codebase memory, structure graphs and semantic search; the code clearly backs the three shipped graph/memory items, while the six remaining tickets — mostly GraphRAG, semantic similarity and knowledge-pack planning work — could not be confirmed from the code that was examined.",
+   "what_is_there": "There is a working persistent memory of the codebase that indexes a repository into a knowledge graph and exposes it to the agent, plus generation of a codebase structure graph and an interactive browser-based graph viewer with zoom, filtering, search and click-through on nodes. Configuration for enabling and auto-indexing codebase memory is also in place.",
+   "what_is_unclear": "The analysis saw no code touching knowledge-graph building from file content, semantic or embedding-based similarity search, portable knowledge pack formats, a shared context-collection layer for retrieval, or any measurement of search quality including Japanese-language evaluation. Only a keyword-selected slice of the repository was read, so this is an absence of evidence rather than evidence the work is missing.",
+   "suggested_action": "Ask the team where the GraphRAG and semantic search components live and point the next review at those parts of the codebase, so the two in-progress tickets can be assessed properly.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "LLM & Routing",
+   "tickets": 8,
+   "cost_usd": 0.01902,
+   "headline": "The model provider and routing area — connecting to multiple AI model vendors, pricing and budgeting, model health scoring, and context management — is marked ready for release across all eight tickets, and the code supports seven of them, with the detailed routing engine not confirmed from what was examined.",
+   "what_is_there": "The code shows working connections to five different AI model providers (including OpenAI-compatible services, Claude and local Ollama), with streaming responses and model listing; a per-model price table with VND/USD/JPY conversion; automated health and quality probing of models with latency scoring; and automatic trimming or summarising of long conversations so they fit within a model's limits. Configuration and settings for automatic model routing are visible and described in detail, indicating the feature is wired into the product.",
+   "what_is_unclear": "The actual decision-making logic behind model routing — choosing models automatically, applying cost rules, gating models and queuing requests per provider — was not among the files examined, so its completeness could not be confirmed either way. The budget-alert part of the pricing ticket was also not visible in what was reviewed.",
+   "suggested_action": "Ask the team to point to where the routing decision logic and budget alerts live, and confirm they have been exercised end to end.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "MCP & Connectors",
+   "tickets": 8,
+   "cost_usd": 0.022065,
+   "headline": "The connectors area — letting the product talk to external tools like CAD/CAE applications and Microsoft 365 — is substantially built in code, with four of eight tickets backed up, one ticket overstating what was delivered, and three that the review could not settle.",
+   "what_is_there": "There is a working framework for user-configured external connectors covering CAD, CAE, Microsoft 365 and a general \"other\" category, including saved configurations, migration of older settings into the new unified model, a settings panel for adding and enabling connectors, and file list/read/write tools over locally synced OneDrive and SharePoint folders with path protection and audit logging. CAD/CAE integrations such as CATIA and NX are wired into the shared tool pipeline as connector entries rather than deep vendor-specific automation, which matches their in-progress status.",
+   "what_is_unclear": "One ticket claims two connection methods for MCP servers, but the code only shows the command-line style connection — the HTTP option appears absent rather than simply unseen. Three tickets — a built-in Microsoft 365 MCP server, the reusable MCP tool contract with schema and sample manifests, and the effort to build a real project capability on existing MCP plumbing — could not be confirmed either way, because the files reviewed did not cover them.",
+   "suggested_action": "Ask the team to confirm whether HTTP transport for MCP server connections was actually delivered or descoped, and update that ticket's description accordingly.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "Workspace",
+   "tickets": 7,
+   "cost_usd": 0.0,
+   "headline": "The Workspace area — the app's home for projects, chat panels, knowledge graph and access control — has seven tickets all marked released, of which two are backed by code the analysis could read and five could not be confirmed either way from the files examined.",
+   "what_is_there": "The analysis found a working knowledge-graph visualisation (an interactive force-directed graph with search, legend and tooltips) and a complete chat-history backend supporting saved conversations, search, rename, delete and pinning — the things a history sidebar needs. It also saw the main application shell wiring in a workspace tab and a chat tab, described in the code as the app's home for project management.",
+   "what_is_unclear": "Five tickets — project create/rename/delete/duplicate, multi-tab chat sessions, the folder picker for AI-edit targets, workspace member management with roles, and trash with restore — could not be settled because the actual workspace and chat tab screens were not among the files the analysis looked at. For the two confirmed items, the backend and rendering were seen but the on-screen components were inferred rather than directly observed.",
+   "suggested_action": "Ask the team to point the next review pass at the workspace and chat tab screens, and at wherever membership and permissions live, so the five unconfirmed tickets can be checked directly.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "Platform Integrations",
+   "tickets": 7,
+   "cost_usd": 0.0,
+   "headline": "Platform Integrations covers seven connector and runtime features — Jira issue tracking, link previews, Java runtime detection, and the workflow/flows engine are backed by code we can see, while Git workspace operations, batch processing and Windows COM integration could not be confirmed from the code reviewed.",
+   "what_is_there": "The code shows a working read-only Jira connector (search, fetch an issue, plus a setup-and-test dialog), a URL preview feature with size limits and document handling, detection of an installed Java runtime so Java-based tooling can run, and a workflow layer that defines, seeds and saves multi-step flows.",
+   "what_is_unclear": "Three items — Git operations in the workspace, batch processing across multiple operations, and Windows COM integration — had no relevant code surface in the material examined, so the analysis could neither confirm nor rule them out. Two of the confirmed items are also narrower than their ticket wording suggests: the Java work is runtime detection rather than executing Java code, and only the definition side of the flows engine was visible, not the part that runs them.",
+   "suggested_action": "Ask the owning engineer to point to where Git workspace operations, batch processing and Windows COM live so those three can be checked, and confirm whether the Java ticket was always scoped to runtime detection.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "Dashboard & Analytics",
+   "tickets": 6,
+   "cost_usd": 0.0,
+   "headline": "The Dashboard and usage-analytics area covers six items all marked ready for release; code was found supporting the AI usage-habits analysis, the AI cost-saving recommendation with one-click apply, and the currency picker, while the three items covering usage/cost summary figures, stat cards and the trend chart could not be confirmed from the code that was reviewed.",
+   "what_is_there": "The code shows a dashboard screen that exists and is built on demand, with an AI feature that summarises a user's token usage (including busiest day and hour) and another that recommends and applies a cost-saving strategy, plus a display-currency selector that saves the user's choice and reformats costs accordingly.",
+   "what_is_unclear": "The parts of the dashboard that display token usage totals, the cost overview with today/week/month/all filtering, the individual stat cards and the usage-trend chart were not settled — the files that would contain those screen elements were not among the ones examined, so this is a gap in the review rather than evidence the features are absent. The exact list of supported currencies (VND/USD/JPY) also sits in a section of code that wasn't shown.",
+   "suggested_action": "Ask whoever owns the dashboard to demo the usage stats, period filter, stat cards and trend chart so the three unconfirmed items can be signed off from the running product.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "AI Edit",
+   "tickets": 6,
+   "cost_usd": 0.0,
+   "headline": "The AI Edit area covers AI-assisted editing of documents and presentations plus image generation; three of its six items are backed by code we could read, and three could not be confirmed either way from the code that was examined.",
+   "what_is_there": "The code shows a working PowerPoint editing capability that opens a deck as an editable text document (covering text, position, size, images and fonts) and writes changes back, a general layer for pulling text, styling and structure out of documents including PDF and Office formats, and text-to-image generation against an image model service with DALL-E-style model selection.",
+   "what_is_unclear": "Excel file editing, the embedded office-document viewer and the AI file-preview feature were not settled — the code reviewed included Excel reading and template export and a link-preview helper, but not the specific editing, viewing or preview-generation components; the viewer is named in the project's own architecture notes but its implementation was never in view. This reflects the limits of the subset of code examined, not evidence the features are absent.",
+   "suggested_action": "Ask the team to point to where Excel editing, the document viewer and the AI preview generator live, or to demo them, so those three can be closed out.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "DevOps & Utilities",
+   "tickets": 6,
+   "cost_usd": 0.0,
+   "headline": "The DevOps and supporting utilities area covers six items all marked ready for release, but the code review could only confirm one of them — the file-path and OneDrive location utility — while the other five could not be settled from the code that was examined.",
+   "what_is_there": "There is working support for locating a user's OneDrive folder across operating systems and resolving where the app reads and writes files, and the wider configuration uses it. Related sandboxed execution behaviour and task-dependency handling were also visible, though neither matches what the sandbox-preparation or dependency-check tickets describe.",
+   "what_is_unclear": "Log rotation and cleanup, execution timing and performance tracking, the in-app console display with a hide option, runtime dependency verification, and sandbox environment preparation scripts were all left unconfirmed — in several cases no relevant code surfaced at all, and the analysis only saw a keyword-selected slice of the repository, so this is not evidence the features are absent.",
+   "suggested_action": "Ask the team to point to where log retention, run timing, the console display, dependency checking and sandbox preparation live, so those five can be checked directly rather than by search.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "Core Platform",
+   "tickets": 5,
+   "cost_usd": 0.015985,
+   "headline": "Core Platform covers the desktop application shell, configuration, shared application state, multi-language support and a fork-upstreaming task; of the five items, only multi-language support could be confirmed against the code, with the other four left unsettled by the material the analysis saw.",
+   "what_is_there": "The code clearly shows working internationalisation: English, Japanese and Vietnamese translations, a lookup for translated text, and the ability to switch language while the app is running with listeners that update on change. The remaining platform items — the desktop window shell with navigation, top bar and system tray; the JSON-based configuration with schema migration and environment overrides; and a shared thread-safe application context — were not settled either way.",
+   "what_is_unclear": "For three of the four unconfirmed tickets, the files the analysis pulled in simply were not related to the feature described (security policy documents, sandbox settings and telemetry helpers instead of the app shell, config loader or shared context), so nothing could be said for or against them. The fifth is a strategy task about contributing fork changes back upstream, which is a process decision rather than something code can evidence.",
+   "suggested_action": "Ask the team to point to where the desktop shell, configuration system and shared application context live so those three can be checked directly, and treat the upstreaming task as a planning item to be confirmed in conversation rather than in code.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "QA & Testing",
+   "tickets": 5,
+   "cost_usd": 0.013535,
+   "headline": "QA and testing work — the automated test suite, IPA and security test cases, workflow engine tests, and UI/UX testing — covers five tickets, none of which could be confirmed from the code that was examined.",
+   "what_is_there": "The code that was reviewed shows working product features around connectors, provider integrations, settings screens and the Co4E workflow engine, but no test files, test plans or QA reports came into view. Several of these tickets also describe QA artifacts such as test case counts and bug reports that would normally live in a tracker or document rather than in source code.",
+   "what_is_unclear": "Nothing in this area was confirmed either way: the analysis only looked at a keyword-selected slice of the code and no test material appeared in it, so the claimed test suite, the 60 IPA test cases with 17 bugs, the 10 security hardening tests, the 10+ workflow tests and the ongoing UI/UX testing are all still open questions.",
+   "suggested_action": "Ask the team where tests and QA records live (test directories, CI results, QA report documents) and point a follow-up review directly at them, so these five tickets can be assessed against real evidence.",
+   "caveat": "",
+   "confidence": "high"
+  },
+  {
+   "component": "Notifications",
+   "tickets": 4,
+   "cost_usd": 0.0,
+   "headline": "Notifications covers four capabilities — in-app alerts, Microsoft Teams cards, Outlook email, and event-driven routing — and the code clearly backs up two of them, with the other two left unconfirmed by this analysis.",
+   "what_is_there": "There is working code for sending notification cards to a Microsoft Teams webhook, including formatted card layouts and a plain-text fallback, and for sending email notifications through a locally installed Outlook, with error handling so failures don't break the caller.",
+   "what_is_unclear": "The analysis did not find code for the in-app notification bell with unread count, or for the layer that decides which events trigger which notifications and over which channel — the files examined covered other parts of the product, so this is not evidence those features are absent.",
+   "suggested_action": "Ask the team to point to where the in-app notification centre and the event routing logic live, and confirm whether the Outlook email work is in fact finished so its tracker status can be updated.",
+   "caveat": "The Outlook email ticket is marked In Progress but the code looks complete, so the tracker status appears out of date.",
+   "confidence": "medium"
+  },
+  {
+   "component": "Skills",
+   "tickets": 3,
+   "cost_usd": 0.0,
+   "headline": "The Skills area covers a set of ready-made working skills plus the ability for users to manage their own and attach them to tasks or chat; the code confirms the built-in skill library, while the management and picker parts could not be confirmed from what was examined.",
+   "what_is_there": "There is a packaged library of built-in skills that is loaded and seeded into a user's skill collection the first time, with a one-time seeding flag so it doesn't repeat, and at least one fully authored skill (Analyze Requirement) matching the advertised set. The skills are stored as standalone definition files, so the underlying file format for skills clearly exists.",
+   "what_is_unclear": "The analysis did not see any code for creating, editing or deleting user-defined skills, nor any picker or dialog for attaching a skill to a task or chat conversation — only skill definition documents came up in the files reviewed. Because only a keyword-selected slice of the codebase was examined, this does not mean those features are absent, just that nothing confirmed them.",
+   "suggested_action": "Ask the team to point to where user skill management and the skill picker live, so those two tickets can be checked directly.",
+   "caveat": "Only one of the five named built-in skills was actually shown in full, though the file naming suggests the others sit alongside it.",
+   "confidence": "medium"
+  },
+  {
+   "component": "Usage & Telemetry",
+   "tickets": 2,
+   "cost_usd": 0.0,
+   "headline": "Usage and telemetry tracking — both tickets in this area are backed by code that matches what was described.",
+   "what_is_there": "The product records one usage event per model interaction to dated local log files, can read those logs back, and can roll them up into summary figures for reporting. There is also a shared layer that pulls usage and audit logs together across multiple machines, with filtering by date.",
+   "what_is_unclear": "Nothing was left open on these two tickets, though the analysis read the code rather than running it, so accuracy of the reported numbers in live use has not been demonstrated.",
+   "suggested_action": "If the usage figures feed anything customer-facing or billing-related, spot-check a real summary against raw logs to confirm the numbers add up in practice.",
+   "caveat": "",
+   "confidence": "high"
+  },
+  {
+   "component": "Performance",
+   "tickets": 1,
+   "cost_usd": 0.0,
+   "headline": "This area covers a single ticket labelled as a performance update, and the analysis was not able to confirm what, if anything, in the code corresponds to it.",
+   "what_is_there": "The ticket describes only a general \"performance update\" with no specific behaviour, target, or measurement named. No code could be matched to it, so nothing can be described in product terms.",
+   "what_is_unclear": "Everything about this item is unclear: the ticket does not state what was meant to get faster, and no relevant source material was retrieved to compare against. This is not evidence the work is missing, only that nothing could be checked.",
+   "suggested_action": "Ask the ticket owner what specific performance change was intended and how it was measured, so the item can be described concretely and re-checked.",
+   "caveat": "",
+   "confidence": "high"
+  },
+  {
+   "component": "Documentation",
+   "tickets": 1,
+   "cost_usd": 0.0,
+   "headline": "Documentation covers a single in-progress task to write business and design documentation from the existing source code, and the code review could not confirm its progress either way.",
+   "what_is_there": "The only item in this area is a documentation deliverable — producing business and design documents derived from the current system. Some module-level descriptions appear to exist in the project, but nothing that identifies itself as the requested business/design documents.",
+   "what_is_unclear": "Whether the business and design documents have been started, drafted, or completed could not be determined, because this is a written deliverable rather than a software feature and code inspection is not the right way to observe it.",
+   "suggested_action": "Ask the product owner or business analyst who owns this task to point to the current draft location and state of completion.",
+   "caveat": "",
+   "confidence": "medium"
+  }
+ ]
+}

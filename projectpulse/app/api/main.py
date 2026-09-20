@@ -58,6 +58,8 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+
+from app.api import tracelink_view
 from pydantic import BaseModel
 from sqlalchemy import func, select
 
@@ -202,6 +204,65 @@ def insight_page() -> FileResponse:
     judge can link to either.
     """
     return _spa()
+
+
+@app.get("/traceability")
+def traceability_page() -> FileResponse:
+    """Jira-to-code traceability: which tickets the code backs up, and what it
+    does that no ticket claims.
+
+    Hand-written like /gantt and /settings rather than part of the React
+    bundle: the data comes from a *different* repository's run directory, so
+    the page must not make the bundle depend on that pipeline existing.
+    """
+    return FileResponse(STATIC / "traceability.html")
+
+
+@app.get("/api/traceability")
+def api_traceability(project: str | None = None) -> dict:
+    """The traceability run for one delivery project.
+
+    Scoped by canonical project id like every other screen (invariant 7): a
+    run declares the project it is about, and asking for a project that has
+    no run gets an empty answer naming the projects that do - not another
+    project's findings, which is the one wrong answer available here.
+
+    200 with `run: null` rather than 404 when a project has no run: the page
+    needs the project list either way to draw its picker, and "this project
+    has not been traced" is an answer, not a failure.
+    """
+    run, runs = tracelink_view.run_for_project(project)
+    if run is None:
+        return {
+            "run": None,
+            "project_id": project,
+            "available": runs,
+            "detail": (
+                f"no traceability run is attached to project {project!r}"
+                if project else
+                "no traceability runs found. Set TRACELINK_RUNS to the directory "
+                "holding them, e.g. TRACELINK_RUNS=../../traceability/runs, and "
+                "give each run a --project-id when reading its backlog."
+                if not runs else
+                "several runs are available - ask for one by project."
+            ),
+        }
+    return {**tracelink_view.collect(run), "available": runs}
+
+
+@app.get("/api/traceability/rollup")
+def api_traceability_rollup(project: str | None = None) -> dict:
+    """Traceability folded onto the tracker keys the Schedule page draws.
+
+    Separate from `/api/traceability` because the Schedule page needs only
+    this summary - sending it 173 tickets and their evidence to render a
+    per-bar count would be most of a megabyte for a dozen numbers.
+    """
+    run, runs = tracelink_view.run_for_project(project)
+    if run is None:
+        return {"parents": {}, "run": None,
+                "detail": f"no traceability run for project {project!r}"}
+    return {**tracelink_view.rollup_by_parent(run), "run": str(run)}
 
 
 @app.get("/gantt")
