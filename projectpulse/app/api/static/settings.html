@@ -23,7 +23,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Settings - ProjectPulse</title>
+  <title>Sources - Settings - ProjectPulse</title>
   <!-- Sets data-theme before the stylesheet paints anything, so a saved or
        system dark preference does not flash light first. Kept identical
        across all four rail copies - see theme.js. -->
@@ -33,10 +33,15 @@
   <style>
     body { margin: 0; background: var(--bg); color: var(--ink);
            font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    .wrap { max-width: 780px; margin: 0 auto; padding: 22px 20px 60px; }
+    /* One frame width across the whole Settings section. The four tabs used
+       to be 780, 900, 980 and 1120 wide, and `margin: 0 auto` re-centred each
+       one - so the title and the tab row slid sideways every time you changed
+       tab, which is the other half of why these did not read as one page.
+       Content keeps its own comfortable width below. */
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 22px 20px 60px; }
     h1 { font-size: 19px; margin: 0 0 4px; }
     .sub { color: var(--ink-2); font-size: 13px; margin-bottom: 20px; }
-    .card { background: var(--surface); border: 1px solid var(--rule);
+    .card { max-width: 820px; background: var(--surface); border: 1px solid var(--rule);
             border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
     .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
            text-transform: uppercase; color: var(--ink-3); }
@@ -68,15 +73,6 @@
     .key-row input { padding-right: 62px; font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; }
     .key-toggle { position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
                   font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 4px; }
-    /* Within-page views, the same shape as the React `SubTabs`. */
-    .subtabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--rule);
-               margin-bottom: 18px; }
-    .subtabs button { font: inherit; font-size: 13px; cursor: pointer; background: none;
-                      border: 0; border-bottom: 2px solid transparent; color: var(--ink-2);
-                      padding: 10px 15px; margin-bottom: -1px; }
-    .subtabs button:hover { color: var(--ink); }
-    .subtabs button[aria-current="page"] { color: var(--ink); font-weight: 650;
-                                           border-bottom-color: var(--navy); }
     table.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
     table.grid th { text-align: left; font-size: 10.5px; letter-spacing: .06em;
                     text-transform: uppercase; color: var(--ink-3); font-weight: 700;
@@ -108,16 +104,14 @@
 
   <div class="appbar">
     <h1>Settings</h1>
-    <span class="scope">sources and the rule table</span>
+    <span class="scope">watched sources, uploads and project pairing</span>
   </div>
   <nav class="subtabs" id="subtabs">
     <button type="button" data-view="sources" aria-current="page">Sources</button>
     <button type="button" data-view="rules">Rule table</button>
-    <!-- Links rather than views: these are separate pages, so a saved model
-         or a rate survives a reload here without this page owning its state. -->
-    <a href="/imports" style="padding:10px 15px;color:var(--ink-2);text-decoration:none;font-size:13px;">Imports</a>
-    <a href="/llm" style="padding:10px 15px;color:var(--ink-2);text-decoration:none;font-size:13px;">Models &amp; keys</a>
-    <a href="/usage" style="padding:10px 15px;color:var(--ink-2);text-decoration:none;font-size:13px;">Usage</a>
+    <a href="/imports">Imports</a>
+    <a href="/llm">Models &amp; keys</a>
+    <a href="/usage">Usage</a>
   </nav>
 
   <div id="program">Loading&hellip;</div>
@@ -132,7 +126,12 @@
               low: "var(--blue)", info: "var(--ink-3)" };
   var programBox = document.getElementById("program");
   var program = null;
-  var view = "sources";
+  /* The tab the URL asks for. Sources and the rule table are views of this
+     one document, but the other three tabs are separate pages - so the rule
+     table needs a URL of its own, or a link to it from those pages has
+     nowhere to point and the row disagrees with itself. */
+  var params = new URLSearchParams(window.location.search);
+  var view = params.get("view") === "rules" ? "rules" : "sources";
 
   function renderSources() {
     var rows = program.sources.map(function (src) {
@@ -345,6 +344,11 @@
       "<th>Says, and why that threshold</th></tr>" + rows + "</table></div>";
   }
 
+  var SCOPES = {
+    sources: "watched sources, uploads and project pairing",
+    rules: "the thresholds every finding is defended by",
+  };
+
   function show(next) {
     view = next;
     var buttons = document.querySelectorAll("#subtabs button");
@@ -355,6 +359,25 @@
         buttons[i].removeAttribute("aria-current");
       }
     }
+
+    var scope = document.querySelector(".appbar .scope");
+    if (scope) scope.textContent = SCOPES[view] || "";
+
+    // The other four tabs are separate documents with their own <title>; these
+    // two share one, so it has to be set rather than served.
+    document.title =
+      (view === "rules" ? "Rule table" : "Sources") + " - Settings - ProjectPulse";
+
+    /* Keep the address bar honest. Without this, switching to the rule table
+       and reloading - or sharing the URL - lands back on Sources, and the tab
+       the other three pages link to would not be the one that opens. */
+    try {
+      var url = view === "rules" ? "/settings?view=rules" : "/settings";
+      window.history.replaceState(null, "", url);
+    } catch (e) {
+      // Opened as a file, or history blocked. The tab still switched.
+    }
+
     if (view === "sources") renderSources();
     if (view === "rules") renderRules();
   }
@@ -374,8 +397,9 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
         program = j;
-        if (view === "sources") renderSources();
-        if (view === "rules") renderRules();
+        // `show` rather than a bare render: the row, the subtitle and the URL
+        // all have to agree with whichever tab the URL opened on.
+        show(view);
       })
       .catch(function () { program = null; });
   }

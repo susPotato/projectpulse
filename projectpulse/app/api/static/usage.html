@@ -23,17 +23,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Model usage - ProjectPulse</title>
+  <title>Usage - Settings - ProjectPulse</title>
   <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
   <link rel="stylesheet" href="/static/shell.css">
   <script src="/static/theme.js" defer></script>
   <style>
     body { margin: 0; background: var(--bg); color: var(--ink);
            font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 22px 20px 60px; }
+    /* One frame width across the whole Settings section. The four tabs used
+       to be 780, 900, 980 and 1120 wide, and `margin: 0 auto` re-centred each
+       one - so the title and the tab row slid sideways every time you changed
+       tab, which is the other half of why these did not read as one page.
+       Content keeps its own comfortable width below. */
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 22px 20px 60px; }
     h1 { font-size: 19px; margin: 0 0 4px; }
     h2 { font-size: 13px; margin: 0 0 2px; }
-    .card { background: var(--surface); border: 1px solid var(--rule);
+    .card { max-width: 980px; background: var(--surface); border: 1px solid var(--rule);
             border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
     .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
            text-transform: uppercase; color: var(--ink-3); }
@@ -41,7 +46,6 @@
     .warn { border-left: 2px solid var(--amber); padding-left: 12px;
             font-size: 12.5px; color: var(--ink-2); margin: 12px 0 0; }
     code { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: 12px; }
-    a.tab { color: var(--ink-2); text-decoration: none; }
 
     /* Filters in one row above the charts. */
     .filters { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
@@ -52,7 +56,7 @@
                                            color: #fff; font-weight: 650; }
 
     /* Hero numbers. No plot, so no hover layer and no colour encoding. */
-    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    .tiles { max-width: 980px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
              gap: 10px; margin-bottom: 14px; }
     .tile { background: var(--surface); border: 1px solid var(--rule);
             border-radius: 8px; padding: 14px 16px; }
@@ -111,15 +115,15 @@
 <div class="wrap">
 
   <div class="appbar">
-    <h1>Model usage</h1>
+    <h1>Settings</h1>
     <span class="scope">tokens and cost, by feature and model</span>
   </div>
-  <nav class="subtabs" style="display:flex;border-bottom:1px solid var(--rule);margin-bottom:18px;">
-    <a class="tab" href="/settings" style="padding:10px 15px;">Sources</a>
-    <a class="tab" href="/imports" style="padding:10px 15px;">Imports</a>
-    <a class="tab" href="/llm" style="padding:10px 15px;">Models &amp; keys</a>
-    <a class="tab" href="/usage" aria-current="page"
-       style="padding:10px 15px;color:var(--ink);font-weight:650;border-bottom:2px solid var(--navy);margin-bottom:-1px;">Usage</a>
+  <nav class="subtabs" id="subtabs">
+    <a href="/settings">Sources</a>
+    <a href="/settings?view=rules">Rule table</a>
+    <a href="/imports">Imports</a>
+    <a href="/llm">Models &amp; keys</a>
+    <a href="/usage" aria-current="page">Usage</a>
   </nav>
 
   <div class="filters" id="filters">

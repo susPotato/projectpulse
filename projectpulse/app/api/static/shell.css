@@ -403,3 +403,47 @@
   .board { grid-template-columns: 1fr; }
   .board > * { grid-column: 1 / -1 !important; }
 }
+
+/* The Settings section's tab row.
+   
+   Five tabs across four separate documents - Sources and the rule table are
+   views of `/settings`, while Imports, Models & keys and Usage are their own
+   pages. A reader should not be able to tell: it is one section, and which
+   tab happens to be a page load is an implementation detail they did not ask
+   about.
+
+   That is why `button` and `a` are styled together here rather than each page
+   carrying its own copy. Four copies of a nav is how the row came to disagree
+   with itself in the first place - the rule table tab simply vanished on three
+   of the four pages, because only one of them had been told about it. */
+.subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 18px;
+}
+
+.subtabs button,
+.subtabs a {
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-2);
+  text-decoration: none;
+  padding: 10px 15px;
+  margin-bottom: -1px;
+  display: inline-block;
+}
+
+.subtabs button:hover,
+.subtabs a:hover { color: var(--ink); }
+
+.subtabs button[aria-current="page"],
+.subtabs a[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 650;
+  border-bottom-color: var(--navy);
+}

@@ -19,17 +19,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Models &amp; keys - ProjectPulse</title>
+  <title>Models &amp; keys - Settings - ProjectPulse</title>
   <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
   <link rel="stylesheet" href="/static/shell.css">
   <script src="/static/theme.js" defer></script>
   <style>
     body { margin: 0; background: var(--bg); color: var(--ink);
            font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    .wrap { max-width: 900px; margin: 0 auto; padding: 22px 20px 60px; }
+    /* One frame width across the whole Settings section. The four tabs used
+       to be 780, 900, 980 and 1120 wide, and `margin: 0 auto` re-centred each
+       one - so the title and the tab row slid sideways every time you changed
+       tab, which is the other half of why these did not read as one page.
+       Content keeps its own comfortable width below. */
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 22px 20px 60px; }
     h1 { font-size: 19px; margin: 0 0 4px; }
     h2 { font-size: 14px; margin: 0 0 3px; }
-    .card { background: var(--surface); border: 1px solid var(--rule);
+    .card { max-width: 900px; background: var(--surface); border: 1px solid var(--rule);
             border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
     .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
            text-transform: uppercase; color: var(--ink-3); }
@@ -53,7 +58,6 @@
     .ok { color: var(--green); }
     .muted { color: var(--ink-3); }
     code { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: 12px; }
-    a.tab { color: var(--ink-2); text-decoration: none; }
     .pill { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 999px;
             padding: 2px 9px; border: 1px solid var(--rule); color: var(--ink-3);
             text-transform: uppercase; letter-spacing: .05em; }
@@ -97,15 +101,15 @@
 <div class="wrap">
 
   <div class="appbar">
-    <h1>Models &amp; keys</h1>
+    <h1>Settings</h1>
     <span class="scope">one model per feature, one key per vendor</span>
   </div>
-  <nav class="subtabs" style="display:flex;border-bottom:1px solid var(--rule);margin-bottom:18px;">
-    <a class="tab" href="/settings" style="padding:10px 15px;">Sources</a>
-    <a class="tab" href="/imports" style="padding:10px 15px;">Imports</a>
-    <a class="tab" href="/llm" aria-current="page"
-       style="padding:10px 15px;color:var(--ink);font-weight:650;border-bottom:2px solid var(--navy);margin-bottom:-1px;">Models &amp; keys</a>
-    <a class="tab" href="/usage" style="padding:10px 15px;">Usage</a>
+  <nav class="subtabs" id="subtabs">
+    <a href="/settings">Sources</a>
+    <a href="/settings?view=rules">Rule table</a>
+    <a href="/imports">Imports</a>
+    <a href="/llm" aria-current="page">Models &amp; keys</a>
+    <a href="/usage">Usage</a>
   </nav>
 
   <div id="auth"></div>
