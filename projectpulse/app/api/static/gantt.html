@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/static/gantt.css">
 <script src="/static/gantt.js" defer></script>
 <script src="/static/theme.js" defer></script>
+<script src="/static/rail.js" defer></script>
 <!--
   The schedule view.
 
@@ -29,8 +30,14 @@
 <style>
   * { box-sizing: border-box; }
 
+  /* No padding. This page was the only one of the six that had any, and it
+     put 20px between the viewport and `.shell` - which is the rail. So the
+     navigation on Schedule sat inset from the edge, top and left, while on
+     every other tab it ran flush against it, and switching tabs moved the
+     whole rail. The content's own gutter comes from `.wrap` in the shared
+     stylesheet, where the other five have always taken it from. */
   body {
-    margin: 0; background: var(--bg); color: var(--ink); padding: 20px;
+    margin: 0; background: var(--bg); color: var(--ink);
     font: 14px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
   }
   h1 { font-size: 20px; margin: 0 0 2px; }

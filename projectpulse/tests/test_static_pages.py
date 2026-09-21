@@ -118,3 +118,45 @@ def test_no_branch_is_left_behind_a_tab_that_was_removed(page: Path):
     handled = set(re.findall(r'view === "([\w-]+)"', text))
     assert not (handled - offered), \
         f"{page.name} still branches on removed tabs: {sorted(handled - offered)}"
+
+
+def _body_rule(text: str) -> str:
+    style = "\n".join(re.findall(r"<style>(.*?)</style>", text, re.S))
+    match = re.search(r"\bbody\s*\{([^}]*)\}", style)
+    return match.group(1) if match else ""
+
+
+@pytest.mark.parametrize("page", PAGES, ids=lambda p: p.name)
+def test_no_page_puts_padding_between_the_viewport_and_the_rail(page: Path):
+    """`body { padding }` insets the whole shell, and the shell is the rail.
+
+    One of the six carried `padding: 20px` and the other five did not, so the
+    navigation on that page sat 20px in from the top and left edge while every
+    other tab ran flush against them - and the rail visibly moved when you
+    switched between them. It reads as a bug in the rail, which is why it
+    survived three attempts to fix it there.
+
+    A page's own gutter belongs on `.wrap`, which is inside the shell.
+    """
+    body = _body_rule(page.read_text(encoding="utf-8"))
+    assert "padding" not in body, (
+        f"{page.name} pads <body>, which moves the rail away from the "
+        f"viewport edge on this page only: {body.strip()!r}"
+    )
+
+
+@pytest.mark.parametrize("page", PAGES, ids=lambda p: p.name)
+def test_every_page_with_a_rail_keeps_the_project_in_its_links(page: Path):
+    """The hand-written rail is literal markup, so its hrefs are bare.
+
+    `Shell.tsx` passes every rail href through `withProject`; these pages had
+    no equivalent, so clicking through one dropped `?project=` from the
+    address bar. The selection survives in storage - the data stayed right -
+    but a link copied from here opens on whatever the server defaults to.
+    """
+    text = page.read_text(encoding="utf-8")
+    if 'class="rail"' not in text:
+        pytest.skip("no rail on this page")
+    assert "/static/rail.js" in text, (
+        f"{page.name} renders a rail but never rewrites its links"
+    )
