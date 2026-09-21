@@ -157,3 +157,110 @@ def test_an_unchecked_gate_is_not_a_pass(tmp_path):
     assert d["gates_failing"] == 1
     assert d["gates_unchecked"] == 1
     assert d["gates_contradicting"] == 1, "signed off in the doc, failing here"
+
+
+# --------------------------------------------------------------------------
+# The digest: one ranked list across every stage
+# --------------------------------------------------------------------------
+
+VERDICTS = [
+    {"uid": "T1", "verdict": "contradicted", "confidence": "high",
+     "reasoning": "the code does something else", "status_conflict": False,
+     "describer": "doc-feature+raw-source", "cost_usd": 0.05,
+     "evidence": [{"file": "a.py", "symbol": "A", "why": "w"}]},
+    {"uid": "T2", "verdict": "corroborated", "confidence": "high",
+     "reasoning": "built", "status_conflict": True,
+     "describer": "raw-source", "cost_usd": 0.05,
+     "evidence": [{"file": "b.py", "symbol": "B", "why": "w"}]},
+    {"uid": "T3", "verdict": "unverified", "confidence": "low",
+     "reasoning": "cannot tell", "status_conflict": False,
+     "describer": "raw-source", "cost_usd": 0.05,
+     "evidence": [{"file": "guide.md", "symbol": "Thing", "why": "w"}]},
+]
+
+GROUNDING = [
+    {"uid": "T1", "verdict": "contradicted", "status": "grounded",
+     "checks": [{"file": "a.py", "symbol": "A", "line": 3, "status": "defined"}]},
+    {"uid": "T3", "verdict": "unverified", "status": "ungrounded",
+     "checks": [{"file": "guide.md", "symbol": "Thing", "line": None,
+                 "status": "no-file"}]},
+]
+
+TICKETS3 = [
+    {"uid": "T1", "summary": "holiday calendar", "status": "Release it",
+     "description": "", "component": "", "key": None, "parent": None,
+     "source_row": 1, "source_sheet": "s", "inline": {}, "lang": "en",
+     "summary_en": "", "description_en": "", "extra": {}},
+    {"uid": "T2", "summary": "file edit dialog", "status": "To Do",
+     "description": "", "component": "", "key": None, "parent": None,
+     "source_row": 2, "source_sheet": "s", "inline": {}, "lang": "en",
+     "summary_en": "", "description_en": "", "extra": {}},
+    {"uid": "T3", "summary": "something vague", "status": "To Do",
+     "description": "", "component": "", "key": None, "parent": None,
+     "source_row": 3, "source_sheet": "s", "inline": {}, "lang": "en",
+     "summary_en": "", "description_en": "", "extra": {}},
+]
+
+
+def _full(run: Path) -> None:
+    _artifact(run, "run", {"project_id": "p:1", "project_name": "P", "tickets": 3})
+    _artifact(run, "tickets", TICKETS3)
+    _artifact(run, "candidates", [
+        {"uid": t["uid"], "head_collision": False, "candidates": []}
+        for t in TICKETS3])
+    _artifact(run, "corpus", {"files": [], "symbols": [], "root": "/repo"})
+    _artifact(run, "verdicts", VERDICTS)
+    _artifact(run, "grounding", GROUNDING)
+    _artifact(run, "progress", PROGRESS)
+    _artifact(run, "reconciliation", RECON)
+    _artifact(run, "gates", GATES)
+
+
+def test_the_digest_ranks_deterministic_checks_above_model_verdicts(tmp_path):
+    """Volume earns nothing: a reader who starts with 35 never reaches the 2."""
+    run = tmp_path / "run"
+    _full(run)
+    kinds = [f["kind"] for f in collect(run)["findings"]]
+    assert kinds[0] == "contradicted"
+    assert kinds.index("gate-failing") < kinds.index("documented-not-built")
+    assert kinds.index("status-conflict") < kinds.index("unsupported-citation")
+
+
+def test_every_finding_says_where_to_look_and_how_strong_it_is(tmp_path):
+    run = tmp_path / "run"
+    _full(run)
+    for f in collect(run)["findings"]:
+        assert f["kind"] and f["title"] and f["evidence"]
+
+
+def test_a_citation_naming_a_document_is_called_out_as_such(tmp_path):
+    """The failure mode the pipeline's own change introduced.
+
+    Showing the adjudicator the team's documents taught it to cite one as
+    though it were source. Every `no-file` in the real run is a markdown
+    path, so this is not hypothetical.
+    """
+    run = tmp_path / "run"
+    _full(run)
+    bad = [f for f in collect(run)["findings"]
+           if f["kind"] == "unsupported-citation"]
+    assert bad and bad[0]["cited_a_document"] is True
+    assert "documentation file" in bad[0]["detail"]
+
+
+def test_a_call_site_citation_is_not_a_finding(tmp_path):
+    """`no-symbol` is legitimate — a citation may name a use, not a definition."""
+    run = tmp_path / "run"
+    _full(run)
+    _artifact(run, "grounding", [
+        {"uid": "T1", "verdict": "contradicted", "status": "partly-grounded",
+         "checks": [{"file": "a.py", "symbol": "A", "line": None,
+                     "status": "no-symbol"}]}])
+    assert not [f for f in collect(run)["findings"]
+                if f["kind"] == "unsupported-citation"]
+
+
+def test_a_run_with_nothing_wrong_produces_an_empty_digest(tmp_path):
+    run = tmp_path / "run"
+    _minimal(run)
+    assert collect(run)["findings"] == []

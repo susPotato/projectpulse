@@ -49,7 +49,7 @@
    "command": "python scripts/check_loc.py --max-lines 400",
    "check": "file_size",
    "status": "fail",
-   "detail": "27 of 154 files exceed 400 lines",
+   "detail": "27 of 144 production files exceed 400 lines; 0 of 10 test files also do",
    "offenders": [
     "1828 lines  ui/co4e_tab.py",
     "1738 lines  ui/chat_panel.py",

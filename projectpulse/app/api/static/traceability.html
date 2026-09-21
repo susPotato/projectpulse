@@ -121,7 +121,8 @@
   <div class="tiles" id="tiles"></div>
 
   <nav class="subtabs" id="subtabs">
-    <button type="button" data-view="conflicts" aria-current="page">Status conflicts</button>
+    <button type="button" data-view="findings" aria-current="page">What to look at</button>
+    <button type="button" data-view="conflicts">Status conflicts</button>
     <button type="button" data-view="tickets">Tickets</button>
     <button type="button" data-view="code">Code</button>
     <button type="button" data-view="shadow">Shadow scope</button>
@@ -137,7 +138,7 @@
 (function () {
   "use strict";
 
-  var D = null, view = "conflicts", q = "", fVerdict = "", fStatus = "";
+  var D = null, view = "findings", q = "", fVerdict = "", fStatus = "";
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
@@ -382,6 +383,74 @@
   // holds 173 feature tickets and knows nothing about the ten-EPIC refactor
   // the same project documents in 63 dated tasks, so a page that reads only
   // the tracker is showing half the delivery.
+  // Five honest views and no answer to "what do I look at first". Each
+  // finding keeps where to look and how strong the evidence is, because the
+  // strengths genuinely differ and flattening them is the one thing this
+  // pipeline keeps refusing to do.
+  var FINDING_LABEL = {
+    "contradicted": "The code says otherwise",
+    "status-conflict": "Built, but not tracked as done",
+    "gate-failing": "A gate the team set, failing",
+    "missing-test": "A test a finished task says it wrote",
+    "documented-not-built": "Marked done in the documents, absent from the code",
+    "unsupported-citation": "A verdict resting on something that is not there",
+    "unclaimed-code": "Code no ticket accounts for"
+  };
+  var EVIDENCE_NOTE = {
+    "measured": "arithmetic over the corpus",
+    "cited": "a model verdict whose citation checks out",
+    "partly-grounded": "a model verdict, some citations unchecked",
+    "ungrounded": "a model verdict whose citations did not check out",
+    "uncited": "a model verdict with nothing cited",
+    "direct": "the task’s own code anchor",
+    "area": "joined through the doc section — about the area, not the task",
+    "failed check": "the citation was checked and is not there"
+  };
+
+  function renderFindings(el) {
+    var f = D.findings || [];
+    if (!f.length) {
+      el.innerHTML = '<div class="empty">Nothing needs a human in this run. ' +
+        "That is either good news or a pipeline that has not run yet — " +
+        "check the gaps above.</div>";
+      return;
+    }
+
+    var groups = [];
+    f.forEach(function (x) {
+      var g = groups[groups.length - 1];
+      if (!g || g.kind !== x.kind) { g = { kind: x.kind, rows: [] }; groups.push(g); }
+      g.rows.push(x);
+    });
+
+    var h = '<section class="panel"><h2>' + f.length + " things want a human</h2>" +
+      '<p class="muted">Ranked by what it costs to be wrong, times how well ' +
+      "evidenced it is — so a deterministic check outranks a model verdict, " +
+      "and volume earns nothing. Every row says where to look.</p></section>";
+
+    groups.forEach(function (g) {
+      h += '<section class="panel"><h3>' + (FINDING_LABEL[g.kind] || g.kind) +
+        ' <span class="muted">(' + g.rows.length + ")</span></h3>";
+      g.rows.slice(0, 25).forEach(function (x) {
+        h += '<details class="row"><summary>' + esc(x.title.slice(0, 92)) +
+          ' <span class="tag">' + esc(x.evidence) + "</span></summary>" +
+          '<div class="body"><p>' + esc(x.detail) + "</p>" +
+          (x.where ? "<p><code>" + esc(x.where) + "</code></p>" : "") +
+          '<p class="muted">evidence: ' +
+          esc(EVIDENCE_NOTE[x.evidence] || x.evidence) +
+          (x.confidence ? " · model confidence " + esc(x.confidence) : "") +
+          (x.command ? " · the doc runs <code>" + esc(x.command) + "</code>" : "") +
+          (x.signed_off ? " · <strong>signed off in the document</strong>" : "") +
+          "</p></div></details>";
+      });
+      if (g.rows.length > 25) {
+        h += '<p class="muted">… ' + (g.rows.length - 25) + " more</p>";
+      }
+      h += "</section>";
+    });
+    el.innerHTML = h;
+  }
+
   function renderDelivery(el) {
     var d = D.delivery || {};
     if (!d.items && !(d.gates || []).length) {
@@ -698,6 +767,7 @@
         else b.removeAttribute("aria-current");
       });
 
+    if (view === "findings") { renderFindings(el); return; }
     if (view === "delivery") { renderDelivery(el); return; }
     if (view === "shadow") { renderShadow(el); return; }
     if (view === "code") { renderCode(el); return; }

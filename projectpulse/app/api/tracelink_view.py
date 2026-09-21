@@ -261,6 +261,129 @@ def rollup_by_parent(run: Path) -> dict[str, Any]:
     return {"parents": parents, "problem": None}
 
 
+#: Ranked worst-first. The order is "what does it cost to be wrong, times how
+#: well evidenced is it" — so a deterministic check over the corpus outranks a
+#: model verdict, and a model verdict with a citation that checks out outranks
+#: one without. Volume does not earn a place: 35 area-level rows sit below 2
+#: contradictions, because a reader who starts with the 35 never reaches the 2.
+FINDING_KINDS = [
+    "contradicted",
+    "status-conflict",
+    "gate-failing",
+    "missing-test",
+    "documented-not-built",
+    "unsupported-citation",
+    "unclaimed-code",
+]
+
+
+def _findings(rows: list[dict[str, Any]], files: list[dict[str, Any]],
+              delivery: dict[str, Any]) -> list[dict[str, Any]]:
+    """One ranked list of things that want a human, across every stage.
+
+    The page had five views and no answer to "what do I look at first".
+    Each view is honest on its own and none of them can be read against the
+    others: a contradiction found by the adjudicator, a gate the team set
+    and failed, and a task whose deliverable was never written are the same
+    kind of problem to a reader and three different screens here.
+
+    Every row carries where to look and how strong the evidence is, because
+    the strengths genuinely differ — `gate-failing` is arithmetic over the
+    corpus, `documented-not-built` is area-level (see `confidence` in the
+    reconciliation), and a verdict is a model's reading of an excerpt.
+    Presenting them in one list without that column would flatten the
+    difference away, which is the one thing this pipeline keeps refusing
+    to do.
+    """
+    out: list[dict[str, Any]] = []
+
+    def add(kind, title, detail, where, evidence, **extra):
+        out.append({"kind": kind, "title": title, "detail": detail,
+                    "where": where, "evidence": evidence, **extra})
+
+    for r in rows:
+        v = r.get("verdict") or {}
+        if not v:
+            continue
+        ground = (r.get("grounding") or {}).get("status")
+        cite = next((e for e in v.get("evidence", []) if e.get("file")), {})
+        where = cite.get("file", "")
+        if cite.get("symbol"):
+            where += f"::{cite['symbol']}"
+
+        if v.get("verdict") == "contradicted":
+            add("contradicted",
+                f"[{r['status']}] {r['summary']}",
+                v.get("reasoning", ""), where,
+                "cited" if ground == "grounded" else (ground or "uncited"),
+                uid=r["uid"], confidence=v.get("confidence"))
+        elif v.get("status_conflict"):
+            add("status-conflict",
+                f"[{r['status']}] {r['summary']}",
+                v.get("reasoning", ""), where,
+                "cited" if ground == "grounded" else (ground or "uncited"),
+                uid=r["uid"], confidence=v.get("confidence"))
+
+        # A verdict resting on a citation that is not there.
+        #
+        # `no-symbol` is excluded: a citation may legitimately name a call
+        # site rather than a definition, and 99 of the 539 checks here are
+        # that. `no-file` and `absent` are the two that mean the evidence
+        # does not exist.
+        #
+        # Every `no-file` in this run names a *documentation* file —
+        # `architecture/security-policy.md`, `refactor/plan.md`. That is a
+        # side effect of the pipeline's own change: showing the model the
+        # team's documents taught it to cite one as though it were code.
+        # Worth its own line rather than folding into the count.
+        for chk in (r.get("grounding") or {}).get("checks", []):
+            if chk.get("status") not in ("no-file", "absent"):
+                continue
+            cited_file = chk.get("file", "")
+            doc_like = cited_file.lower().endswith((".md", ".rst", ".txt"))
+            add("unsupported-citation",
+                f"[{v.get('verdict')}] {r['summary']}",
+                ("cites a documentation file as if it were code"
+                 if doc_like else "cites something that is not in the corpus")
+                + f" — {cited_file}"
+                + (f"::{chk['symbol']}" if chk.get("symbol") else ""),
+                cited_file, "failed check", uid=r["uid"],
+                cited_a_document=doc_like)
+
+    for g in delivery.get("gates", []):
+        if g.get("status") == "fail":
+            add("gate-failing", g.get("name", ""), g.get("detail", ""),
+                f"{g.get('doc', '')}:{g.get('line', '')}", "measured",
+                command=g.get("command", ""),
+                signed_off=bool(g.get("signed_off")))
+
+    for f in delivery.get("findings", []):
+        if f.get("label") != "both-sides-wrong":
+            continue
+        add("documented-not-built", f"{f['wid']}  {f.get('title', '')}",
+            "marked done in the documents; its deliverables are not in the code"
+            + (f" — {', '.join(f.get('missing', [])[:3])}" if f.get("missing") else ""),
+            f"{f.get('doc', '')}:{f.get('line', '')}",
+            "direct" if f.get("joined_via") == "claim" else "area",
+            wid=f["wid"])
+
+    for u in delivery.get("unmet_tests", []):
+        add("missing-test", f"{u['wid']}  {u['name']}",
+            "a completed task says it produced this test; it is not there",
+            f"{u.get('doc', '')}:{u.get('line', '')}", "measured", wid=u["wid"])
+
+    unclaimed = [f for f in files if f["coverage"] == "unclaimed"]
+    if unclaimed:
+        biggest = sorted(unclaimed, key=lambda f: -f.get("size", 0))[:5]
+        add("unclaimed-code",
+            f"{len(unclaimed)} files no ticket accounts for",
+            ", ".join(f["path"] for f in biggest), "", "measured")
+
+    order = {k: i for i, k in enumerate(FINDING_KINDS)}
+    out.sort(key=lambda f: (order.get(f["kind"], 99), f.get("title", "")))
+    return out
+
+
 def _delivery(run: Path, gaps: list[str]) -> dict[str, Any]:
     """The delivery half of a run, summarised for one panel.
 
@@ -316,7 +439,10 @@ def _delivery(run: Path, gaps: list[str]) -> dict[str, Any]:
 
     interesting = sorted(
         (r for r in (recon or []) if r.get("label") not in ("agreed", "unknown")),
-        key=lambda r: (r.get("label", ""), r.get("wid", "")))[:25]
+        key=lambda r: (r.get("label", ""), r.get("wid", "")))
+    # Not truncated here: the digest reads this list and a cap would make
+    # it silently under-report. Reconciliation is one row per work item, so
+    # it is bounded by the task count anyway. The page caps what it draws.
 
     return {
         "items": len(items),
@@ -331,6 +457,8 @@ def _delivery(run: Path, gaps: list[str]) -> dict[str, Any]:
         "labels": by_label,
         "confidence": by_confidence,
         "findings": interesting,
+        # The digest wants these by name rather than by re-deriving them.
+        "unmet_tests": [u for u in _unmet_tests(progress)],
         "gates": gates or [],
         "gates_failing": sum(1 for g in (gates or []) if g.get("status") == "fail"),
         "gates_unchecked": sum(1 for g in (gates or [])
@@ -339,6 +467,31 @@ def _delivery(run: Path, gaps: list[str]) -> dict[str, Any]:
             1 for g in (gates or [])
             if g.get("status") == "fail" and g.get("signed_off")),
     }
+
+
+def _unmet_tests(progress) -> list[dict[str, Any]]:
+    """Test files a *completed* task says it produced, that are not there.
+
+    Read from `progress.json` rather than `delivery.json` so the digest
+    does not depend on a stage that may not have run; the classification
+    rule is the same one `tracelink` uses, kept deliberately simple here
+    because a wrong answer only ever adds a row a reader can dismiss.
+    """
+    out = []
+    for item in (progress or {}).get("items", []):
+        if not item.get("done"):
+            continue
+        for c in item.get("deliverables", []):
+            name = c.get("name", "")
+            if c.get("paths") or c.get("kind") == "docref":
+                continue
+            parts = name.lower().split("/")
+            if not (any(p in ("test", "tests", "spec", "specs") for p in parts[:-1])
+                    or parts[-1].startswith("test_")):
+                continue
+            out.append({"wid": item["wid"], "name": name,
+                        "doc": item.get("doc", ""), "line": item.get("line", 0)})
+    return out
 
 
 def _group_progress(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -478,9 +631,11 @@ def collect(run: Path) -> dict[str, Any]:
     totals["files_retrieved"] = sum(1 for f in files if f["coverage"] == "retrieved")
     totals["files_unclaimed"] = sum(1 for f in files if f["coverage"] == "unclaimed")
 
+    delivery = _delivery(run, gaps)
     manifest = _manifest(run)
     return {
-        "delivery": _delivery(run, gaps),
+        "delivery": delivery,
+        "findings": _findings(rows, files, delivery),
         "run": str(run),
         "project_id": manifest.get("project_id"),
         "project_name": manifest.get("project_name"),
