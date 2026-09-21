@@ -325,3 +325,90 @@ def test_the_workbook_module_needs_no_optional_extra():
     machine missing an extra can still hand a judge a report.
     """
     assert importlib.util.find_spec("openpyxl") is not None
+
+
+# --------------------------------------------------------------------------
+# Checked against the code
+# --------------------------------------------------------------------------
+
+class _Trace:
+    """The shape `app.api.main._Traceability` hands the exporter."""
+
+    def __init__(self, findings, totals=None):
+        self.findings = findings
+        self.totals = totals or {"tickets": 173, "contradicted": 2}
+
+
+_TRACE_ROWS = [
+    {"kind": "contradicted", "title": "[Release it] Holiday calendar",
+     "detail": "the code says scheduling was removed",
+     "where": "ui/task_editor_dialog.py::TaskEditorDialog", "evidence": "cited"},
+    {"kind": "gate-failing", "title": "CASAN Check 2: Modularity (LOC)",
+     "detail": "27 of 144 production files exceed 400 lines",
+     "where": "checklist.md:460", "evidence": "measured"},
+    {"kind": "documented-not-built", "title": "R01-T02  FakeProvider",
+     "detail": "marked done in the documents; deliverables absent",
+     "where": "checklist.md:136", "evidence": "area"},
+]
+
+
+def test_the_section_is_absent_when_the_project_has_no_run():
+    """Most projects have not been traced, and a heading over nothing reads
+    as a broken analysis rather than a caller who did not ask."""
+    doc = build_document(_bundle(), sections=["traceability"])
+    assert doc.section("traceability") is None
+
+
+def test_a_traced_project_gets_the_section():
+    doc = build_document(_bundle(), traceability=_Trace(_TRACE_ROWS),
+                         sections=["traceability"])
+    assert doc.section("traceability") is not None
+
+
+def test_every_row_says_how_it_was_established():
+    """The column exists because the strengths genuinely differ: arithmetic
+    over the corpus and a language model's reading are not the same claim."""
+    doc = build_document(_bundle(), traceability=_Trace(_TRACE_ROWS),
+                         sections=["traceability"])
+    tables = [b for b in doc.section("traceability").blocks if b.kind == "table"]
+    assert tables
+    for t in tables:
+        assert t.columns[-1] == "How it was established"
+        for row in t.rows:
+            assert row[-1], "a row with no provenance is a row nobody can weigh"
+
+
+def test_the_kinds_keep_the_order_the_digest_ranked_them_in():
+    """A reader who starts with thirty-five area-level rows never reaches
+    the two contradictions."""
+    doc = build_document(_bundle(), traceability=_Trace(_TRACE_ROWS),
+                         sections=["traceability"])
+    headings = [b.text for b in doc.section("traceability").blocks
+                if b.kind == "heading"]
+    assert headings[0] == "The code says otherwise"
+    assert headings.index("A gate this team set, failing") < \
+        headings.index("Marked done in the documents, absent from the code")
+
+
+def test_an_empty_run_says_so_rather_than_rendering_nothing():
+    doc = build_document(_bundle(), traceability=_Trace([]),
+                         sections=["traceability"])
+    blocks = doc.section("traceability").blocks
+    assert blocks and "nothing that needs a person" in blocks[0].text
+
+
+def test_the_area_level_caveat_travels_with_the_rows():
+    """It is the one thing about this section a reader can misread badly."""
+    doc = build_document(_bundle(), traceability=_Trace(_TRACE_ROWS),
+                         sections=["traceability"])
+    notes = " ".join(b.text for b in doc.section("traceability").blocks
+                     if b.kind == "note")
+    assert "not this one task" in notes
+
+
+def test_the_section_renders_in_every_format():
+    doc = build_document(_bundle(), traceability=_Trace(_TRACE_ROWS),
+                         sections=["traceability"])
+    md = render_markdown(doc)
+    assert "Checked against the code" in md
+    assert "Holiday calendar" in md

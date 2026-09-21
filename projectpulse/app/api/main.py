@@ -44,6 +44,8 @@ opened from disk, where a relative fetch has no server to reach.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import importlib.util
 import json
 import logging
@@ -217,6 +219,39 @@ def traceability_page() -> FileResponse:
     the page must not make the bundle depend on that pipeline existing.
     """
     return FileResponse(STATIC / "traceability.html")
+
+
+@dataclass(frozen=True)
+class _Traceability:
+    """A run's findings, in the shape the report exporter expects.
+
+    A small object rather than the whole `collect()` dict, because the
+    exporter is pure and should not be handed a payload shaped by a page's
+    needs. It is `None` when the project has no run, and the section is
+    then skipped rather than printed empty.
+    """
+
+    findings: list[dict]
+    totals: dict
+
+
+def _traceability_for(project: str | None) -> _Traceability | None:
+    """The run for one project, or None when it has not been traced.
+
+    Never falls back to whatever run happens to exist. A report that
+    silently carried another project's contradictions would be the worst
+    document this product can produce.
+    """
+    if not project:
+        return None
+    run, _ = tracelink_view.run_for_project(project)
+    if run is None:
+        return None
+    payload = tracelink_view.collect(run)
+    if payload.get("project_id") != project:
+        return None
+    return _Traceability(findings=payload.get("findings") or [],
+                         totals=payload.get("totals") or {})
 
 
 @app.get("/api/traceability")
@@ -428,6 +463,14 @@ def _report_doc(
             #: already generated on the Risk page.
             drafts = _draft_bundle(session, found.canonical_id if found else project)
 
+    # The traceability run, when this project has one. Read outside the
+    # session because it is files on disk, not rows - and read here rather
+    # than inside `build_document` so the exporter keeps its promise of
+    # touching no I/O and staying testable without any of this.
+    traceability = None
+    if "traceability" in chosen:
+        traceability = _traceability_for(found.canonical_id if found else project)
+
     if not bundle.findings and not bundle.context.get("task_count"):
         raise HTTPException(
             status_code=404,
@@ -444,6 +487,7 @@ def _report_doc(
         forecast=forecast,
         risks=risks,
         drafts=drafts,
+        traceability=traceability,
         sections=chosen,
         project_name=found.name if found else "",
     )

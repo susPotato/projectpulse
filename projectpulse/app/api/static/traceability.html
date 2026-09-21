@@ -68,6 +68,17 @@
     .t-unverified { color: var(--ink-3); }
     .t-conflict { color: var(--orange); border-color: currentColor; font-weight: 600; }
     .t-scope { color: var(--purple); border-color: currentColor; }
+    /* Findings reuse the verdict palette rather than adding a second one:
+       red is "the code disagrees" wherever it appears on this page. */
+    .t-measured { color: var(--navy); border-color: currentColor; }
+    .t-area { color: var(--ink-3); border-style: dashed; }
+    .kind { font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+            color: var(--ink-3); margin: 18px 0 6px; display: flex; gap: 8px;
+            align-items: baseline; }
+    .kind b { color: var(--ink); font-size: 12px; letter-spacing: 0;
+              text-transform: none; font-weight: 600; }
+    .where { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+             font-size: 12px; color: var(--ink-2); }
 
     code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
                   font-size: 12.5px; }
@@ -122,7 +133,6 @@
 
   <nav class="subtabs" id="subtabs">
     <button type="button" data-view="findings" aria-current="page">What to look at</button>
-    <button type="button" data-view="conflicts">Status conflicts</button>
     <button type="button" data-view="tickets">Tickets</button>
     <button type="button" data-view="code">Code</button>
     <button type="button" data-view="shadow">Shadow scope</button>
@@ -373,12 +383,6 @@
       verdictTag(v) + "</summary><div class=\"body\">" + h + "</div></details>";
   }
 
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
-    });
-  }
-
   // The tracker is not the only record of what a team did. Here the backlog
   // holds 173 feature tickets and knows nothing about the ten-EPIC refactor
   // the same project documents in 63 dated tasks, so a page that reads only
@@ -410,43 +414,45 @@
   function renderFindings(el) {
     var f = D.findings || [];
     if (!f.length) {
-      el.innerHTML = '<div class="empty">Nothing needs a human in this run. ' +
-        "That is either good news or a pipeline that has not run yet — " +
-        "check the gaps above.</div>";
+      el.innerHTML = '<div class="empty">Nothing needs a person in this run. ' +
+        "That is either good news or a pipeline that has not finished — " +
+        "check the notes above.</div>";
       return;
     }
 
-    var groups = [];
+    // Worst-founded last within a kind is already the server's order; the
+    // tag says which, because the strengths genuinely differ.
+    var TAG = {
+      "measured": "t-measured", "cited": "t-corroborated",
+      "failed check": "t-contradicted", "area": "t-area",
+      "direct": "t-measured", "ungrounded": "t-contradicted",
+      "partly-grounded": "t-unverified", "uncited": "t-unverified"
+    };
+
+    var h = '<div class="note">Ranked by what it costs to be wrong, times how ' +
+      "well evidenced it is — so a deterministic check outranks a model " +
+      "verdict, and volume earns nothing. Every row says where to look.</div>";
+
+    var kind = null;
     f.forEach(function (x) {
-      var g = groups[groups.length - 1];
-      if (!g || g.kind !== x.kind) { g = { kind: x.kind, rows: [] }; groups.push(g); }
-      g.rows.push(x);
-    });
-
-    var h = '<section class="panel"><h2>' + f.length + " things want a human</h2>" +
-      '<p class="muted">Ranked by what it costs to be wrong, times how well ' +
-      "evidenced it is — so a deterministic check outranks a model verdict, " +
-      "and volume earns nothing. Every row says where to look.</p></section>";
-
-    groups.forEach(function (g) {
-      h += '<section class="panel"><h3>' + (FINDING_LABEL[g.kind] || g.kind) +
-        ' <span class="muted">(' + g.rows.length + ")</span></h3>";
-      g.rows.slice(0, 25).forEach(function (x) {
-        h += '<details class="row"><summary>' + esc(x.title.slice(0, 92)) +
-          ' <span class="tag">' + esc(x.evidence) + "</span></summary>" +
-          '<div class="body"><p>' + esc(x.detail) + "</p>" +
-          (x.where ? "<p><code>" + esc(x.where) + "</code></p>" : "") +
-          '<p class="muted">evidence: ' +
-          esc(EVIDENCE_NOTE[x.evidence] || x.evidence) +
-          (x.confidence ? " · model confidence " + esc(x.confidence) : "") +
-          (x.command ? " · the doc runs <code>" + esc(x.command) + "</code>" : "") +
-          (x.signed_off ? " · <strong>signed off in the document</strong>" : "") +
-          "</p></div></details>";
-      });
-      if (g.rows.length > 25) {
-        h += '<p class="muted">… ' + (g.rows.length - 25) + " more</p>";
+      if (x.kind !== kind) {
+        kind = x.kind;
+        var n = f.filter(function (y) { return y.kind === kind; }).length;
+        h += '<div class="kind"><b>' + esc(FINDING_LABEL[kind] || kind) +
+          "</b><span>" + n + "</span></div>";
       }
-      h += "</section>";
+      h += '<details class="card"><summary>' +
+        '<span class="tag ' + (TAG[x.evidence] || "") + '">' +
+        esc(x.evidence) + "</span>" +
+        '<span class="sum">' + esc(x.title) + "</span>" +
+        (x.confidence ? '<span class="tag">' + esc(x.confidence) + "</span>" : "") +
+        '</summary><div class="body">' +
+        "<p>" + esc(x.detail) + "</p>" +
+        (x.where ? '<p class="where">' + esc(x.where) + "</p>" : "") +
+        '<p class="why">evidence: ' + esc(EVIDENCE_NOTE[x.evidence] || x.evidence) +
+        (x.command ? " · the document runs <code>" + esc(x.command) + "</code>" : "") +
+        (x.signed_off ? " · signed off in the document, and failing" : "") +
+        "</p></div></details>";
     });
     el.innerHTML = h;
   }
@@ -460,79 +466,72 @@
       return;
     }
 
-    var h = '<section class="panel"><h2>Work the documents record</h2>';
-    h += '<p class="muted">' + d.items + " tasks (" + d.done + " done, " +
-      d.open + " open), " + d.timed + " with real start and end times; " +
-      d.schedule + " plan rows." +
-      (d.unread ? " " + d.unread + " lines could not be read." : "") + "</p>";
-    h += '<table class="grid"><thead><tr><th>Group</th><th>Done</th>' +
-      "<th>Open</th></tr></thead><tbody>";
+    var h = '<div class="tiles">' +
+      tile(d.items, "tasks the documents record") +
+      tile(d.done + " / " + d.open, "done / open") +
+      tile(d.timed, "with real start and end times") +
+      tile(d.schedule, "plan rows") + "</div>";
+
+    h += "<h3>By group</h3>";
     (d.groups || []).forEach(function (g) {
-      h += "<tr" + (g.done === 0 && g.open ? ' class="bad"' : "") + "><td>" +
-        esc(g.group) + "</td><td>" + g.done + "</td><td>" + g.open +
-        "</td></tr>";
+      var open = g.done === 0 && g.open;
+      h += '<details class="card"><summary>' +
+        '<span class="tag ' + (open ? "t-contradicted" : "") + '">' +
+        g.done + " done · " + g.open + " open</span>" +
+        '<span class="sum">' + esc(g.group) + "</span>" +
+        (open ? '<span class="tag t-conflict">none started</span>' : "") +
+        "</summary></details>";
     });
-    h += "</tbody></table></section>";
 
-    // Two blocks, not one. A task joins the tracker directly only when one
+    // Two blocks, never one. A task joins the tracker directly only when one
     // of its deliverables resolves in the code, so every row whose code is
-    // *absent* is joined at area level — which is exactly the set a reader
-    // cares most about. Shown together they would read as equally solid.
+    // absent is joined at area level - exactly the set a reader cares most
+    // about. Together they would read as equally solid.
     var c = d.confidence || {};
-    if (Object.keys(c.direct || {}).length || Object.keys(c.area || {}).length) {
-      h += '<section class="panel"><h2>Tracker vs documents vs code</h2>';
-      [["direct", "Direct — the task’s own code anchor found these tickets"],
-       ["area", "Area-level — joined through the task’s doc section, so the " +
-        "tracker column is about this part of the system, not this task"]]
-        .forEach(function (pair) {
-          var counts = c[pair[0]] || {};
-          if (!Object.keys(counts).length) return;
-          h += "<h3>" + pair[1] + "</h3><ul>";
-          Object.keys(counts).forEach(function (k) {
-            h += "<li><strong>" + counts[k] + "</strong> " + esc(k) + "</li>";
-          });
-          h += "</ul>";
+    [["direct", "Direct — the task’s own code anchor found these tickets"],
+     ["area", "Area-level — joined through the task’s doc section, so " +
+      "the tracker column is about this part of the system, not this task"]]
+      .forEach(function (pair) {
+        var counts = c[pair[0]] || {};
+        if (!Object.keys(counts).length) return;
+        h += "<h3>" + pair[1] + "</h3><p>";
+        Object.keys(counts).forEach(function (k) {
+          h += '<span class="tag ' +
+            (pair[0] === "area" ? "t-area" : "t-measured") + '">' +
+            counts[k] + " " + esc(k) + "</span> ";
         });
-      h += "</section>";
-    }
-
-    (d.findings || []).slice(0, 25).forEach(function (r) {
-      h += '<details class="row"><summary><code>' + esc(r.wid) + "</code> " +
-        esc((r.title || "").slice(0, 70)) + ' <span class="tag">' +
-        esc(r.label) + "</span></summary><div class=\"body\">" +
-        "<p>tracker=" + esc(r.tracker) + " &middot; docs=" + esc(r.docs) +
-        " &middot; code=" + esc(r.code) + " &middot; joined via " +
-        esc(r.joined_via) + "</p>" +
-        "<p class=\"muted\">" + esc(r.doc) + ":" + r.line + "</p>" +
-        ((r.missing || []).length
-          ? "<p>code missing: <code>" + esc(r.missing.join(", ")) + "</code></p>"
-          : "") +
-        ((r.anchors || []).length
-          ? "<p>code found: <code>" + esc(r.anchors.join(", ")) + "</code></p>"
-          : "") +
-        "</div></details>";
-    });
+        h += "</p>";
+      });
 
     if ((d.gates || []).length) {
-      h += '<section class="panel"><h2>Gates the documents set</h2>';
-      h += '<p class="muted">' + d.gates_failing + " failing, " +
+      h += "<h3>Gates the documents set</h3>";
+      h += '<div class="note">' + d.gates_failing + " failing, " +
         d.gates_unchecked + " not checkable against this repository" +
         (d.gates_contradicting
           ? ", " + d.gates_contradicting + " signed off and failing" : "") +
-        ". Criteria are re-implemented over the corpus, not shell-executed." +
-        "</p><table class=\"grid\"><thead><tr><th>Gate</th><th>Status</th>" +
-        "<th>Measured</th></tr></thead><tbody>";
+        ". Criteria are re-implemented over the corpus, not shell-executed — " +
+        "the commands name scripts this repository does not contain. A gate " +
+        "about a directory that does not exist is <em>unchecked</em>, never a pass." +
+        "</div>";
       d.gates.forEach(function (g) {
-        h += "<tr" + (g.status === "fail" ? ' class="bad"' : "") + "><td>" +
-          esc(g.name) + (g.command
-            ? '<br><code class="muted">' + esc(g.command) + "</code>" : "") +
-          "</td><td>" + esc(g.status) + "</td><td>" + esc(g.detail) +
-          "</td></tr>";
+        h += '<details class="card"><summary><span class="tag ' +
+          (g.status === "fail" ? "t-contradicted"
+            : g.status === "pass" ? "t-corroborated" : "t-unverified") + '">' +
+          esc(g.status) + "</span>" +
+          '<span class="sum">' + esc(g.name) + "</span></summary>" +
+          '<div class="body"><p>' + esc(g.detail) + "</p>" +
+          (g.command ? '<p class="where">' + esc(g.command) + "</p>" : "") +
+          "</div></details>";
       });
-      h += "</tbody></table></section>";
     }
-
     el.innerHTML = h;
+  }
+
+  // Same markup as the header tiles at the top of the page, so the two rows
+  // of numbers cannot drift apart visually.
+  function tile(value, label) {
+    return '<div class="tile"><b>' + esc(String(value)) +
+      '</b><div class="lbl">' + esc(label) + "</div></div>";
   }
 
   function renderShadow(el) {
@@ -774,24 +773,10 @@
 
     var rows = D.tickets;
 
-    if (view === "conflicts") {
-      rows = rows.filter(function (r) {
-        return r.verdict && r.verdict.status_conflict;
-      });
-      if (!rows.length) {
-        el.innerHTML = '<div class="empty">No status conflicts' +
-          (D.totals.adjudicated ? "." : " — nothing adjudicated yet.") + "</div>";
-        return;
-      }
-      var rank = { high: 0, medium: 1, low: 2 };
-      rows.sort(function (a, b) {
-        return rank[a.verdict.confidence] - rank[b.verdict.confidence];
-      });
-      el.innerHTML = '<p class="muted">The tracker and the code disagree about what ' +
-        "is done. Ranked by confidence — read these first.</p>" +
-        rows.map(function (r) { return ticketCard(r, true); }).join("");
-      return;
-    }
+    // "Status conflicts" was its own tab until the digest ranked the same
+    // rows better - by how well evidenced each is, rather than by the
+    // model's own confidence in itself. Two doors to one set of rows is
+    // one door too many; the full ticket detail is still under Tickets.
 
     var needle = q.toLowerCase();
     rows = rows.filter(function (r) {

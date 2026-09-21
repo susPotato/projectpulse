@@ -170,6 +170,14 @@ SECTIONS: tuple[SectionSpec, ...] = (
         requires="drafts",
     ),
     SectionSpec(
+        "traceability",
+        "Checked against the code",
+        "What the repository says about tickets the tracker calls done, and "
+        "what the team's own documents claim was built. Every row names where "
+        "to look and how strong its evidence is.",
+        requires="traceability",
+    ),
+    SectionSpec(
         "data_quality",
         "What this analysis could not use",
         "Rejected rows, uncertain identities and inferred dependencies. Kept in "
@@ -647,6 +655,105 @@ def _risk_blocks(risks) -> tuple[Block, ...]:
     )
 
 
+#: How a traceability row was established, worst-founded last. The report
+#: prints this beside every row rather than sorting it away, for the same
+#: reason the register and the findings are separate sections: a reader who
+#: cannot tell a measurement from a model's reading cannot act on either.
+_EVIDENCE_WORDS = {
+    "measured": "checked against the repository",
+    "cited": "a model's reading, its citation verified",
+    "partly-grounded": "a model's reading, some citations unverified",
+    "ungrounded": "a model's reading, citations did not verify",
+    "uncited": "a model's reading, nothing cited",
+    "direct": "the task's own code anchor",
+    "area": "the area, not this task",
+    "failed check": "cited something that is not there",
+}
+
+_KIND_WORDS = {
+    "contradicted": "The code says otherwise",
+    "status-conflict": "Built, but not tracked as done",
+    "gate-failing": "A gate this team set, failing",
+    "missing-test": "A test a finished task says it wrote",
+    "documented-not-built": "Marked done in the documents, absent from the code",
+    "unsupported-citation": "A verdict resting on something that is not there",
+    "unclaimed-code": "Code no ticket accounts for",
+}
+
+
+def _traceability_blocks(trace) -> tuple[Block, ...]:
+    """What the repository says, as against what the tracker and the docs say.
+
+    A fourth kind of claim, and it gets its own section for exactly the
+    reason the register and the model proposals do. A finding is a rule
+    firing on the schedule. A register entry is a judgement somebody signed.
+    A model proposal is neither. This is a fourth thing again: a statement
+    checked against source code, where "checked" ranges from arithmetic over
+    the corpus to a model's reading whose citation was verified afterwards.
+
+    Flattening those into the findings list would put a line count and a
+    language model's opinion in the same voice, so the strength of each row
+    is printed as a column rather than sorted away.
+    """
+    rows = getattr(trace, "findings", None) or []
+    if not rows:
+        return (
+            Block("paragraph",
+                  "A traceability run exists for this project but found nothing "
+                  "that needs a person."),
+        )
+
+    totals = getattr(trace, "totals", {}) or {}
+    lead = (
+        f"{len(rows)} thing(s) want a human, from a run over "
+        f"{totals.get('tickets', 0)} tracker item(s) against the repository."
+    )
+    if totals.get("contradicted"):
+        lead += (
+            f" {totals['contradicted']} ticket(s) are contradicted outright: the "
+            f"code positively does something else."
+        )
+
+    blocks: list[Block] = [Block("paragraph", lead)]
+
+    # Grouped by kind, in the order the digest ranks them, so the two rows
+    # that matter are not buried under thirty-five that merely repeat.
+    seen: list[str] = []
+    for row in rows:
+        kind = row.get("kind", "")
+        if kind not in seen:
+            seen.append(kind)
+
+    for kind in seen:
+        group = [r for r in rows if r.get("kind") == kind]
+        blocks.append(Block("heading", _KIND_WORDS.get(kind, kind), level=2))
+        blocks.append(Block(
+            "table",
+            columns=("What", "Where", "How it was established"),
+            rows=tuple(
+                (
+                    str(r.get("title", ""))[:120],
+                    str(r.get("where") or "-")[:80],
+                    _EVIDENCE_WORDS.get(r.get("evidence", ""), r.get("evidence", "")),
+                )
+                for r in group[:20]
+            ),
+        ))
+        if len(group) > 20:
+            blocks.append(Block("note", f"{len(group) - 20} more of this kind."))
+
+    blocks.append(Block(
+        "note",
+        "“The area, not this task” means the row reached the tracker "
+        "through the section of the document it sits in rather than through its "
+        "own code anchor - it is about this part of the system, not this one "
+        "task. Every row whose code is missing is joined that way, necessarily, "
+        "because a task claiming a file that does not exist leaves nothing for a "
+        "ticket to touch.",
+    ))
+    return tuple(blocks)
+
+
 def _model_read_blocks(drafts) -> tuple[Block, ...]:
     """Risks a model proposed from task text, with the rows it read them from.
 
@@ -800,6 +907,7 @@ def build_document(
     forecast=None,
     risks=None,
     drafts=None,
+    traceability=None,
     sections: Sequence[str] | None = None,
     project_name: str = "",
     generated_at: datetime | None = None,
@@ -856,6 +964,9 @@ def build_document(
             blocks = _risk_blocks(risks) if risks is not None else ()
         elif spec.id == "model_read":
             blocks = _model_read_blocks(drafts) if drafts is not None else ()
+        elif spec.id == "traceability":
+            blocks = (_traceability_blocks(traceability)
+                      if traceability is not None else ())
         elif spec.id == "data_quality":
             blocks = _data_quality_blocks(bundle)
         else:  # pragma: no cover - SECTIONS and this branch move together
