@@ -571,6 +571,56 @@ def _ownership(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return {"rows": len(rows), "fields": fields}
 
 
+def feature_rows(run: Path) -> list[dict[str, Any]]:
+    """One flat row per feature, small enough for a page that is not the trace.
+
+    `collect` is most of a megabyte, which is the right size for the trace page
+    and the wrong size for a table beside a Gantt chart. This is the same rows
+    with everything a reader cannot filter on removed: no evidence, no
+    candidate list, no per-file `why`, no translations.
+
+    The owner comes from the description block, the same place `_ownership`
+    reads it, so a table that lets you filter for "nobody owns this" and a
+    finding that counts the same thing cannot disagree.
+    """
+    tickets, problem = _read(run, "tickets")
+    if problem:
+        return []
+    verdicts, _ = _read(run, "verdicts")
+    grounding, _ = _read(run, "grounding")
+    by_uid = {v["uid"]: v for v in (verdicts or [])}
+    ground = {g["uid"]: g for g in (grounding or [])}
+
+    rows: list[dict[str, Any]] = []
+    for t in tickets or []:
+        uid = t["uid"]
+        verdict = by_uid.get(uid) or {}
+        g = ground.get(uid) or {}
+        inline = t.get("inline") or {}
+        rows.append({
+            "uid": uid,
+            "title": t.get("summary") or "",
+            "status": t.get("status") or "",
+            "component": t.get("component") or "",
+            # Whatever the sheet's people fields are called. Sent as a dict so
+            # the page can label a column with the team's own word instead of
+            # one this product picked - see `_ownership`.
+            "people": {k: v for k, v in inline.items() if str(v or "").strip()},
+            "verdict": verdict.get("verdict") or "",
+            "conflict": bool(verdict.get("status_conflict")),
+            # What happened when the names the verdict cited were looked for
+            # in the files it named: `grounded`, `partly-grounded`,
+            # `ungrounded`, or `uncited` for a verdict that named nothing.
+            # Deterministic, and decided without the model.
+            "checked": g.get("status") or "",
+            # The model's own sentence. Kept whole rather than truncated to a
+            # tooltip: it is the only part of this row a person can argue
+            # with, and a half-sentence cannot be argued with at all.
+            "why": verdict.get("reasoning") or "",
+        })
+    return rows
+
+
 def collect(run: Path) -> dict[str, Any]:
     """Everything the page needs, in one object."""
     gaps: list[str] = []

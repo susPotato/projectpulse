@@ -335,14 +335,20 @@ export function Page({
       <Rail current={current} />
       <main>
         <div className={`mx-auto pt-5 pb-12 ${wide ? "max-w-[1880px] px-4" : "max-w-[1280px] px-6"}`}>
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-2">
-        <h1 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">{title}</h1>
-        {scope && (
-          <span className="border-l border-rule pl-3.5 text-[12px] text-ink-3">{scope}</span>
-        )}
-        <div className="flex-1" />
+      {/* `.appbar` from the shared stylesheet, not a second copy of it in
+          Tailwind. This header and the hand-written pages' header were the
+          same bar written twice, and they had drifted: this one aligned on
+          `baseline` and carried `mb-4`, that one aligned on `center` and
+          carried 16px of margin top *and* bottom. The result was a title and
+          a project picker that moved 16px down the page when you clicked
+          Schedule and back up when you left it. One rule cannot drift from
+          itself. */}
+      <div className="appbar">
+        <h1>{title}</h1>
+        {scope && <span className="scope">{scope}</span>}
+        <span className="spacer" />
         <ProjectSwitcher />
-        {asof && <span className="text-[12px] text-ink-3">{asof}</span>}
+        {asof && <span className="asof">{asof}</span>}
         {action}
       </div>
       {subtitle && <p className="mt-0 mb-4 text-[13px] text-ink-2">{subtitle}</p>}

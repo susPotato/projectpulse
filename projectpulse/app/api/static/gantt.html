@@ -54,6 +54,41 @@
                text-transform: uppercase; letter-spacing: .06em; }
   .stat.bad b { color: var(--red); }
 
+  /* The feature table. Its own rules rather than the shared `.card` grid:
+     this is the only tabular thing on the page, and the one property that
+     matters is that a 173-row body scrolls inside a fixed box instead of
+     pushing the milestones section off the screen. */
+  .ft-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin: 12px 0 8px; }
+  .ft-controls input[type="search"] { font: inherit; font-size: 13px;
+    padding: 6px 9px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--rule); border-radius: 6px; min-width: 240px; }
+  .ft-chip { font: inherit; font-size: 12px; padding: 5px 10px; cursor: pointer;
+    color: var(--ink-2); background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 999px; }
+  .ft-chip[aria-pressed="true"] { color: var(--ink); border-color: var(--blue);
+    background: var(--rule-2); font-weight: 600; }
+  .ft-count { font-size: 12px; color: var(--ink-3); margin-left: auto; }
+  .ft-scroll { max-height: 460px; overflow: auto; border: 1px solid var(--rule);
+    border-radius: 8px; }
+  .ft { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .ft th { position: sticky; top: 0; z-index: 1; text-align: left;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ink-3); background: var(--surface);
+    border-bottom: 1px solid var(--rule); padding: 8px 10px; white-space: nowrap; }
+  .ft td { border-bottom: 1px solid var(--rule-2); padding: 7px 10px;
+    vertical-align: top; }
+  .ft tbody tr:hover { background: var(--rule-2); }
+  .ft .t-title { color: var(--ink); }
+  .ft .t-why { display: block; margin-top: 3px; color: var(--ink-3);
+    font-size: 11.5px; line-height: 1.45; }
+  .ft-tag { display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .ft-corroborated { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); }
+  .ft-contradicted { color: var(--red); background: color-mix(in srgb, var(--red) 16%, transparent); }
+  .ft-unverified { color: var(--ink-3); background: var(--rule-2); }
+  .ft-none { color: var(--ink-3); font-style: italic; }
+  .ft-empty { padding: 18px 12px; color: var(--ink-3); font-size: 13px; }
   .ms-list { display: grid; gap: 2px; }
   .ms-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 0;
             border-bottom: 1px dotted var(--rule-2); font-size: 13px; }
@@ -531,19 +566,24 @@
             ".</p>";
         });
 
-        // The rest of the chart's rows, named, so "carries nothing" is
-        // visible as a fact about them rather than an omission.
+        /* The rest of the chart's rows, counted rather than listed.
+
+           This used to name every one of them in a semicolon-joined
+           paragraph, which read as a sentence while the project held
+           seventeen rows. The real export put a hundred and ninety on the
+           chart and the same code produced a wall of a hundred and eighty-nine
+           names - and a misleading one, because most of those rows *are* the
+           feature rows, they just reach the run under a different id than the
+           tracker gave them. The rows themselves are in the table below. */
         var bare = ordered.filter(function (k) {
           return !data.parents[k] || !data.parents[k].features;
         });
         if (bare.length) {
-          html += '<p class="sub" style="margin-top:14px">The other ' +
-            bare.length + " issue" + (bare.length === 1 ? "" : "s") +
-            " carry no feature rows, so no code should back them: " +
-            bare.map(function (k) {
-              return "<b>" + k + "</b>" +
-                (titles[k] ? " " + titles[k].replace(/^\[Planning Task\]\s*/, "") : "");
-            }).join("; ") + ".</p>";
+          html += '<p class="sub" style="margin-top:14px">' + bare.length +
+            " other row" + (bare.length === 1 ? "" : "s") + " on this chart " +
+            (bare.length === 1 ? "is" : "are") + " not grouped under a key the " +
+            "run reports against, so nothing above counts " +
+            (bare.length === 1 ? "it" : "them") + ".</p>";
         }
 
         html += '<p class="sub" style="margin-top:10px">' +
@@ -553,11 +593,155 @@
           '<a href="/traceability?project=' + encodeURIComponent(project) +
           '">Open Traceability</a></p>';
 
+        html += '<div id="ft-mount"></div>';
+
         panel.innerHTML = html;
         panel.hidden = false;
         markTraceability(data, isDated);
+        drawFeatureTable(project);
       })
       .catch(function () { /* no traceability is not a schedule failure */ });
+  }
+
+  /* The feature rows, as something a person can search.
+
+     Fed by `/api/traceability/rows` rather than `/api/traceability`, which is
+     most of a megabyte - the whole reason the flat view exists. Rendering is
+     one pass over a filtered array with `innerHTML`, not a row-diffing
+     renderer: 173 rows is small enough that the simplest thing is also the
+     fast thing, and a hand-written page earns its keep by being readable. */
+  /* Every cell below is built by string concatenation, and every value in
+     them came out of somebody's spreadsheet. A summary containing `<` is not
+     hypothetical in a backlog full of `Task<T>` and `a -> b`, and without
+     this the table would render it as markup. */
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  var FEATURES = [];
+  var FT_FILTER = "all";
+  var FT_QUERY = "";
+
+  /* What each chip keeps. Kept as data so the chip row, the filtering and the
+     empty state cannot disagree about what a name means. */
+  var FT_FILTERS = [
+    { id: "all", label: "All", keep: function () { return true; } },
+    { id: "corroborated", label: "Backed by code",
+      keep: function (r) { return r.verdict === "corroborated"; } },
+    { id: "unverified", label: "Not verified",
+      keep: function (r) { return r.verdict === "unverified"; } },
+    { id: "contradicted", label: "Contradicted",
+      keep: function (r) { return r.verdict === "contradicted"; } },
+    { id: "conflict", label: "Status conflict",
+      keep: function (r) { return r.conflict; } },
+    /* The one a delivery manager actually opens this for. "Nobody" means the
+       sheet's own people fields are all empty for this row - the same test
+       `_ownership` applies, so this chip and the finding that counts unowned
+       rows can never disagree. */
+    { id: "unowned", label: "Nobody assigned",
+      keep: function (r) { return !Object.keys(r.people || {}).length; } }
+  ];
+
+  function ftKeep(row) {
+    var f = FT_FILTERS.filter(function (x) { return x.id === FT_FILTER; })[0];
+    if (f && !f.keep(row)) return false;
+    if (!FT_QUERY) return true;
+    var hay = (row.title + " " + row.component + " " + row.status + " " +
+      Object.keys(row.people || {}).map(function (k) { return row.people[k]; })
+        .join(" ")).toLowerCase();
+    // Every word has to appear, so a second word narrows rather than widens.
+    return FT_QUERY.split(/\s+/).every(function (term) {
+      return hay.indexOf(term) !== -1;
+    });
+  }
+
+  function ftRender() {
+    var body = document.getElementById("ft-body");
+    var count = document.getElementById("ft-count");
+    if (!body) return;
+    var shown = FEATURES.filter(ftKeep);
+
+    count.textContent = shown.length === FEATURES.length
+      ? FEATURES.length + " rows"
+      : shown.length + " of " + FEATURES.length + " rows";
+
+    if (!shown.length) {
+      body.innerHTML = '<tr><td colspan="5" class="ft-empty">' +
+        "No feature row matches that." + "</td></tr>";
+      return;
+    }
+
+    body.innerHTML = shown.map(function (r) {
+      var who = Object.keys(r.people || {}).map(function (k) {
+        return esc(k) + " " + esc(r.people[k]);
+      }).join("<br>");
+      return "<tr>" +
+        '<td><span class="t-title">' + esc(r.title) + "</span>" +
+        /* The model's own sentence, shown rather than hidden behind a
+           tooltip. It is the only part of the row a reader can argue with,
+           and an unarguable claim is worth less than no claim. */
+        (r.why ? '<span class="t-why">' + esc(r.why) + "</span>" : "") +
+        "</td>" +
+        "<td>" + esc(r.status) + "</td>" +
+        "<td>" + (esc(r.component) || '<span class="ft-none">none</span>') + "</td>" +
+        "<td>" + (who || '<span class="ft-none">nobody</span>') + "</td>" +
+        '<td><span class="ft-tag ft-' + esc(r.verdict || "unverified") + '">' +
+        esc(r.verdict || "not checked") + "</span>" +
+        (r.conflict ? '<br><span class="ft-tag ft-contradicted">status conflict</span>' : "") +
+        "</td></tr>";
+    }).join("");
+  }
+
+  function drawFeatureTable(project) {
+    var mount = document.getElementById("ft-mount");
+    if (!mount) return;
+    fetch("/api/traceability/rows" +
+      (project ? "?project=" + encodeURIComponent(project) : ""))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.rows || !data.rows.length) return;
+        FEATURES = data.rows;
+
+        mount.innerHTML =
+          '<div class="ft-controls">' +
+            '<input type="search" id="ft-q" placeholder="Search title, component, person...">' +
+            FT_FILTERS.map(function (f) {
+              return '<button type="button" class="ft-chip" data-ft="' + f.id +
+                '" aria-pressed="' + (f.id === FT_FILTER) + '">' + f.label +
+                "</button>";
+            }).join("") +
+            '<span class="ft-count" id="ft-count"></span>' +
+          "</div>" +
+          '<div class="ft-scroll"><table class="ft">' +
+            "<thead><tr><th>Feature</th><th>Status</th><th>Component</th>" +
+            "<th>Named on the row</th><th>Against the code</th></tr></thead>" +
+            '<tbody id="ft-body"></tbody>' +
+          "</table></div>";
+
+        mount.querySelector("#ft-q").addEventListener("input", function (e) {
+          FT_QUERY = e.target.value.trim().toLowerCase();
+          ftRender();
+        });
+        Array.prototype.forEach.call(
+          mount.querySelectorAll(".ft-chip"),
+          function (chip) {
+            chip.addEventListener("click", function () {
+              FT_FILTER = chip.dataset.ft;
+              Array.prototype.forEach.call(
+                mount.querySelectorAll(".ft-chip"),
+                function (c) {
+                  c.setAttribute("aria-pressed", String(c === chip));
+                }
+              );
+              ftRender();
+            });
+          }
+        );
+        ftRender();
+      })
+      .catch(function () { /* the chart is the page; the table is a bonus */ });
   }
 
   /* Put what the code says onto the chart itself.

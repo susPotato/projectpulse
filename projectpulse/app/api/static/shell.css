@@ -326,7 +326,12 @@
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  margin: 16px 0 16px;
+  /* No top margin: the content column's own `padding-top` already sets how
+     far the page starts from the chrome. The built pages had `mb-4` and no
+     top margin while this had 16px of both, so the title and the picker sat
+     16px lower on Schedule than on every tab beside it - which is what you
+     see as the bar jumping when you switch. */
+  margin: 0 0 16px;
 }
 
 .appbar h1 {

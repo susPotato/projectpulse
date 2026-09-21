@@ -369,6 +369,23 @@ def api_traceability_rollup(project: str | None = None) -> dict:
     return {**tracelink_view.rollup_by_parent(run), "run": str(run)}
 
 
+@app.get("/api/traceability/rows")
+def api_traceability_rows(project: str | None = None) -> dict:
+    """The feature rows, flat, for a table somebody filters.
+
+    Between `/rollup` (a dozen numbers) and `/api/traceability` (most of a
+    megabyte). The Schedule page listed every row it could not match as one
+    semicolon-joined paragraph, which read as a sentence while the project had
+    seventeen rows in it and as a wall of text the moment the real export went
+    in at a hundred and ninety. A list that long is a table.
+    """
+    run, _ = tracelink_view.run_for_project(project)
+    if run is None:
+        return {"rows": [], "run": None,
+                "detail": f"no traceability run for project {project!r}"}
+    return {"rows": tracelink_view.feature_rows(run), "run": str(run)}
+
+
 @app.get("/gantt")
 def gantt_page() -> FileResponse:
     """The schedule view.

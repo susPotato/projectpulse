@@ -77,6 +77,11 @@
             align-items: baseline; }
     .kind b { color: var(--ink); font-size: 12px; letter-spacing: 0;
               text-transform: none; font-weight: 600; }
+    /* The sentence under a group heading. Full width on its own line rather
+       than another flex child, or it competes with the count for space and
+       wraps at the first comma. */
+    .kind-why { font-size: 12px; color: var(--ink-2); line-height: 1.5;
+                margin: -2px 0 8px; max-width: 76ch; }
     .where { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
              font-size: 12px; color: var(--ink-2); }
 
@@ -397,8 +402,48 @@
     "gate-failing": "A gate the team set, failing",
     "missing-test": "A test a finished task says it wrote",
     "documented-not-built": "Marked done in the documents, absent from the code",
-    "unsupported-citation": "A verdict resting on something that is not there",
+    "unsupported-citation": "The reason given points at nothing",
     "unclaimed-code": "Code no ticket accounts for"
+  };
+
+  /* What each heading actually means, in a sentence.
+     
+     The labels are short because they are headings, and short was being paid
+     for in comprehension: "A verdict resting on something that is not there"
+     is accurate and tells a reader nothing about what to do with the rows
+     under it. Each sentence says what was compared against what, and - where
+     it is not obvious - what the finding does *not* prove, because the
+     failure this whole pipeline is built against is a weak result read as a
+     strong one. */
+  var FINDING_WHY = {
+    "contradicted":
+      "A model read the ticket and the code it points at, and found the code " +
+      "doing something different from what the ticket claims. Strong when the " +
+      "citation checks out - the tag on each row says whether it did.",
+    "status-conflict":
+      "The code for this looks present and the tracker still has the row open. " +
+      "One of the two is out of date, and which one is a question only the " +
+      "team can settle.",
+    "gate-failing":
+      "The team's own documents set a rule for this project. The rule was " +
+      "re-checked against the code here - the document's command was never " +
+      "run - and it does not hold.",
+    "missing-test":
+      "A task the documents record as finished names a test file it produced. " +
+      "That file is not in the repository.",
+    "documented-not-built":
+      "The documents record this as delivered and nothing in the code " +
+      "corresponds to it. Worth reading as a question about the documents as " +
+      "much as about the code.",
+    "unsupported-citation":
+      "To justify its answer the model named a file or a symbol. That file or " +
+      "name was looked up and is not there. This does not make the verdict " +
+      "wrong - it means the reason offered for it is not evidence, so treat " +
+      "the row as unjudged rather than as settled.",
+    "unclaimed-code":
+      "These files are in the repository and no backlog row claims them. " +
+      "Either work happened off the tracker, or the row that covers it never " +
+      "names the code."
   };
   var EVIDENCE_NOTE = {
     "measured": "arithmetic over the corpus",
@@ -439,7 +484,9 @@
         kind = x.kind;
         var n = f.filter(function (y) { return y.kind === kind; }).length;
         h += '<div class="kind"><b>' + esc(FINDING_LABEL[kind] || kind) +
-          "</b><span>" + n + "</span></div>";
+          "</b><span>" + n + "</span></div>" +
+          (FINDING_WHY[kind]
+            ? '<p class="kind-why">' + esc(FINDING_WHY[kind]) + "</p>" : "");
       }
       h += '<details class="card"><summary>' +
         '<span class="tag ' + (TAG[x.evidence] || "") + '">' +
