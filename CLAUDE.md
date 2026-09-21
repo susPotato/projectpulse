@@ -4,54 +4,38 @@ Read this first. It is the handoff between sessions.
 
 ---
 
-## ⚠️ DO THIS FIRST — deploy owed to production (updated 2026-09-12, second session)
+## ✅ Done — traceability deployed to production 2026-09-22
 
-**Only one step is owed now: `fly deploy`. There is no migration to run.**
-`main` is at `015a62b` and pushed; production is running the commit before it.
+**Nothing is owed. Production is current with `main`.** Checked live rather
+than assumed, which is the only way an entry like this is worth anything.
 
-The §0d migration block that used to live here is **done** — see the done-record
-below. It was checked against the live deploy rather than assumed, which is the
-only reason we know: `/api/programs` already answers
-`program:Program:0:DEFAULT` (3 projects) and `program:Program:0:CLOUD`
-(0 projects), and `/api/portfolio` still reads HRMS 10 / EXPROJ 3 / SAIN 5. A
-machine with `flyctl` had already shipped and migrated it. **Check the live
-endpoints before believing a block like this one**; an owed-deploy note is
-written by whoever could not run it and is stale the moment somebody does.
-
-What production does *not* have is §0e. `/api/dashboard/catalogue` answers
-**18 tiles and 3 templates**; this commit makes it **30 tiles and 5 templates**.
-That is the one-line test of whether the deploy below has landed.
+The Traceability page now carries the delivery half and a ranked digest, and
+the run behind it has been adjudicated. Verified against production right
+after the deploy:
 
 ```bash
-# 0. Check before touching production.
-git pull
-cd projectpulse
-python -m pytest -q          # expect 801 passed
-cd web && npm run build      # committed bundle must not be stale
-cd ..
-
-# 1. Ship it. This is the whole deploy - §0e adds no schema change and no
-#    migration. `create_all()` on boot needs to do nothing new, and
-#    `scripts.serve` only seeds an *empty* database, so production's data is
-#    untouched.
-fly auth login               # a new machine needs its own login
-fly deploy
-
-# 2. The one-line check that it landed: 30 tiles, 5 templates.
-curl -s https://projectpulse.fly.dev/api/dashboard/catalogue \
-  | python -c "import json,sys; d=json.load(sys.stdin); print(len(d['tiles']), list(d['templates']))"
-#    expect: 30 ['it_portfolio_dashboard', 'sprint_delivery_report',
-#                'project_delivery_review', 'program_delivery_control',
-#                'project_delivery_control']
-
-# 3. Nothing else may move. This work did not touch ingestion or identity.
-curl -s https://projectpulse.fly.dev/api/programs | python -m json.tool \
-  | grep -E '"id"|project_count'
-#    still program:Program:0:DEFAULT (3) and program:Program:0:CLOUD (0)
-curl -s https://projectpulse.fly.dev/api/portfolio | python -m json.tool \
-  | grep -E 'project_id|task_count'
-#    still HRMS 10, EXPROJ 3, SAIN 5
+curl -s "https://projectpulse.fly.dev/api/traceability?project_id=excel:Project:upload:cowork-local"
+#   corroborated 76 · contradicted 2 · unverified 95 · conflicts 4
+#   cost 9.2584 · findings 54 · delivery 63 tasks · gaps none
+curl -s -o /dev/null -w "%{http_code}
+" https://projectpulse.fly.dev/api/portfolio   # 200
 ```
+
+Those numbers are the test. Before this deploy production served the previous
+run — 73 / 1 / 99 and cost 0.0, with no `delivery` or `findings` at all — so a
+stale image is obvious at a glance rather than something you have to infer.
+
+No schema change and no migration: the work is a static page, a view module,
+tests, and the run snapshots under `traceability_runs/`, which the Dockerfile
+copies to `/app/traceability_runs` where `TRACELINK_RUNS` points.
+
+**The block that used to be here demanded a `fly deploy` for §0e and gave
+"30 tiles, 5 templates" as its test.** Production answers **36 tiles, 5
+templates** — it landed long ago, on some machine that had `flyctl`, and the
+note sat here looking outstanding for ten days. This is the failure mode the
+file keeps repeating: *an owed-deploy note is written by whoever could not run
+it, and goes stale the moment somebody does.* Check the live endpoints before
+believing one, including this one.
 
 **Do not press "Default setup" on a production dashboard to test it.** It
 *replaces* that scope's board (one dashboard per scope), so trying it on HRMS
