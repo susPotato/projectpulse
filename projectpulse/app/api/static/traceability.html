@@ -153,7 +153,8 @@
 (function () {
   "use strict";
 
-  var D = null, view = "findings", q = "", fVerdict = "", fStatus = "";
+  var D = null, view = "findings", q = "", fVerdict = "", fStatus = "",
+      fSort = "";
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
@@ -835,11 +836,64 @@
       return (r.summary + " " + r.component + " " + r.candidates.join(" "))
         .toLowerCase().indexOf(needle) !== -1;
     });
+    rows = sortRows(rows);
     el.innerHTML = rows.length
       ? rows.map(function (r) { return ticketCard(r, false); }).join("")
       : '<div class="empty">Nothing matches.</div>';
+    // Says what is being counted *and* how many of them carry a conflict,
+    // because the sort puts them first and a reader needs to know where the
+    // four stop and the other hundred and sixty-nine begin.
+    var conflicts = rows.filter(function (r) {
+      return r.verdict && r.verdict.status_conflict;
+    }).length;
     document.getElementById("count").textContent =
-      rows.length + " of " + D.tickets.length;
+      rows.length + " of " + D.tickets.length +
+      (conflicts ? " · " + conflicts + " with a status conflict" : "");
+  }
+
+  /* How the ticket list can be ordered.
+
+     Declared as data for the same reason the filters are: the control, the
+     ordering and the default all read one table, so a name on a menu cannot
+     come to mean something other than what the list does.
+
+     `sort` is stable in every engine this page runs in, so each of these is a
+     *partial* order - rows that tie on the key keep the sheet order they came
+     in with. That matters more than it sounds: the export's row order is the
+     only structure this backlog has (`tracelink diagnose` found the sheet is
+     written in contiguous blocks of Component and Description), so preserving
+     it inside a tie means "conflicts first" still reads as the document. */
+  var SORTS = [
+    { id: "", label: "sheet order", key: null },
+    /* The four rows where the code looks built and the tracker still has the
+       row open. This was a tab of its own once; it is a sort key now, which
+       keeps the rows in one list with everything else about them. */
+    { id: "conflict", label: "status conflicts first",
+      key: function (r) { return r.verdict && r.verdict.status_conflict ? 0 : 1; } },
+    { id: "verdict", label: "contradicted first",
+      key: function (r) {
+        var order = ["contradicted", "unverified", "corroborated"];
+        var v = r.verdict && r.verdict.verdict;
+        var at = order.indexOf(v);
+        // A ticket nobody adjudicated sorts last: it is not a weak result,
+        // it is no result, and putting it above one is a lie about effort.
+        return at === -1 ? order.length : at;
+      } },
+    /* Whether the names a verdict cited were actually found. Deterministic,
+       and decided without the model - so this orders by how much of the page
+       you can check yourself. */
+    { id: "unchecked", label: "citations unchecked first",
+      key: function (r) {
+        var order = ["ungrounded", "uncited", "partly-grounded", "grounded"];
+        var at = order.indexOf((r.grounding || {}).status);
+        return at === -1 ? order.length : at;
+      } }
+  ];
+
+  function sortRows(rows) {
+    var s = SORTS.filter(function (x) { return x.id === fSort; })[0];
+    if (!s || !s.key) return rows;
+    return rows.slice().sort(function (a, b) { return s.key(a) - s.key(b); });
   }
 
   function buildBar() {
@@ -859,6 +913,10 @@
       '<select id="fs"><option value="">any status</option>' +
         statuses.map(function (s) {
           return "<option>" + esc(s) + "</option>"; }).join("") + "</select>" +
+      '<select id="fo">' +
+        SORTS.map(function (o) {
+          return '<option value="' + o.id + '">' + esc(o.label) + "</option>";
+        }).join("") + "</select>" +
       '<span class="muted" id="count"></span>';
     return bar;
   }
@@ -878,6 +936,9 @@
     document.getElementById("fs").addEventListener("change", function (e) {
       fStatus = e.target.value; render();
     });
+    document.getElementById("fo").addEventListener("change", function (e) {
+      fSort = e.target.value; render();
+    });
   }
 
   function showBar(which) {
@@ -889,8 +950,12 @@
     // silently does nothing is worse than no control.
     var fv = document.getElementById("fv"), fs = document.getElementById("fs"),
         q = document.getElementById("q");
+    var fo = document.getElementById("fo");
     if (fv) fv.style.display = which === "tickets" ? "" : "none";
     if (fs) fs.style.display = which === "tickets" ? "" : "none";
+    // Same reason as the verdict filter: the Code tab is a list of files and
+    // has no verdicts to order by, so the control would do nothing.
+    if (fo) fo.style.display = which === "tickets" ? "" : "none";
     if (q) q.placeholder = which === "code"
       ? "search area, ticket or path…" : "search summary, component, file…";
     // The count belongs to whichever list is showing. Left alone it follows
