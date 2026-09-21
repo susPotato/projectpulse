@@ -21,7 +21,7 @@ a declared dataclass and `as_record()` is the only way to produce it.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
@@ -124,6 +124,25 @@ class DeliveryContext:
     #: Distinct assignees on the task rows. One means every cross-project
     #: contention signal is structurally unavailable, not that there is none.
     distinct_owners: int = 0
+    #: Open tasks carrying no assignee at all.
+    #:
+    #: Kept apart from `distinct_owners` because the two answer different
+    #: questions and one used to be read as the other: a project where three
+    #: rows say "Alice" and seven say nothing has `distinct_owners == 1`, and
+    #: `single_owner_project` reported that as "all ten tasks are assigned to
+    #: one person" - which is false about seven of them. Counted over open
+    #: tasks only: nobody needs an owner for work that is finished.
+    tasks_unowned: int = 0
+    #: Open, past its own planned finish, and carrying no assignee.
+    #:
+    #: The conjunction rather than either half, because the halves are already
+    #: reported and neither is this. An overdue task with an owner has someone
+    #: who can be asked about it; an overdue task with nobody has no one, and
+    #: it is the second that will still be overdue next month. Fires only where
+    #: the source carries both a date and an assignee column with content - a
+    #: backlog with no dates produces 0 here and that is the honest answer, not
+    #: a clean bill of health.
+    tasks_overdue_unowned: int = 0
     #: Open tasks the *source system* has not recorded a change to in
     #: `STALE_AFTER_DAYS`, and the age of the stalest.
     #:
@@ -294,7 +313,7 @@ def build_context(
     data_age_hours: float = -1.0,
     program: "ProgramContext | None" = None,
     source_ids: Sequence[str] = (),
-    owners: Sequence[str | None] = (),
+    owners: Mapping[str, str | None] | None = None,
 ) -> DeliveryContext:
     """Aggregate one project into the scalars the rules compare.
 
@@ -309,10 +328,17 @@ def build_context(
     `source_ids` is how this project's allocations are found - every id it may
     have been filed under, not just the canonical one.
 
-    `owners` is the assignee of each task row. Passed in rather than read off
-    `schedule.tasks` because `TaskNode` is deliberately reduced to what
-    scheduling needs, and who a task belongs to is not that - widening it would
-    put a field in the scheduling type that the scheduler never reads.
+    `owners` maps a task's entity id to its assignee. Passed in rather than
+    read off `schedule.tasks` because `TaskNode` is deliberately reduced to
+    what scheduling needs, and who a task belongs to is not that - widening it
+    would put a field in the scheduling type that the scheduler never reads.
+
+    A *mapping*, not the parallel list it used to be. The list came from its
+    own query with no `ORDER BY`, so it was only ever safe to count distinct
+    values out of - which is all anything did with it. The moment a rule needs
+    to know whether *this* overdue task has an owner, position-matching two
+    independent result sets is a bug waiting for a query planner to change its
+    mind, and it would have been a silent one.
     """
     tasks = list(schedule.tasks.values())
     projections = list(impact.projections.values())
@@ -340,9 +366,15 @@ def build_context(
     _today = as_of.date() if isinstance(as_of, datetime) else as_of
     _soon = shift_date(_today, DUE_SOON_DAYS)
     _open_tasks = [t for t in tasks if _status_of(t) not in CLOSED_STATES]
-    _overdue = sum(
-        1 for t in _open_tasks if t.planned_end is not None and t.planned_end < _today
-    )
+    _by_owner = dict(owners or {})
+
+    def _unowned(task) -> bool:
+        return not (_by_owner.get(task.entity_id) or "").strip()
+
+    _overdue_tasks = [
+        t for t in _open_tasks if t.planned_end is not None and t.planned_end < _today
+    ]
+    _overdue = len(_overdue_tasks)
     _due_soon = sum(
         1
         for t in _open_tasks
@@ -404,7 +436,11 @@ def build_context(
         tasks_in_progress=sum(1 for t in tasks if _status_of(t) in IN_PROGRESS_STATES),
         tasks_overdue=_overdue,
         tasks_due_soon=_due_soon,
-        distinct_owners=len({(o or "").strip() for o in owners if (o or "").strip()}),
+        distinct_owners=len(
+            {(o or "").strip() for o in _by_owner.values() if (o or "").strip()}
+        ),
+        tasks_unowned=sum(1 for t in _open_tasks if _unowned(t)),
+        tasks_overdue_unowned=sum(1 for t in _overdue_tasks if _unowned(t)),
         tasks_stale=len(_stale),
         stalest_task_days=max(_ages, default=0),
         tasks_on_busiest_due_date=_busiest[1] if _busiest else 0,

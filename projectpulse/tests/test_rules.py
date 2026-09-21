@@ -46,6 +46,8 @@ RECORDS = [
     ctx(rows_rejected=7),
     ctx(task_count=6, tasks_with_baseline=1, baseline_coverage=0.16),
     ctx(chain_count=50, chains_dependency_backed=2),
+    ctx(task_count=17, tasks_overdue=7, tasks_unowned=3, tasks_overdue_unowned=2),
+    ctx(task_count=17, tasks_overdue=7, distinct_owners=1),
 ]
 
 
@@ -243,3 +245,68 @@ def test_a_banded_rule_joins_its_conditions_in_one_cell():
     row = next(r for r in table["content"]["rules"] if r["_id"] == "schedule_inconsistent_minor")
 
     assert " and " in row["i_max_propagated_days"]
+
+
+# --------------------------------------------------------------------------
+# Ownership
+# --------------------------------------------------------------------------
+
+
+def test_an_unowned_overdue_task_fires_above_either_half():
+    """The conjunction is the actionable one, so it outranks its parents.
+
+    Both halves already fire on a project like this and neither names these
+    rows: "7 tasks are past due" does not say which of them nobody will chase.
+    """
+    engine = RulesEngine(DEFAULT_TABLE, known_fields=KNOWN)
+    hits = {
+        h.rule_id: h
+        for h in engine.evaluate(
+            ctx(task_count=17, tasks_overdue=7, tasks_unowned=3, tasks_overdue_unowned=2)
+        )
+    }
+
+    assert "overdue_and_unowned" in hits
+    assert hits["overdue_and_unowned"].severity == "high"
+    assert hits["tasks_overdue"].severity == "medium"
+    assert "unowned_backlog" in hits
+
+
+def test_no_dates_and_no_owners_is_not_reported_as_clear():
+    """A backlog carrying neither half must not produce the finding.
+
+    Zero here means unmeasurable. The rule's rationale says so in words; this
+    is the check that the table agrees.
+    """
+    engine = RulesEngine(DEFAULT_TABLE, known_fields=KNOWN)
+    fired = {h.rule_id for h in engine.evaluate(ctx(task_count=173, tasks_overdue=0))}
+
+    assert "overdue_and_unowned" not in fired
+    assert "unowned_backlog" not in fired
+
+
+def test_one_named_owner_beside_a_pile_of_blanks_is_not_called_fully_assigned():
+    """`single_owner_project` used to state something false here.
+
+    `distinct_owners` counts names present, so three rows naming Alice and
+    seven naming nobody read as "all ten tasks are assigned to one person".
+    """
+    engine = RulesEngine(DEFAULT_TABLE, known_fields=KNOWN)
+    fired = {
+        h.rule_id
+        for h in engine.evaluate(ctx(task_count=10, distinct_owners=1, tasks_unowned=7))
+    }
+
+    assert "single_owner_project" not in fired
+    assert "unowned_backlog" in fired
+
+
+def test_a_genuinely_single_owner_project_still_fires():
+    """The correction must not cost the finding it was tightening."""
+    engine = RulesEngine(DEFAULT_TABLE, known_fields=KNOWN)
+    fired = {
+        h.rule_id
+        for h in engine.evaluate(ctx(task_count=17, distinct_owners=1, tasks_unowned=0))
+    }
+
+    assert "single_owner_project" in fired

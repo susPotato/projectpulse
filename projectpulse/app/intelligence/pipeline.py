@@ -104,19 +104,25 @@ def _hours_since_last_sync(session, generated_at: datetime) -> float | None:
     return (generated_at - finished).total_seconds() / 3600
 
 
-def load_owners(session, project_ids: Sequence[str]) -> list[str | None]:
-    """Who each task belongs to.
+def load_owners(session, project_ids: Sequence[str]) -> dict[str, str | None]:
+    """Who each task belongs to, keyed by the task's id.
 
     Its own read because `load_tasks` returns `TaskNode`, which is deliberately
     reduced to what scheduling needs and carries no assignee. Widening that type
     would put a field in the scheduling model the scheduler never looks at; a
     named query costs one cheap column scan and says what it is for.
+
+    Selects the id alongside the assignee, where it used to select the assignee
+    alone. A bare column with no `ORDER BY` can be counted but not joined, and
+    "is *this* overdue task unowned" is a join - done by position it would have
+    agreed with `load_tasks` on most runs and quietly disagreed on some.
     """
-    return list(
-        session.scalars(
-            select(Task.assignee).where(Task.project_id.in_(list(project_ids)))
+    return {
+        task_id: assignee
+        for task_id, assignee in session.execute(
+            select(Task.id, Task.assignee).where(Task.project_id.in_(list(project_ids)))
         ).all()
-    )
+    }
 
 
 def load_tasks(session, project_ids: Sequence[str]) -> list[TaskNode]:

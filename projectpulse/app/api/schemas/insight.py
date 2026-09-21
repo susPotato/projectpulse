@@ -209,6 +209,23 @@ class InsightBundle(Response):
     #: a rule trace against real values without a second request.
     context: dict = Field(default_factory=dict)
 
+    #: What a traceability run over this project's own code and documents found,
+    #: or `None` where no run exists.
+    #:
+    #: Deliberately a field of its own rather than more `findings`. Everything
+    #: in `findings` is a rule this product evaluated against rows it imported;
+    #: everything in here was decided somewhere else - by a model reading a
+    #: document, by a citation checked against a file, by a gate the team wrote
+    #: down. Flattening the two would put four different kinds of evidence in
+    #: one voice and make the weakest of them read like the strongest, which is
+    #: the one thing the traceability work exists to prevent.
+    #:
+    #: It also carries the count nothing else on this screen can: the tracker
+    #: exports 17 keyed rows for this project and the run reads 173 unkeyed
+    #: ones out of the same file. A reader who only sees the first number has
+    #: no way to know the second exists.
+    code_check: dict | None = None
+
     @property
     def top_severity(self) -> Severity:
         for level in ("critical", "high", "medium", "low", "info"):

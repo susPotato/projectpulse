@@ -505,6 +505,72 @@ def _group_progress(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                   key=lambda g: (g["done"] > 0, -g["open"], g["group"]))
 
 
+#: A field most rows carry is one the sheet expects; the rows missing it are
+#: the exceptions worth naming. Half is deliberately a low bar - a field on
+#: 60% of rows is plainly in use, and raising this only hides gaps.
+EXPECTED_FIELD_SHARE = 0.5
+
+
+def _ownership(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Which rows the backlog leaves nameless, without being told what a name is.
+
+    The export carries no assignee column. It carries `BA`, `Developer` and
+    `PO` written as `key: value` inside the description prose, which is where
+    `tracelink diagnose` found them and where the adapter now reads them from.
+    None of those words appears in this function, and none should: a different
+    team writes different keys, and a rule that knows three of them is a rule
+    that silently reports "fully staffed" for everyone else.
+
+    So the convention is measured instead. A key present on at least
+    `EXPECTED_FIELD_SHARE` of rows is one this sheet expects every row to
+    carry; the rows that do not carry it are the gap. That makes the finding
+    survive a rename, a translation, and a team that tracks a reviewer instead
+    of a developer.
+
+    Statuses are reported verbatim and never ranked. The sheet's three values
+    do not map onto this product's done/open vocabulary, and guessing which of
+    them means finished would turn a count into an opinion - so the breakdown
+    says which status each nameless row sits in and lets the reader decide
+    whether that is a problem.
+    """
+    if not rows:
+        return {"rows": 0, "fields": []}
+
+    coverage: dict[str, int] = {}
+    for row in rows:
+        for key, value in (row.get("inline") or {}).items():
+            if str(value or "").strip():
+                coverage[key] = coverage.get(key, 0) + 1
+
+    threshold = len(rows) * EXPECTED_FIELD_SHARE
+    fields = []
+    for key, seen in sorted(coverage.items(), key=lambda kv: (-kv[1], kv[0])):
+        if seen < threshold:
+            continue
+        missing = [
+            r for r in rows
+            if not str((r.get("inline") or {}).get(key, "") or "").strip()
+        ]
+        by_status: dict[str, int] = {}
+        for r in missing:
+            by_status[r.get("status") or "(no status)"] = (
+                by_status.get(r.get("status") or "(no status)", 0) + 1
+            )
+        fields.append({
+            "field": key,
+            "named": seen,
+            "missing": len(missing),
+            "by_status": sorted(
+                ({"status": k, "n": v} for k, v in by_status.items()),
+                key=lambda d: (-d["n"], d["status"]),
+            ),
+            # Enough to find the rows again; the page links each one.
+            "uids": [r["uid"] for r in missing][:25],
+        })
+
+    return {"rows": len(rows), "fields": fields}
+
+
 def collect(run: Path) -> dict[str, Any]:
     """Everything the page needs, in one object."""
     gaps: list[str] = []
@@ -641,6 +707,7 @@ def collect(run: Path) -> dict[str, Any]:
         "project_name": manifest.get("project_name"),
         "gaps": gaps,
         "corpus": corpus,
+        "ownership": _ownership(rows),
         "totals": totals,
         "tickets": rows,
         "files": files,

@@ -184,6 +184,41 @@ DEFAULT_TABLE = RuleTable(
             ),
         ),
         Rule(
+            id="overdue_and_unowned",
+            when=(Condition("tasks_overdue_unowned", ">=", 1),),
+            category="schedule_risk",
+            # `high` where its parent `tasks_overdue` is `medium`, and the
+            # difference is not severity inflation.
+            #
+            # `tasks_overdue` is banded down because "past due" is measured
+            # against `as_of`, so an old spreadsheet makes every row in it
+            # trivially late - the finding can be an artefact of the document's
+            # age rather than a fact about the work. That caveat does not reach
+            # this rule's other half. Whether a row carries an assignee is true
+            # of the row as exported, whatever date it is read on, and it is
+            # the half that decides what happens next: an overdue task with a
+            # name on it has someone to ask, and an overdue task with nobody
+            # has no one, so it is still overdue next month.
+            severity="high",
+            headline=(
+                "{{tasks_overdue_unowned}} of the {{tasks_overdue}} overdue "
+                "task(s) have nobody assigned."
+            ),
+            recommendation=(
+                "Put a name on these before re-dating anything. An unowned "
+                "task cannot be chased, so it is the subset that will still be "
+                "open after the re-plan."
+            ),
+            rationale=(
+                "Reported separately from the overdue count and the owner "
+                "count because it is neither: both of those already fire on "
+                "this project and neither names these rows. Needs an assignee "
+                "column with content and a due date on the same row - a "
+                "backlog carrying only one of the two produces 0 here, which "
+                "means not measurable, not clear."
+            ),
+        ),
+        Rule(
             id="due_soon_none_finished",
             when=(
                 Condition("tasks_due_soon", ">=", 3),
@@ -286,8 +321,17 @@ DEFAULT_TABLE = RuleTable(
         ),
         Rule(
             id="single_owner_project",
+            # `tasks_unowned == 0` is not a tightening, it is a correction. The
+            # headline says "all N tasks are assigned to one person", and on a
+            # project where three rows name Alice and seven name nobody that
+            # sentence is false about seven of them - `distinct_owners` counts
+            # the names present and cannot see the blanks. The old
+            # recommendation admitted the ambiguity in prose and asked the
+            # reader to resolve it; the context can now resolve it, so the rule
+            # states one thing and `unowned_backlog` states the other.
             when=(
                 Condition("distinct_owners", "==", 1),
+                Condition("tasks_unowned", "==", 0),
                 Condition("task_count", ">=", 5),
             ),
             category="resource_risk",
@@ -297,15 +341,41 @@ DEFAULT_TABLE = RuleTable(
                 "({{distinct_owners}} distinct owner)."
             ),
             recommendation=(
-                "Confirm this is real rather than an unassigned backlog filed "
-                "under whoever raised it - the two look identical here and only "
-                "one of them is a delivery risk."
+                "Check the concentration is deliberate. One owner across a "
+                "whole project is a single point of failure for delivery and "
+                "for everything nobody else has seen."
             ),
             rationale=(
                 "Stated so it is not mistaken for a clean bill of health. "
                 "Cross-project contention is computed across projects sharing a "
                 "person, so a single-owner project contributes nothing to a "
                 "program rollup: its resource band is unknown, not healthy."
+            ),
+        ),
+        Rule(
+            id="unowned_backlog",
+            when=(Condition("tasks_unowned", ">=", 1),),
+            category="resource_risk",
+            # `low`. Unowned work is a fact worth stating and rarely an
+            # emergency on its own - a backlog that has not been allocated yet
+            # is normal planning, not a breach. The urgent subset has its own
+            # rule and its own severity, which is the whole reason this one can
+            # afford to stay quiet.
+            severity="low",
+            headline=(
+                "{{tasks_unowned}} open task(s) of {{task_count}} carry no "
+                "assignee."
+            ),
+            recommendation=(
+                "Decide whether these are unallocated or simply exported "
+                "without the column. Only the first is a planning gap, and "
+                "the export looks the same either way."
+            ),
+            rationale=(
+                "Counted over open tasks only - finished work needs no owner. "
+                "It exists because `single_owner_project` used to absorb this "
+                "case and mis-state it: a project with one named owner and a "
+                "pile of blanks was reported as fully assigned to that person."
             ),
         ),
         Rule(

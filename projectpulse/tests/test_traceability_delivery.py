@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from app.api import tracelink_view
 from app.api.tracelink_view import collect
 
 
@@ -264,3 +265,62 @@ def test_a_run_with_nothing_wrong_produces_an_empty_digest(tmp_path):
     run = tmp_path / "run"
     _minimal(run)
     assert collect(run)["findings"] == []
+
+
+# --- Ownership -------------------------------------------------------------
+
+
+def test_a_field_most_rows_carry_is_treated_as_one_every_row_should():
+    """The convention is measured, never declared.
+
+    Nothing here may know that a team writes `Developer`. A key on at least
+    half the rows is one the sheet expects, and the rows without it are the
+    gap - which is what makes the finding survive a rename or a translation.
+    """
+    rows = [
+        {"uid": "a", "status": "open", "inline": {"Reviewer": "x", "Odd": "y"}},
+        {"uid": "b", "status": "open", "inline": {"Reviewer": "x"}},
+        {"uid": "c", "status": "shipped", "inline": {}},
+    ]
+    fields = {f["field"]: f for f in tracelink_view._ownership(rows)["fields"]}
+
+    #: On 2 of 3 rows, so expected; row c is the gap.
+    assert fields["Reviewer"]["missing"] == 1
+    assert fields["Reviewer"]["uids"] == ["c"]
+    #: On 1 of 3. Too rare to call a convention, so it is not reported as one.
+    assert "Odd" not in fields
+
+
+def test_statuses_are_reported_verbatim_and_never_ranked():
+    """This sheet's words do not map onto our done/open vocabulary.
+
+    Deciding which of them means finished would turn a count into an opinion,
+    so the breakdown names the status and lets the reader judge.
+    """
+    #: Two of four carry the field, which clears the bar for a convention -
+    #: below it the field is not reported at all and there is nothing to break
+    #: down, which is what the first draft of this test got wrong.
+    rows = [
+        {"uid": "a", "status": "Release it", "inline": {"Dev": "x"}},
+        {"uid": "b", "status": "To Do", "inline": {"Dev": "y"}},
+        {"uid": "c", "status": "Release it", "inline": {}},
+        {"uid": "d", "status": "To Do", "inline": {}},
+    ]
+    field = tracelink_view._ownership(rows)["fields"][0]
+
+    assert field["by_status"] == [
+        {"status": "Release it", "n": 1},
+        {"status": "To Do", "n": 1},
+    ]
+
+
+def test_whitespace_is_not_a_name():
+    rows = [
+        {"uid": "a", "status": "open", "inline": {"Dev": "x"}},
+        {"uid": "b", "status": "open", "inline": {"Dev": "   "}},
+    ]
+    assert tracelink_view._ownership(rows)["fields"][0]["missing"] == 1
+
+
+def test_an_empty_backlog_reports_no_fields_rather_than_dividing_by_zero():
+    assert tracelink_view._ownership([]) == {"rows": 0, "fields": []}

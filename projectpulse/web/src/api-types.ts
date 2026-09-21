@@ -602,6 +602,11 @@ export interface paths {
          *     somebody arranged, so the reason to refuse is served as a sentence rather
          *     than a status code alone - see `app/projects.py` for what is deliberately
          *     left behind.
+         *
+         *     Gated for that same reason. "No undo" and "anybody on the internet may
+         *     call it" are not two facts that belong in one route: until this, a stranger
+         *     could empty the deployment a project at a time. Loopback still passes with
+         *     no token, so local development is unchanged.
          */
         delete: operations["remove_project_route_api_projects__project_id__delete"];
         options?: never;
@@ -2610,6 +2615,10 @@ export interface components {
             context: {
                 [key: string]: unknown;
             };
+            /** Code Check */
+            code_check: {
+                [key: string]: unknown;
+            } | null;
         };
         /**
          * LiveSource
@@ -3921,8 +3930,8 @@ export interface operations {
     api_gantt_api_gantt_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -3984,8 +3993,8 @@ export interface operations {
     api_explain_api_explain_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -4016,8 +4025,8 @@ export interface operations {
     forecast_api_forecast_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -4068,7 +4077,7 @@ export interface operations {
     report_options_api_report_options_get: {
         parameters: {
             query?: {
-                project?: string;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -4099,10 +4108,10 @@ export interface operations {
     report_preview_api_report_preview_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
                 template?: string | null;
                 section?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -4133,10 +4142,10 @@ export interface operations {
     report_md_api_report_md_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
                 template?: string | null;
                 section?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -4167,10 +4176,10 @@ export interface operations {
     report_xlsx_api_report_xlsx_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
                 template?: string | null;
                 section?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -4201,10 +4210,10 @@ export interface operations {
     report_api_report_docx_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
                 template?: string | null;
                 section?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -4518,8 +4527,8 @@ export interface operations {
     team_api_team_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -4702,8 +4711,8 @@ export interface operations {
     scenarios_api_scenarios_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;
@@ -6069,8 +6078,8 @@ export interface operations {
     insight_api_insight_get: {
         parameters: {
             query?: {
-                project?: string;
                 also?: string[] | null;
+                project?: string | null;
             };
             header?: never;
             path?: never;

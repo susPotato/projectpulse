@@ -300,7 +300,12 @@
 */
 .appbar {
   display: flex;
-  align-items: baseline;
+  /* `center`, not `baseline`. A bar of pure text aligns fine either way, but
+     the moment one child is a control with padding and a border, baseline
+     aligns the row on that control's *text* and leaves its box hanging below
+     everything beside it. That is what made Schedule's bar look crooked after
+     the picker was given a border - the fix was never the colours. */
+  align-items: center;
   gap: 14px;
   flex-wrap: wrap;
   margin: 16px 0 16px;
@@ -345,6 +350,23 @@
   border-radius: 6px;
   max-width: 260px;
 }
+
+/* A bordered <select> still paints a native drop-down button inside its own
+   box, so the control read as half ours and half Windows'. `appearance: none`
+   removes the button and the arrow with it, which is why the arrow has to come
+   back as a background image; the right padding reserves its space. The colour
+   is `--ink-3` written out, because a data URI cannot see `currentColor`. */
+.appbar select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 26px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A94A6' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  background-size: 12px 12px;
+  cursor: pointer;
+}
+.appbar select:hover { background-color: var(--bg); }
 
 .appbar select:focus,
 .appbar input:focus {

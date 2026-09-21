@@ -115,6 +115,24 @@ export interface ProjectSelection {
   also: string[];
 }
 
+/** Persist a selection nobody put in the URL.
+
+    The rail's picker used to *display* `portfolio.projects[0]` when storage
+    was empty while the page fetched with no `?project=` at all, so the server
+    answered with its own default. Two defaults, one rule each, agreeing only
+    by luck - and when they disagree the screen names one project and shows
+    another's numbers, which looks like nothing is wrong. Writing the choice
+    down the first time the picker resolves one means there is exactly one
+    answer to "which project is this", and every later fetch states it. */
+export function rememberProject(selection: ProjectSelection): void {
+  try {
+    storage()?.setItem(STORAGE_KEY, JSON.stringify(selection));
+  } catch {
+    // Same as everywhere else here: a private window losing the remembered
+    // choice is a smaller problem than a page that will not render.
+  }
+}
+
 export function currentProject(): ProjectSelection | null {
   const params = searchParams();
   const fromUrl = params.get("project");
@@ -140,8 +158,13 @@ export function currentProject(): ProjectSelection | null {
 }
 
 /**
- * Append the current project selection, if any, to an API path - so the page
- * you're already on asks for the project it is showing.
+ * Append the current project selection, if any, to a path - so the page you're
+ * already on asks for the project it is showing.
+ *
+ * Used for page hrefs as well as API paths. The rail's links were bare, so
+ * every click dropped `?project=` from the address bar: the selection survived
+ * in storage, but the URL stopped describing what was on screen, and a link
+ * pasted to someone else opened on whatever the server defaulted to.
  */
 export function withProject(path: string): string {
   const selection = currentProject();

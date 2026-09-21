@@ -10,6 +10,8 @@ import {
   currentProject,
   load,
   projectLink,
+  rememberProject,
+  withProject,
   type PortfolioBundle,
   type ProjectRow,
 } from "../api";
@@ -177,10 +179,18 @@ export function Rail({ current }: { current: string }) {
         </svg>
       </a>
       <ThemeToggle />
+      {/* `withProject`, not a bare href. Every rail click used to drop
+          `?project=` from the address bar. The selection survived in storage so
+          the next page still showed the right project, which is exactly why
+          nobody noticed: what broke was the *URL*, which stopped describing
+          what was on screen, so a link sent to a colleague opened on whatever
+          the server defaulted to rather than on what the sender was looking
+          at. `/settings` and `/agent` ignore the param; carrying it anyway
+          keeps one rule here instead of a list of exceptions to maintain. */}
       {TABS.map((tab) => (
         <a
           key={tab.href}
-          href={tab.href}
+          href={withProject(tab.href)}
           aria-current={tab.href === current ? "page" : undefined}
         >
           <svg viewBox="0 0 24 24">{ICONS[tab.href]}</svg>
@@ -244,6 +254,23 @@ function ProjectSwitcher() {
   useEffect(() => {
     load<PortfolioBundle>("/api/portfolio").then(setBundle, () => setBundle(null));
   }, []);
+
+  /* Resolving a default is not the same as *having* one. Showing
+     `projects[0]` while the page fetched with no `?project=` left the server
+     free to answer about a different project entirely - see
+     `default_project_id` in `app/api/main.py`. Writing it down the moment the
+     portfolio arrives makes the displayed name and the fetched numbers the
+     same claim, and costs one storage write per first visit. */
+  useEffect(() => {
+    if (!bundle || bundle.projects.length === 0) return;
+    if (currentProject()) return;
+    const first = bundle.projects[0];
+    if (!first) return;
+    rememberProject({
+      id: first.project_id,
+      also: first.source_ids.filter((id) => id !== first.project_id),
+    });
+  }, [bundle]);
 
   if (!bundle || bundle.projects.length === 0) return null;
 

@@ -160,3 +160,86 @@ def test_propagated_slip_reaches_the_rule_vocabulary():
     assert record["max_propagated_days"] == 11
     assert record["tasks_inconsistent"] == 1
     assert record["max_recorded_slip_days"] == 12
+
+
+# --- Ownership -------------------------------------------------------------
+#
+# `owners` used to be a positional list of assignees, which could be counted
+# but not joined. These pin the mapping form, and the one question the list
+# could never answer: does *this* overdue task have a name on it.
+
+
+def owned(entity_id, planned, owner, status="in progress"):
+    return task(entity_id, date(2026, 3, 1), planned, status=status), owner
+
+
+def test_an_overdue_task_with_nobody_on_it_is_counted_apart_from_both_halves():
+    late, on_time = date(2026, 3, 1), date(2026, 4, 30)
+    rows = [
+        owned("t1", late, "Alice"),
+        owned("t2", late, None),
+        owned("t3", late, "   "),  # whitespace is not an owner
+        owned("t4", on_time, None),
+    ]
+    record = context(
+        tasks=[t for t, _ in rows],
+        owners={t.entity_id: o for t, o in rows},
+    ).as_record()
+
+    assert record["tasks_overdue"] == 3
+    #: t2 and t3 - late and unowned. t4 is unowned but not yet due, t1 is late
+    #: but has someone to ask.
+    assert record["tasks_overdue_unowned"] == 2
+    assert record["tasks_unowned"] == 3
+    assert record["distinct_owners"] == 1
+
+
+def test_a_finished_task_needs_no_owner():
+    """Counted over open tasks only, or every delivered backlog reads as a gap."""
+    rows = [
+        owned("t1", date(2026, 3, 1), None, status="done"),
+        owned("t2", date(2026, 3, 1), None),
+    ]
+    record = context(
+        tasks=[t for t, _ in rows],
+        owners={t.entity_id: o for t, o in rows},
+    ).as_record()
+
+    assert record["tasks_unowned"] == 1
+    assert record["tasks_overdue_unowned"] == 1
+
+
+def test_a_backlog_with_no_dates_reports_zero_rather_than_clear():
+    """The conjunction needs both halves; missing one is unmeasurable, not safe.
+
+    This is the real shape of the project the rule was written for: 173 rows,
+    every one carrying an owner in prose and four carrying a date. Nothing can
+    honestly be said about overdue-and-unowned there, and 0 is how the context
+    says so - which is why the rule's own rationale spells that out rather than
+    letting a reader take silence for a clean result.
+    """
+    rows = [owned("t1", None, None), owned("t2", None, None)]
+    record = context(
+        tasks=[t for t, _ in rows],
+        owners={t.entity_id: o for t, o in rows},
+    ).as_record()
+
+    assert record["tasks_unowned"] == 2
+    assert record["tasks_overdue"] == 0
+    assert record["tasks_overdue_unowned"] == 0
+
+
+def test_owners_naming_a_task_the_schedule_does_not_have_are_ignored():
+    """The mapping is a lookup, not a second source of tasks.
+
+    The list form was zipped by position, so a stray row shifted every
+    assignment after it. A mapping simply misses.
+    """
+    rows = [owned("t1", date(2026, 3, 1), None)]
+    record = context(
+        tasks=[t for t, _ in rows],
+        owners={"t1": None, "ghost": "Alice"},
+    ).as_record()
+
+    assert record["tasks_unowned"] == 1
+    assert record["distinct_owners"] == 1

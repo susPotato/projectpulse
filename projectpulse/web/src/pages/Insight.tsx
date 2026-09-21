@@ -935,6 +935,120 @@ function Scenarios({ bundle }: { bundle: ScenarioBundle }) {
    tab that opens on "nothing here yet" teaches a reader the product is empty.
    Schedule and Quality have screens of their own, so they are not repeated
    here as half-versions. */
+/* What a traceability run found, on the page people actually open.
+
+   This is the second reading of the same project and it disagrees with the
+   first on the most basic question there is: how much work exists. The tracker
+   exports keyed rows and this screen counts those; the run reads the unkeyed
+   sub-rows out of the same export and there are an order of magnitude more of
+   them. Both numbers are correct about what they measured, and a reader shown
+   only the smaller one has no way to learn the larger exists.
+
+   Kept visually apart from `FindingCard` on purpose. Those are rules this
+   product evaluated against rows it imported and can defend line by line;
+   these were decided by a model reading a document and by citations checked
+   against files. Same page, different standing, and the panel says which. */
+function CodeCheck({
+  check,
+  tracked,
+}: {
+  check: NonNullable<InsightBundle["code_check"]>;
+  /* How many rows *this* screen counted, passed in rather than written down.
+     The first draft of this sentence had the number typed into it, which on a
+     page built to prove that every figure comes from the data it describes is
+     the one mistake it cannot afford. */
+  tracked: number;
+}) {
+  const rows = Number(check.rows ?? 0);
+  if (!rows) return null;
+
+  const corroborated = Number(check.corroborated ?? 0);
+  const contradicted = Number(check.contradicted ?? 0);
+  const unverified = Number(check.unverified ?? 0);
+  const conflicts = Number(check.conflicts ?? 0);
+  const gaps = (check.ownership_gaps ?? []) as {
+    field: string;
+    named: number;
+    missing: number;
+    by_status: { status: string; n: number }[];
+  }[];
+
+  return (
+    <Section title="Checked against the code">
+      <Card>
+        <p className="m-0 text-[12.5px] leading-relaxed text-ink-2">
+          A separate pass read this project's own repository and documents.
+          It found <b className="text-ink">{rows}</b> feature rows in the same
+          export this screen reads{" "}
+          <b className="text-ink tabular-nums">{tracked}</b> keyed tasks from —
+          the rest sit under a parent that carries no dates, which is why
+          nothing above counts them.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-[12.5px]">
+          <span>
+            <b className="text-ink tabular-nums">{corroborated}</b>{" "}
+            <span className="text-ink-2">backed by code</span>
+          </span>
+          <span>
+            <b className="text-ink tabular-nums">{unverified}</b>{" "}
+            <span className="text-ink-2">could not be verified</span>
+          </span>
+          <span>
+            <b className="text-ink tabular-nums">{contradicted}</b>{" "}
+            <span className="text-ink-2">contradicted</span>
+          </span>
+          {conflicts > 0 && (
+            <span>
+              <b className="text-ink tabular-nums">{conflicts}</b>{" "}
+              <span className="text-ink-2">status conflicts</span>
+            </span>
+          )}
+        </div>
+
+        {/* The answer to "does anyone own this". The export has no assignee
+            column at all - these fields were written as `key: value` inside
+            the description prose and recovered from there, which is why they
+            are named by whatever the team called them rather than by a word
+            this product chose. */}
+        {gaps.length > 0 && (
+          <div className="mt-4 border-t border-rule pt-3">
+            <div className="mb-2 text-[11px] font-semibold tracking-wide text-ink-3 uppercase">
+              Rows naming nobody
+            </div>
+            {gaps.map((gap) => (
+              <p key={gap.field} className="mt-1 mb-0 text-[12.5px] text-ink-2">
+                <b className="text-ink tabular-nums">{gap.missing}</b> of {rows}{" "}
+                rows carry no <b className="text-ink">{gap.field}</b>
+                {gap.by_status.length > 0 && (
+                  <>
+                    {" — "}
+                    {gap.by_status
+                      .map((entry) => `${entry.n} ${entry.status}`)
+                      .join(", ")}
+                  </>
+                )}
+                .
+              </p>
+            ))}
+            <p className="mt-2 mb-0 text-[11.5px] text-ink-3">
+              Statuses are this sheet's own words, not ranked — whether a row
+              without a name is a problem depends on which of them it is in.
+            </p>
+          </div>
+        )}
+
+        <a
+          className="mt-4 inline-block text-[12.5px] text-navy"
+          href="/traceability"
+        >
+          Open the full trace &rarr;
+        </a>
+      </Card>
+    </Section>
+  );
+}
+
+
 const VIEWS = ["Overview", "Risk", "Evidence"] as const;
 
 export function InsightView({
@@ -1048,6 +1162,13 @@ export function InsightView({
               ))
             )}
           </Section>
+
+          {bundle.code_check && (
+            <CodeCheck
+              check={bundle.code_check}
+              tracked={Number(bundle.context?.task_count ?? 0)}
+            />
+          )}
 
           {/* Folded. The narrative is complete prose and worth having - it is
               what gets read aloud - but five paragraphs restating the cards

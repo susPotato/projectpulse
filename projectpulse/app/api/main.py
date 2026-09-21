@@ -58,7 +58,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -254,6 +254,74 @@ def _traceability_for(project: str | None) -> _Traceability | None:
                          totals=payload.get("totals") or {})
 
 
+def _code_check(project: str | None) -> dict | None:
+    """The traceability run for one project, summarised for the insight screen.
+
+    A summary, not the payload: `/api/traceability` already serves the whole
+    run to the page built for it, and the insight screen wants the four numbers
+    a delivery manager would ask for before deciding whether to open it.
+
+    Returns `None` for a project with no run, which is most of them - the
+    screen then shows nothing rather than an empty panel explaining that it is
+    empty.
+    """
+    if not project:
+        return None
+    run, _ = tracelink_view.run_for_project(project)
+    if run is None:
+        return None
+    payload = tracelink_view.collect(run)
+    if payload.get("project_id") != project:
+        return None
+
+    totals = payload.get("totals") or {}
+    ownership = payload.get("ownership") or {}
+    # Only the fields with a gap. A field every row carries is a fact about the
+    # sheet, not a finding, and listing it would bury the two that matter.
+    gaps = [f for f in (ownership.get("fields") or []) if f.get("missing")]
+    return {
+        "rows": totals.get("tickets", 0),
+        "corroborated": totals.get("corroborated", 0),
+        "contradicted": totals.get("contradicted", 0),
+        "unverified": totals.get("unverified", 0),
+        "conflicts": totals.get("conflicts", 0),
+        "ownership_gaps": gaps,
+        "files": (payload.get("corpus") or {}).get("files", 0),
+    }
+
+
+def default_project_id() -> str:
+    """Which project a request that names none is about.
+
+    Eleven routes used to carry `project: str = "excel:Project:1:HRMS"` as a
+    literal default. Two things were wrong with that. The demo project's id was
+    compiled into the API, so deleting it would have left every unparameterised
+    route answering about a project that no longer exists - with a 200. And the
+    rail's picker independently fell back to the *first row of the portfolio*
+    when nothing was stored, which is a different rule: the two agreed only
+    because the seed project happens to be first in both orders. A picker that
+    names one project while the numbers describe another is the worst failure
+    this screen has, because nothing about it looks wrong.
+
+    So there is now one rule, written once. It is deliberately not clever -
+    first registered project - because a default that ranks or scores would
+    move under the reader as the data changed, and "why did my dashboard open
+    on a different project today" is a worse question than "why this one".
+    """
+    projects = scope.all_projects()
+    if not projects:
+        raise HTTPException(
+            status_code=404,
+            detail="No project has been imported yet. Add a source in Settings.",
+        )
+    return projects[0].canonical_id
+
+
+def project_param(project: str | None = None) -> str:
+    """`?project=`, or the default above - never a hard-coded id."""
+    return project or default_project_id()
+
+
 @app.get("/api/traceability")
 def api_traceability(project: str | None = None) -> dict:
     """The traceability run for one delivery project.
@@ -313,7 +381,7 @@ def gantt_page() -> FileResponse:
 
 @app.get("/api/gantt", response_model=GanttBundle)
 def api_gantt(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
 ) -> GanttBundle:
     """Tasks, milestones and dependency edges on one shared time window."""
@@ -496,7 +564,7 @@ def _report_doc(
 
 @app.get("/api/explain", response_model=ExplainBundle)
 def api_explain(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
 ) -> ExplainBundle:
     """The forward pass, with the working, for one project.
@@ -530,7 +598,7 @@ def api_explain(
 
 @app.get("/api/forecast", response_model=ForecastBundle)
 def forecast(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
 ) -> ForecastBundle:
     """A range of finish dates, resampled from this project's observed drift.
@@ -564,7 +632,7 @@ def reports_page() -> FileResponse:
 
 
 @app.get("/api/report/options", response_model=ReportOptions)
-def report_options(project: str = "excel:Project:1:HRMS") -> ReportOptions:
+def report_options(project: str = Depends(project_param)) -> ReportOptions:
     """What the builder screen may offer, straight from the exporter.
 
     Served rather than hardcoded in the front end so that a section added to
@@ -652,7 +720,7 @@ def report_options(project: str = "excel:Project:1:HRMS") -> ReportOptions:
 
 @app.get("/api/report/preview", response_model=ReportPreview)
 def report_preview(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
     template: str | None = None,
     section: list[str] | None = Query(default=None),
@@ -679,7 +747,7 @@ def report_preview(
 
 @app.get("/api/report.md")
 def report_md(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
     template: str | None = None,
     section: list[str] | None = Query(default=None),
@@ -698,7 +766,7 @@ def report_md(
 
 @app.get("/api/report.xlsx")
 def report_xlsx(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
     template: str | None = None,
     section: list[str] | None = Query(default=None),
@@ -717,7 +785,7 @@ def report_xlsx(
 
 @app.get("/api/report.docx")
 def report(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
     template: str | None = None,
     section: list[str] | None = Query(default=None),
@@ -955,7 +1023,7 @@ def team_page() -> FileResponse:
 
 @app.get("/api/team", response_model=TeamBundle)
 def team(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
 ) -> TeamBundle:
     """Workload, effort and activity, from columns the sheets actually carry.
@@ -1364,7 +1432,7 @@ async def upload_source(
 
 @app.get("/api/scenarios", response_model=ScenarioBundle)
 def scenarios(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
 ) -> ScenarioBundle:
     """What the schedule would do if one thing changed.
@@ -1767,12 +1835,14 @@ def test_settings(request: Request) -> dict:
     if problem is not None:
         raise HTTPException(status_code=503, detail=problem)
 
+    # The smoke test narrates a real project so a key that authenticates but
+    # cannot complete still fails here rather than on someone's report. Which
+    # project is the same question every other route asks, so it is the same
+    # answer - naming the demo id here made "test your key" fail on any install
+    # that had deleted it.
+    _default, _also = scope.canonical_pairing(default_project_id())
     with session_scope() as session:
-        bundle = analyze_project(
-            session,
-            project_id="excel:Project:1:HRMS",
-            also=["jira:Project:1:HRMS"],
-        )
+        bundle = analyze_project(session, project_id=_default, also=list(_also))
 
     if not bundle.findings:
         raise HTTPException(
@@ -2375,7 +2445,7 @@ def agent_chat(request: Request, body: ChatRequest) -> ChatResponse:
 
 @app.get("/api/insight", response_model=InsightBundle)
 def insight(
-    project: str = "excel:Project:1:HRMS",
+    project: str = Depends(project_param),
     also: list[str] | None = Query(default=None),
 ) -> InsightBundle:
     """The whole intelligence layer for one project, as one object.
@@ -2418,4 +2488,11 @@ def insight(
                 "python -m scripts.replay"
             ),
         )
+
+    # Attached after the analysis rather than inside it, and left `None` when
+    # the project has no run. `analyze_project` reads the database and nothing
+    # else; giving it a directory of another repository's artifacts to read
+    # would make the intelligence layer depend on a filesystem it has no
+    # business knowing about, and every test of it would need one.
+    bundle.code_check = _code_check(project)
     return bundle
