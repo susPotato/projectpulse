@@ -130,6 +130,29 @@
   align-items: center;
   gap: 3px;
   padding: 14px 0;
+
+  /* Stays put while the page moves under it.
+
+     The rail carried no `position` at all, so it was an ordinary flex child
+     that scrolled off the top with everything else. On the short screens that
+     is invisible - there is nothing to scroll - which is why it survived this
+     long. Schedule is the page that exposed it: a hundred and ninety chart
+     rows and a hundred and seventy-three more in the table below them, and
+     the navigation is gone for all but the first screenful of it.
+
+     `align-self: flex-start` is the part that is easy to miss. `.shell` sets
+     `align-items: stretch`, which makes this element as tall as the whole
+     document; a sticky box whose height already fills its container has
+     nowhere to stick to and silently does nothing. Opting out of the stretch
+     is what lets `top: 0` mean anything.
+
+     `overflow-y: auto` so a rail with more entries than fit - a shorter
+     viewport, a larger text size - can still reach its last one. */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .rail .brand {
