@@ -170,6 +170,36 @@ Losing `PULSE_SECRET_KEY` does not lose the app - only the stored keys, which
 report themselves as unreadable on `/llm` and have to be pasted in again.
 Rotating it deliberately is `keys.rotate()`, via `PULSE_SECRET_KEY_PREVIOUS`.
 
+### What `PULSE_ADMIN_TOKEN` actually gates
+
+Most of this app is writable by anyone who can reach it, and that is a
+deliberate choice - it is a demo, and a visitor rearranging their own dashboard
+costs nothing. Two kinds of route are not:
+
+| Route | Why |
+|---|---|
+| `POST /api/agent/chat` | calls a model on this deployment's key |
+| `POST /api/custom-tiles/chat` | a tool loop - several billed calls per turn |
+| `POST /api/custom-tiles/draft` | calls a model |
+| `POST /api/dashboards/generate` | calls a model |
+| `POST /api/risks/drafts` | calls a model |
+| `POST /api/llm/features/{feature}/test`, `POST /api/settings/test` | call a model |
+| `DELETE /api/projects/{id}` | no undo, and rebuilds nothing |
+| everything under `/api/llm/*` and `/api/imports` that writes | settings, keys and stored workbooks |
+
+**Loopback always passes**, so `python -m scripts.serve` on a laptop behaves as
+it always has and the test suite needs no token. On a deployed host these
+answer 403 until somebody pastes the admin token on `/llm`, which unlocks that
+browser tab - the React app sends it on every write from there on.
+
+Without `PULSE_ADMIN_TOKEN` set at all, the deployed app simply cannot run
+these: the AI features are visible but decline, saying so. That is the safe
+default, and it is what you get by doing nothing.
+
+`tests/test_route_auth.py` reads the routing table and fails on any mutating
+route that reaches a model without the gate, so the next one added is caught
+by the suite rather than by the bill.
+
 Add the extra to the image first, or the SDK is not there to import - in
 `Dockerfile`, change `pip install -e .` to `pip install -e ".[llm]"` (or
 `.[llm-openai]` / `.[llm-gemini]`). Without it the page still fills, with

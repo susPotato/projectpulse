@@ -240,20 +240,46 @@ export async function load<T>(path: string): Promise<T> {
 }
 
 /**
- * The write half of `load` - same error shape, for the one screen in this
- * app where a person's own data is being changed rather than the engine's
- * findings being rendered (the risk register).
+ * The admin token, if somebody has unlocked this browser tab.
+ *
+ * `sessionStorage`, not `localStorage`, and the same key `/llm` writes - it is
+ * a credential, so it should not outlive the tab, and there should be exactly
+ * one place a person pastes it.
+ *
+ * Absent on an ordinary visit, which is the normal case: only the routes that
+ * spend money on the deployment's own API key, or destroy a project, ask for
+ * it. Everything else on this app is readable and writable without one.
+ */
+function adminToken(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.sessionStorage.getItem("pulse-admin-token") ?? "";
+  } catch {
+    // Private window or storage blocked - the same as not having one.
+    return "";
+  }
+}
+
+/**
+ * The write half of `load` - same error shape, for the screens where a
+ * person's own data is being changed rather than the engine's findings being
+ * rendered.
  */
 export async function send<T>(
   path: string,
   method: "POST" | "PUT" | "PATCH" | "DELETE",
   body?: unknown,
 ): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (body) headers["Content-Type"] = "application/json";
+  const token = adminToken();
+  if (token) headers["X-Pulse-Admin-Token"] = token;
+
   let response: Response;
   try {
     response = await fetch(path, {
       method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch (error) {
@@ -263,6 +289,16 @@ export async function send<T>(
   if (!response.ok) {
     const problem: unknown = await response.json().catch(() => null);
     const detail = (problem as { detail?: string } | null)?.detail ?? `HTTP ${response.status}`;
+    // A 403 here is not a bug and not a broken product: it is the deployment
+    // declining to spend money, or delete a project, for someone it cannot
+    // identify. Say where the key is rather than reporting the status code.
+    if (response.status === 403) {
+      throw {
+        title: "This action needs an admin token",
+        detail,
+        fix: "Open /llm and paste your admin token to unlock this tab.",
+      } satisfies ApiProblem;
+    }
     throw { title: `${method} ${path} failed`, detail } satisfies ApiProblem;
   }
 

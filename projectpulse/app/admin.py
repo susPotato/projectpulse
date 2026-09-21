@@ -103,22 +103,27 @@ def require(request) -> str:
     if who:
         return who
 
+    # Deliberately not "settings": this now guards the routes that call a
+    # language model on the deployment's own key, and the one that deletes a
+    # project. A message naming only settings would read as a wrong answer on
+    # the Agent tab, which is one of the places it surfaces.
     if not configured():
         raise HTTPException(
             status_code=403,
             detail=(
-                "this deployment has no admin token, so settings can only be "
-                f"changed from the machine the app runs on. Set {TOKEN_ENV} as "
-                "a platform secret to administer it remotely, or set the "
-                "provider and key as environment variables instead."
+                "This action either spends money on this deployment's API key "
+                "or cannot be undone, so it is limited to the machine the app "
+                f"runs on. Set {TOKEN_ENV} as a platform secret to allow it "
+                "from a browser - `python -m scripts.secret` prints one."
             ),
         )
 
     raise HTTPException(
         status_code=403,
         detail=(
-            f"a valid {HEADER} header is required to change settings on a "
-            "deployed instance."
+            "This action either spends money on this deployment's API key or "
+            "cannot be undone. Paste your admin token on /llm to unlock this "
+            "browser tab."
         ),
     )
 

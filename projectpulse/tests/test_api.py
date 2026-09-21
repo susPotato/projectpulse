@@ -41,7 +41,17 @@ APP_SHELL = STATIC / "app" / "index.html"
 
 @pytest.fixture()
 def client():
-    return TestClient(__import__("app.api.main", fromlist=["app"]).app)
+    """A client that looks like it came from the machine the app runs on.
+
+    The routes that spend money on a vendor, and the one that deletes a
+    project, require loopback or an admin token - see `app/admin.py`. A suite
+    running on a developer's machine *is* loopback, so this matches reality;
+    `tests/test_route_auth.py` owns the case this fixture deliberately is not,
+    which is a stranger arriving over the proxy.
+    """
+    return TestClient(
+        __import__("app.api.main", fromlist=["app"]).app, client=("127.0.0.1", 5000)
+    )
 
 
 @pytest.fixture()

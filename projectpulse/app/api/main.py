@@ -871,15 +871,23 @@ def preview_project_removal(project_id: str) -> dict:
 
 
 @app.delete("/api/projects/{project_id}")
-def remove_project_route(project_id: str) -> dict:
+def remove_project_route(request: Request, project_id: str) -> dict:
     """Remove a project and everything that was only ever about it.
 
     There is no undo and nothing rebuilds a risk somebody typed or a board
     somebody arranged, so the reason to refuse is served as a sentence rather
     than a status code alone - see `app/projects.py` for what is deliberately
     left behind.
+
+    Gated for that same reason. "No undo" and "anybody on the internet may
+    call it" are not two facts that belong in one route: until this, a stranger
+    could empty the deployment a project at a time. Loopback still passes with
+    no token, so local development is unchanged.
     """
+    from app import admin
     from app.projects import remove
+
+    admin.require(request)
 
     with session_scope() as session:
         try:
@@ -1902,7 +1910,7 @@ def read_risk_drafts(project: str) -> RiskDraftBundle:
 
 
 @app.post("/api/risks/drafts", response_model=RiskDraftBundle)
-def generate_risk_drafts(project: str) -> RiskDraftBundle:
+def generate_risk_drafts(request: Request, project: str) -> RiskDraftBundle:
     """Read this project's task text and propose risks from it.
 
     Answers 200 with a `reason` rather than an error when the model cannot be
@@ -1911,6 +1919,15 @@ def generate_risk_drafts(project: str) -> RiskDraftBundle:
     not a failure to raise, and a 500 here would make a page that works look
     broken.
     """
+    # Gated because it spends money. Anyone who could reach this route could
+    # run up the bill on the deployment's own key, and `/usage` exists
+    # precisely so that spend is not invisible - it should not also be
+    # anonymous. Loopback still passes with no token, so local development is
+    # unchanged; see `app/admin.py`.
+    from app import admin
+
+    admin.require(request)
+
     from app.risks.drafts import DraftsUnavailable, propose
     from app.risks.service import CATEGORIES
 
@@ -2036,11 +2053,20 @@ def fit_dashboard_api(scope_type: str, scope_id: str) -> DashboardOut:
 
 
 @app.post("/api/dashboards/generate", response_model=DashboardOut)
-def generate_dashboard_api(body: GenerateRequest) -> DashboardOut:
+def generate_dashboard_api(request: Request, body: GenerateRequest) -> DashboardOut:
     """Create with AI: the model picks tiles from the catalogue, never data.
 
     Reuses whichever provider narration is already configured with (`_narrator`,
     same as `/api/agent/chat`) - no separate credential for this feature."""
+    # Gated because it spends money. Anyone who could reach this route could
+    # run up the bill on the deployment's own key, and `/usage` exists
+    # precisely so that spend is not invisible - it should not also be
+    # anonymous. Loopback still passes with no token, so local development is
+    # unchanged; see `app/admin.py`.
+    from app import admin
+
+    admin.require(request)
+
     from app.dashboard.service import generate
 
     with session_scope() as session:
@@ -2048,11 +2074,20 @@ def generate_dashboard_api(body: GenerateRequest) -> DashboardOut:
 
 
 @app.post("/api/custom-tiles/draft", response_model=CustomChartDraft)
-def draft_custom_tile_api(body: CustomTileDraftRequest) -> CustomChartDraft:
+def draft_custom_tile_api(request: Request, body: CustomTileDraftRequest) -> CustomChartDraft:
     """Parse pasted data into a chart - not saved yet. Reuses whichever
     provider narration is already configured with; falls back to a plain
     two-column CSV/TSV parse when there's no model or its output doesn't
     validate, so 'paste a label,value table' still works with narration off."""
+    # Gated because it spends money. Anyone who could reach this route could
+    # run up the bill on the deployment's own key, and `/usage` exists
+    # precisely so that spend is not invisible - it should not also be
+    # anonymous. Loopback still passes with no token, so local development is
+    # unchanged; see `app/admin.py`.
+    from app import admin
+
+    admin.require(request)
+
     from app.dashboard.custom import draft_chart
 
     try:
@@ -2062,7 +2097,7 @@ def draft_custom_tile_api(body: CustomTileDraftRequest) -> CustomChartDraft:
 
 
 @app.post("/api/custom-tiles/chat", response_model=TileChatResponse)
-def chat_custom_tile_api(body: TileChatRequest) -> TileChatResponse:
+def chat_custom_tile_api(request: Request, body: TileChatRequest) -> TileChatResponse:
     """The tile builder, one turn at a time: describe a chart, look at it, say
     what is wrong, look again.
 
@@ -2072,6 +2107,15 @@ def chat_custom_tile_api(body: TileChatRequest) -> TileChatResponse:
     values}` object, validated before it reaches the response, and what the
     transcript says about a turn is computed by diffing the two drafts rather
     than taken from the model's own account of what it did."""
+    # Gated because it spends money. Anyone who could reach this route could
+    # run up the bill on the deployment's own key, and `/usage` exists
+    # precisely so that spend is not invisible - it should not also be
+    # anonymous. Loopback still passes with no token, so local development is
+    # unchanged; see `app/admin.py`.
+    from app import admin
+
+    admin.require(request)
+
     from app.api.schemas.dashboard import CustomChartDraft
     from app.dashboard.custom import chat_turn
 
@@ -2205,7 +2249,7 @@ def agent_page() -> FileResponse:
 
 
 @app.post("/api/agent/chat", response_model=ChatResponse)
-def agent_chat(body: ChatRequest) -> ChatResponse:
+def agent_chat(request: Request, body: ChatRequest) -> ChatResponse:
     """One reply, given the whole conversation so far.
 
     Stateless: nothing is persisted server-side, so the client resends the
@@ -2219,6 +2263,15 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
     reply would repeat both the latency and the token cost for no new
     information.
     """
+    # Gated because it spends money. Anyone who could reach this route could
+    # run up the bill on the deployment's own key, and `/usage` exists
+    # precisely so that spend is not invisible - it should not also be
+    # anonymous. Loopback still passes with no token, so local development is
+    # unchanged; see `app/admin.py`.
+    from app import admin
+
+    admin.require(request)
+
     from app.agent.brief import build_brief
     from app.agent.chat import ChatTurn, ChatUnavailable, chat as run_chat
     from app.agent.link_fetch import fetch_and_extract, find_first_url

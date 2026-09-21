@@ -461,18 +461,34 @@ def test_a_remote_write_succeeds_with_the_token(clean, monkeypatch):
 
 
 def test_a_wrong_token_is_refused_differently_from_an_absent_one(clean, monkeypatch):
-    """The two cases send someone to different places, so they read differently."""
-    monkeypatch.setenv(admin.TOKEN_ENV, "the-real-token")
-    detail = (
-        TestClient(app)
-        .put(
-            "/api/llm/features/chat",
-            json={"provider": "gemini"},
-            headers={admin.HEADER: "not-the-real-token"},
+    """The two cases send someone to different places, so they read differently.
+
+    "No token is configured" is a deployment that has not opted in and needs a
+    secret set; "the token is wrong" is a request that tried and failed.
+    Collapsing them sends the first case hunting for a typo in a value that
+    does not exist.
+    """
+    def refusal():
+        return (
+            TestClient(app)
+            .put(
+                "/api/llm/features/chat",
+                json={"provider": "gemini"},
+                headers={admin.HEADER: "not-the-real-token"},
+            )
+            .json()["detail"]
         )
-        .json()["detail"]
-    )
-    assert admin.HEADER in detail
+
+    monkeypatch.delenv(admin.TOKEN_ENV, raising=False)
+    absent = refusal()
+    monkeypatch.setenv(admin.TOKEN_ENV, "the-real-token")
+    wrong = refusal()
+
+    assert absent != wrong
+    # Nothing to paste yet - go and create one.
+    assert admin.TOKEN_ENV in absent
+    # There is one; this is not it.
+    assert "/llm" in wrong
 
 
 def test_loopback_still_writes_without_a_token(clean, local, monkeypatch):
