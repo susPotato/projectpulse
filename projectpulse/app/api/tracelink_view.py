@@ -45,6 +45,13 @@ PRODUCED_BY = {
     "grounding": "tracelink verify",
     "links": "tracelink couple",
     "diagnosis": "tracelink diagnose <export.xlsx>",
+    # The delivery half: the team's own documents read as a record of work,
+    # reconciled against the tracker and the code. Optional like everything
+    # else here — a project with no documentation tree simply has none of
+    # these, and the page says which command would produce them.
+    "progress": "tracelink progress --docs <docs dir>",
+    "reconciliation": "tracelink reconcile --done-status '<status>'",
+    "gates": "tracelink gates",
 }
 
 
@@ -254,6 +261,97 @@ def rollup_by_parent(run: Path) -> dict[str, Any]:
     return {"parents": parents, "problem": None}
 
 
+def _delivery(run: Path, gaps: list[str]) -> dict[str, Any]:
+    """The delivery half of a run, summarised for one panel.
+
+    The tracker is not the only record of what a team did. On the project
+    this was built against, the backlog holds 173 feature tickets and knows
+    nothing at all about the ten-EPIC refactor its own `docs/` tree records
+    in 63 dated tasks — probing every ticket for `R01`…`R10`, `EPIC` or a
+    team name scores zero. A traceability page that reads only the tracker
+    is therefore missing half the delivery, which is the reason this block
+    exists.
+
+    Summarised rather than passed through: `progress.json` is 150 KB and
+    the page needs counts, the worst rows, and the locators to go and look.
+
+    Two things are deliberately kept rather than smoothed away, because
+    both are findings and both read as bugs if they arrive unexplained:
+
+    * a reconciliation row's `confidence`. An item joins the tracker
+      directly only when one of its deliverables resolves in the code, so
+      every row whose code is *absent* is joined at area level, always.
+      That is exactly the set of rows a reader cares most about, and
+      presenting them beside the direct hits overstates them.
+    * a gate that is `unchecked`. "No PySide6 under `domain/`" is satisfied
+      trivially when there is no `domain/`; reporting that as a pass tells
+      a reader the architecture holds when it was never built.
+    """
+    present = {name: _read(run, name)[0]
+               for name in ("progress", "reconciliation", "gates")}
+    if not any(v is not None for v in present.values()):
+        # This project does not keep a documentation tree, or nobody has
+        # read it yet. Not a gap: three "not written yet" notes on every
+        # run that will never have one is noise, and a page that cries
+        # about absent optional stages teaches people to skip the list.
+        return {}
+    for name, value in present.items():
+        if value is None:
+            gaps.append(f"{name}.json not written yet — run: {PRODUCED_BY[name]}")
+    progress, recon, gates = (present["progress"], present["reconciliation"],
+                              present["gates"])
+
+    items = (progress or {}).get("items", [])
+    schedule = (progress or {}).get("schedule", [])
+    unread = [u for u in (progress or {}).get("unparsed", [])
+              if u.get("reason") != "no-id"]
+
+    by_label: dict[str, int] = {}
+    by_confidence: dict[str, dict[str, int]] = {"direct": {}, "area": {}}
+    for r in recon or []:
+        label = r.get("label", "unknown")
+        by_label[label] = by_label.get(label, 0) + 1
+        kind = "direct" if r.get("joined_via") == "claim" else "area"
+        by_confidence[kind][label] = by_confidence[kind].get(label, 0) + 1
+
+    interesting = sorted(
+        (r for r in (recon or []) if r.get("label") not in ("agreed", "unknown")),
+        key=lambda r: (r.get("label", ""), r.get("wid", "")))[:25]
+
+    return {
+        "items": len(items),
+        "done": sum(1 for i in items if i.get("done")),
+        "open": sum(1 for i in items if not i.get("done")),
+        "timed": sum(1 for i in items if i.get("started") and i.get("ended")),
+        "schedule": len(schedule),
+        "slipped": sum(1 for s in schedule
+                       if s.get("planned") and s.get("started")),
+        "unread": len(unread),
+        "groups": _group_progress(items),
+        "labels": by_label,
+        "confidence": by_confidence,
+        "findings": interesting,
+        "gates": gates or [],
+        "gates_failing": sum(1 for g in (gates or []) if g.get("status") == "fail"),
+        "gates_unchecked": sum(1 for g in (gates or [])
+                               if g.get("status") == "unchecked"),
+        "gates_contradicting": sum(
+            1 for g in (gates or [])
+            if g.get("status") == "fail" and g.get("signed_off")),
+    }
+
+
+def _group_progress(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Done and open per group, worst first — an epic wholly open goes top."""
+    groups: dict[str, dict[str, Any]] = {}
+    for i in items:
+        name = (i.get("group") or "").split(" / ")[-1] or "(ungrouped)"
+        g = groups.setdefault(name, {"group": name, "done": 0, "open": 0})
+        g["done" if i.get("done") else "open"] += 1
+    return sorted(groups.values(),
+                  key=lambda g: (g["done"] > 0, -g["open"], g["group"]))
+
+
 def collect(run: Path) -> dict[str, Any]:
     """Everything the page needs, in one object."""
     gaps: list[str] = []
@@ -382,6 +480,7 @@ def collect(run: Path) -> dict[str, Any]:
 
     manifest = _manifest(run)
     return {
+        "delivery": _delivery(run, gaps),
         "run": str(run),
         "project_id": manifest.get("project_id"),
         "project_name": manifest.get("project_name"),

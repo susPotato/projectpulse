@@ -16,7 +16,12 @@ working whether or not that pipeline is installed anywhere nearby.
 ## What is here, and what is not
 
 Kept: `run`, `tickets`, `corpus`, `candidates`, `verdicts`, `grounding`,
-`links`, `explain`, `shadow`, `diagnosis`, `translations`.
+`links`, `explain`, `shadow`, `diagnosis`, `translations`, and the delivery
+half — `progress`, `reconciliation`, `gates`.
+
+`features.json` is left out with the index: 3.8 MB that only the retrieval
+and reconciliation stages read, and free to rebuild from `corpus.json` and
+the docs tree.
 
 Left out on purpose:
 
@@ -30,5 +35,16 @@ Left out on purpose:
 ## Refreshing
 
 Copy the artifacts above from the pipeline's run directory. The page reads
-whichever runs are present and asks for one by project id, so adding a second
-run directory is enough to make it appear in the picker.
+whichever runs are present and asks for one by project id.
+
+**One run per project id.** Adding a second directory that declares the same
+`project_id` does not give you a picker — `run_for_project` returns the first
+match in sorted order, so the new directory silently shadows the old one and
+whatever it is missing (most expensively, `verdicts.json`) disappears from the
+page with no warning. Either refresh a run in place, or give the new one a
+different project.
+
+The delivery artifacts must come from the *same* run as `candidates.json`:
+`reconcile` joins work items to tickets through the candidate sets, so
+mixing a new reconciliation with an old retrieval reports agreement that was
+never measured.

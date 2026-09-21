@@ -125,6 +125,7 @@
     <button type="button" data-view="tickets">Tickets</button>
     <button type="button" data-view="code">Code</button>
     <button type="button" data-view="shadow">Shadow scope</button>
+    <button type="button" data-view="delivery">Delivery</button>
   </nav>
 
   <div id="main"><div class="empty">Loading&hellip;</div></div>
@@ -371,6 +372,100 @@
       verdictTag(v) + "</summary><div class=\"body\">" + h + "</div></details>";
   }
 
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  // The tracker is not the only record of what a team did. Here the backlog
+  // holds 173 feature tickets and knows nothing about the ten-EPIC refactor
+  // the same project documents in 63 dated tasks, so a page that reads only
+  // the tracker is showing half the delivery.
+  function renderDelivery(el) {
+    var d = D.delivery || {};
+    if (!d.items && !(d.gates || []).length) {
+      el.innerHTML = '<div class="empty">This project has no documentation ' +
+        "tree read yet. Run: <code>tracelink progress --docs &lt;docs dir&gt;" +
+        "</code></div>";
+      return;
+    }
+
+    var h = '<section class="panel"><h2>Work the documents record</h2>';
+    h += '<p class="muted">' + d.items + " tasks (" + d.done + " done, " +
+      d.open + " open), " + d.timed + " with real start and end times; " +
+      d.schedule + " plan rows." +
+      (d.unread ? " " + d.unread + " lines could not be read." : "") + "</p>";
+    h += '<table class="grid"><thead><tr><th>Group</th><th>Done</th>' +
+      "<th>Open</th></tr></thead><tbody>";
+    (d.groups || []).forEach(function (g) {
+      h += "<tr" + (g.done === 0 && g.open ? ' class="bad"' : "") + "><td>" +
+        esc(g.group) + "</td><td>" + g.done + "</td><td>" + g.open +
+        "</td></tr>";
+    });
+    h += "</tbody></table></section>";
+
+    // Two blocks, not one. A task joins the tracker directly only when one
+    // of its deliverables resolves in the code, so every row whose code is
+    // *absent* is joined at area level — which is exactly the set a reader
+    // cares most about. Shown together they would read as equally solid.
+    var c = d.confidence || {};
+    if (Object.keys(c.direct || {}).length || Object.keys(c.area || {}).length) {
+      h += '<section class="panel"><h2>Tracker vs documents vs code</h2>';
+      [["direct", "Direct — the task’s own code anchor found these tickets"],
+       ["area", "Area-level — joined through the task’s doc section, so the " +
+        "tracker column is about this part of the system, not this task"]]
+        .forEach(function (pair) {
+          var counts = c[pair[0]] || {};
+          if (!Object.keys(counts).length) return;
+          h += "<h3>" + pair[1] + "</h3><ul>";
+          Object.keys(counts).forEach(function (k) {
+            h += "<li><strong>" + counts[k] + "</strong> " + esc(k) + "</li>";
+          });
+          h += "</ul>";
+        });
+      h += "</section>";
+    }
+
+    (d.findings || []).slice(0, 25).forEach(function (r) {
+      h += '<details class="row"><summary><code>' + esc(r.wid) + "</code> " +
+        esc((r.title || "").slice(0, 70)) + ' <span class="tag">' +
+        esc(r.label) + "</span></summary><div class=\"body\">" +
+        "<p>tracker=" + esc(r.tracker) + " &middot; docs=" + esc(r.docs) +
+        " &middot; code=" + esc(r.code) + " &middot; joined via " +
+        esc(r.joined_via) + "</p>" +
+        "<p class=\"muted\">" + esc(r.doc) + ":" + r.line + "</p>" +
+        ((r.missing || []).length
+          ? "<p>code missing: <code>" + esc(r.missing.join(", ")) + "</code></p>"
+          : "") +
+        ((r.anchors || []).length
+          ? "<p>code found: <code>" + esc(r.anchors.join(", ")) + "</code></p>"
+          : "") +
+        "</div></details>";
+    });
+
+    if ((d.gates || []).length) {
+      h += '<section class="panel"><h2>Gates the documents set</h2>';
+      h += '<p class="muted">' + d.gates_failing + " failing, " +
+        d.gates_unchecked + " not checkable against this repository" +
+        (d.gates_contradicting
+          ? ", " + d.gates_contradicting + " signed off and failing" : "") +
+        ". Criteria are re-implemented over the corpus, not shell-executed." +
+        "</p><table class=\"grid\"><thead><tr><th>Gate</th><th>Status</th>" +
+        "<th>Measured</th></tr></thead><tbody>";
+      d.gates.forEach(function (g) {
+        h += "<tr" + (g.status === "fail" ? ' class="bad"' : "") + "><td>" +
+          esc(g.name) + (g.command
+            ? '<br><code class="muted">' + esc(g.command) + "</code>" : "") +
+          "</td><td>" + esc(g.status) + "</td><td>" + esc(g.detail) +
+          "</td></tr>";
+      });
+      h += "</tbody></table></section>";
+    }
+
+    el.innerHTML = h;
+  }
+
   function renderShadow(el) {
     var s = D.shadow || {};
     if (!s.counts) {
@@ -603,6 +698,7 @@
         else b.removeAttribute("aria-current");
       });
 
+    if (view === "delivery") { renderDelivery(el); return; }
     if (view === "shadow") { renderShadow(el); return; }
     if (view === "code") { renderCode(el); return; }
 
