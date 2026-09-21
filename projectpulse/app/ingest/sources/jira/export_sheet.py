@@ -134,6 +134,35 @@ DESCRIPTION_FIELDS = {
     "Start": ("ngay nhan", "received"),
 }
 
+#: The same block's *people*, read by `_person_from_description`.
+#:
+#: Split from `DESCRIPTION_FIELDS` rather than added to it because the two are
+#: safe for opposite reasons. A date is safe because it has to parse as a date:
+#: prose cannot accidentally satisfy that, so the label match can be the only
+#: other guard. A name has no such shape - almost any text "is" a name - so the
+#: guard has to come from `_looks_like_a_name` instead, and keeping them in one
+#: table would invite a future date field to be added here and skip it.
+#:
+#: This matters more than it looks. The export's `Assignee` column is filled on
+#: 17 of 190 rows - the planning tasks - and empty on all 173 delivery rows,
+#: which is why the product reported one owner for the whole project. The
+#: delivery rows do name their developer; the instance just has no field for
+#: it, so the team writes it in the description like everything else.
+DESCRIPTION_PEOPLE = {
+    "Owner": ("developer", "dev"),
+}
+
+#: What a name may look like, for a value that has no intrinsic shape to check.
+#:
+#: Deliberately crude, and only ever a *rejection* test: these values are
+#: `QuanDh14`, `FSG/QuanDh14`, `Hoach Bach Van`. The thing being kept out is a
+#: description line whose label happens to collide - a paragraph, a sentence, a
+#: URL - not a name spelled unusually. A real column always wins anyway, so the
+#: cost of being slightly too strict here is one row's owner, and the cost of
+#: being too loose is a sentence printed where a person's name goes.
+NAME_MAX_CHARS = 60
+NAME_MAX_WORDS = 5
+
 #: `Ngay nhan: 46246`. Jira stores this custom field as a number, so the
 #: Description carries a raw Excel serial rather than anything a reader would
 #: recognise as a date.
@@ -381,6 +410,33 @@ def _from_description(text, labels: tuple[str, ...]):
         if _strip_accents(label) not in wanted:
             continue
         return _as_serial_date(value) or _as_date(value)
+    return None
+
+
+def _looks_like_a_name(value: str) -> bool:
+    """Whether a description value is plausibly a person, not prose."""
+    if len(value) > NAME_MAX_CHARS or len(value.split()) > NAME_MAX_WORDS:
+        return False
+    # A sentence, or a link. Either means the label collided with prose.
+    return not (value.endswith(".") or URL.match(value))
+
+
+def _person_from_description(text, labels: tuple[str, ...]):
+    """A person this team keeps in the Description, under one of `labels`.
+
+    Same line rule as `_from_description` - the label is matched whole against
+    the part before the first colon, so a sentence mentioning the word in
+    passing contributes nothing - and then `_looks_like_a_name` stands in for
+    the date parse that makes the other one safe.
+    """
+    if not isinstance(text, str):
+        return None
+    wanted = {_strip_accents(l) for l in labels}
+    for label, value in DESCRIPTION_LINE.findall(text):
+        if _strip_accents(label) not in wanted:
+            continue
+        value = value.strip()
+        return value if value and _looks_like_a_name(value) else None
     return None
 
 
@@ -730,18 +786,29 @@ def convert(
                 a `Planned Start`) and never on one that has no start column,
                 which is the shape the block exists for.
                 """
-                if column not in DESCRIPTION_FIELDS:
-                    return None
                 text = row[description_at] if description_at < len(row) else None
-                return _from_description(text, DESCRIPTION_FIELDS[column])
+                if column in DESCRIPTION_FIELDS:
+                    return _from_description(text, DESCRIPTION_FIELDS[column])
+                if column in DESCRIPTION_PEOPLE:
+                    return _person_from_description(text, DESCRIPTION_PEOPLE[column])
+                return None
 
             if source is None:
-                record[column] = _described() if column in DATE_COLUMNS else None
+                record[column] = (
+                    _described()
+                    if column in DATE_COLUMNS or column in DESCRIPTION_PEOPLE
+                    else None
+                )
                 continue
             cells = _cells(row, source)
             if column in DATE_COLUMNS:
                 value = _as_date(cells[0]) if cells else None
                 #: Only where the column gave nothing. A real field always wins.
+                record[column] = value if value is not None else _described()
+            elif column in DESCRIPTION_PEOPLE:
+                #: Same precedence as a date: the column wins, the description
+                #: block fills the rows it left blank.
+                value = _clean(cells[0]) if cells else None
                 record[column] = value if value is not None else _described()
             elif column == "Predecessor":
                 record[column] = _predecessors(cells)

@@ -227,6 +227,24 @@
   min-width: 0;
 }
 
+/* The content column, matching the one `Shell.tsx` gives every built page.
+
+   There were six of these, one per hand-written page, at six different widths
+   - and Schedule's was the only one with no horizontal padding at all, which
+   is why its panels ran to the container edge while every other tab kept a
+   gutter. Defined here so a page that wants the ordinary column gets it by
+   saying nothing.
+
+   The remaining local overrides are deliberate and win on the cascade: the
+   settings-shaped pages are narrower because a form is easier to read short,
+   and the trace page narrower again because most of it is prose. What is not
+   deliberate is a page differing by accident, which is what this fixes. */
+.wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 24px 48px;
+}
+
 /* The rail becomes a strip along the top on a narrow screen - a 64px column
    costs too much of a phone's width to keep. */
 @media (max-width: 700px) {

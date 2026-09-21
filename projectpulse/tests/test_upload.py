@@ -928,3 +928,99 @@ def test_the_description_block_refuses_anything_that_is_not_a_date(tmp_path, bod
     headers, rows = read_export(path)
     records, _ = convert(headers, rows)
     assert records[0]["Start"] is None
+
+
+# --- The owner buried in the description ------------------------------------
+#
+# The export's `Assignee` column is filled on the 17 planning rows and empty on
+# all 173 delivery rows, so the product reported one owner for the project and
+# could not tell an unassigned task from an assigned one. The delivery rows do
+# name a developer; the instance has no field for it.
+
+
+def _one_row(tmp_path, name, *cells, headers=None):
+    from openpyxl import Workbook
+
+    book = Workbook()
+    sheet = book.active
+    sheet.append(["Filter"])
+    sheet.append(["Displaying 0 issues at 13/Sep/26 9:00 AM."])
+    sheet.append(headers or ["Project", "Key", "Summary", "Status", "Description"])
+    sheet.append(list(cells))
+    path = tmp_path / f"{name}.xlsx"
+    book.save(path)
+    return path
+
+
+def test_the_owner_is_read_from_the_description_when_there_is_no_column(tmp_path):
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    path = _one_row(
+        tmp_path, "described_owner",
+        "P", None, "Refactor", "In Progress",
+        "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: QuanDh14",
+    )
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+
+    assert records[0]["Owner"] == "QuanDh14"
+
+
+def test_a_real_assignee_column_beats_the_description(tmp_path):
+    """Same precedence as the date block: the field wins, prose fills blanks."""
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    path = _one_row(
+        tmp_path, "column_wins_owner",
+        "P", None, "Refactor", "In Progress", "Hoach Bach Van", "Developer: QuanDh14",
+        headers=["Project", "Key", "Summary", "Status", "Assignee", "Description"],
+    )
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+
+    assert records[0]["Owner"] == "Hoach Bach Van"
+
+
+def test_a_blank_assignee_column_still_falls_through_to_the_description(tmp_path):
+    """The real export's shape: the column exists and 173 rows leave it empty."""
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    path = _one_row(
+        tmp_path, "blank_column_owner",
+        "P", None, "Refactor", "In Progress", None, "Developer: QuanDh14",
+        headers=["Project", "Key", "Summary", "Status", "Assignee", "Description"],
+    )
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+
+    assert records[0]["Owner"] == "QuanDh14"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        # A sentence that happens to use the word. A name has no shape of its
+        # own to check, so this is the guard that stands in for the date parse.
+        "The developer will be assigned once the spec is signed off.",
+        # Prose long enough that it cannot be a name.
+        "Developer: " + "we have not decided who picks this up yet and it may "
+        "end up being whoever has capacity in the next sprint",
+        # A link to a person is not the name of one.
+        "Developer: https://jira.example.com/people/quandh14",
+        # A different label entirely.
+        "Reviewer: QuanDh14",
+    ],
+)
+def test_the_description_block_refuses_a_value_that_is_not_plausibly_a_name(
+    tmp_path, body
+):
+    from app.ingest.sources.jira.export_sheet import convert, read_export
+
+    path = _one_row(
+        tmp_path, f"refused_owner_{abs(hash(body))}",
+        "P", None, "Refactor", "In Progress", body,
+    )
+    headers, rows = read_export(path)
+    records, _ = convert(headers, rows)
+
+    assert records[0]["Owner"] is None
