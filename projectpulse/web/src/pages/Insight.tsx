@@ -976,13 +976,19 @@ function CodeCheck({
   return (
     <Section title="Checked against the code">
       <Card>
+        {/* Written twice. The first version said the run found 173 rows "in
+            the same export this screen reads 17 tasks from", which was true of
+            a product that had only ever ingested a hand-made eighteen-row
+            summary. Once the real export went in, this screen reads 190 and
+            the sentence implied the 173 were *extra* rather than a subset of
+            what is already on the page. The relationship is the point, so it
+            is stated rather than left to the reader to infer from two
+            numbers. */}
         <p className="m-0 text-[12.5px] leading-relaxed text-ink-2">
-          A separate pass read this project's own repository and documents.
-          It found <b className="text-ink">{rows}</b> feature rows in the same
-          export this screen reads{" "}
-          <b className="text-ink tabular-nums">{tracked}</b> keyed tasks from —
-          the rest sit under a parent that carries no dates, which is why
-          nothing above counts them.
+          A separate pass read this project's own repository and documents and
+          checked <b className="text-ink tabular-nums">{rows}</b> of these{" "}
+          <b className="text-ink tabular-nums">{tracked}</b> rows against the
+          code. The rest are planning tasks, which name no feature to look for.
         </p>
         <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-[12.5px]">
           <span>
