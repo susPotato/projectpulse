@@ -322,6 +322,47 @@
 
 .appbar .spacer { flex: 1 1 auto; }
 
+/* A picker in the page header. `.appbar` styled its own h1, scope and as-of
+   line but nothing a person could operate, so every hand-written page that
+   needed a project switcher dropped a bare <select> into a baseline-aligned
+   flex row: native OS chrome beside 12px muted text, with inline margins
+   fighting the container's own gap. Schedule, Usage and Imports all looked
+   unlike the rest of the product for that one reason.
+
+   Deliberately not merged with the full-width field styling in /settings and
+   /llm. A control in a form and a control in a toolbar are different things
+   and want different sizes; unifying them would fix one screen by breaking
+   two. */
+.appbar select,
+.appbar input[type="search"],
+.appbar input[type="text"] {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 9px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  max-width: 260px;
+}
+
+.appbar select:focus,
+.appbar input:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+
+/* The label beside it. Pages were reaching for `.asof`, which is the muted
+   "as of <date>" line and reads as commentary rather than as the name of the
+   control next to it. */
+.appbar .field-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
 .appbar .asof {
   font-size: 12px;
   color: var(--ink-3);

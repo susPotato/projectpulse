@@ -1158,16 +1158,35 @@ export function InsightView({
             )}
           </Section>
 
-          <Section title="Every finding's source rows">
-            {findings.filter((f) => f.evidence.length > 0).length === 0 ? (
-              <Card>No finding carries a source row.</Card>
+          {/* What stands behind each finding - a source row where there is
+              one, the rule that fired where there is not.
+
+              This listed only findings with `evidence.length > 0` and said
+              "No finding carries a source row" otherwise, which on a project
+              whose findings are all aggregate rules is every finding. The
+              page then read as "nothing here is checkable" about an analysis
+              that was entirely checkable: `tasks_in_progress >= 5 (was 16)`
+              is the whole argument, and it was already in the payload.
+
+              `_evidence_for_rule` only attaches source rows to schedule and
+              milestone findings with a causal chain behind them. Everything
+              else is defensible through its trace instead - which is why
+              `Finding.is_defensible` accepts either, and why showing only one
+              of the two was the bug. */}
+          <Section title="What stands behind each finding">
+            {findings.filter((f) => f.evidence.length > 0 || f.rule_trace).length === 0 ? (
+              <Card>No finding carries a source row or a rule trace.</Card>
             ) : (
               findings
-                .filter((f) => f.evidence.length > 0)
+                .filter((f) => f.evidence.length > 0 || f.rule_trace)
                 .map((finding) => (
                   <Card key={finding.id} className="mb-2.5">
                     <div className="mb-2 text-[13px] font-semibold">{finding.headline}</div>
-                    <Evidence refs={finding.evidence} />
+                    {finding.evidence.length > 0 ? (
+                      <Evidence refs={finding.evidence} />
+                    ) : (
+                      finding.rule_trace && <Trace trace={finding.rule_trace} />
+                    )}
                   </Card>
                 ))
             )}
