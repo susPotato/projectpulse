@@ -636,12 +636,18 @@
       keep: function (r) { return r.verdict === "contradicted"; } },
     { id: "conflict", label: "Status conflict",
       keep: function (r) { return r.conflict; } },
-    /* The one a delivery manager actually opens this for. "Nobody" means the
-       sheet's own people fields are all empty for this row - the same test
-       `_ownership` applies, so this chip and the finding that counts unowned
-       rows can never disagree. */
-    { id: "unowned", label: "Nobody assigned",
-      keep: function (r) { return !Object.keys(r.people || {}).length; } }
+    /* The one a delivery manager actually opens this for.
+
+       It filters on `missing`, which the server fills from the same learned
+       convention `_ownership` uses: a field most rows carry is one every row
+       is expected to carry, and this row leaves it blank. The first version
+       asked whether the row named *anybody* and matched nothing at all -
+       every row on this export carries a `BA`, so "has a person on it" is
+       true of all 173 while 22 of them are still missing a field the sheet
+       expects. Two definitions of unowned on one screen, and the filter got
+       the useless one. */
+    { id: "unowned", label: "Missing a name",
+      keep: function (r) { return (r.missing || []).length > 0; } }
   ];
 
   function ftKeep(row) {
@@ -677,6 +683,11 @@
       var who = Object.keys(r.people || {}).map(function (k) {
         return esc(k) + " " + esc(r.people[k]);
       }).join("<br>");
+      // Named after the people, so the gap reads as part of the same list.
+      (r.missing || []).forEach(function (field) {
+        who += (who ? "<br>" : "") +
+          '<span class="ft-none">no ' + esc(field) + "</span>";
+      });
       return "<tr>" +
         '<td><span class="t-title">' + esc(r.title) + "</span>" +
         /* The model's own sentence, shown rather than hidden behind a
@@ -686,7 +697,7 @@
         "</td>" +
         "<td>" + esc(r.status) + "</td>" +
         "<td>" + (esc(r.component) || '<span class="ft-none">none</span>') + "</td>" +
-        "<td>" + (who || '<span class="ft-none">nobody</span>') + "</td>" +
+        "<td>" + (who || '<span class="ft-none">nobody named</span>') + "</td>" +
         '<td><span class="ft-tag ft-' + esc(r.verdict || "unverified") + '">' +
         esc(r.verdict || "not checked") + "</span>" +
         (r.conflict ? '<br><span class="ft-tag ft-contradicted">status conflict</span>' : "") +

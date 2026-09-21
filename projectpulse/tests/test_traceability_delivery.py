@@ -324,3 +324,44 @@ def test_whitespace_is_not_a_name():
 
 def test_an_empty_backlog_reports_no_fields_rather_than_dividing_by_zero():
     assert tracelink_view._ownership([]) == {"rows": 0, "fields": []}
+
+
+def test_the_tables_missing_name_filter_counts_what_ownership_reports():
+    """Two definitions of "unowned" on one screen is a bug, not a nuance.
+
+    The table's chip first asked whether a row named *anybody*, which on a
+    sheet where every row carries a `BA` is every row - it matched nothing
+    while 22 rows were missing a field the sheet plainly expects. Both sides
+    read `expected_fields` now, and this is the check that they still do.
+    """
+    run = Path(__file__).resolve().parents[1] / "traceability_runs" / "demo"
+    rows = tracelink_view.feature_rows(run)
+
+    from_table: dict[str, int] = {}
+    for row in rows:
+        for field in row["missing"]:
+            from_table[field] = from_table.get(field, 0) + 1
+
+    payload = tracelink_view.collect(run)
+    from_finding = {
+        f["field"]: f["missing"]
+        for f in payload["ownership"]["fields"]
+        if f["missing"]
+    }
+
+    assert from_table == from_finding
+    assert from_finding, "the demo run is the case this exists for"
+
+
+def test_a_field_every_row_carries_is_never_reported_missing():
+    """Otherwise the chip fills with rows that have no gap at all."""
+    run = Path(__file__).resolve().parents[1] / "traceability_runs" / "demo"
+    rows = tracelink_view.feature_rows(run)
+    universal = {
+        f["field"]
+        for f in tracelink_view.collect(run)["ownership"]["fields"]
+        if not f["missing"]
+    }
+
+    assert universal, "the demo run has one"
+    assert not [r for r in rows if universal & set(r["missing"])]

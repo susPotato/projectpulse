@@ -511,6 +511,27 @@ def _group_progress(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 EXPECTED_FIELD_SHARE = 0.5
 
 
+def expected_fields(rows: list[dict[str, Any]]) -> dict[str, int]:
+    """The inline fields this sheet expects every row to carry, and how many do.
+
+    A key present on at least `EXPECTED_FIELD_SHARE` of rows is a convention
+    the sheet keeps; a key on three rows out of 173 is somebody's note. Shared
+    by `_ownership`, which reports the gaps, and `feature_rows`, whose table
+    lets a reader filter for them - the first version of that filter asked
+    whether a row named *anybody*, which on this export is every row, because
+    all 173 carry a `BA`. A filter that silently matches nothing is worse than
+    no filter, and two definitions of "unowned" on one screen is how it
+    happened.
+    """
+    coverage: dict[str, int] = {}
+    for row in rows:
+        for key, value in (row.get("inline") or {}).items():
+            if str(value or "").strip():
+                coverage[key] = coverage.get(key, 0) + 1
+    threshold = len(rows) * EXPECTED_FIELD_SHARE
+    return {k: v for k, v in coverage.items() if v >= threshold}
+
+
 def _ownership(rows: list[dict[str, Any]]) -> dict[str, Any]:
     """Which rows the backlog leaves nameless, without being told what a name is.
 
@@ -536,17 +557,9 @@ def _ownership(rows: list[dict[str, Any]]) -> dict[str, Any]:
     if not rows:
         return {"rows": 0, "fields": []}
 
-    coverage: dict[str, int] = {}
-    for row in rows:
-        for key, value in (row.get("inline") or {}).items():
-            if str(value or "").strip():
-                coverage[key] = coverage.get(key, 0) + 1
-
-    threshold = len(rows) * EXPECTED_FIELD_SHARE
+    coverage = expected_fields(rows)
     fields = []
     for key, seen in sorted(coverage.items(), key=lambda kv: (-kv[1], kv[0])):
-        if seen < threshold:
-            continue
         missing = [
             r for r in rows
             if not str((r.get("inline") or {}).get(key, "") or "").strip()
@@ -591,6 +604,8 @@ def feature_rows(run: Path) -> list[dict[str, Any]]:
     by_uid = {v["uid"]: v for v in (verdicts or [])}
     ground = {g["uid"]: g for g in (grounding or [])}
 
+    wanted = expected_fields(tickets or [])
+
     rows: list[dict[str, Any]] = []
     for t in tickets or []:
         uid = t["uid"]
@@ -606,6 +621,12 @@ def feature_rows(run: Path) -> list[dict[str, Any]]:
             # the page can label a column with the team's own word instead of
             # one this product picked - see `_ownership`.
             "people": {k: v for k, v in inline.items() if str(v or "").strip()},
+            # Which of the fields this sheet expects every row to carry are
+            # blank here. The table's "nobody assigned" filter reads this, so
+            # it counts the same rows `_ownership` reports as gaps.
+            "missing": sorted(
+                k for k in wanted if not str(inline.get(k, "") or "").strip()
+            ),
             "verdict": verdict.get("verdict") or "",
             "conflict": bool(verdict.get("status_conflict")),
             # What happened when the names the verdict cited were looked for
