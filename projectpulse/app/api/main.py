@@ -1230,45 +1230,32 @@ def _narrator():
     a request cannot be made slower or more fragile by a feature nobody turned
     on.
 
-    Read per request from `narration.store`, so the settings page takes effect
-    on the next reload rather than the next restart. `app.config` is still the
-    floor: it supplies the defaults the store starts from.
+    Read per request, so the settings page takes effect on the next reload
+    rather than the next restart. `app.config` is still the floor: it supplies
+    the defaults the resolution starts from.
     """
-    from app.narration.store import load
+    from app.llm.features import attributed_drafter, resolve
 
-    current = load()
-    if not current.enabled:
+    # Per-feature now: narration, risk drafts, the tile agent and chat each
+    # resolve their own vendor and model, instead of all four reading one
+    # global setting. `resolve` falls back to exactly that setting when nobody
+    # has overridden the feature, so an existing deployment is unaffected.
+    chosen = resolve("narration")
+
+    # `chosen.enabled`, not the global flag this used to read: the resolution
+    # already folds `PULSE_NARRATION` together with a per-feature switch, and
+    # checking the global one separately meant turning narration off on the
+    # settings page changed nothing here.
+    if not chosen.enabled:
         return None
-
-    from app.narration.providers import ModelConfig, drafter_for
 
     try:
-        return drafter_for(
-            current.provider,
-            ModelConfig(
-                model=current.model,
-                api_key=current.api_key,
-                base_url=current.base_url,
-            ),
-        )
+        return attributed_drafter("narration")
     except ValueError:
-        # An unknown provider in the stored file. Narration is optional, so a
-        # bad setting costs the model and not the page.
-        log.warning("unknown narration provider %r; serving the template", current.provider)
+        # An unknown provider in the stored settings. Narration is optional,
+        # so a bad setting costs the model and not the page.
+        log.warning("unknown narration provider %r; serving the template", chosen.provider)
         return None
-
-
-def _is_local(request: Request) -> bool:
-    """Whether the caller is on this machine.
-
-    The settings endpoints accept an API key, so writing them is restricted to
-    loopback. That is not a permission system - it is the smallest honest
-    boundary: `scripts.demo` binds 127.0.0.1, so it always passes, and a
-    deployment behind a proxy always fails and becomes read-only with no
-    configuration to forget.
-    """
-    host = (request.client.host if request.client else "") or ""
-    return host in {"127.0.0.1", "::1", "localhost"}
 
 
 class NarrationSettingsIn(BaseModel):
@@ -1293,29 +1280,29 @@ def settings_page() -> FileResponse:
 
 
 @app.get("/api/settings")
-def read_settings() -> dict:
-    """Current narration settings. Never includes the key itself."""
+def read_settings(request: Request) -> dict:
+    """Current narration settings. Never includes the key itself.
+
+    `writable` used to be hardcoded true, which told every deployed browser it
+    could save when the write would 403 - and contradicted DEPLOY.md's own
+    "read-only when deployed". It now answers the question it claims to.
+    """
+    from app.llm import admin
     from app.narration.store import public_view
 
     view = public_view()
-    view["writable"] = True
+    view["writable"] = admin.may_write(request)
+    view["auth"] = admin.status()
     return view
 
 
 @app.put("/api/settings")
 def write_settings(request: Request, body: NarrationSettingsIn) -> dict:
+    from app.llm import admin
     from app.narration.providers import PROVIDERS
     from app.narration.store import public_view, update
 
-    if not _is_local(request):
-        raise HTTPException(
-            status_code=403,
-            detail=(
-                "settings can only be changed from the machine the app runs on. "
-                "Set PULSE_NARRATION, PULSE_NARRATION_PROVIDER and the vendor's "
-                "API key as environment variables instead."
-            ),
-        )
+    admin.require(request)
 
     if body.provider is not None and body.provider not in PROVIDERS:
         raise HTTPException(
@@ -1325,7 +1312,190 @@ def write_settings(request: Request, body: NarrationSettingsIn) -> dict:
 
     changes = {k: v for k, v in body.model_dump().items() if v is not None}
     update(**changes)
-    return read_settings()
+    return read_settings(request)
+
+
+# --------------------------------------------------------------------------
+# Models, keys and spend.
+#
+# Three questions that used to have one answer between them - the single
+# global narration setting - and no answer at all for the third. See
+# `app/llm/` for the modules behind these routes.
+# --------------------------------------------------------------------------
+
+
+class FeatureOverrideIn(BaseModel):
+    """One feature's model settings. Every field is optional on purpose.
+
+    An omitted field is left alone; an explicitly empty one is cleared back to
+    the global default. That distinction is what lets the page offer "follow
+    the default" as a real choice rather than a string somebody has to guess.
+    """
+
+    provider: str | None = None
+    model: str | None = None
+    max_tokens: int | None = None
+    timeout_seconds: float | None = None
+    base_url: str | None = None
+    enabled: bool | None = None
+
+
+class ApiKeyIn(BaseModel):
+    """A vendor credential on its way to the encrypted store.
+
+    An empty string is an explicit clear, matching the settings page's existing
+    convention - the page never holds the real key, so it cannot send one back
+    by accident.
+    """
+
+    api_key: str = ""
+
+
+class RateIn(BaseModel):
+    """US dollars per million tokens. Zero input and output removes the rate."""
+
+    input: float = 0.0
+    output: float = 0.0
+    cache_read: float = 0.0
+    cache_write: float = 0.0
+
+
+@app.get("/llm")
+def llm_page() -> FileResponse:
+    """Where each feature's model is chosen and keys are managed."""
+    return FileResponse(STATIC / "llm.html")
+
+
+@app.get("/usage")
+def usage_page() -> FileResponse:
+    """What the models have cost."""
+    return FileResponse(STATIC / "usage.html")
+
+
+@app.get("/api/llm/features")
+def llm_features(request: Request) -> dict:
+    """Every feature, the model it resolves to, and where that came from."""
+    from app.llm import admin, keys
+    from app.llm.features import public_view
+
+    view = public_view()
+    view["writable"] = admin.may_write(request)
+    view["auth"] = admin.status()
+    view["key_store"] = {
+        "available": keys.available(),
+        "reason": keys.unavailable_reason(),
+        "secret_env": keys.SECRET_ENV,
+    }
+    return view
+
+
+@app.put("/api/llm/features/{feature}")
+def set_llm_feature(request: Request, feature: str, body: FeatureOverrideIn) -> dict:
+    from app.llm import admin
+    from app.llm.features import set_override
+
+    admin.require(request)
+
+    # `exclude_unset` rather than a None filter: it is what distinguishes "do
+    # not touch this field" from "clear it", and `enabled=False` from absent.
+    changes = body.model_dump(exclude_unset=True)
+    try:
+        set_override(feature, **changes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    return llm_features(request)
+
+
+@app.get("/api/llm/keys")
+def llm_keys(request: Request) -> dict:
+    """Which vendors have a key, and where each one lives. Never a key."""
+    from app.llm import admin, keys
+
+    return {
+        "keys": keys.status(),
+        "writable": admin.may_write(request),
+        "auth": admin.status(),
+        "store": {
+            "available": keys.available(),
+            "reason": keys.unavailable_reason(),
+            "secret_env": keys.SECRET_ENV,
+            "encrypted": True,
+        },
+    }
+
+
+@app.put("/api/llm/keys/{provider}")
+def save_llm_key(request: Request, provider: str, body: ApiKeyIn) -> dict:
+    from app.llm import admin, keys
+    from app.narration.providers import PROVIDERS
+
+    actor = admin.require(request)
+
+    if provider not in PROVIDERS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown provider {provider!r}; expected one of {list(PROVIDERS)}",
+        )
+
+    try:
+        keys.save(provider, body.api_key.strip(), actor=actor)
+    except keys.KeyStoreUnavailable as exc:
+        # 503 rather than 400: the request was fine, the server cannot store
+        # it safely yet. The message names the variable to set.
+        raise HTTPException(status_code=503, detail=str(exc)) from None
+    return llm_keys(request)
+
+
+@app.delete("/api/llm/keys/{provider}")
+def delete_llm_key(request: Request, provider: str) -> dict:
+    from app.llm import admin, keys
+
+    admin.require(request)
+    keys.delete(provider)
+    return llm_keys(request)
+
+
+@app.get("/api/llm/usage")
+def llm_usage(days: int = 30) -> dict:
+    """Tokens and cost, grouped by feature, model and day.
+
+    Readable without an admin token: it discloses no credential and no prompt,
+    and a spend figure nobody can see is a spend figure nobody controls.
+    """
+    from app.llm.usage import summary
+
+    return summary(days=max(1, min(days, 365)))
+
+
+@app.get("/api/llm/pricing")
+def llm_pricing(request: Request) -> dict:
+    from app.llm import admin
+    from app.llm.pricing import table
+
+    return {"rates": table(), "writable": admin.may_write(request)}
+
+
+@app.put("/api/llm/pricing/{model:path}")
+def set_llm_rate(request: Request, model: str, body: RateIn) -> dict:
+    from app.llm import admin
+    from app.llm.pricing import set_rate
+
+    admin.require(request)
+    try:
+        set_rate(model, **body.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    return llm_pricing(request)
+
+
+@app.post("/api/llm/usage/purge")
+def purge_llm_usage(request: Request, older_than_days: int = 90) -> dict:
+    """Trim the usage log. Retention is a decision, so nothing does this itself."""
+    from app.llm import admin
+    from app.llm.usage import purge
+
+    admin.require(request)
+    return {"deleted": purge(max(0, older_than_days))}
 
 
 @app.post("/api/settings/test")
@@ -1336,23 +1506,21 @@ def test_settings(request: Request) -> dict:
     brief, runs the same eight-stage gate and substitutes the same way, so a
     pass here means the feature works and not merely that the key is valid.
     """
-    if not _is_local(request):
-        raise HTTPException(status_code=403, detail="only available locally")
+    # A real call to the vendor, so it spends money - the same gate as a
+    # write rather than the softer one a read gets.
+    from app.llm import admin
 
+    admin.require(request)
+
+    from app.llm.features import attributed_drafter, resolve
     from app.narration.client import narrate
-    from app.narration.providers import ModelConfig, drafter_for
-    from app.narration.store import load
 
-    current = load()
+    # The test exercises what narration itself would run, so it resolves the
+    # same feature rather than the global default - otherwise a per-feature
+    # override would be exactly the thing this never tested.
+    chosen = resolve("narration")
     try:
-        drafter = drafter_for(
-            current.provider,
-            ModelConfig(
-                model=current.model,
-                api_key=current.api_key,
-                base_url=current.base_url,
-            ),
-        )
+        drafter = attributed_drafter("narration")
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -1379,8 +1547,12 @@ def test_settings(request: Request) -> dict:
         "attempts": outcome.attempts,
         "fallback_reason": outcome.fallback_reason,
         "narrative": outcome.narrative,
-        "provider": current.provider,
-        "model": current.model or "(provider default)",
+        # What actually ran, which is the point of a test: with per-feature
+        # settings these are narration's own resolved values, not the global
+        # default they used to be read from.
+        "provider": chosen.provider,
+        "model": chosen.model or "(provider default)",
+        "source_of_choice": chosen.source,
     }
 
 
@@ -1457,38 +1629,16 @@ def _draft_drafter():
             "a model make a claim, which the narration fence exists to forbid."
         )
 
-    from app.narration.providers import ModelConfig, drafter_for
-    from app.narration.store import load
+    from app.llm.features import attributed_drafter, resolve
 
-    current = load()
+    # The timeout and token ceiling that used to live here are now this
+    # feature's defaults in `app/llm/features.py`, with the measurements that
+    # produced them - so an override can raise them without editing a route.
+    chosen = resolve("risk_drafts")
     try:
-        drafter = drafter_for(
-            current.provider,
-            ModelConfig(
-                model=current.model,
-                api_key=current.api_key,
-                base_url=current.base_url,
-                #: Far longer than narration's default, because this is not
-                #: narration's job. That one rephrases a handful of findings
-                #: already in hand; this one reads a whole backlog and writes
-                #: structured JSON about it, on a reasoning model. Sixty
-                #: seconds - the shared default - timed out on the first real
-                #: project it met, before the model had written a word.
-                timeout_seconds=240.0,
-                #: Generous, and it has to be. Reasoning tokens are billed
-                #: *inside* this ceiling on every vendor, and the adapter asks
-                #: for adaptive thinking - so a budget sized to the answer
-                #: starves it: 4000 was spent thinking and the reply was cut
-                #: off before a single JSON object, which the adapter correctly
-                #: reported as "truncated at max_tokens". The answer itself is
-                #: at most eight short objects; everything above that is the
-                #: model's working, and refusing to pay for it buys nothing but
-                #: a guaranteed truncation.
-                max_tokens=16000,
-            ),
-        )
+        drafter = attributed_drafter("risk_drafts")
     except ValueError:
-        return None, f"unknown model provider {current.provider!r} in settings."
+        return None, f"unknown model provider {chosen.provider!r} in settings."
     return drafter, None
 
 
@@ -1749,31 +1899,30 @@ def chat_custom_tile_api(body: TileChatRequest) -> TileChatResponse:
     # straight through to its existing plain-parse path. Model default
     # resolved the same way drafter_for() resolves it - an empty cfg.model
     # would otherwise reach the Anthropic SDK as model="".
-    from app.narration.providers import DEFAULT_MODELS, ModelConfig
-    from app.narration.store import load as load_narration
+    from app.llm import usage
+    from app.llm.features import resolve
 
-    current = load_narration()
-    agent_cfg = (
-        ModelConfig(
-            model=current.model or DEFAULT_MODELS["anthropic"],
-            api_key=current.api_key,
-            base_url=current.base_url,
-        )
-        if current.enabled and current.provider == "anthropic"
-        else None
-    )
+    # `resolve` already pins this feature to Anthropic and fills in the model,
+    # so the "is it anthropic, and what is the default model" dance this used
+    # to do by hand is gone. It stays None when the feature has no credential,
+    # which is what makes `chat_turn` fall through to its plain-parse path.
+    chosen = resolve("tile_agent")
+    agent_cfg = chosen.model_config() if chosen.has_credential else None
 
     with session_scope() as session:
         try:
-            return chat_turn(
-                body.messages,
-                on_screen,
-                body.raw_data,
-                drafter=_narrator(),
-                session=session,
-                project_id=body.scope_id,
-                agent_cfg=agent_cfg,
-            )
+            # The tool loop inside records a row per round; this names the
+            # feature those rounds belong to.
+            with usage.for_feature("tile_agent"):
+                return chat_turn(
+                    body.messages,
+                    on_screen,
+                    body.raw_data,
+                    drafter=_narrator(),
+                    session=session,
+                    project_id=body.scope_id,
+                    agent_cfg=agent_cfg,
+                )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from None
 
@@ -1886,12 +2035,16 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
     from app.agent.brief import build_brief
     from app.agent.chat import ChatTurn, ChatUnavailable, chat as run_chat
     from app.agent.link_fetch import fetch_and_extract, find_first_url
-    from app.narration.store import load as load_narration_settings
+    from app.llm import usage
+    from app.llm.features import resolve
 
     if not body.messages:
         raise HTTPException(status_code=400, detail="messages must not be empty")
 
-    settings_ = load_narration_settings()
+    # Its own feature, so the Agent tab can sit on a cheaper model than
+    # narration does - many short turns is a different shape of bill from a
+    # few long ones, and they used to be forced to share a setting.
+    chosen = resolve("chat")
     turns = [ChatTurn(role=m.role, content=m.content) for m in body.messages]
 
     #: Rebuilt every turn rather than once per conversation. The snapshot moves
@@ -1921,14 +2074,15 @@ def agent_chat(body: ChatRequest) -> ChatResponse:
             )
 
     try:
-        reply = run_chat(
-            turns,
-            provider=settings_.provider,
-            model=settings_.model,
-            api_key=settings_.api_key or None,
-            base_url=settings_.base_url or None,
-            context=context,
-        )
+        with usage.for_feature("chat"):
+            reply = run_chat(
+                turns,
+                provider=chosen.provider,
+                model=chosen.model,
+                api_key=chosen.api_key or None,
+                base_url=chosen.base_url or None,
+                context=context,
+            )
     except ChatUnavailable as exc:
         return ChatResponse(reply="", ok=False, error=str(exc))
 

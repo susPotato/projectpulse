@@ -1,0 +1,338 @@
+<!doctype html>
+<!--
+  What the language models have cost.
+
+  Hand-written rather than part of the React app, for the same reason
+  `settings.html` is: this is a page somebody opens when they want to know why
+  a bill looks wrong, so it must not depend on the bundle being fresh.
+
+  **Identity is carried by row labels, not by hue.** Every bar on this page is
+  one colour. The obvious alternative - a colour per feature - was measured
+  rather than assumed: the theme's four accent tokens fail a colourblind
+  separation check as adjacent pairs (blue against purple is deutan dE 2.8 in
+  dark mode, and dE 10.3 even in normal vision). Rather than invent four new
+  tokens for one page, magnitude is encoded by bar length against a single
+  hue and identity by the label beside it, which reads correctly in both
+  themes and under every kind of colour vision.
+
+  Red appears only for failures, and never alone - always beside the word
+  "failed" or a count, because a status a reader has to infer from colour is a
+  status some readers do not get.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Model usage - ProjectPulse</title>
+  <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <link rel="stylesheet" href="/static/shell.css">
+  <script src="/static/theme.js" defer></script>
+  <style>
+    body { margin: 0; background: var(--bg); color: var(--ink);
+           font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 22px 20px 60px; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    h2 { font-size: 13px; margin: 0 0 2px; }
+    .card { background: var(--surface); border: 1px solid var(--rule);
+            border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
+    .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
+           text-transform: uppercase; color: var(--ink-3); }
+    .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+    .warn { border-left: 2px solid var(--amber); padding-left: 12px;
+            font-size: 12.5px; color: var(--ink-2); margin: 12px 0 0; }
+    code { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: 12px; }
+    a.tab { color: var(--ink-2); text-decoration: none; }
+
+    /* Filters in one row above the charts. */
+    .filters { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+    .filters button { font: inherit; font-size: 12.5px; cursor: pointer; padding: 6px 13px;
+                      border: 1px solid var(--rule); background: var(--surface);
+                      color: var(--ink-2); border-radius: 6px; }
+    .filters button[aria-pressed="true"] { background: var(--navy); border-color: var(--navy);
+                                           color: #fff; font-weight: 650; }
+
+    /* Hero numbers. No plot, so no hover layer and no colour encoding. */
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+             gap: 10px; margin-bottom: 14px; }
+    .tile { background: var(--surface); border: 1px solid var(--rule);
+            border-radius: 8px; padding: 14px 16px; }
+    .tile .v { font-size: 25px; font-weight: 680; letter-spacing: -.02em;
+               margin-top: 3px; font-variant-numeric: tabular-nums; }
+    .tile .sub { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; }
+
+    /* Vertical bars, anchored to the baseline, 4px rounded data-end, 2px gap. */
+    .series { display: flex; align-items: flex-end; gap: 2px; height: 130px;
+              padding-top: 8px; border-bottom: 1px solid var(--rule); }
+    .series .col { flex: 1 1 0; min-width: 3px; display: flex; align-items: flex-end;
+                   height: 100%; position: relative; cursor: default; }
+    .series .bar { width: 100%; background: var(--blue);
+                   border-radius: 4px 4px 0 0; min-height: 2px; }
+    .series .col:hover .bar { background: var(--navy); }
+    .axis { display: flex; justify-content: space-between; font-size: 11px;
+            color: var(--ink-3); margin-top: 6px; }
+
+    /* Horizontal magnitude bars inside a table row, direct-labelled. */
+    table.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.grid th { text-align: left; font-size: 10.5px; letter-spacing: .06em;
+                    text-transform: uppercase; color: var(--ink-3); font-weight: 700;
+                    padding: 0 10px 7px 0; border-bottom: 1px solid var(--rule); }
+    table.grid td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule-2);
+                    vertical-align: middle; }
+    table.grid td.num { text-align: right; font-variant-numeric: tabular-nums;
+                        white-space: nowrap; }
+    .track { background: var(--rule-2); border-radius: 4px; height: 8px; width: 100%;
+             min-width: 60px; }
+    .fill { background: var(--blue); border-radius: 4px; height: 8px; min-width: 2px; }
+    .muted { color: var(--ink-3); }
+    .bad { color: var(--red); }
+    .empty { color: var(--ink-3); font-size: 13px; padding: 10px 0; }
+
+    /* Tooltip: a title attribute is the smallest honest hover layer, and it
+       survives with no JavaScript running. */
+  </style>
+</head>
+<body>
+<div class="shell">
+<nav class="rail" aria-label="Sections">
+  <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
+  <button type="button" class="theme-toggle" data-theme-toggle><svg viewBox="0 0 24 24"></svg></button>
+  <a href="/programs"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Program</span></a>
+  <a href="/projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Projects</span></a>
+  <a href="/gantt"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
+  <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
+  <a href="/traceability"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="4" cy="18" r="1.6"/></svg><span>Trace</span></a>
+  <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
+  <a href="/team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 20a6 6 0 0 0-2-4.5"/></svg><span>Team</span></a>
+  <a href="/reports"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Reports</span></a>
+  <a href="/agent"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 14h6"/></svg><span>Agent</span></a>
+  <a href="/settings" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a>
+</nav>
+<main>
+<div class="wrap">
+
+  <div class="appbar">
+    <h1>Model usage</h1>
+    <span class="scope">tokens and cost, by feature and model</span>
+  </div>
+  <nav class="subtabs" style="display:flex;border-bottom:1px solid var(--rule);margin-bottom:18px;">
+    <a class="tab" href="/settings" style="padding:10px 15px;">Narration</a>
+    <a class="tab" href="/llm" style="padding:10px 15px;">Models &amp; keys</a>
+    <a class="tab" href="/usage" aria-current="page"
+       style="padding:10px 15px;color:var(--ink);font-weight:650;border-bottom:2px solid var(--navy);margin-bottom:-1px;">Usage</a>
+  </nav>
+
+  <div class="filters" id="filters">
+    <span class="lbl">Range</span>
+    <button type="button" data-days="7">7 days</button>
+    <button type="button" data-days="30" aria-pressed="true">30 days</button>
+    <button type="button" data-days="90">90 days</button>
+  </div>
+
+  <div id="main">Loading&hellip;</div>
+</div>
+
+<script>
+(function () {
+  var main = document.getElementById("main");
+  var days = 30;
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  /* Costs here are fractions of a cent up to a few dollars. A fixed 2dp would
+     render most of this page as $0.00, which reads as free rather than small -
+     the same failure the unpriced count exists to avoid. */
+  function money(n) {
+    n = Number(n) || 0;
+    if (n === 0) return "$0";
+    if (n < 0.01) return "$" + n.toFixed(4);
+    if (n < 1) return "$" + n.toFixed(3);
+    return "$" + n.toFixed(2);
+  }
+
+  function count(n) {
+    return (Number(n) || 0).toLocaleString();
+  }
+
+  function tokens(n) {
+    n = Number(n) || 0;
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + "k";
+    return String(n);
+  }
+
+  function tile(label, value, sub) {
+    return '<div class="tile"><div class="lbl">' + esc(label) + "</div>" +
+           '<div class="v">' + esc(value) + "</div>" +
+           (sub ? '<div class="sub">' + esc(sub) + "</div>" : "") + "</div>";
+  }
+
+  /* One hue, length carries magnitude, the label beside it carries identity. */
+  function bar(value, max) {
+    var pct = max > 0 ? (Number(value) || 0) / max * 100 : 0;
+    pct = Math.min(Math.max(pct, 0), 100);
+    return '<div class="track"><div class="fill" style="width:' +
+           (pct ? Math.max(pct, 1.5) : 0) + '%"></div></div>';
+  }
+
+  function render(d) {
+    var t = d.totals;
+    if (!t.calls) {
+      main.innerHTML =
+        '<div class="card"><div class="empty">No model calls recorded in the last ' +
+        days + ' days.</div><div class="hint">Every call through narration, risk ' +
+        'drafts, the tile builder or the Agent tab is logged here - including ' +
+        'failed ones, which still burn input tokens.</div></div>';
+      return;
+    }
+
+    var html = "";
+
+    html += '<div class="tiles">' +
+      tile("Cost", money(t.cost_usd), d.days + " days") +
+      tile("Calls", count(t.calls),
+           t.failed ? t.failed + " failed" : "all succeeded") +
+      tile("Input", tokens(t.input_tokens),
+           t.cached_input_tokens ? tokens(t.cached_input_tokens) + " from cache" : "tokens") +
+      tile("Output", tokens(t.output_tokens),
+           t.reasoning_tokens ? tokens(t.reasoning_tokens) + " reasoning" : "tokens") +
+      "</div>";
+
+    if (t.unpriced_calls) {
+      html += '<div class="card"><div class="warn"><strong>' + t.unpriced_calls +
+        " call" + (t.unpriced_calls === 1 ? "" : "s") + " could not be priced.</strong> " +
+        "Their tokens are counted above but contribute $0 to the cost, so the " +
+        "real figure is higher than shown. Add a rate for the models listed " +
+        'below on the <a href="/llm">Models &amp; keys</a> page.</div></div>';
+    }
+
+    /* Change over time: one series, so no legend - the heading names it. */
+    var byDay = d.by_day || [];
+    if (byDay.length > 1) {
+      var maxDay = Math.max.apply(null, byDay.map(function (r) { return r.cost_usd; }));
+      if (!(maxDay > 0)) {
+        maxDay = Math.max.apply(null, byDay.map(function (r) {
+          return r.input_tokens + r.output_tokens;
+        }));
+      }
+      var priced = maxDay > 0 && byDay.some(function (r) { return r.cost_usd > 0; });
+
+      html += '<div class="card"><h2>' + (priced ? "Cost per day" : "Tokens per day") +
+        '</h2><div class="hint" style="margin:0 0 4px;">' +
+        (priced ? "" : "No priced calls in this range, so this shows tokens instead.") +
+        "</div><div class=\"series\">";
+      byDay.forEach(function (r) {
+        var v = priced ? r.cost_usd : r.input_tokens + r.output_tokens;
+        var h = maxDay > 0 ? Math.max(v / maxDay * 100, v > 0 ? 2 : 0) : 0;
+        html += '<div class="col" title="' + esc(r.day) + ": " +
+          (priced ? money(r.cost_usd) : tokens(v) + " tokens") + " · " +
+          r.calls + " call" + (r.calls === 1 ? "" : "s") +
+          '"><div class="bar" style="height:' + h + '%"></div></div>';
+      });
+      html += '</div><div class="axis"><span>' + esc(byDay[0].day) +
+        "</span><span>" + esc(byDay[byDay.length - 1].day) + "</span></div></div>";
+    }
+
+    var feats = d.by_feature || [];
+    if (feats.length) {
+      /* One measure for every row. Sizing the bar by cost but falling back to
+         tokens per row mixes two units on one scale: an unpriced feature's
+         token count was compared against a maximum measured in dollars, and
+         its bar ran off the side of the card. Tokens are the measure that is
+         always known, so they are the one used - cost keeps its own column. */
+      var maxF = Math.max.apply(null, feats.map(function (r) {
+        return r.input_tokens + r.output_tokens;
+      })) || 0;
+      html += '<div class="card"><h2>By feature</h2>' +
+        '<div class="hint" style="margin:0 0 10px;">Which part of the product is ' +
+        "spending. Each feature's model is set on the Models &amp; keys page.</div>" +
+        '<table class="grid"><thead><tr><th>Feature</th>' +
+        '<th style="width:24%">Token share</th>' +
+        '<th class="num">Calls</th><th class="num">In</th><th class="num">Out</th>' +
+        '<th class="num">Avg</th><th class="num">Cost</th></tr></thead><tbody>';
+      feats.forEach(function (r) {
+        html += "<tr><td>" + esc(r.label) + "</td><td>" +
+          bar(r.input_tokens + r.output_tokens, maxF) + "</td>" +
+          '<td class="num">' + count(r.calls) + "</td>" +
+          '<td class="num">' + tokens(r.input_tokens) + "</td>" +
+          '<td class="num">' + tokens(r.output_tokens) + "</td>" +
+          '<td class="num muted">' + (r.avg_latency_ms / 1000).toFixed(1) + "s</td>" +
+          '<td class="num">' + money(r.cost_usd) + "</td></tr>";
+      });
+      html += "</tbody></table></div>";
+    }
+
+    var models = d.by_model || [];
+    if (models.length) {
+      var maxM = Math.max.apply(null, models.map(function (r) {
+        return r.input_tokens + r.output_tokens;
+      })) || 0;
+      html += '<div class="card"><h2>By model</h2>' +
+        '<table class="grid" style="margin-top:10px;"><thead><tr><th>Model</th>' +
+        '<th style="width:24%">Token share</th><th class="num">Calls</th>' +
+        '<th class="num">In</th><th class="num">Out</th><th class="num">Cost</th>' +
+        "</tr></thead><tbody>";
+      models.forEach(function (r) {
+        html += "<tr><td>" + esc(r.model) +
+          '<div class="muted" style="font-size:11px;">' + esc(r.provider) + "</div></td><td>" +
+          bar(r.input_tokens + r.output_tokens, maxM) + "</td>" +
+          '<td class="num">' + count(r.calls) + "</td>" +
+          '<td class="num">' + tokens(r.input_tokens) + "</td>" +
+          '<td class="num">' + tokens(r.output_tokens) + "</td>" +
+          '<td class="num">' + (r.unpriced_calls
+            ? '<span class="muted" title="no rate for this model">not priced</span>'
+            : money(r.cost_usd)) + "</td></tr>";
+      });
+      html += "</tbody></table></div>";
+    }
+
+    var fails = d.recent_failures || [];
+    if (fails.length) {
+      html += '<div class="card"><h2><span class="bad">Failed</span> calls</h2>' +
+        '<div class="hint" style="margin:0 0 10px;">Recorded because a refusal or ' +
+        "a timeout still burns input tokens - hiding them would under-report the " +
+        "bill exactly when something is looping.</div>" +
+        '<table class="grid"><thead><tr><th>When</th><th>Feature</th><th>Model</th>' +
+        "<th>Error</th></tr></thead><tbody>";
+      fails.forEach(function (r) {
+        html += '<tr><td class="muted">' + esc(r.at.replace("T", " ").slice(0, 16)) +
+          "</td><td>" + esc(r.feature) + "</td><td>" + esc(r.model) +
+          '</td><td class="muted">' + esc(r.error) + "</td></tr>";
+      });
+      html += "</tbody></table></div>";
+    }
+
+    main.innerHTML = html;
+  }
+
+  function load() {
+    main.innerHTML = "Loading&hellip;";
+    fetch("/api/llm/usage?days=" + days)
+      .then(function (r) { return r.json(); })
+      .then(render)
+      .catch(function (e) {
+        main.innerHTML = '<div class="card"><div class="empty">Could not load usage: ' +
+          esc(e.message) + "</div></div>";
+      });
+  }
+
+  document.getElementById("filters").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-days]");
+    if (!b) return;
+    days = Number(b.getAttribute("data-days"));
+    [].forEach.call(this.querySelectorAll("button[data-days]"), function (x) {
+      x.setAttribute("aria-pressed", x === b ? "true" : "false");
+    });
+    load();
+  });
+
+  load();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

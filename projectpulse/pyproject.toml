@@ -20,6 +20,11 @@ dependencies = [
     # imports it and carries a built-in evaluator, so a failed wheel degrades
     # rather than breaks - but the wheel is expected to be here.
     "zen-engine>=2.0",
+    # Fernet, for the API keys in `llm_credentials`. A hard dependency rather
+    # than an extra on purpose: `app/llm/keys.py` refuses to store a key it
+    # cannot encrypt, so shipping this optionally would turn "the wheel is
+    # missing" into "the key store is silently unavailable".
+    "cryptography>=43.0",
 ]
 
 [project.optional-dependencies]

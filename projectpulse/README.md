@@ -98,12 +98,31 @@ Or do it in the app: **http://127.0.0.1:8000/settings** — pick the provider,
 paste a key, press **Test it**. It runs a real narration through the real
 validator and tells you which wrote the summary and, if it fell back, why.
 
-The key is stored in plaintext in `.pulse/narration.json` (gitignored), the same
-bargain as a `.env` file; an environment variable takes priority when it is
-blank. Settings can only be changed from the machine the app runs on.
+Keys are stored **encrypted** in the database, sealed with `PULSE_SECRET_KEY`,
+so a dump or a backup discloses ciphertext rather than a usable credential. An
+environment variable (`ANTHROPIC_API_KEY` and friends) is read by the vendor's
+own SDK and remains the better path for a deployment. Settings can only be
+changed from the machine the app runs on, unless `PULSE_ADMIN_TOKEN` is set.
 
 Also settable without the page: `PULSE_NARRATION=1`, `PULSE_NARRATION_PROVIDER`,
-`PULSE_NARRATION_MODEL`.
+`PULSE_NARRATION_MODEL`, `PULSE_RISK_DRAFTS=1`.
+
+### One model per feature, and what they cost
+
+Four things here call a model, and they need not share one: narration rephrases
+findings, risk drafts reads a backlog, the dashboard tile builder runs a tool
+loop, and the Agent tab holds a conversation. **http://127.0.0.1:8000/llm**
+sets each one's vendor and model independently, and holds the keys and the
+per-model rates.
+
+**http://127.0.0.1:8000/usage** is what they have spent - tokens and cost by
+feature, by model and by day, including failed calls, because a refusal still
+burns input tokens. Models with no published rate are counted and flagged as
+unpriced rather than shown as free.
+
+```bash
+python -m scripts.secret    # a PULSE_SECRET_KEY and a PULSE_ADMIN_TOKEN
+```
 
 ### Files it hands back
 

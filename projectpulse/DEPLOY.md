@@ -18,8 +18,10 @@ fix something on the first `fly deploy`.
 |---|---|
 | Insight, Schedule, Calculation, the Gantt, evidence, rule traces, chains | **Live.** All of it, on real generated history. |
 | The `.docx` report and the `.xlsx` templates | **Live.** |
-| Narration by a language model | Live once a key is set. Off by default. |
-| Narration via the **FPT gateway** (`PULSE_NARRATION_PROVIDER=fpt`) | **Should be live** - see the note below before relying on it. |
+| Narration by a language model | **Live.** On in `fly.toml`, against Anthropic, with `ANTHROPIC_API_KEY` as a Fly secret. |
+| A model *proposing risks* from issue text (`PULSE_RISK_DRAFTS`) | **Live.** A separate permission from narration - see `app/config.py`. |
+| Per-feature model choice, the key store and the usage board (`/llm`, `/usage`) | **Live.** Read-only from a browser until `PULSE_ADMIN_TOKEN` is set - see §4. |
+| Narration via the **FPT gateway** (`PULSE_NARRATION_PROVIDER=fpt`) | **Not deployed, but supported.** No `FPT_API_KEY` is set on the app - see the note below before switching to it. |
 | The **Sync** button and `sync run` | **Not live.** See below. |
 
 ### Will the FPT gateway answer from a deployed host?
@@ -31,7 +33,8 @@ from here comes back **`401 Unauthorized`, not `403`**. A 401 means the request
 reached the origin's auth layer and was turned away for having no credential -
 if the gateway were allowlisted to the FPT corporate network, the edge would
 have refused it before that. So it is a public endpoint gated by API key, not
-by source address, and `FPT_API_KEY` is all a Fly machine should need.
+by source address, and `FPT_API_KEY` is all a Fly machine should need - though
+note that no such secret is set today, and the deployed app runs on Anthropic.
 
 ⚠️ **The residual risk is Cloudflare's bot rules, not an IP allowlist.** We
 already know this edge rejects `Python-urllib/3.x` with `403 "error code:
@@ -129,18 +132,43 @@ Set the record to **DNS only** (grey cloud), not proxied - Fly terminates TLS
 itself, and proxying on top produces a certificate loop that presents as a
 redirect loop in the browser.
 
-### 4. Optional: narration
+### 4. Narration, models and keys
 
-The `/settings` page is **read-only when deployed** - writes are restricted to
-loopback, and a request through Fly's proxy is not. That is deliberate: a
-settings form that accepts an API key should not be reachable from the internet.
-Configure it with secrets instead.
+`PULSE_NARRATION` and `PULSE_RISK_DRAFTS` live in `fly.toml`, because they are
+booleans rather than credentials. **Do not also set them as secrets** - a secret
+of the same name silently wins over `[env]`, which is how this app once ran
+narration in production while the only configuration anybody could read said it
+was off.
 
+The credential is a secret:
 
 ```bash
 fly secrets set ANTHROPIC_API_KEY=...
-fly secrets set PULSE_NARRATION=1
 ```
+
+That is all a deployment needs. Each feature - narration, risk drafts, the
+dashboard tile builder, the Agent tab - can then be pointed at its own vendor
+and model on `/llm`, and what they spend shows up on `/usage`.
+
+**The settings pages are read-only from a browser by default.** Writes are
+restricted to loopback, and a request through Fly's proxy is not - deliberately,
+because a form that accepts an API key should not be reachable from the
+internet. To administer a deployed instance anyway, set two more secrets:
+
+```bash
+python -m scripts.secret          # prints both, and the line below
+fly secrets set PULSE_SECRET_KEY="..." PULSE_ADMIN_TOKEN="..."
+```
+
+- `PULSE_SECRET_KEY` encrypts the API keys stored in the database, so a dump or
+  a backup discloses ciphertext rather than a usable credential. Without it the
+  key store refuses to save anything rather than falling back to plaintext.
+- `PULSE_ADMIN_TOKEN` is what authorises a write from a browser. Leave it unset
+  and the old loopback-only behaviour is exactly what you get.
+
+Losing `PULSE_SECRET_KEY` does not lose the app - only the stored keys, which
+report themselves as unreadable on `/llm` and have to be pasted in again.
+Rotating it deliberately is `keys.rotate()`, via `PULSE_SECRET_KEY_PREVIOUS`.
 
 Add the extra to the image first, or the SDK is not there to import - in
 `Dockerfile`, change `pip install -e .` to `pip install -e ".[llm]"` (or

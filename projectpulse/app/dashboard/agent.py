@@ -51,6 +51,7 @@ from typing import Any
 from app.api.schemas.agent import ChatMessage
 from app.api.schemas.dashboard import CustomChartDraft, LiveSource
 from app.dashboard.custom import _draft_json, _parse_model_json, _validate_draft
+from app.llm import usage
 from app.narration.providers import ModelConfig, _base, _import, _key
 
 log = logging.getLogger(__name__)
@@ -322,13 +323,18 @@ def agentic_turn(
 
     try:
         for _ in range(MAX_TOOL_ROUNDS):
-            response = client.messages.create(
-                model=cfg.model,
-                max_tokens=cfg.max_tokens,
-                system=system,
-                tools=TOOLS,
-                messages=conversation,
-            )
+            # One row per round, not one per turn: a tool loop is several
+            # billed calls and collapsing them would hide the round count,
+            # which is the thing that makes this feature expensive.
+            with usage.track("anthropic", cfg.model):
+                response = client.messages.create(
+                    model=cfg.model,
+                    max_tokens=cfg.max_tokens,
+                    system=system,
+                    tools=TOOLS,
+                    messages=conversation,
+                )
+                usage.report_anthropic(response)
 
             if response.stop_reason == "tool_use":
                 conversation.append(

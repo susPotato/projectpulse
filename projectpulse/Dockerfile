@@ -39,8 +39,8 @@ COPY traceability_runs ./traceability_runs
 #
 # `llm` (Anthropic) is in because narration and the tool-use tile builder
 # (app/dashboard/agent.py, Anthropic-only) are both configured against Claude
-# - PULSE_NARRATION_PROVIDER=anthropic is a Fly secret, and the agent's tool
-# loop calls the `anthropic` SDK directly, so it needs the package present
+# - PULSE_NARRATION_PROVIDER=anthropic is set in `fly.toml`, and the agent's
+# tool loop calls the `anthropic` SDK directly, so it needs the package present
 # regardless of which provider narration itself is pointed at. Switching
 # narration's *own* provider is still a one-word change in `.env`
 # (PULSE_NARRATION_PROVIDER) plus swapping this extra to `.[llm-gemini]` or

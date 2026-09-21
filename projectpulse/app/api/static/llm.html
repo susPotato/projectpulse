@@ -1,0 +1,481 @@
+<!doctype html>
+<!--
+  Which model each feature uses, where the keys live, and what they cost.
+
+  Hand-written for the same reason `settings.html` is: this is the page someone
+  opens when the models are NOT working, so it must not depend on the React
+  bundle being fresh.
+
+  **The page never receives a key.** It gets a hint like `sk-ant-...bQ4A` and a
+  boolean, and it sends a key only when somebody types one. An untouched field
+  submits nothing and the stored key is left alone.
+
+  **The admin token is held in `sessionStorage`, not `localStorage`.** It is a
+  credential, so it should not outlive the tab. That is a deliberate trade and
+  not an oversight: a token in `localStorage` survives a closed browser on a
+  shared machine, which is exactly the case this page is used in.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Models &amp; keys - ProjectPulse</title>
+  <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <link rel="stylesheet" href="/static/shell.css">
+  <script src="/static/theme.js" defer></script>
+  <style>
+    body { margin: 0; background: var(--bg); color: var(--ink);
+           font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 22px 20px 60px; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    h2 { font-size: 14px; margin: 0 0 3px; }
+    .card { background: var(--surface); border: 1px solid var(--rule);
+            border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
+    .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
+           text-transform: uppercase; color: var(--ink-3); }
+    label { display: block; font-size: 12.5px; color: var(--ink-2); margin: 0 0 5px; }
+    input[type=text], input[type=password], input[type=number], select {
+      width: 100%; box-sizing: border-box; padding: 8px 10px; font: inherit;
+      font-size: 13px; color: var(--ink); background: var(--bg);
+      border: 1px solid var(--rule); border-radius: 6px;
+    }
+    input:focus, select:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+    button { font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+             border-radius: 6px; padding: 9px 16px; border: 1px solid var(--rule);
+             background: var(--bg); color: var(--ink); }
+    button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    button.small { font-size: 12px; padding: 6px 11px; }
+    button:disabled { opacity: .55; cursor: default; }
+    .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+    .warn { border-left: 2px solid var(--amber); padding-left: 12px;
+            font-size: 12.5px; color: var(--ink-2); margin: 12px 0 0; }
+    .bad { color: var(--red); }
+    .ok { color: var(--green); }
+    .muted { color: var(--ink-3); }
+    code { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: 12px; }
+    a.tab { color: var(--ink-2); text-decoration: none; }
+    .pill { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 999px;
+            padding: 2px 9px; border: 1px solid var(--rule); color: var(--ink-3);
+            text-transform: uppercase; letter-spacing: .05em; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px;
+             align-items: end; margin-top: 12px; }
+    .feat { border-bottom: 1px solid var(--rule-2); padding: 16px 0; }
+    .feat:last-child { border-bottom: 0; padding-bottom: 0; }
+    .feat .head { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+    table.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.grid th { text-align: left; font-size: 10.5px; letter-spacing: .06em;
+                    text-transform: uppercase; color: var(--ink-3); font-weight: 700;
+                    padding: 0 10px 7px 0; border-bottom: 1px solid var(--rule); }
+    table.grid td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule-2);
+                    vertical-align: middle; }
+    table.grid td.num { text-align: right; }
+    table.grid input { max-width: 92px; text-align: right; }
+    .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 22px;
+             background: var(--ink); color: var(--surface); font-size: 13px;
+             padding: 9px 16px; border-radius: 7px; opacity: 0;
+             transition: opacity .16s; pointer-events: none; }
+    .toast.on { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="shell">
+<nav class="rail" aria-label="Sections">
+  <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
+  <button type="button" class="theme-toggle" data-theme-toggle><svg viewBox="0 0 24 24"></svg></button>
+  <a href="/programs"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Program</span></a>
+  <a href="/projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Projects</span></a>
+  <a href="/gantt"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
+  <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
+  <a href="/traceability"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="4" cy="18" r="1.6"/></svg><span>Trace</span></a>
+  <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
+  <a href="/team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 20a6 6 0 0 0-2-4.5"/></svg><span>Team</span></a>
+  <a href="/reports"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Reports</span></a>
+  <a href="/agent"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 14h6"/></svg><span>Agent</span></a>
+  <a href="/settings" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a>
+</nav>
+<main>
+<div class="wrap">
+
+  <div class="appbar">
+    <h1>Models &amp; keys</h1>
+    <span class="scope">one model per feature, one key per vendor</span>
+  </div>
+  <nav class="subtabs" style="display:flex;border-bottom:1px solid var(--rule);margin-bottom:18px;">
+    <a class="tab" href="/settings" style="padding:10px 15px;">Narration</a>
+    <a class="tab" href="/llm" aria-current="page"
+       style="padding:10px 15px;color:var(--ink);font-weight:650;border-bottom:2px solid var(--navy);margin-bottom:-1px;">Models &amp; keys</a>
+    <a class="tab" href="/usage" style="padding:10px 15px;">Usage</a>
+  </nav>
+
+  <div id="auth"></div>
+  <div id="features">Loading&hellip;</div>
+  <div id="keys"></div>
+  <div id="rates"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var TOKEN_KEY = "pulse-admin-token";
+  var elAuth = document.getElementById("auth");
+  var elFeatures = document.getElementById("features");
+  var elKeys = document.getElementById("keys");
+  var elRates = document.getElementById("rates");
+  var elToast = document.getElementById("toast");
+  var state = { features: null, keys: null, rates: null };
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function token() {
+    try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; }
+  }
+
+  function toast(msg, bad) {
+    elToast.textContent = msg;
+    elToast.style.background = bad ? "var(--red)" : "var(--ink)";
+    elToast.classList.add("on");
+    setTimeout(function () { elToast.classList.remove("on"); }, 2600);
+  }
+
+  function send(method, url, body) {
+    var headers = { "Content-Type": "application/json" };
+    var t = token();
+    if (t) headers["X-Pulse-Admin-Token"] = t;
+    return fetch(url, {
+      method: method,
+      headers: headers,
+      body: body === undefined ? undefined : JSON.stringify(body)
+    }).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) throw new Error(data.detail || ("HTTP " + r.status));
+        return data;
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- auth */
+
+  function renderAuth() {
+    var f = state.features;
+    if (!f) return;
+    if (f.writable) {
+      elAuth.innerHTML = "";
+      return;
+    }
+    var configured = f.auth && f.auth.token_configured;
+    elAuth.innerHTML =
+      '<div class="card"><h2>This page is read-only</h2>' +
+      '<div class="hint" style="margin-top:4px;">' +
+      (configured
+        ? "Settings can be changed from the machine the app runs on, or with " +
+          "an admin token. Paste yours to enable the controls below - it is " +
+          "kept for this browser tab only."
+        : "Writes are restricted to the machine the app runs on. To administer " +
+          "this deployment from here, set <code>PULSE_ADMIN_TOKEN</code> as a " +
+          "platform secret - <code>python -m scripts.secret</code> prints one - " +
+          "then reload and paste it below.") +
+      "</div>" +
+      (configured
+        ? '<div class="grid3" style="grid-template-columns:1fr auto;">' +
+          '<div><label for="tok">Admin token</label>' +
+          '<input type="password" id="tok" autocomplete="off" placeholder="paste the token"></div>' +
+          '<button type="button" class="primary" id="tok-save">Unlock</button></div>'
+        : "") +
+      "</div>";
+
+    var save = document.getElementById("tok-save");
+    if (save) {
+      save.addEventListener("click", function () {
+        var v = document.getElementById("tok").value.trim();
+        if (!v) return;
+        try { sessionStorage.setItem(TOKEN_KEY, v); } catch (e) { /* private mode */ }
+        loadAll();
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------ features */
+
+  function renderFeatures() {
+    var d = state.features;
+    if (!d) return;
+    var rw = d.writable;
+    var html = '<div class="card"><h2>What each feature runs on</h2>' +
+      '<div class="hint" style="margin-top:4px;">Every feature falls back to the ' +
+      "narration default until you set it here. Leave a model blank for the " +
+      "vendor's own default.</div>";
+
+    d.features.forEach(function (f) {
+      var opts = f.providers.map(function (p) {
+        return '<option value="' + esc(p) + '"' +
+          (p === f.provider ? " selected" : "") + ">" + esc(p) + "</option>";
+      }).join("");
+
+      var models = (f.model_options[f.provider] || []);
+      var modelOpts = '<option value="">' +
+        esc("vendor default (" + (f.default_models[f.provider] || "") + ")") + "</option>";
+      var known = false;
+      models.forEach(function (m) {
+        if (m.id === f.model) known = true;
+        modelOpts += '<option value="' + esc(m.id) + '"' +
+          (m.id === f.model ? " selected" : "") + ">" + esc(m.label || m.id) + "</option>";
+      });
+      // A model the vendor table does not list - typed in, or a default that
+      // moved. Shown rather than silently reset to "vendor default".
+      if (f.model && !known) {
+        modelOpts += '<option value="' + esc(f.model) + '" selected>' +
+          esc(f.model) + " (custom)</option>";
+      }
+
+      html += '<div class="feat" data-feature="' + esc(f.key) + '">' +
+        '<div class="head"><strong>' + esc(f.label) + "</strong>" +
+        '<span class="pill">' + esc(f.source === "override" ? "set here"
+          : f.source === "global" ? "narration default" : "built-in") + "</span>" +
+        (f.enabled ? "" : '<span class="pill bad">off</span>') +
+        (f.has_credential ? "" : '<span class="pill bad">no key</span>') +
+        "</div>" +
+        '<div class="hint" style="margin-top:3px;">' + esc(f.description) + "</div>" +
+        (f.unsupported ? '<div class="warn">' + esc(f.unsupported) + "</div>" : "") +
+        '<div class="grid3">' +
+        '<div><label>Vendor</label><select class="f-provider"' +
+          (rw ? "" : " disabled") + (f.providers.length < 2 ? " disabled" : "") +
+          ">" + opts + "</select></div>" +
+        '<div><label>Model</label><select class="f-model"' + (rw ? "" : " disabled") +
+          ">" + modelOpts + "</select></div>" +
+        '<button type="button" class="small f-off"' + (rw ? "" : " disabled") + ">" +
+          (f.enabled ? "Turn off" : "Turn on") + "</button>" +
+        "</div>" +
+        (f.providers.length < 2
+          ? '<div class="hint">Only ' + esc(f.providers[0]) +
+            " can serve this one.</div>"
+          : "") +
+        "</div>";
+    });
+
+    html += "</div>";
+    elFeatures.innerHTML = html;
+
+    [].forEach.call(elFeatures.querySelectorAll(".feat"), function (row) {
+      var key = row.getAttribute("data-feature");
+      var current = d.features.filter(function (x) { return x.key === key; })[0];
+
+      row.querySelector(".f-provider").addEventListener("change", function () {
+        // Clearing the model alongside the vendor: a model string belongs to
+        // the vendor that was chosen with it, and carrying it across would
+        // send one vendor a name only the other has heard of.
+        save(key, { provider: this.value, model: "" });
+      });
+      row.querySelector(".f-model").addEventListener("change", function () {
+        save(key, { model: this.value });
+      });
+      row.querySelector(".f-off").addEventListener("click", function () {
+        save(key, { enabled: !current.enabled });
+      });
+    });
+  }
+
+  function save(feature, changes) {
+    send("PUT", "/api/llm/features/" + encodeURIComponent(feature), changes)
+      .then(function (data) {
+        state.features = data;
+        renderAuth();
+        renderFeatures();
+        toast("Saved");
+      })
+      .catch(function (e) { toast(e.message, true); loadAll(); });
+  }
+
+  /* ---------------------------------------------------------------- keys */
+
+  function renderKeys() {
+    var d = state.keys;
+    if (!d) return;
+    var rw = d.writable;
+    var store = d.store || {};
+
+    var html = '<div class="card"><h2>API keys</h2>' +
+      '<div class="hint" style="margin-top:4px;">Stored encrypted in the ' +
+      "database, so a backup or a dump discloses ciphertext rather than a " +
+      "usable credential. The page never receives a key back - only a hint.</div>";
+
+    if (!store.available) {
+      html += '<div class="warn"><strong>Keys cannot be saved yet.</strong> ' +
+        esc(store.reason || "") + "</div>";
+    }
+
+    html += '<table class="grid" style="margin-top:14px;"><thead><tr>' +
+      "<th>Vendor</th><th>In use</th><th>New key</th><th></th></tr></thead><tbody>";
+
+    d.keys.forEach(function (k) {
+      /* "A row exists" and "a key works" are different questions - a row
+         sealed with a secret this process no longer holds is stored but
+         unusable, and saying "saved here" for it made this table contradict
+         the feature list above. */
+      var where = k.effective_source === "database"
+        ? '<span class="ok">saved here</span> <span class="muted">' + esc(k.hint) + "</span>"
+        : k.effective_source === "environment"
+          ? '<span class="muted">from <code>' + esc(k.env_var) + "</code></span>"
+          : '<span class="muted">none</span>';
+      if (k.stored && !k.readable) {
+        where = '<span class="bad">unreadable</span> <span class="muted">' +
+          esc(k.hint) + "</span>" +
+          (k.problem ? '<div class="hint">' + esc(k.problem) + "</div>" : "") +
+          (k.from_environment
+            ? '<div class="hint">Falling back to <code>' + esc(k.env_var) + "</code>.</div>"
+            : "");
+      }
+      html += '<tr data-provider="' + esc(k.provider) + '"><td>' + esc(k.provider) +
+        "</td><td>" + where + "</td>" +
+        '<td><input type="password" class="k-input" autocomplete="off" placeholder="' +
+        (rw && store.available ? "paste to replace" : "read-only") + '"' +
+        (rw && store.available ? "" : " disabled") + "></td>" +
+        '<td class="num"><button type="button" class="small k-save"' +
+        (rw && store.available ? "" : " disabled") + ">Save</button> " +
+        (k.stored
+          ? '<button type="button" class="small k-clear"' + (rw ? "" : " disabled") +
+            ">Clear</button>"
+          : "") +
+        "</td></tr>";
+    });
+    html += "</tbody></table>";
+
+    if (!d.keys.some(function (k) { return k.effective_source !== "none"; })) {
+      html += '<div class="hint" style="margin-top:12px;">Platform secrets ' +
+        "(<code>ANTHROPIC_API_KEY</code> and friends) remain the better path " +
+        "for a deployment - a key set that way needs no row here at all.</div>";
+    }
+    html += "</div>";
+    elKeys.innerHTML = html;
+
+    [].forEach.call(elKeys.querySelectorAll("tr[data-provider]"), function (row) {
+      var provider = row.getAttribute("data-provider");
+      var input = row.querySelector(".k-input");
+      var saveBtn = row.querySelector(".k-save");
+      var clearBtn = row.querySelector(".k-clear");
+
+      if (saveBtn) saveBtn.addEventListener("click", function () {
+        var v = input.value.trim();
+        if (!v) { toast("Nothing to save", true); return; }
+        send("PUT", "/api/llm/keys/" + encodeURIComponent(provider), { api_key: v })
+          .then(function (data) {
+            state.keys = data;
+            input.value = "";
+            renderKeys();
+            loadFeatures();
+            toast("Key saved");
+          })
+          .catch(function (e) { toast(e.message, true); });
+      });
+
+      if (clearBtn) clearBtn.addEventListener("click", function () {
+        send("DELETE", "/api/llm/keys/" + encodeURIComponent(provider))
+          .then(function (data) {
+            state.keys = data;
+            renderKeys();
+            loadFeatures();
+            toast("Key cleared");
+          })
+          .catch(function (e) { toast(e.message, true); });
+      });
+    });
+  }
+
+  /* --------------------------------------------------------------- rates */
+
+  function renderRates() {
+    var d = state.rates;
+    if (!d) return;
+    var rw = d.writable;
+
+    var html = '<div class="card"><h2>Rates</h2>' +
+      '<div class="hint" style="margin-top:4px;">US dollars per million tokens. ' +
+      "Only rates that could be sourced ship filled in - the rest are blank " +
+      "rather than guessed, because an invented rate produces a confident " +
+      "figure that reconciles against nothing. A call is priced when it is " +
+      "made, so editing a rate does not rewrite what past calls cost.</div>" +
+      '<table class="grid" style="margin-top:14px;"><thead><tr><th>Model</th>' +
+      '<th class="num">Input</th><th class="num">Output</th>' +
+      '<th class="num">Cache read</th><th></th></tr></thead><tbody>';
+
+    d.rates.forEach(function (r) {
+      html += '<tr data-model="' + esc(r.model) + '"><td>' + esc(r.model) +
+        (r.source === "unpriced" ? ' <span class="pill bad">no rate</span>' : "") +
+        (r.source === "override" ? ' <span class="pill">edited</span>' : "") +
+        '</td><td class="num"><input type="number" step="0.01" min="0" class="r-in" value="' +
+        (r.input == null ? "" : r.input) + '"' + (rw ? "" : " disabled") + "></td>" +
+        '<td class="num"><input type="number" step="0.01" min="0" class="r-out" value="' +
+        (r.output == null ? "" : r.output) + '"' + (rw ? "" : " disabled") + "></td>" +
+        '<td class="num"><input type="number" step="0.01" min="0" class="r-cr" value="' +
+        (r.cache_read == null ? "" : r.cache_read) + '"' + (rw ? "" : " disabled") + "></td>" +
+        '<td class="num"><button type="button" class="small r-save"' +
+        (rw ? "" : " disabled") + ">Save</button></td></tr>";
+    });
+    html += "</tbody></table></div>";
+    elRates.innerHTML = html;
+
+    [].forEach.call(elRates.querySelectorAll("tr[data-model]"), function (row) {
+      row.querySelector(".r-save").addEventListener("click", function () {
+        var model = row.getAttribute("data-model");
+        send("PUT", "/api/llm/pricing/" + encodeURIComponent(model), {
+          input: Number(row.querySelector(".r-in").value) || 0,
+          output: Number(row.querySelector(".r-out").value) || 0,
+          cache_read: Number(row.querySelector(".r-cr").value) || 0
+        })
+          .then(function (data) { state.rates = data; renderRates(); toast("Rate saved"); })
+          .catch(function (e) { toast(e.message, true); });
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- load */
+
+  function authHeaders() {
+    var headers = {};
+    var t = token();
+    // Sent on reads too, not only writes: `writable` on every one of these
+    // responses is the answer to "may this browser save", and without the
+    // header the server would correctly say no and the page would render
+    // itself read-only straight after a successful save.
+    if (t) headers["X-Pulse-Admin-Token"] = t;
+    return headers;
+  }
+
+  function loadFeatures() {
+    return fetch("/api/llm/features", { headers: authHeaders() })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { state.features = d; renderAuth(); renderFeatures(); });
+  }
+
+  function loadAll() {
+    var headers = authHeaders();
+
+    Promise.all([
+      fetch("/api/llm/features", { headers: headers }).then(function (r) { return r.json(); }),
+      fetch("/api/llm/keys", { headers: headers }).then(function (r) { return r.json(); }),
+      fetch("/api/llm/pricing", { headers: headers }).then(function (r) { return r.json(); })
+    ]).then(function (all) {
+      state.features = all[0];
+      state.keys = all[1];
+      state.rates = all[2];
+      renderAuth();
+      renderFeatures();
+      renderKeys();
+      renderRates();
+    }).catch(function (e) {
+      elFeatures.innerHTML = '<div class="card"><div class="hint">Could not load: ' +
+        esc(e.message) + "</div></div>";
+    });
+  }
+
+  loadAll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

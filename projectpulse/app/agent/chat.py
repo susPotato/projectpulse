@@ -25,6 +25,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+from app.llm import usage
+
 log = logging.getLogger(__name__)
 
 DEFAULT_MODELS = {
@@ -139,15 +141,18 @@ def _anthropic_chat(
             **({"api_key": api_key} if api_key else {}),
             **({"base_url": base_url} if base_url else {}),
         )
-        response = client.messages.create(
-            model=model or DEFAULT_MODELS["anthropic"],
-            max_tokens=MAX_OUTPUT_TOKENS,
-            system=system,
-            messages=[
-                {"role": "assistant" if t.role == "assistant" else "user", "content": t.content}
-                for t in turns
-            ],
-        )
+        resolved = model or DEFAULT_MODELS["anthropic"]
+        with usage.track("anthropic", resolved):
+            response = client.messages.create(
+                model=resolved,
+                max_tokens=MAX_OUTPUT_TOKENS,
+                system=system,
+                messages=[
+                    {"role": "assistant" if t.role == "assistant" else "user", "content": t.content}
+                    for t in turns
+                ],
+            )
+            usage.report_anthropic(response)
     except Exception as exc:  # noqa: BLE001 - any failure is a downgrade
         raise ChatUnavailable(f"{type(exc).__name__}: {exc}") from exc
 
@@ -197,14 +202,17 @@ def _gemini_chat(
             )
             for turn in turns
         ]
-        response = client.models.generate_content(
-            model=model or DEFAULT_MODELS["gemini"],
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system,
-                max_output_tokens=MAX_OUTPUT_TOKENS,
-            ),
-        )
+        resolved = model or DEFAULT_MODELS["gemini"]
+        with usage.track("gemini", resolved):
+            response = client.models.generate_content(
+                model=resolved,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system,
+                    max_output_tokens=MAX_OUTPUT_TOKENS,
+                ),
+            )
+            usage.report_gemini(response)
     except Exception as exc:  # noqa: BLE001 - any failure is a downgrade
         raise ChatUnavailable(f"{type(exc).__name__}: {exc}") from exc
 

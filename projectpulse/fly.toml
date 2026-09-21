@@ -9,9 +9,28 @@ primary_region = 'sin'
 [build]
   dockerfile = 'Dockerfile'
 
+# Non-secret configuration lives here, in git, where it can be read. Anything
+# that is a credential is a Fly secret instead - `fly secrets list`.
+#
+# ⚠️ **A secret of the same name wins over anything in this block.** That is how
+# `PULSE_NARRATION` came to be declared twice with opposite values: '0' here and
+# '1' as a secret. Production ran narration the whole time while the only
+# configuration anybody could read said it was off. If you add a name here, make
+# sure it is not also a secret.
 [env]
   PORT = '8080'
-  PULSE_NARRATION = '0'
+  # On, and visibly so. Both of these are booleans, not credentials, so they
+  # belong in git rather than in `fly secrets` - the keys they gate are the
+  # secrets.
+  PULSE_NARRATION = '1'
+  # A model may propose risks by reading issue text. Deliberately a separate
+  # permission from narration - see `app/config.py` - so it is listed
+  # separately rather than implied.
+  PULSE_RISK_DRAFTS = '1'
+  # Which vendor the features default to. Not a credential either - the key it
+  # selects is the secret. Any feature can override this on `/llm` without a
+  # deploy; see `app/llm/features.py`.
+  PULSE_NARRATION_PROVIDER = 'anthropic'
   # Where the Traceability page looks for run snapshots. Baked into the image
   # by the Dockerfile; a project with no run there reads "Not traced" rather
   # than erroring.

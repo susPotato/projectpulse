@@ -43,6 +43,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, replace
 
+from app.llm import usage
 from app.narration.client import Drafter, NarrationUnavailable
 
 log = logging.getLogger(__name__)
@@ -193,12 +194,31 @@ def drafter_for(provider: str, config: ModelConfig | None = None) -> Drafter:
     if name in DEFAULT_TIMEOUTS and cfg.timeout_seconds == ModelConfig().timeout_seconds:
         cfg = replace(cfg, timeout_seconds=DEFAULT_TIMEOUTS[name])
 
-    return {
+    drafter = {
         "anthropic": _anthropic_drafter,
         "openai": _openai_drafter,
         "gemini": _gemini_drafter,
         "fpt": _fpt_drafter,
     }[name](cfg)
+
+    return _metered(name, cfg, drafter)
+
+
+def _metered(provider: str, cfg: ModelConfig, drafter: Drafter) -> Drafter:
+    """Time every call through `drafter` and record one usage row for it.
+
+    Here rather than inside each adapter because `drafter_for` is already the
+    single entry point - so an adapter added later is metered by construction,
+    not by its author remembering to. The adapters' own contribution is one
+    `usage.report_*` line each, which is what supplies the token counts; this
+    wrapper supplies the timing, the outcome and the row.
+    """
+
+    def metered(system: str, user: str) -> str:
+        with usage.track(provider, cfg.model):
+            return drafter(system, user)
+
+    return metered
 
 
 def _import(module: str, provider: str):
@@ -278,6 +298,10 @@ def _anthropic_drafter(cfg: ModelConfig) -> Drafter:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
+        # Before the checks below, so a refusal still reports what it spent -
+        # and so the row names the model that actually answered, which a
+        # server-side fallback changes and bills at its own rate.
+        usage.report_anthropic(response)
 
         # Both arrive as a successful HTTP response, so neither raises on its
         # own. A refusal has no text to read at all.
@@ -327,6 +351,8 @@ def _openai_drafter(cfg: ModelConfig) -> Drafter:
                 {"role": "user", "content": user},
             ],
         )
+
+        usage.report_openai(response)
 
         choice = response.choices[0]
         # A content filter stops generation with a successful response, and a
@@ -380,6 +406,8 @@ def _gemini_drafter(cfg: ModelConfig) -> Drafter:
                 max_output_tokens=cfg.max_tokens,
             ),
         )
+
+        usage.report_gemini(response)
 
         # Gemini reports a blocked prompt and a blocked answer in two different
         # places, and both come back as a successful call with no text.
@@ -508,6 +536,10 @@ def _fpt_drafter(cfg: ModelConfig) -> Drafter:
             )
 
         data = body.get("data", body)
+        # The gateway reports usage OpenAI-style, but inside its envelope - so
+        # look in both places rather than assuming which shape answered.
+        usage.report_mapping(data.get("usage") or body.get("usage"))
+
         choices = data.get("choices") or []
         if not choices:
             raise NarrationUnavailable("fpt returned no choices")

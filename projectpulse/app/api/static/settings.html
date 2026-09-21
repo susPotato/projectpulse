@@ -107,6 +107,10 @@
     <button type="button" data-view="narration" aria-current="page">Narration</button>
     <button type="button" data-view="sources">Sources</button>
     <button type="button" data-view="rules">Rule table</button>
+    <!-- Links rather than views: these are separate pages, so a saved model
+         or a rate survives a reload here without this page owning its state. -->
+    <a href="/llm" style="padding:10px 15px;color:var(--ink-2);text-decoration:none;font-size:13px;">Models &amp; keys</a>
+    <a href="/usage" style="padding:10px 15px;color:var(--ink-2);text-decoration:none;font-size:13px;">Usage</a>
   </nav>
 
   <div id="main">Loading&hellip;</div>

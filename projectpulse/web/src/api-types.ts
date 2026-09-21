@@ -53,6 +53,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/traceability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Traceability Page
+         * @description Jira-to-code traceability: which tickets the code backs up, and what it
+         *     does that no ticket claims.
+         *
+         *     Hand-written like /gantt and /settings rather than part of the React
+         *     bundle: the data comes from a *different* repository's run directory, so
+         *     the page must not make the bundle depend on that pipeline existing.
+         */
+        get: operations["traceability_page_traceability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/traceability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Api Traceability
+         * @description The traceability run for one delivery project.
+         *
+         *     Scoped by canonical project id like every other screen (invariant 7): a
+         *     run declares the project it is about, and asking for a project that has
+         *     no run gets an empty answer naming the projects that do - not another
+         *     project's findings, which is the one wrong answer available here.
+         *
+         *     200 with `run: null` rather than 404 when a project has no run: the page
+         *     needs the project list either way to draw its picker, and "this project
+         *     has not been traced" is an answer, not a failure.
+         */
+        get: operations["api_traceability_api_traceability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/traceability/rollup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Api Traceability Rollup
+         * @description Traceability folded onto the tracker keys the Schedule page draws.
+         *
+         *     Separate from `/api/traceability` because the Schedule page needs only
+         *     this summary - sending it 173 tickets and their evidence to render a
+         *     per-bar count would be most of a megabyte for a dozen numbers.
+         */
+        get: operations["api_traceability_rollup_api_traceability_rollup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/gantt": {
         parameters: {
             query?: never;
@@ -690,11 +768,207 @@ export interface paths {
         /**
          * Read Settings
          * @description Current narration settings. Never includes the key itself.
+         *
+         *     `writable` used to be hardcoded true, which told every deployed browser it
+         *     could save when the write would 403 - and contradicted DEPLOY.md's own
+         *     "read-only when deployed". It now answers the question it claims to.
          */
         get: operations["read_settings_api_settings_get"];
         /** Write Settings */
         put: operations["write_settings_api_settings_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/llm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Llm Page
+         * @description Where each feature's model is chosen and keys are managed.
+         */
+        get: operations["llm_page_llm_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Usage Page
+         * @description What the models have cost.
+         */
+        get: operations["usage_page_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Llm Features
+         * @description Every feature, the model it resolves to, and where that came from.
+         */
+        get: operations["llm_features_api_llm_features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/features/{feature}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Llm Feature */
+        put: operations["set_llm_feature_api_llm_features__feature__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Llm Keys
+         * @description Which vendors have a key, and where each one lives. Never a key.
+         */
+        get: operations["llm_keys_api_llm_keys_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/keys/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Llm Key */
+        put: operations["save_llm_key_api_llm_keys__provider__put"];
+        post?: never;
+        /** Delete Llm Key */
+        delete: operations["delete_llm_key_api_llm_keys__provider__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Llm Usage
+         * @description Tokens and cost, grouped by feature, model and day.
+         *
+         *     Readable without an admin token: it discloses no credential and no prompt,
+         *     and a spend figure nobody can see is a spend figure nobody controls.
+         */
+        get: operations["llm_usage_api_llm_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Llm Pricing */
+        get: operations["llm_pricing_api_llm_pricing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/pricing/{model}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Llm Rate */
+        put: operations["set_llm_rate_api_llm_pricing__model__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/usage/purge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Purge Llm Usage
+         * @description Trim the usage log. Retention is a decision, so nothing does this itself.
+         */
+        post: operations["purge_llm_usage_api_llm_usage_purge_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1288,6 +1562,21 @@ export interface components {
              */
             bounded: number;
         };
+        /**
+         * ApiKeyIn
+         * @description A vendor credential on its way to the encrypted store.
+         *
+         *     An empty string is an explicit clear, matching the settings page's existing
+         *     convention - the page never holds the real key, so it cannot send one back
+         *     by accident.
+         */
+        ApiKeyIn: {
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
+        };
         /** Body_upload_source_api_sources_upload_post */
         Body_upload_source_api_sources_upload_post: {
             /** File */
@@ -1845,6 +2134,28 @@ export interface components {
             scalars: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * FeatureOverrideIn
+         * @description One feature's model settings. Every field is optional on purpose.
+         *
+         *     An omitted field is left alone; an explicitly empty one is cleared back to
+         *     the global default. That distinction is what lets the page offer "follow
+         *     the default" as a real choice rather than a string somebody has to guess.
+         */
+        FeatureOverrideIn: {
+            /** Provider */
+            provider?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Max Tokens */
+            max_tokens?: number | null;
+            /** Timeout Seconds */
+            timeout_seconds?: number | null;
+            /** Base Url */
+            base_url?: string | null;
+            /** Enabled */
+            enabled?: boolean | null;
         };
         /**
          * Finding
@@ -2522,6 +2833,32 @@ export interface components {
             effort_days: number;
             /** Delay Days */
             delay_days: number;
+        };
+        /**
+         * RateIn
+         * @description US dollars per million tokens. Zero input and output removes the rate.
+         */
+        RateIn: {
+            /**
+             * Input
+             * @default 0
+             */
+            input: number;
+            /**
+             * Output
+             * @default 0
+             */
+            output: number;
+            /**
+             * Cache Read
+             * @default 0
+             */
+            cache_read: number;
+            /**
+             * Cache Write
+             * @default 0
+             */
+            cache_write: number;
         };
         /**
          * RefusedEdge
@@ -3350,6 +3687,92 @@ export interface operations {
             };
         };
     };
+    traceability_page_traceability_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    api_traceability_api_traceability_get: {
+        parameters: {
+            query?: {
+                project?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_traceability_rollup_api_traceability_rollup_get: {
+        parameters: {
+            query?: {
+                project?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     gantt_page_gantt_get: {
         parameters: {
             query?: never;
@@ -4140,6 +4563,322 @@ export interface operations {
                 "application/json": components["schemas"]["NarrationSettingsIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    llm_page_llm_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    usage_page_usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    llm_features_api_llm_features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    set_llm_feature_api_llm_features__feature__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                feature: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeatureOverrideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    llm_keys_api_llm_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    save_llm_key_api_llm_keys__provider__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_llm_key_api_llm_keys__provider__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    llm_usage_api_llm_usage_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    llm_pricing_api_llm_pricing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    set_llm_rate_api_llm_pricing__model__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    purge_llm_usage_api_llm_usage_purge_post: {
+        parameters: {
+            query?: {
+                older_than_days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
