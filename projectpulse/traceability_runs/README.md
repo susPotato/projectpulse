@@ -32,6 +32,30 @@ Left out on purpose:
 * `cache/` — raw model responses. Large, and re-deriving a verdict from them
   is a pipeline job, not a page's.
 
+## Recreating one from scratch
+
+Given a backlog export, a repository and a documentation tree, one command
+produces a run and stages it here:
+
+```bash
+python -m tracelink --run runs/acme pipeline \
+    --export ../backlog.xlsx \
+    --repo ../acme \
+    --docs ../acme/docs \
+    --project Acme \
+    --project-id excel:Project:upload:acme \
+    --done-status "Release it" \
+    --into <this repo>/projectpulse/traceability_runs/acme
+```
+
+That runs only the free stages, so the result has no verdicts; the page
+names each absence and the command that fills it, and is worth reading
+without them. The paid stages are printed at the end for whoever decides to
+spend.
+
+`--project-id` is what binds the run to a delivery project here. Without it
+the run exists but no project page will find it.
+
 ## Refreshing
 
 Copy the artifacts above from the pipeline's run directory. The page reads
