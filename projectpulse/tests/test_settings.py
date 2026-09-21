@@ -60,15 +60,13 @@ def _local(app):
 
 def test_settings_survive_a_round_trip(state):
     store.save(
-        store.NarrationSettings(
-            enabled=True, provider="openai", model="gpt-4.1", api_key="sk-secret"
-        )
+        store.NarrationSettings(enabled=True, provider="openai", model="gpt-4.1")
     )
     loaded = store.load()
 
     assert loaded.enabled is True
     assert loaded.provider == "openai"
-    assert loaded.api_key == "sk-secret"
+    assert loaded.model == "gpt-4.1"
 
 
 def test_no_stored_settings_is_the_ordinary_state_not_an_error(state):
@@ -101,39 +99,72 @@ def test_an_unreachable_database_falls_back_rather_than_raising(state, monkeypat
 
 
 def test_updating_without_a_key_keeps_the_stored_one(state):
-    """The page never receives the key, so it cannot send it back.
-
-    Without this, changing the model id would silently clear the credential.
-    """
-    store.save(store.NarrationSettings(api_key="sk-keep-me"))
+    """Changing the model id must not disturb anything else."""
+    store.save(store.NarrationSettings(provider="openai"))
     store.update(model="gpt-4.1")
 
-    assert store.load().api_key == "sk-keep-me"
+    assert store.load().provider == "openai"
     assert store.load().model == "gpt-4.1"
 
 
-def test_an_empty_key_is_an_explicit_clear(state):
-    store.save(store.NarrationSettings(api_key="sk-goodbye"))
-    store.update(api_key="")
+def test_a_key_handed_to_this_store_is_never_written(state):
+    """The plaintext path is closed, not merely unused by the UI.
+
+    This row is plaintext JSON. Keys live encrypted in `llm_credentials`
+    (`app/llm/keys.py`), and a caller that still passes one here - an old
+    client, a replayed form post - must not succeed in putting it back.
+    """
+    from app.db import session_scope
+    from app.models.uploads import AppSetting
+
+    store.save(store.NarrationSettings(provider="openai", api_key="sk-must-not-land"))
+    store.update(api_key="sk-must-not-land-either")
 
     assert store.load().api_key == ""
+    with session_scope() as session:
+        row = session.get(AppSetting, store.SETTING_KEY)
+        assert "must-not-land" not in (row.value or "")
 
 
-def test_the_public_view_never_carries_the_key(state):
-    store.save(store.NarrationSettings(api_key="sk-ant-api03-abcdefghijklmnop"))
+def test_the_public_view_never_carries_a_key(state):
+    store.save(store.NarrationSettings(provider="anthropic"))
     view = store.public_view()
 
     assert "api_key" not in view
-    assert "abcdefghijklmnop" not in json.dumps(view)
-    assert view["api_key_set"] is True
-    assert view["api_key_hint"].startswith("sk-ant-")
+    # Nothing is stored here to report any more; `/api/llm/keys` is where a
+    # key's presence is shown, from the encrypted store.
+    assert view["api_key_set"] is False
 
 
-def test_a_short_key_is_hidden_entirely_rather_than_mostly_shown(state):
-    """A short secret is all suffix, so the usual last-four hint discloses it."""
-    store.save(store.NarrationSettings(api_key="short"))
+def test_a_legacy_plaintext_key_is_migrated_and_blanked(state, monkeypatch):
+    """The row somebody wrote before keys moved must not stay in the clear."""
+    import json as _json
 
-    assert store.public_view()["api_key_hint"] == "*****"
+    from app.db import session_scope
+    from app.llm import keys
+    from app.models.uploads import AppSetting
+
+    monkeypatch.setenv(keys.SECRET_ENV, keys.generate_secret())
+    # Written past `save()`, because `save()` is what now strips it - this is
+    # the shape a row written by the old code actually has on disk.
+    with session_scope() as session:
+        session.merge(
+            AppSetting(
+                key=store.SETTING_KEY,
+                value=_json.dumps(
+                    {"enabled": True, "provider": "anthropic", "api_key": "sk-ant-legacy-value"}
+                ),
+            )
+        )
+
+    assert keys.adopt_legacy() == "anthropic"
+
+    assert keys.get("anthropic") == "sk-ant-legacy-value"
+    assert store.load().api_key == ""
+    with session_scope() as session:
+        row = session.get(AppSetting, store.SETTING_KEY)
+        assert "legacy-value" not in (row.value or "")
+    keys.delete("anthropic")
 
 
 # --------------------------------------------------------------------------
@@ -166,8 +197,11 @@ def test_a_local_client_can_change_them(state):
 
     assert body["enabled"] is True
     assert body["provider"] == "openai"
-    assert body["api_key_set"] is True
+    # Accepted and discarded rather than refused, so an old client does not
+    # 500 - but it does not get a key into this row either.
+    assert body["api_key_set"] is False
     assert "api_key" not in body
+    assert store.load().api_key == ""
 
 
 def test_an_unknown_provider_is_refused_before_it_is_stored(state):

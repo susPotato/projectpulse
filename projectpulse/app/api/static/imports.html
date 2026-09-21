@@ -1,0 +1,341 @@
+<!doctype html>
+<!--
+  What has been imported, what it feeds, and what reads it.
+
+  Hand-written like `settings.html` and for the same reason: this is the page
+  somebody opens when a chart is empty and they want to know whether the data
+  ever arrived.
+
+  The "Reads it" column is the part that did not exist anywhere before. The
+  dependency from a sheet to a page is real, but it runs through the convertor,
+  the domain tables and the rule engine, so it cannot be read off the code -
+  `app/imports.py` states it once and this renders it.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Imports - ProjectPulse</title>
+  <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <link rel="stylesheet" href="/static/shell.css">
+  <script src="/static/theme.js" defer></script>
+  <style>
+    body { margin: 0; background: var(--bg); color: var(--ink);
+           font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 22px 20px 60px; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    h2 { font-size: 13px; margin: 0 0 2px; }
+    .card { background: var(--surface); border: 1px solid var(--rule);
+            border-radius: 8px; padding: 18px 20px; margin-bottom: 14px; }
+    .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em;
+           text-transform: uppercase; color: var(--ink-3); }
+    .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+    .warn { border-left: 2px solid var(--amber); padding-left: 12px;
+            font-size: 12.5px; color: var(--ink-2); margin: 12px 0 0; }
+    code { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: 11.5px; }
+    a.tab { color: var(--ink-2); text-decoration: none; }
+    button { font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+             border-radius: 6px; padding: 9px 16px; border: 1px solid var(--rule);
+             background: var(--bg); color: var(--ink); }
+    button.small { font-size: 12px; padding: 5px 10px; font-weight: 600; }
+    button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    button:disabled { opacity: .55; cursor: default; }
+
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+             gap: 10px; margin-bottom: 14px; }
+    .tile { background: var(--surface); border: 1px solid var(--rule);
+            border-radius: 8px; padding: 14px 16px; }
+    .tile .v { font-size: 25px; font-weight: 680; letter-spacing: -.02em;
+               margin-top: 3px; font-variant-numeric: tabular-nums; }
+    .tile .sub { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; }
+
+    table.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.grid th { text-align: left; font-size: 10.5px; letter-spacing: .06em;
+                    text-transform: uppercase; color: var(--ink-3); font-weight: 700;
+                    padding: 0 10px 7px 0; border-bottom: 1px solid var(--rule); }
+    table.grid td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--rule-2);
+                    vertical-align: top; }
+    table.grid td.num { text-align: right; font-variant-numeric: tabular-nums;
+                        white-space: nowrap; }
+    .pill { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 999px;
+            padding: 2px 8px; border: 1px solid var(--rule); color: var(--ink-3);
+            text-transform: uppercase; letter-spacing: .05em; }
+    .pill.ok { color: var(--green); border-color: var(--green); }
+    .pill.bad { color: var(--red); border-color: var(--red); }
+    .chip { display: inline-block; font-size: 11px; border-radius: 5px; padding: 1px 7px;
+            border: 1px solid var(--rule); color: var(--ink-2); margin: 0 4px 4px 0;
+            cursor: help; }
+    .muted { color: var(--ink-3); }
+    .ok { color: var(--green); }
+    .bad { color: var(--red); }
+    .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 22px;
+             background: var(--ink); color: var(--surface); font-size: 13px;
+             padding: 9px 16px; border-radius: 7px; opacity: 0;
+             transition: opacity .16s; pointer-events: none; }
+    .toast.on { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="shell">
+<nav class="rail" aria-label="Sections">
+  <a class="brand" href="/insight" aria-label="ProjectPulse"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></a>
+  <button type="button" class="theme-toggle" data-theme-toggle><svg viewBox="0 0 24 24"></svg></button>
+  <a href="/programs"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Program</span></a>
+  <a href="/projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg><span>Projects</span></a>
+  <a href="/gantt"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
+  <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
+  <a href="/traceability"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="4" cy="18" r="1.6"/></svg><span>Trace</span></a>
+  <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
+  <a href="/team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 20a6 6 0 0 0-2-4.5"/></svg><span>Team</span></a>
+  <a href="/reports"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Reports</span></a>
+  <a href="/agent"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 14h6"/></svg><span>Agent</span></a>
+  <a href="/settings" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a>
+</nav>
+<main>
+<div class="wrap">
+
+  <div class="appbar">
+    <h1>Imports</h1>
+    <span class="scope">what came in, what it feeds, and what reads it</span>
+  </div>
+  <nav class="subtabs" style="display:flex;border-bottom:1px solid var(--rule);margin-bottom:18px;">
+    <a class="tab" href="/settings" style="padding:10px 15px;">Sources</a>
+    <a class="tab" href="/imports" aria-current="page"
+       style="padding:10px 15px;color:var(--ink);font-weight:650;border-bottom:2px solid var(--navy);margin-bottom:-1px;">Imports</a>
+    <a class="tab" href="/llm" style="padding:10px 15px;">Models &amp; keys</a>
+    <a class="tab" href="/usage" style="padding:10px 15px;">Usage</a>
+  </nav>
+
+  <div id="main">Loading&hellip;</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var TOKEN_KEY = "pulse-admin-token";
+  var main = document.getElementById("main");
+  var elToast = document.getElementById("toast");
+  var state = null;
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function token() {
+    try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; }
+  }
+
+  function headers() {
+    var h = { "Content-Type": "application/json" };
+    var t = token();
+    if (t) h["X-Pulse-Admin-Token"] = t;
+    return h;
+  }
+
+  function toast(msg, bad) {
+    elToast.textContent = msg;
+    elToast.style.background = bad ? "var(--red)" : "var(--ink)";
+    elToast.classList.add("on");
+    setTimeout(function () { elToast.classList.remove("on"); }, 2800);
+  }
+
+  function send(method, url) {
+    return fetch(url, { method: method, headers: headers() }).then(function (r) {
+      return r.json().then(function (d) {
+        if (!r.ok) throw new Error(d.detail || ("HTTP " + r.status));
+        return d;
+      });
+    });
+  }
+
+  function size(n) {
+    n = Number(n) || 0;
+    if (!n) return "";
+    if (n >= 1048576) return (n / 1048576).toFixed(1) + " MB";
+    if (n >= 1024) return Math.round(n / 1024) + " KB";
+    return n + " B";
+  }
+
+  function when(iso) {
+    if (!iso) return '<span class="muted">never scanned</span>';
+    return esc(iso.replace("T", " ").slice(0, 16));
+  }
+
+  function render(d) {
+    var rows = d.imports || [];
+    var orphans = d.orphan_projects || [];
+    var rw = d.writable;
+
+    var available = rows.filter(function (r) { return r.available; }).length;
+    var ingested = rows.filter(function (r) { return r.ingested; }).length;
+    var projects = {};
+    rows.forEach(function (r) { if (r.project_id) projects[r.project_id] = 1; });
+
+    var html = '<div class="tiles">' +
+      tile("Imports", rows.length, rows.length - available
+        ? (rows.length - available) + " unavailable" : "all available") +
+      tile("Projects fed", Object.keys(projects).length,
+        orphans.length ? orphans.length + " with no import" : "none orphaned") +
+      tile("Reached the pages", ingested,
+        ingested === rows.length ? "all of them" : (rows.length - ingested) + " have not") +
+      "</div>";
+
+    if (rows.length - available) {
+      html += '<div class="card"><div class="warn"><strong>' + (rows.length - available) +
+        " import" + (rows.length - available === 1 ? " is" : "s are") + " unavailable.</strong> " +
+        "Their rows were counted at the last scan, but the workbook behind them " +
+        "cannot be read now, so a re-sync would skip them.</div></div>";
+    }
+
+    html += '<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;">' +
+      "<div><h2>Everything imported</h2>" +
+      '<div class="hint" style="margin:2px 0 0;">Newest scan first. "Reads it" is what ' +
+      'consumes this kind of sheet &mdash; hover a page for what it does with it.</div></div>' +
+      '<button type="button" class="small" id="resync"' + (rw ? "" : " disabled") +
+      ">Re-sync all</button></div>" +
+      '<table class="grid" style="margin-top:14px;"><thead><tr>' +
+      "<th>Import</th><th>Kind</th><th>Feeds</th><th>Reads it</th>" +
+      '<th class="num">Rows</th><th>Last scan</th><th>State</th><th></th>' +
+      "</tr></thead><tbody>";
+
+    if (!rows.length) {
+      html += '<tr><td colspan="8" class="muted" style="padding:14px 0;">' +
+        "Nothing has been imported yet. Upload a workbook on the " +
+        '<a href="/settings">Sources</a> tab.</td></tr>';
+    }
+
+    rows.forEach(function (r) {
+      var name = r.original_filename || r.file_name;
+      var chips = (r.consumers || []).map(function (c) {
+        return '<span class="chip" title="' + esc(c.uses) + '">' + esc(c.page) + "</span>";
+      }).join("");
+
+      html += '<tr data-file="' + esc(r.file_name) + '">' +
+        "<td><b>" + esc(name) + "</b>" +
+          '<div class="hint" style="margin:2px 0 0;"><code>' + esc(r.file_name) + "</code>" +
+          (r.size_bytes ? " &middot; " + size(r.size_bytes) : "") + "</div></td>" +
+        '<td>' + esc(r.kind) + '<div class="hint" style="margin:2px 0 0;">' +
+          esc(r.origin) + "</div></td>" +
+        "<td>" + (r.project_name
+            ? "<b>" + esc(r.project_name) + "</b>"
+            : '<span class="muted">' + esc(r.project_id) + "</span>") +
+          '<div class="hint" style="margin:2px 0 0;">' +
+          (r.program_name ? esc(r.program_name) : '<span class="muted">no program</span>') +
+          "</div></td>" +
+        "<td>" + chips + "</td>" +
+        '<td class="num">' + (r.rows || 0) +
+          '<div class="hint" style="margin:2px 0 0;">' + (r.task_count || 0) + " tasks</div></td>" +
+        "<td>" + when(r.last_scan) + "</td>" +
+        "<td>" + stateCell(r) + "</td>" +
+        '<td class="num">' + (r.origin === "upload"
+            ? '<button type="button" class="small del"' + (rw ? "" : " disabled") + ">Delete</button>"
+            : '<span class="muted" title="part of the demo image">&mdash;</span>') +
+          "</td></tr>";
+    });
+    html += "</tbody></table></div>";
+
+    if (orphans.length) {
+      html += '<div class="card"><h2>Projects with nothing behind them</h2>' +
+        '<div class="hint" style="margin:2px 0 12px;">A project row is created the moment ' +
+        "somebody starts an upload, so an abandoned or failed one leaves this behind. " +
+        "These have no import and nothing ingested, which is what makes them safe to " +
+        "remove &mdash; deleting a project that <em>does</em> hold data is a different " +
+        "decision and this list will not offer it.</div>" +
+        '<table class="grid"><thead><tr><th>Project</th><th>Id</th><th>Why it is listed</th>' +
+        "<th></th></tr></thead><tbody>";
+      orphans.forEach(function (o) {
+        html += '<tr data-project="' + esc(o.canonical_id) + '"><td><b>' + esc(o.name) +
+          "</b></td><td><code>" + esc(o.canonical_id) + "</code></td>" +
+          '<td class="muted">' + esc(o.reason) + "</td>" +
+          '<td class="num"><button type="button" class="small drop"' +
+          (rw ? "" : " disabled") + ">Delete</button></td></tr>";
+      });
+      html += "</tbody></table></div>";
+    }
+
+    if (!rw) {
+      html += '<div class="card"><div class="hint">This page is read-only. ' +
+        "Changes are allowed from the machine the app runs on, or with an admin " +
+        'token &mdash; paste one on <a href="/llm">Models &amp; keys</a> and it ' +
+        "applies here too.</div></div>";
+    }
+
+    main.innerHTML = html;
+    wire();
+  }
+
+  function stateCell(r) {
+    if (!r.available) {
+      return '<span class="pill bad">unavailable</span>' +
+        (r.problem ? '<div class="hint" style="margin:3px 0 0;">' + esc(r.problem) + "</div>" : "");
+    }
+    if (!r.ingested) {
+      return '<span class="pill">not ingested</span>' +
+        '<div class="hint" style="margin:3px 0 0;">nothing downstream yet &mdash; re-sync</div>';
+    }
+    return '<span class="pill ok">in use</span>';
+  }
+
+  function tile(label, value, sub) {
+    return '<div class="tile"><div class="lbl">' + esc(label) + "</div>" +
+      '<div class="v">' + esc(value) + "</div>" +
+      '<div class="sub">' + esc(sub) + "</div></div>";
+  }
+
+  function wire() {
+    var resync = document.getElementById("resync");
+    if (resync) resync.addEventListener("click", function () {
+      var b = this;
+      b.disabled = true;
+      b.textContent = "Re-syncing…";
+      send("POST", "/api/imports/resync")
+        .then(function () { toast("Re-synced"); load(); })
+        .catch(function (e) { toast(e.message, true); b.disabled = false; b.textContent = "Re-sync all"; });
+    });
+
+    [].forEach.call(main.querySelectorAll("tr[data-file] .del"), function (btn) {
+      btn.addEventListener("click", function () {
+        var file = btn.closest("tr").getAttribute("data-file");
+        if (!confirm("Forget this import?\n\n" + file +
+            "\n\nThe tasks it produced stay; only the stored workbook and its " +
+            "watch registration go.")) return;
+        send("DELETE", "/api/imports/" + encodeURIComponent(file))
+          .then(function () { toast("Import deleted"); load(); })
+          .catch(function (e) { toast(e.message, true); });
+      });
+    });
+
+    [].forEach.call(main.querySelectorAll("tr[data-project] .drop"), function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.closest("tr").getAttribute("data-project");
+        if (!confirm("Delete this project?\n\n" + id + "\n\nThere is no undo.")) return;
+        send("DELETE", "/api/projects/" + encodeURIComponent(id))
+          .then(function () { toast("Project deleted"); load(); })
+          .catch(function (e) { toast(e.message, true); });
+      });
+    });
+  }
+
+  function load() {
+    fetch("/api/imports", { headers: headers() })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (d) { state = d; render(d); })
+      .catch(function (e) {
+        main.innerHTML = '<div class="card"><div class="hint">Could not load imports: ' +
+          esc(e.message) + "</div></div>";
+      });
+  }
+
+  load();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

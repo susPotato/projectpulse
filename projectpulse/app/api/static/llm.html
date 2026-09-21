@@ -101,7 +101,8 @@
     <span class="scope">one model per feature, one key per vendor</span>
   </div>
   <nav class="subtabs" style="display:flex;border-bottom:1px solid var(--rule);margin-bottom:18px;">
-    <a class="tab" href="/settings" style="padding:10px 15px;">Narration</a>
+    <a class="tab" href="/settings" style="padding:10px 15px;">Sources</a>
+    <a class="tab" href="/imports" style="padding:10px 15px;">Imports</a>
     <a class="tab" href="/llm" aria-current="page"
        style="padding:10px 15px;color:var(--ink);font-weight:650;border-bottom:2px solid var(--navy);margin-bottom:-1px;">Models &amp; keys</a>
     <a class="tab" href="/usage" style="padding:10px 15px;">Usage</a>
@@ -227,10 +228,14 @@
       });
       // A model the vendor table does not list - typed in, or a default that
       // moved. Shown rather than silently reset to "vendor default".
-      if (f.model && !known) {
+      var custom = f.model && !known;
+      if (custom) {
         modelOpts += '<option value="' + esc(f.model) + '" selected>' +
           esc(f.model) + " (custom)</option>";
       }
+      // Model names move faster than this table does. Without this, a vendor
+      // renaming a model leaves the page offering only ids it rejects.
+      modelOpts += '<option value="__custom__">Other… (type a model id)</option>';
 
       html += '<div class="feat" data-feature="' + esc(f.key) + '">' +
         '<div class="head"><strong>' + esc(f.label) + "</strong>" +
@@ -250,6 +255,24 @@
         '<button type="button" class="small f-off"' + (rw ? "" : " disabled") + ">" +
           (f.enabled ? "Turn off" : "Turn on") + "</button>" +
         "</div>" +
+        '<input type="text" class="f-model-custom" placeholder="paste a model id, then Enter"' +
+          ' value="' + esc(custom ? f.model : "") + '"' + (rw ? "" : " disabled") +
+          ' style="margin-top:8px' + (custom ? "" : ";display:none") + '">' +
+        // The self-hosted path: an open model behind an OpenAI-compatible
+        // server is a field, not a fork. It was only ever on the narration
+        // form, so a per-feature override could be saved and never reached.
+        '<div class="grid3" style="grid-template-columns:1fr auto;">' +
+        '<div><label>Endpoint <span class="muted">(optional)</span></label>' +
+          '<input type="text" class="f-base" placeholder="the vendor’s own endpoint"' +
+          ' value="' + esc(f.override && f.override.base_url ? f.override.base_url : "") + '"' +
+          (rw ? "" : " disabled") + "></div>" +
+        '<button type="button" class="small f-test"' + (rw ? "" : " disabled") +
+          ">Test</button>" +
+        "</div>" +
+        '<div class="hint">Point this at vLLM, Ollama or LM Studio behind an ' +
+          "OpenAI-compatible server, or an internal gateway. Blank means the " +
+          "vendor's own endpoint.</div>" +
+        '<div class="f-result"></div>' +
         (f.providers.length < 2
           ? '<div class="hint">Only ' + esc(f.providers[0]) +
             " can serve this one.</div>"
@@ -270,11 +293,57 @@
         // send one vendor a name only the other has heard of.
         save(key, { provider: this.value, model: "" });
       });
+      var customField = row.querySelector(".f-model-custom");
       row.querySelector(".f-model").addEventListener("change", function () {
+        if (this.value === "__custom__") {
+          // Reveal the field and wait - saving "__custom__" as a model id
+          // would send that literal string to the vendor.
+          customField.style.display = "";
+          customField.focus();
+          return;
+        }
+        customField.style.display = "none";
         save(key, { model: this.value });
       });
+      customField.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") save(key, { model: this.value.trim() });
+      });
+      customField.addEventListener("blur", function () {
+        var v = this.value.trim();
+        if (v && v !== current.model) save(key, { model: v });
+      });
+
+      row.querySelector(".f-base").addEventListener("change", function () {
+        save(key, { base_url: this.value.trim() });
+      });
+
       row.querySelector(".f-off").addEventListener("click", function () {
         save(key, { enabled: !current.enabled });
+      });
+
+      row.querySelector(".f-test").addEventListener("click", function () {
+        var btn = this;
+        var out = row.querySelector(".f-result");
+        btn.disabled = true;
+        out.innerHTML = '<div class="hint">Calling the model…</div>';
+        send("POST", "/api/llm/features/" + encodeURIComponent(key) + "/test")
+          .then(function (d) {
+            // A failed call is an answer, not an error - it comes back 200
+            // with the vendor's own message, which says more than a guess.
+            out.innerHTML = d.ok
+              ? '<div class="hint"><span class="ok">Answered</span> as <code>' +
+                esc(d.model || d.provider) + "</code>" +
+                (d.elapsed_ms ? " in " + (d.elapsed_ms / 1000).toFixed(1) + "s" : "") +
+                (d.source ? " · written by the " + esc(d.source) : "") +
+                (d.reply ? " · " + esc(d.reply) : "") + "</div>"
+              : '<div class="hint"><span class="bad">Failed</span> · ' +
+                esc(d.error || d.fallback_reason || "no reason given") + "</div>";
+          })
+          .catch(function (e) {
+            out.innerHTML = '<div class="hint"><span class="bad">Failed</span> · ' +
+              esc(e.message) + "</div>";
+          })
+          .then(function () { btn.disabled = false; });
       });
     });
   }

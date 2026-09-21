@@ -1,6 +1,13 @@
 <!doctype html>
 <!--
-  Where narration is turned on and a key is pasted.
+  Program configuration: watched sources, project pairing, the rule table.
+
+  The narration form used to live here too - provider, model, endpoint and an
+  API key. It moved to `/llm`, which sets a model per *feature* rather than one
+  for the whole app, and keeps keys in the encrypted store. Leaving a second
+  copy here would not merely have been duplication: this page's save path wrote
+  the key as plaintext JSON, so whichever form someone happened to use decided
+  whether their credential was encrypted.
 
   Hand-written rather than part of the React app on purpose: this is the page
   someone opens when the model is NOT working, so it must not depend on the
@@ -101,218 +108,31 @@
 
   <div class="appbar">
     <h1>Settings</h1>
-    <span class="scope">narration, sources and the rule table</span>
+    <span class="scope">sources and the rule table</span>
   </div>
   <nav class="subtabs" id="subtabs">
-    <button type="button" data-view="narration" aria-current="page">Narration</button>
-    <button type="button" data-view="sources">Sources</button>
+    <button type="button" data-view="sources" aria-current="page">Sources</button>
     <button type="button" data-view="rules">Rule table</button>
     <!-- Links rather than views: these are separate pages, so a saved model
          or a rate survives a reload here without this page owning its state. -->
+    <a href="/imports" style="padding:10px 15px;color:var(--ink-2);text-decoration:none;font-size:13px;">Imports</a>
     <a href="/llm" style="padding:10px 15px;color:var(--ink-2);text-decoration:none;font-size:13px;">Models &amp; keys</a>
     <a href="/usage" style="padding:10px 15px;color:var(--ink-2);text-decoration:none;font-size:13px;">Usage</a>
   </nav>
 
-  <div id="main">Loading&hellip;</div>
-  <div id="program"></div>
+  <div id="program">Loading&hellip;</div>
 </div>
 
 <script>
 (function () {
-  var main = document.getElementById("main");
-  var state = null;
-
-  function el(html) { var d = document.createElement("div"); d.innerHTML = html; return d.firstElementChild; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
     return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
-
-  //  Model dropdown: each provider's recommended id(s) from `model_options`,
-  //  plus "Other" for a model that moved past what's listed here.
-  function isCustomModel() {
-    var opts = (state.model_options && state.model_options[state.provider]) || [];
-    if (!state.model) return false;
-    return !opts.some(function (o) { return o.id === state.model; });
-  }
-
-  function modelOptionsHtml() {
-    var s = state;
-    var opts = (s.model_options && s.model_options[s.provider]) || [];
-    var defaultId = s.default_models[s.provider] || "";
-    var custom = isCustomModel();
-    var html = '<option value=""' + (!s.model ? " selected" : "") + '>Provider default' +
-      (defaultId ? " (" + esc(defaultId) + ")" : "") + "</option>";
-    html += opts.map(function (o) {
-      var sel = !custom && !!s.model && o.id === s.model;
-      return '<option value="' + esc(o.id) + '"' + (sel ? " selected" : "") + ">" + esc(o.label) + "</option>";
-    }).join("");
-    html += '<option value="__custom__"' + (custom ? " selected" : "") + ">Other&hellip; (type a model id)</option>";
-    return html;
-  }
-
-  function render() {
-    var s = state;
-    var opts = s.providers.map(function (p) {
-      return '<option value="' + p + '"' + (p === s.provider ? " selected" : "") + ">" + p + "</option>";
-    }).join("");
-
-    var keyLine = s.api_key_set
-      ? '<span class="ok">saved</span> <code>' + esc(s.api_key_hint) + "</code>"
-      : (s.api_key_from_environment
-          ? '<span class="ok">found in the environment</span> &mdash; nothing to paste here'
-          : '<span class="bad">not set</span>');
-
-    main.innerHTML = "";
-    main.appendChild(el(
-      '<div class="card">' +
-        '<div class="lbl">Model</div>' +
-        '<label for="enabled">Who writes the summary</label>' +
-        '<select id="enabled">' +
-          '<option value="0"' + (s.enabled ? "" : " selected") + ">Built-in template (deterministic, no key needed)</option>" +
-          '<option value="1"' + (s.enabled ? " selected" : "") + ">A language model</option>" +
-        "</select>" +
-
-        '<label for="provider">Provider</label>' +
-        '<select id="provider">' + opts + "</select>" +
-
-        '<label for="model">Model id</label>' +
-        '<select id="model">' + modelOptionsHtml() + "</select>" +
-        '<input type="text" id="model-custom" value="' + esc(s.model) + '" placeholder="paste a model id" ' +
-          'style="margin-top:8px' + (isCustomModel() ? "" : ";display:none") + '">' +
-        '<div class="hint">Model names move; pick "Other" and paste the current id if the ' +
-          "vendor rejects the one shown.</div>" +
-
-        '<label for="base">Endpoint <span style="color:var(--ink-3)">(optional)</span></label>' +
-        '<input type="text" id="base" value="' + esc(s.base_url) + '" placeholder="the vendor&rsquo;s own endpoint">' +
-        '<div class="hint">Point this at a self-hosted model &mdash; vLLM, Ollama or LM Studio ' +
-          'behind an OpenAI-compatible server, or an internal gateway. With <code>openai</code> ' +
-          'selected, a local open model needs nothing else but a dummy key.</div>' +
-
-        '<label for="key">API key &mdash; ' + keyLine + "</label>" +
-        '<div class="key-row">' +
-          '<input type="password" id="key" placeholder="' +
-          (s.api_key_set ? "leave blank to keep the saved key" : "paste a key") + '" autocomplete="off">' +
-          '<button type="button" id="key-toggle" class="key-toggle">Show</button>' +
-        "</div>" +
-        '<div class="hint">Hidden by default &mdash; click Show to check what you pasted. ' +
-          "An environment variable takes priority when this is blank, " +
-          'so a proper deployment never needs to store one here.</div>' +
-
-        '<div class="warn">Saving a key writes it <strong>in plaintext</strong> to ' +
-          "<code>" + esc(s.stored_at) + "</code> (gitignored). " +
-          "This page only accepts changes from this machine.</div>" +
-
-        '<div class="row" style="margin-top:18px">' +
-          '<button class="primary" id="save">Save</button>' +
-          '<button id="test">Test it</button>' +
-          '<span id="status" class="hint" style="margin:0"></span>' +
-        "</div>" +
-      "</div>"));
-
-    main.appendChild(el('<div class="card" id="result-card" hidden>' +
-      '<div class="lbl">Result</div><div id="result"></div></div>'));
-
-    document.getElementById("provider").addEventListener("change", function (e) {
-      state.provider = e.target.value;
-      state.api_key_from_environment = false;  // re-fetched on save
-      render();
-    });
-    document.getElementById("model").addEventListener("change", function (e) {
-      var custom = document.getElementById("model-custom");
-      custom.style.display = e.target.value === "__custom__" ? "" : "none";
-      if (e.target.value !== "__custom__") state.model = e.target.value;
-      if (e.target.value === "__custom__") custom.focus();
-    });
-    document.getElementById("key-toggle").addEventListener("click", function () {
-      var key = document.getElementById("key");
-      var showing = key.type === "text";
-      key.type = showing ? "password" : "text";
-      this.textContent = showing ? "Show" : "Hide";
-    });
-    document.getElementById("save").addEventListener("click", save);
-    document.getElementById("test").addEventListener("click", test);
-  }
-
-  function say(msg, cls) {
-    var n = document.getElementById("status");
-    n.className = "hint " + (cls || "");
-    n.style.margin = "0";
-    n.textContent = msg;
-  }
-
-  function save() {
-    var key = document.getElementById("key").value;
-    var modelSel = document.getElementById("model").value;
-    var model = modelSel === "__custom__"
-      ? document.getElementById("model-custom").value.trim()
-      : modelSel;
-    var body = {
-      enabled: document.getElementById("enabled").value === "1",
-      provider: document.getElementById("provider").value,
-      model: model,
-      base_url: document.getElementById("base").value.trim()
-    };
-    // Only send a key when one was typed - the page never had the real one.
-    if (key) body.api_key = key;
-
-    say("Saving…");
-    fetch("/api/settings", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body)
-    }).then(function (r) {
-      return r.json().then(function (j) {
-        if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
-        return j;
-      });
-    }).then(function (j) {
-      state = j;
-      render();
-      say("Saved.", "ok");
-    }).catch(function (e) { say(e.message, "bad"); });
-  }
-
-  function test() {
-    var card = document.getElementById("result-card");
-    var out = document.getElementById("result");
-    say("Asking the model… this can take a few seconds.");
-    document.getElementById("test").disabled = true;
-
-    fetch("/api/settings/test", { method: "POST" })
-      .then(function (r) {
-        return r.json().then(function (j) {
-          if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
-          return j;
-        });
-      })
-      .then(function (j) {
-        say("");
-        card.hidden = false;
-        var head = j.source === "model"
-          ? '<span class="pill" style="border-color:var(--green);color:var(--green)">the model wrote this</span>'
-          : '<span class="pill" style="border-color:var(--amber);color:var(--amber)">fell back to the template</span>';
-        var why = j.fallback_reason
-          ? '<div class="hint" style="margin-top:8px">Why: ' + esc(j.fallback_reason) + "</div>"
-          : "";
-        out.innerHTML = head +
-          '<div class="hint" style="margin-top:8px">' + esc(j.provider) + " &middot; " +
-          esc(j.model) + " &middot; " + j.attempts + " attempt(s)</div>" + why +
-          "<pre>" + esc(j.narrative) + "</pre>";
-      })
-      .catch(function (e) {
-        say("");
-        card.hidden = false;
-        out.innerHTML = '<span class="bad">' + esc(e.message) + "</span>";
-      })
-      .then(function () { document.getElementById("test").disabled = false; });
-  }
-
-  /* ---- program settings: sources and the rule table ------------------ */
 
   var SEV = { critical: "var(--red)", high: "var(--red)", medium: "var(--orange)",
               low: "var(--blue)", info: "var(--ink-3)" };
   var programBox = document.getElementById("program");
   var program = null;
-  var view = "narration";
+  var view = "sources";
 
   function renderSources() {
     var rows = program.sources.map(function (src) {
@@ -535,8 +355,6 @@
         buttons[i].removeAttribute("aria-current");
       }
     }
-    main.hidden = view !== "narration";
-    programBox.hidden = view === "narration";
     if (view === "sources") renderSources();
     if (view === "rules") renderRules();
   }
@@ -544,22 +362,13 @@
   document.getElementById("subtabs").addEventListener("click", function (e) {
     var next = e.target.getAttribute && e.target.getAttribute("data-view");
     if (!next) return;
-    if (!program) { say("Program settings are still loading."); return; }
+    if (!program) return;
     show(next);
   });
 
-  fetch("/api/settings")
-    .then(function (r) { return r.json(); })
-    .then(function (j) { state = j; render(); })
-    .catch(function () {
-      main.textContent = "Could not reach the server. Is it running?";
-    });
-
-  /* Fetched separately and allowed to fail: a database that is down costs the
-     two program tabs, never the narration form - which is the page someone
-     opens precisely when something else is broken. Also called after a
-     successful upload, so the sources table and project pairing reflect it
-     without a reload. */
+  /* Allowed to fail: a database that is down costs these tabs and nothing
+     else. Also called after a successful upload, so the sources table and
+     project pairing reflect it without a reload. */
   function loadProgram() {
     return fetch("/api/program")
       .then(function (r) { return r.ok ? r.json() : null; })

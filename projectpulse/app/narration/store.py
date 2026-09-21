@@ -5,12 +5,13 @@ deployment configuration and useless for a key someone wants to paste into a
 form. This is the mutable half: which vendor, which model, whether narration is
 on at all, and the credential.
 
-**The key is stored in plaintext**, in the database (`app_settings`, key
-`narration`). That is the same bargain as a `.env` file and it is stated here,
-in the API response and on the settings page rather than left for someone to
-discover. It is never logged, and never returned to a browser - `public_view()`
-returns a hint like `sk-ant-...bQ4A` and a boolean, so a page can show that a
-key is set without being able to read it back.
+**The key does not live here any more.** It used to, in plaintext, in this
+same JSON row. It is now sealed in `llm_credentials` - see `app/llm/keys.py`,
+which explains what that buys and what it does not. This module still *reads*
+the old field so a row written before the move can be migrated
+(`keys.adopt_legacy`), and `save()` blanks it on the way past, but nothing
+writes a key here again. Re-opening that path would undo the encryption for
+anybody who happened to use this form instead of the other one.
 
 It used to be a JSON file under `PULSE_STATE_DIR`, which is fine on a laptop
 and wrong on a host: a container's filesystem does not survive a deploy, so a
@@ -48,8 +49,9 @@ class NarrationSettings:
     provider: str = "anthropic"
     #: Empty means the provider's default from `narration.providers`.
     model: str = ""
-    #: Empty means "let the SDK read the environment", which is the deployment
-    #: path. Never leaves the process except to the vendor's client.
+    #: **Legacy, read-only.** Rows written before keys moved to
+    #: `llm_credentials` still carry one here; `keys.adopt_legacy()` re-seals
+    #: it and `save()` blanks it. Always empty on anything written since.
     api_key: str = ""
     #: Point the vendor's SDK elsewhere - a self-hosted open model behind an
     #: OpenAI-compatible server, or an internal gateway. Empty = the vendor.
@@ -126,37 +128,37 @@ def _read() -> dict | None:
 def save(current: NarrationSettings) -> NarrationSettings:
     """Persist settings and return what was written.
 
+    **The key is stripped before writing, always.** This row is plaintext JSON
+    and a credential has no business in it; `app/llm/keys.py` owns keys now.
+    Stripping here rather than refusing means a caller holding a legacy value
+    - `adopt_legacy()` does - can persist the rest of the settings without
+    first having to know about the field.
+
     In the database rather than a file under `PULSE_STATE_DIR`: a container's
     disk does not survive a deploy, so a provider chosen in the browser reset
-    itself on every release. Platform secrets (`ANTHROPIC_API_KEY` and
-    friends, read by the SDKs) remain the better path for a deployment - this
-    is for the case where somebody is configuring the running app by hand.
+    itself on every release.
     """
     from app.db import session_scope
     from app.models.uploads import AppSetting
 
+    stored = replace(current, api_key="")
     with _LOCK, session_scope() as session:
         session.merge(
-            AppSetting(key=SETTING_KEY, value=json.dumps(asdict(current)))
+            AppSetting(key=SETTING_KEY, value=json.dumps(asdict(stored)))
         )
-    return current
+    return stored
 
 
 def update(**changes) -> NarrationSettings:
     """Change some fields and persist.
 
-    `api_key=None` leaves the stored key alone, which is what a form submits
-    when the user did not retype it - the page never had the real one to send
-    back. `api_key=""` is an explicit clear.
+    `api_key` is accepted and discarded rather than rejected: callers that
+    still pass it - an old client, a stored form post - should not 500, they
+    should simply not succeed in putting a key here. `save()` strips it too,
+    so there is no path through this module that writes one.
     """
-    with_key = dict(changes)
-    keep_key = with_key.pop("api_key", None) is None and "api_key" in changes
-
-    current = load()
-    if keep_key:
-        changes = {k: v for k, v in changes.items() if k != "api_key"}
-
-    return save(replace(current, **changes))
+    changes.pop("api_key", None)
+    return save(replace(load(), **changes))
 
 
 def public_view() -> dict:

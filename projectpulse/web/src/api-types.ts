@@ -677,6 +677,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Imports Page
+         * @description What has been imported, what it feeds, and what reads it.
+         */
+        get: operations["imports_page_imports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Imports
+         * @description Every import with its project, its availability and its consumers.
+         *
+         *     Readable without a token - it discloses no credential and no content, only
+         *     what exists and what uses it. The actions below are gated.
+         */
+        get: operations["read_imports_api_imports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{file_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Import
+         * @description Forget one import.
+         *
+         *     Deleting the `uploaded_sheets` row removes the workbook *and* the watch in
+         *     one step, because that row is both - `source._load_registered()` builds the
+         *     watch list from this table. There is no second registry to fall out of step
+         *     with it, which is why this is one delete rather than two.
+         *
+         *     **What it leaves alone is the point.** The tasks it produced stay, so
+         *     removing a superseded upload does not empty the pages built from it. To
+         *     remove those too, delete the project - a separate decision, and one the
+         *     page states separately.
+         */
+        delete: operations["delete_import_api_imports__file_name__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/resync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resync Imports
+         * @description Re-read every watched sheet through the ordinary reader, differ and rules.
+         *
+         *     All of them rather than one: `run_sync` scans the whole source, and there
+         *     is no per-sheet entry point to pretend otherwise with. A sheet whose last
+         *     scan failed, or one whose rules have changed since, is re-run by this.
+         */
+        post: operations["resync_imports_api_imports_resync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sources/upload": {
         parameters: {
             query?: never;
@@ -854,6 +951,35 @@ export interface paths {
         /** Set Llm Feature */
         put: operations["set_llm_feature_api_llm_features__feature__put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/llm/features/{feature}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Llm Feature
+         * @description Ask this feature's configured model to answer, and report what happened.
+         *
+         *     For `narration` this runs the full end-to-end test - the real brief, the
+         *     real eight-stage validator - because that path exists and proves far more
+         *     than a ping. For the others it is a ping: the smallest real call through
+         *     the same adapter, which is what actually establishes that the vendor, the
+         *     model id and the credential agree.
+         *
+         *     Either way it spends money, so it needs the same authorisation a write
+         *     does, and it records a usage row against the feature like any other call.
+         */
+        post: operations["test_llm_feature_api_llm_features__feature__test_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2565,11 +2691,12 @@ export interface components {
         };
         /**
          * NarrationSettingsIn
-         * @description What the settings page may change.
+         * @description The global model default that features fall back to.
          *
-         *     `api_key` omitted (or null) keeps the stored key - the page never receives
-         *     it, so it cannot send it back, and a save that did not retype it must not
-         *     wipe it. An empty string is an explicit clear.
+         *     **No `api_key`.** Keys are set on `/llm` and sealed in `llm_credentials`;
+         *     this row is plaintext JSON and accepting one here would quietly reopen the
+         *     hole that store was built to close. A client that still sends the field
+         *     has it ignored rather than rejected - see `narration.store.update`.
          */
         NarrationSettingsIn: {
             /** Enabled */
@@ -2578,8 +2705,6 @@ export interface components {
             provider?: string | null;
             /** Model */
             model?: string | null;
-            /** Api Key */
-            api_key?: string | null;
             /** Base Url */
             base_url?: string | null;
         };
@@ -4442,6 +4567,103 @@ export interface operations {
             };
         };
     };
+    imports_page_imports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    read_imports_api_imports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    delete_import_api_imports__file_name__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resync_imports_api_imports_resync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     upload_source_api_sources_upload_post: {
         parameters: {
             query?: never;
@@ -4662,6 +4884,39 @@ export interface operations {
                 "application/json": components["schemas"]["FeatureOverrideIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_llm_feature_api_llm_features__feature__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                feature: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

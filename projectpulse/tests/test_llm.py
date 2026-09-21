@@ -22,7 +22,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.main import app
-from app.llm import admin, features, keys, pricing, usage
+from app import admin
+from app.llm import features, keys, pricing, usage
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-"""Who may change model settings and keys.
+"""Who may change anything on a deployed instance.
 
 `app/api/main.py` used to answer this with one rule: writes come from loopback
 or they do not happen. That was the right call at the time - a settings form
@@ -13,6 +13,10 @@ refusal message says so rather than leaving someone guessing.
 
 Loopback still passes without a token, so `python -m scripts.serve` on a laptop
 behaves as it always has.
+
+It sits at the top level rather than under `app/llm/`, where it started: the
+same question is asked by the import controls, which have nothing to do with
+models.
 
 **The token is compared, never stored here.** It lives wherever platform
 secrets live. There is no lockout and no attempt counter: a token from

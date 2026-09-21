@@ -1054,6 +1054,14 @@ def program_config(session) -> "ProgramBundle":
         if seen is None or scan.scanned_at > seen.scanned_at:
             latest[scan.scope] = scan
 
+    # An upload is a row in `uploaded_sheets`, not a file - that is the whole
+    # point of it, so a deployed host with no synced folder can take data at
+    # all. Asking the filesystem alone reported *every* source as missing on
+    # exactly that host, while the data was there and serving pages.
+    from app.models.uploads import UploadedSheet
+
+    stored = set(session.scalars(select(UploadedSheet.file_name)).all())
+
     sources: list[WatchedSource] = []
     for watched in all_watched():
         path = Path(settings.data_root) / watched.file_name
@@ -1064,7 +1072,7 @@ def program_config(session) -> "ProgramBundle":
                 kind="excel",
                 scope=scope,
                 path=str(path),
-                exists=path.exists(),
+                exists=path.exists() or watched.file_name in stored,
                 last_scan=scan.scanned_at if scan else None,
                 rows=scan.row_count if scan else 0,
                 project_id=watched.project_id,

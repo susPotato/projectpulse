@@ -119,6 +119,18 @@ def main(argv: list[str] | None = None) -> int:
     create_all()
     print("[serve] schema ready")
 
+    # A key written by the old settings form sat in plaintext in
+    # `app_settings.narration`. Re-seal it here rather than on first use: this
+    # runs once per boot with the schema already up, and leaving it to a
+    # request means the plaintext copy survives for as long as nobody happens
+    # to open the right page. A missing PULSE_SECRET_KEY makes it a no-op that
+    # logs - never a reason not to start.
+    from app.llm.keys import adopt_legacy
+
+    migrated = adopt_legacy()
+    if migrated:
+        print(f"[serve] moved the stored {migrated} key into the encrypted store")
+
     if args.no_seed:
         print("[serve] seeding skipped")
     elif is_empty():

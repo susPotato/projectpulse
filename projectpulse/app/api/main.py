@@ -51,6 +51,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
@@ -941,6 +942,121 @@ def program() -> ProgramBundle:
         return program_config(session)
 
 
+@app.get("/imports")
+def imports_page() -> FileResponse:
+    """What has been imported, what it feeds, and what reads it."""
+    return FileResponse(STATIC / "imports.html")
+
+
+@app.get("/api/imports")
+def read_imports(request: Request) -> dict:
+    """Every import with its project, its availability and its consumers.
+
+    Readable without a token - it discloses no credential and no content, only
+    what exists and what uses it. The actions below are gated.
+    """
+    from app import admin
+    from app.imports import inventory, orphan_projects
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        rows = inventory(session)
+        orphans = orphan_projects(session)
+
+    return {
+        "imports": [
+            {
+                "file_name": r.file_name,
+                "origin": r.origin,
+                "kind": r.kind,
+                "sheet_name": r.sheet_name,
+                "project_id": r.project_id,
+                "project_name": r.project_name,
+                "program_id": r.program_id,
+                "program_name": r.program_name,
+                "original_filename": r.original_filename,
+                "last_scan": r.last_scan.isoformat() if r.last_scan else None,
+                "rows": r.rows,
+                "size_bytes": r.size_bytes,
+                "available": r.available,
+                "problem": r.problem,
+                "ingested": r.ingested,
+                "task_count": r.task_count,
+                "risk_count": r.risk_count,
+                "consumers": [{"page": c.page, "uses": c.uses} for c in r.consumers],
+            }
+            for r in rows
+        ],
+        "orphan_projects": orphans,
+        "writable": admin.may_write(request),
+        "auth": admin.status(),
+    }
+
+
+@app.delete("/api/imports/{file_name}")
+def delete_import(request: Request, file_name: str) -> dict:
+    """Forget one import.
+
+    Deleting the `uploaded_sheets` row removes the workbook *and* the watch in
+    one step, because that row is both - `source._load_registered()` builds the
+    watch list from this table. There is no second registry to fall out of step
+    with it, which is why this is one delete rather than two.
+
+    **What it leaves alone is the point.** The tasks it produced stay, so
+    removing a superseded upload does not empty the pages built from it. To
+    remove those too, delete the project - a separate decision, and one the
+    page states separately.
+    """
+    from app import admin
+    from app.models.uploads import UploadedSheet
+
+    admin.require(request)
+
+    with session_scope() as session:
+        row = session.get(UploadedSheet, file_name)
+        if row is None:
+            # A demo-seed sheet is compiled into `source._SEED`, not stored, so
+            # there is nothing to delete and saying "not found" would be a
+            # worse answer than saying why.
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"{file_name!r} is not an upload. Sheets that ship with the "
+                    "demo are part of the image and cannot be removed here."
+                ),
+            )
+        session.delete(row)
+
+    return {"deleted": file_name}
+
+
+@app.post("/api/imports/resync")
+def resync_imports(request: Request) -> dict:
+    """Re-read every watched sheet through the ordinary reader, differ and rules.
+
+    All of them rather than one: `run_sync` scans the whole source, and there
+    is no per-sheet entry point to pretend otherwise with. A sheet whose last
+    scan failed, or one whose rules have changed since, is re-run by this.
+    """
+    from app import admin
+    from app.ingest.runner import run_sync
+
+    admin.require(request)
+
+    try:
+        with session_scope() as session:
+            outcome = run_sync(session, "excel", "manual")
+    except Exception as exc:  # noqa: BLE001 - report it rather than 500
+        raise HTTPException(
+            status_code=400, detail=f"{type(exc).__name__}: {exc}"
+        ) from None
+
+    return {"resynced": True, "outcome": str(outcome)[:400]}
+
+
 @app.post("/api/sources/upload")
 async def upload_source(
     file: UploadFile = File(...),
@@ -1259,17 +1375,17 @@ def _narrator():
 
 
 class NarrationSettingsIn(BaseModel):
-    """What the settings page may change.
+    """The global model default that features fall back to.
 
-    `api_key` omitted (or null) keeps the stored key - the page never receives
-    it, so it cannot send it back, and a save that did not retype it must not
-    wipe it. An empty string is an explicit clear.
+    **No `api_key`.** Keys are set on `/llm` and sealed in `llm_credentials`;
+    this row is plaintext JSON and accepting one here would quietly reopen the
+    hole that store was built to close. A client that still sends the field
+    has it ignored rather than rejected - see `narration.store.update`.
     """
 
     enabled: bool | None = None
     provider: str | None = None
     model: str | None = None
-    api_key: str | None = None
     base_url: str | None = None
 
 
@@ -1287,7 +1403,7 @@ def read_settings(request: Request) -> dict:
     could save when the write would 403 - and contradicted DEPLOY.md's own
     "read-only when deployed". It now answers the question it claims to.
     """
-    from app.llm import admin
+    from app import admin
     from app.narration.store import public_view
 
     view = public_view()
@@ -1298,7 +1414,7 @@ def read_settings(request: Request) -> dict:
 
 @app.put("/api/settings")
 def write_settings(request: Request, body: NarrationSettingsIn) -> dict:
-    from app.llm import admin
+    from app import admin
     from app.narration.providers import PROVIDERS
     from app.narration.store import public_view, update
 
@@ -1375,7 +1491,8 @@ def usage_page() -> FileResponse:
 @app.get("/api/llm/features")
 def llm_features(request: Request) -> dict:
     """Every feature, the model it resolves to, and where that came from."""
-    from app.llm import admin, keys
+    from app import admin
+    from app.llm import keys
     from app.llm.features import public_view
 
     view = public_view()
@@ -1391,7 +1508,7 @@ def llm_features(request: Request) -> dict:
 
 @app.put("/api/llm/features/{feature}")
 def set_llm_feature(request: Request, feature: str, body: FeatureOverrideIn) -> dict:
-    from app.llm import admin
+    from app import admin
     from app.llm.features import set_override
 
     admin.require(request)
@@ -1406,10 +1523,78 @@ def set_llm_feature(request: Request, feature: str, body: FeatureOverrideIn) -> 
     return llm_features(request)
 
 
+@app.post("/api/llm/features/{feature}/test")
+def test_llm_feature(request: Request, feature: str) -> dict:
+    """Ask this feature's configured model to answer, and report what happened.
+
+    For `narration` this runs the full end-to-end test - the real brief, the
+    real eight-stage validator - because that path exists and proves far more
+    than a ping. For the others it is a ping: the smallest real call through
+    the same adapter, which is what actually establishes that the vendor, the
+    model id and the credential agree.
+
+    Either way it spends money, so it needs the same authorisation a write
+    does, and it records a usage row against the feature like any other call.
+    """
+    from app import admin
+    from app.llm import usage
+    from app.llm.features import FEATURES, resolve
+    from app.narration.providers import drafter_for
+
+    admin.require(request)
+
+    if feature not in FEATURES:
+        raise HTTPException(status_code=400, detail=f"unknown feature {feature!r}")
+
+    if feature == "narration":
+        return test_settings(request)
+
+    chosen = resolve(feature)
+    if not chosen.has_credential:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"no credential for {chosen.provider}. Save a key below, or set "
+                "the vendor's environment variable."
+            ),
+        )
+
+    try:
+        drafter = drafter_for(chosen.provider, chosen.model_config())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+    started = time.monotonic()
+    try:
+        with usage.for_feature(feature):
+            reply = drafter(
+                "Reply with the single word: ready.",
+                "Are you reachable?",
+            )
+    except Exception as exc:  # noqa: BLE001 - the answer is what went wrong
+        return {
+            "ok": False,
+            "provider": chosen.provider,
+            "model": chosen.model,
+            "error": f"{type(exc).__name__}: {exc}"[:400],
+            "elapsed_ms": int((time.monotonic() - started) * 1000),
+        }
+
+    return {
+        "ok": True,
+        "provider": chosen.provider,
+        "model": chosen.model,
+        "source_of_choice": chosen.source,
+        "reply": (reply or "").strip()[:200],
+        "elapsed_ms": int((time.monotonic() - started) * 1000),
+    }
+
+
 @app.get("/api/llm/keys")
 def llm_keys(request: Request) -> dict:
     """Which vendors have a key, and where each one lives. Never a key."""
-    from app.llm import admin, keys
+    from app import admin
+    from app.llm import keys
 
     return {
         "keys": keys.status(),
@@ -1426,7 +1611,8 @@ def llm_keys(request: Request) -> dict:
 
 @app.put("/api/llm/keys/{provider}")
 def save_llm_key(request: Request, provider: str, body: ApiKeyIn) -> dict:
-    from app.llm import admin, keys
+    from app import admin
+    from app.llm import keys
     from app.narration.providers import PROVIDERS
 
     actor = admin.require(request)
@@ -1448,7 +1634,8 @@ def save_llm_key(request: Request, provider: str, body: ApiKeyIn) -> dict:
 
 @app.delete("/api/llm/keys/{provider}")
 def delete_llm_key(request: Request, provider: str) -> dict:
-    from app.llm import admin, keys
+    from app import admin
+    from app.llm import keys
 
     admin.require(request)
     keys.delete(provider)
@@ -1469,7 +1656,7 @@ def llm_usage(days: int = 30) -> dict:
 
 @app.get("/api/llm/pricing")
 def llm_pricing(request: Request) -> dict:
-    from app.llm import admin
+    from app import admin
     from app.llm.pricing import table
 
     return {"rates": table(), "writable": admin.may_write(request)}
@@ -1477,7 +1664,7 @@ def llm_pricing(request: Request) -> dict:
 
 @app.put("/api/llm/pricing/{model:path}")
 def set_llm_rate(request: Request, model: str, body: RateIn) -> dict:
-    from app.llm import admin
+    from app import admin
     from app.llm.pricing import set_rate
 
     admin.require(request)
@@ -1491,7 +1678,7 @@ def set_llm_rate(request: Request, model: str, body: RateIn) -> dict:
 @app.post("/api/llm/usage/purge")
 def purge_llm_usage(request: Request, older_than_days: int = 90) -> dict:
     """Trim the usage log. Retention is a decision, so nothing does this itself."""
-    from app.llm import admin
+    from app import admin
     from app.llm.usage import purge
 
     admin.require(request)
@@ -1508,7 +1695,7 @@ def test_settings(request: Request) -> dict:
     """
     # A real call to the vendor, so it spends money - the same gate as a
     # write rather than the softer one a read gets.
-    from app.llm import admin
+    from app import admin
 
     admin.require(request)
 

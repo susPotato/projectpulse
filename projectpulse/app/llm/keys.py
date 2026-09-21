@@ -350,7 +350,9 @@ def adopt_legacy() -> str:
         if not current.api_key:
             return ""
         save(current.provider, current.api_key, actor="legacy-migration")
-        update(api_key="")
+        # `update()` alone clears it: `store.save()` strips the field on every
+        # write now, so re-persisting the settings is the whole migration.
+        update()
         log.info("migrated a plaintext %s key into the encrypted store", current.provider)
         return current.provider
     except Exception as exc:  # noqa: BLE001 - never block startup on this
