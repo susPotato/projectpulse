@@ -64,8 +64,50 @@ the run exists but no project page will find it.
 
 ## Refreshing
 
-Copy the artifacts above from the pipeline's run directory. The page reads
-whichever runs are present and asks for one by project id.
+This is not a one-off. A backlog moves, a repository moves, and a page
+showing last month's answer looks exactly like one showing this morning's.
+The refresh is the same command as the first run, pointed at the same run
+directory — stages are independent, so only what changed is recomputed:
+
+```bash
+python -m tracelink --run runs/demo pipeline \
+    --export ../Jira\ Cowork\ Local_0913.xlsx \
+    --repo https://github.com/example/coworklocal --ref main \
+    --docs ../hackathon/docs \
+    --project CoWorkLocal \
+    --project-id excel:Project:upload:cowork-local \
+    --done-status "Release it" \
+    --into <this repo>/projectpulse/traceability_runs/demo
+```
+
+`--repo` takes a checkout **or** a git URL. A URL is cloned shallowly into
+`~/.tracelink/sources` and fetched rather than re-downloaded next time; a
+local checkout is read in place and never fetched, pulled or checked out,
+because moving somebody's working tree while they are in it is the rudest
+thing a tool can do.
+
+**Every run records the revision it read.** `corpus.json`'s meta carries the
+commit, the branch and whether the tree was dirty. That is what makes the
+next question answerable:
+
+```bash
+python -m tracelink --run runs/demo stale
+```
+
+`stale` reports two different kinds of out-of-date. Artifacts that no longer
+match the inputs they were built from — free stages name the command that
+fixes them, paid ones are named and left to you. And, separately, whether
+the **code itself** has moved since the run: every artifact can agree with
+every other and all of them be about a commit from last week, which nothing
+that compares artifacts to each other can see.
+
+The paid stages (`translate`, `adjudicate`, `explain`) are never re-run
+automatically. A refresh of the free half costs nothing and is worth doing
+often; the rest is a decision with a number attached, and `cost` prints it.
+
+Copy the artifacts above from the pipeline's run directory, or let `--into`
+do it. The page reads whichever runs are present and asks for one by
+project id.
 
 **One run per project id.** Adding a second directory that declares the same
 `project_id` does not give you a picker — `run_for_project` returns the first

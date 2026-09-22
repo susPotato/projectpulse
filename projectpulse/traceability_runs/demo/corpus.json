@@ -1,7 +1,14 @@
 {
  "schema_version": 1,
  "produced_by": "corpus",
- "meta": {},
+ "meta": {
+  "revision": {
+   "commit": "f24276056392b10c86a317105751312a11c4372f",
+   "ref": "main",
+   "dirty": false,
+   "origin": "../pimsathon-main"
+  }
+ },
  "payload": {
   "files": [
    {

@@ -517,8 +517,8 @@
    "kind": "shares-code",
    "confidence": "high",
    "via": [
-    "ui/spline_chart.py",
-    "ui/dashboard_tab.py"
+    "ui/dashboard_tab.py",
+    "ui/spline_chart.py"
    ],
    "weight": 2
   },
@@ -528,8 +528,8 @@
    "kind": "shares-code",
    "confidence": "high",
    "via": [
-    "assets/graph_template.html",
-    "core/d3_graph.py"
+    "core/d3_graph.py",
+    "assets/graph_template.html"
    ],
    "weight": 2
   },
@@ -539,8 +539,8 @@
    "kind": "shares-code",
    "confidence": "high",
    "via": [
-    "assets/graph_template.html",
-    "core/d3_graph.py"
+    "core/d3_graph.py",
+    "assets/graph_template.html"
    ],
    "weight": 2
   },
@@ -703,8 +703,8 @@
    "kind": "shares-code",
    "confidence": "high",
    "via": [
-    "assets/graph_template.html",
-    "core/d3_graph.py"
+    "core/d3_graph.py",
+    "assets/graph_template.html"
    ],
    "weight": 2
   },
