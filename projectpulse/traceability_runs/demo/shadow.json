@@ -1,25 +1,21 @@
 {
  "schema_version": 1,
  "produced_by": "shadow",
- "meta": {},
+ "meta": {
+  "inputs": {
+   "candidates": "9a084319116dce2d",
+   "corpus": "e6efcfbae0cbd378",
+   "verdicts": "3029506211b50451"
+  }
+ },
  "payload": {
   "counts": {
-   "eligible_files": 158,
-   "cited": 77,
-   "retrieved_only": 61,
-   "unclaimed": 20
+   "eligible_files": 156,
+   "cited": 78,
+   "retrieved_only": 71,
+   "unclaimed": 7
   },
   "groups": [
-   {
-    "directory": "ui",
-    "n_symbols": 22,
-    "files": [
-     "ui/co4e_agent_dialog.py",
-     "ui/ext_connector_dialog.py",
-     "ui/mcp_servers_dialog.py",
-     "ui/osutil.py"
-    ]
-   },
    {
     "directory": "core/routing",
     "n_symbols": 14,
@@ -30,10 +26,16 @@
     ]
    },
    {
-    "directory": "core",
-    "n_symbols": 9,
+    "directory": "ui",
+    "n_symbols": 4,
     "files": [
-     "core/cron.py",
+     "ui/osutil.py"
+    ]
+   },
+   {
+    "directory": "core",
+    "n_symbols": 2,
+    "files": [
      "core/agent_roles.py"
     ]
    }

@@ -131,6 +131,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/traceability/rows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Api Traceability Rows
+         * @description The feature rows, flat, for a table somebody filters.
+         *
+         *     Between `/rollup` (a dozen numbers) and `/api/traceability` (most of a
+         *     megabyte). The Schedule page listed every row it could not match as one
+         *     semicolon-joined paragraph, which read as a sentence while the project had
+         *     seventeen rows in it and as a wall of text the moment the real export went
+         *     in at a hundred and ninety. A list that long is a table.
+         */
+        get: operations["api_traceability_rows_api_traceability_rows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/gantt": {
         parameters: {
             query?: never;
@@ -2529,6 +2555,8 @@ export interface components {
             status: string | null;
             /** Assignee */
             assignee: string | null;
+            /** Phase */
+            phase: string | null;
             /** Start */
             start: string | null;
             /** Baseline End */
@@ -2693,6 +2721,10 @@ export interface components {
             projected_end: string | null;
             /** Propagated Days */
             propagated_days: number | null;
+            /** Days Past Due */
+            days_past_due: number | null;
+            /** Also Named */
+            also_named: string[];
             /** Phase */
             phase: string | null;
             /** Progress */
@@ -3875,6 +3907,39 @@ export interface operations {
         };
     };
     api_traceability_rollup_api_traceability_rollup_get: {
+        parameters: {
+            query?: {
+                project?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_traceability_rows_api_traceability_rows_get: {
         parameters: {
             query?: {
                 project?: string | null;

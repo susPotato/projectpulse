@@ -262,6 +262,7 @@ def test_every_new_catalogue_tile_reads_a_bundle_that_exists():
         "gantt": "/api/gantt",
         "forecast": "/api/forecast",
         "team": "/api/team",
+        "traceability": "/api/traceability",
     }
     from app.api.main import app
 
@@ -1062,3 +1063,57 @@ def test_fitting_a_scope_with_nothing_ingested_still_places_something(session):
     assert out.source == "fitted"
     assert out.tiles, "an unfitted project got a blank board"
     assert out.fit is not None and out.fit["placed"] == len(out.tiles)
+
+
+# Splitting management work from delivery work
+
+
+def test_the_new_schedule_tiles_are_in_the_catalogue():
+    from app.dashboard.catalogue import CATALOGUE
+
+    keys = {t.key for t in CATALOGUE}
+    assert "management_vs_delivery" in keys
+    assert "what_the_tracker_records" in keys
+
+
+def test_both_new_tiles_read_a_bundle_that_already_exists():
+    """The catalogue's rule: a tile is a slice of a bundle that exists, and
+    adding one must not introduce a backend computation."""
+    from app.dashboard.catalogue import CATALOGUE
+
+    for key in ("management_vs_delivery", "what_the_tracker_records"):
+        spec = next(t for t in CATALOGUE if t.key == key)
+        assert spec.data_source == "gantt"
+        assert spec.requires == ("tasks",)
+
+
+def test_the_gantt_row_carries_the_issue_type():
+    """Without it the board cannot tell management work from delivery work,
+    and pools two populations that report themselves in opposite directions."""
+    from app.api.schemas.gantt import GanttRow
+
+    assert "phase" in GanttRow.model_fields
+
+
+def test_the_disagreements_tile_needs_a_traceability_run():
+    """Every project ingested from a tracker alone has no code to compare
+    against, and must not be offered a code-versus-documents tile."""
+    from app.dashboard.catalogue import CATALOGUE
+
+    spec = next(t for t in CATALOGUE if t.key == "source_disagreements")
+    assert spec.data_source == "traceability"
+    assert spec.requires == ("traceability",)
+
+
+def test_a_project_with_no_run_does_not_get_the_disagreements_tile(session):
+    from app.dashboard.catalogue import for_scope
+    from app.dashboard.fit import project_signals
+
+    signals = project_signals(session, ["excel:Project:1:NOSUCH"])
+    assert "traceability" not in signals
+    offered = {
+        t.key
+        for t in for_scope("project")
+        if set(t.requires) <= signals
+    }
+    assert "source_disagreements" not in offered

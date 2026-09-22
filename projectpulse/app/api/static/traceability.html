@@ -143,6 +143,7 @@
     <button type="button" data-view="code">Code</button>
     <button type="button" data-view="shadow">Shadow scope</button>
     <button type="button" data-view="delivery">Delivery</button>
+    <button type="button" data-view="backlog">Backlog</button>
   </nav>
 
   <div id="main"><div class="empty">Loading&hellip;</div></div>
@@ -402,6 +403,9 @@
     "contradicted": "The code says otherwise",
     "status-conflict": "Built, but not tracked as done",
     "gate-failing": "A gate the team set, failing",
+    "acceptance-unanswered": "A sign-off form nobody has filled in",
+    "process-undelegated": "Process work that was never handed out",
+    "roles-concentrated": "One person doing every job",
     "missing-test": "A test a finished task says it wrote",
     "documented-not-built": "Marked done in the documents, absent from the code",
     "unsupported-citation": "The reason given points at nothing",
@@ -426,17 +430,34 @@
       "The code for this looks present and the tracker still has the row open. " +
       "One of the two is out of date, and which one is a question only the " +
       "team can settle.",
+    "acceptance-unanswered":
+      "Every process ticket carries a QA sign-off form with its own " +
+      "questions. On all of them the answer boxes still show the choices " +
+      "(“yes/no”) instead of an answer, which is what an untouched " +
+      "form looks like. Nothing was compared to the code to work this out, " +
+      "so it is true whichever version of the code you hold.",
+    "process-undelegated":
+      "The written procedures say who should do each step — the PM " +
+      "assigns, QA reviews, IT provisions. The tracker has every one of " +
+      "these tickets against a single person, and none of them started.",
+    "roles-concentrated":
+      "This export has no assignee column — the names are written inside " +
+      "the description text instead. Reading them shows the same person " +
+      "listed as the one who asks for the work, the one who specifies it " +
+      "and the one who builds it, on nearly every ticket. Nobody is " +
+      "checking anybody.",
     "gate-failing":
-      "The team's own documents set a rule for this project. The rule was " +
-      "re-checked against the code here - the document's command was never " +
-      "run - and it does not hold.",
+      "Your team wrote a rule for this project in its own checklist — things " +
+      "like “no passwords in config files”. Nobody ever ran the check. We " +
+      "ran it, and the code breaks the rule.",
     "missing-test":
-      "A task the documents record as finished names a test file it produced. " +
-      "That file is not in the repository.",
+      "Your documents tick this task off as finished, and the task says it " +
+      "wrote a test file. That file is not in the code we were given.",
     "documented-not-built":
-      "The documents record this as delivered and nothing in the code " +
-      "corresponds to it. Worth reading as a question about the documents as " +
-      "much as about the code.",
+      "Your documents tick this task off as finished, and we cannot find any " +
+      "code for it. Before blaming the team: this can equally mean the " +
+      "documents describe a newer version of the code than the copy we were " +
+      "given. Check which is out of date first.",
     "unsupported-citation":
       "To justify its answer the model named a file or a symbol. That file or " +
       "name was looked up and is not there. This does not make the verdict " +
@@ -447,15 +468,27 @@
       "Either work happened off the tracker, or the row that covers it never " +
       "names the code."
   };
+  /* Written for whoever opens this page, which is usually not the person
+     who built the pipeline. Each line says how the finding was arrived at
+     and how much to trust it, in words that need no knowledge of how any
+     of this works. "Arithmetic over the corpus" told a reader nothing. */
   var EVIDENCE_NOTE = {
-    "measured": "arithmetic over the corpus",
-    "cited": "a model verdict whose citation checks out",
-    "partly-grounded": "a model verdict, some citations unchecked",
-    "ungrounded": "a model verdict whose citations did not check out",
-    "uncited": "a model verdict with nothing cited",
-    "direct": "the task’s own code anchor",
-    "area": "joined through the doc section — about the area, not the task",
-    "failed check": "the citation was checked and is not there"
+    "measured": "Counted directly from the code. No AI involved — you can " +
+      "re-run this and get the same answer. Strongest evidence here.",
+    "cited": "An AI read the code and said so, and we then checked every " +
+      "file and function it pointed at. They all exist.",
+    "partly-grounded": "An AI read the code and said so. Some of what it " +
+      "pointed at was checked, some was not.",
+    "ungrounded": "An AI said so, but at least one file or function it " +
+      "pointed at is not in the code. Treat with suspicion.",
+    "uncited": "An AI said so and pointed at nothing in particular. Weakest " +
+      "evidence here.",
+    "direct": "This task named a file, and we found tickets that touch that " +
+      "exact file. A solid match.",
+    "area": "We could not match this task to a file, so we matched it to the " +
+      "area it sits in. It tells you about the area, not this task.",
+    "failed check": "Something was claimed to be in the code, we looked, and " +
+      "it is not there."
   };
 
   function renderFindings(el) {
@@ -503,6 +536,176 @@
         (x.signed_off ? " · signed off in the document, and failing" : "") +
         "</p></div></details>";
     });
+    el.innerHTML = h;
+  }
+
+  /* Is this one backlog, or several appended into one sheet?
+
+     A single corroboration rate assumes every row means the same kind of
+     thing. Here 149 rows carry a fix version and corroborate at 50%, and
+     24 rows at the end of the sheet carry none and corroborate at 4% -
+     because they are a roadmap, not a record. Pooling them produces one
+     number that describes neither, and reads as a retrieval failure where
+     it is a difference in what the rows are.
+
+     The process tickets below are the third population: work that is real
+     and tracked, whose deliverables live in systems this pipeline cannot
+     read. The block leads with what cannot be checked, because that is
+     the honest finding and the tempting alternative - grep the docs tree,
+     report what is absent - would be wrong on every row. */
+  function renderBacklog(el) {
+    var c = D.cohorts || {};
+    var g = D.governance || {};
+    var cohorts = c.cohorts || [];
+    var tasks = g.tasks || [];
+
+    if (!cohorts.length && !tasks.length) {
+      el.innerHTML = '<div class="empty">Neither reading has been run yet. ' +
+        "Run: <code>tracelink cohorts</code> and " +
+        "<code>tracelink governance &lt;export.xlsx&gt;</code></div>";
+      return;
+    }
+
+    var h = "";
+    if (cohorts.length) {
+      var seam = c.seam || {};
+      h += "<h3>Cohorts</h3>";
+      h += '<div class="note"><b>Seam: ' + esc(seam.field || "") + "</b> — " +
+        seam.groups + " values in " + seam.runs + " contiguous runs. " +
+        "A field whose values block up this way records <i>when rows were " +
+        "written</i>, not what the work is.</div>";
+
+      var rates = [];
+      cohorts.forEach(function (co) {
+        var v = co.verdicts || {};
+        var pct = co.corroboration === null || co.corroboration === undefined
+          ? null : Math.round(co.corroboration * 100);
+        if (pct !== null) rates.push(pct);
+        var langs = Object.keys(co.lang || {}).map(function (k) {
+          return esc(k) + " " + co.lang[k];
+        }).join(", ");
+        var stat = Object.keys(co.status || {}).sort(function (a, b) {
+          return co.status[b] - co.status[a];
+        }).slice(0, 3).map(function (k) {
+          return esc(k) + " " + co.status[k];
+        }).join(", ");
+        h += '<details class="card" open><summary>' +
+          '<span class="tag">' + co.n + " tickets</span>" +
+          '<span class="sum">' + esc(co.label) + "</span>" +
+          (pct === null ? "" : '<span class="tag ' +
+            (pct < 20 ? "t-contradicted" : "") + '">' + pct +
+            "% corroborated</span>") +
+          "</summary><div class=\"body\">" +
+          (co.span ? "<div>rows " + co.span[0] + "&ndash;" + co.span[1] +
+            "</div>" : "") +
+          "<div>status: " + stat + "</div>" +
+          (langs ? "<div>language: " + langs + "</div>" : "") +
+          "</div></details>";
+      });
+
+      if (rates.length > 1) {
+        var lo = Math.min.apply(null, rates), hi = Math.max.apply(null, rates);
+        h += '<div class="note"><b>Why one number will not do</b> — the ' +
+          "cohorts run " + lo + "% to " + hi + "%. A pooled figure describes " +
+          "neither, and reads as a retrieval failure where it is a difference " +
+          "in what the rows are.</div>";
+      }
+    }
+
+    if (tasks.length) {
+      var counts = g.counts || {};
+      var checkable = g.checkable || 0;
+
+      /* The checklist first. The verdicts below say what may be *claimed*;
+         these say what to do, and they are the only part of this export a
+         PM can act on this morning. */
+      if (g.n_steps) {
+        h += "<h3>Process checklist</h3>";
+        var del = g.delegation || {};
+        if (del.single_assignee) {
+          var who = Object.keys(del.assignees || {})[0] || "one person";
+          h += '<div class="note"><b>' + tasks.length + " process tickets, " +
+            g.n_steps + " steps, all assigned to " + esc(who) + ".</b> " +
+            "The procedures name " + (del.roles_named || []).length +
+            " different roles. The checklist exists and has not been " +
+            "handed out.</div>";
+        }
+        (g.commitments || []).length && (h +=
+          '<div class="note"><b>Steps with a deadline</b> — ' +
+          g.commitments.map(function (c) {
+            return esc(c.key) + " step " + c.n + " within " + esc(c.sla) +
+              " (" + esc(c.owner || "unassigned") + ")";
+          }).join("; ") + ". No start event is recorded against these " +
+          "tickets, so nothing here can say whether one was met.</div>");
+
+        tasks.forEach(function (t) {
+          if (!(t.steps || []).length) return;
+          h += '<details class="card"><summary>' +
+            '<span class="tag">' + t.steps.length + " steps</span>" +
+            '<span class="sum">' + esc(t.key || "") + " " +
+            esc(t.summary || "") + "</span>" +
+            (t.assignee ? '<span class="tag">' + esc(t.assignee) + "</span>" : "") +
+            "</summary><div class=\"body\">";
+          t.steps.forEach(function (st) {
+            h += "<div><b>" + st.n + ".</b> " +
+              '<span class="tag">' + esc(st.owner || "unassigned") + "</span> " +
+              esc(st.text) +
+              (st.sla ? ' <span class="tag t-conflict">within ' +
+                esc(st.sla) + "</span>" : "") +
+              (st.contacts || []).map(function (c) {
+                return "<br><small>send to: " + esc(c) + "</small>";
+              }).join("") +
+              "</div>";
+          });
+          h += "</div></details>";
+        });
+      }
+
+      h += "<h3>What can be checked</h3>";
+      if (!checkable) {
+        h += '<div class="note"><b>0 of ' + tasks.length + " can support a " +
+          "finding about a missing deliverable.</b> Every one is either still " +
+          "open — so its deliverable is owed, not overdue — or names a system " +
+          "this pipeline cannot read. That is the finding: grepping the docs " +
+          "tree for these names and reporting what is absent would be wrong " +
+          "on every row.</div>";
+      } else {
+        h += '<div class="note">' + checkable + " of " + tasks.length +
+          " are claimed done and name something to look for.</div>";
+      }
+
+      var held = {};
+      tasks.forEach(function (t) {
+        (t.systems || []).forEach(function (sys) {
+          held[sys] = (held[sys] || 0) + 1;
+        });
+      });
+      var names = Object.keys(held);
+      if (names.length) {
+        h += '<div class="note"><b>To verify these at all you need access to:' +
+          "</b> " + names.sort(function (a, b) { return held[b] - held[a]; })
+            .map(function (k) {
+              return esc(k) + " (" + held[k] + ")";
+            }).join(", ") + "</div>";
+      }
+
+      tasks.forEach(function (t) {
+        var open = t.verdict === "not-claimed-done";
+        h += '<details class="card"><summary>' +
+          '<span class="tag ' + (open ? "" : "t-conflict") + '">' +
+          esc(t.verdict) + "</span>" +
+          '<span class="sum">' + esc(t.key || "") + " " +
+          esc(t.summary || "") + "</span></summary><div class=\"body\">" +
+          "<div>" + esc(t.why || "") + "</div>" +
+          ((t.deliverables || []).length
+            ? "<div>names: " + esc(t.deliverables.slice(0, 5).join(", ")) +
+              "</div>" : "") +
+          ((t.systems || []).length
+            ? "<div>evidence lives in: " + esc(t.systems.join(", ")) +
+              "</div>" : "") +
+          "</div></details>";
+      });
+    }
     el.innerHTML = h;
   }
 
@@ -817,6 +1020,7 @@
 
     if (view === "findings") { renderFindings(el); return; }
     if (view === "delivery") { renderDelivery(el); return; }
+    if (view === "backlog") { renderBacklog(el); return; }
     if (view === "shadow") { renderShadow(el); return; }
     if (view === "code") { renderCode(el); return; }
 

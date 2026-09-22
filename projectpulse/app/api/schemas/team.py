@@ -71,6 +71,18 @@ class MemberTask(Response):
     projected_end: date | None = None
     #: Slip the chain implies and the sheet does not show.
     propagated_days: int | None = None
+    #: Days between a passed planned finish and the scan, on a row still
+    #: open. Distinct from `propagated_days`, which is what the *chain*
+    #: implies about a row whose own dates are still in the future: this is
+    #: the sheet's own date having gone by with the work not finished, and
+    #: conflating the two would draw a task that is simply late as though
+    #: something upstream had pushed it.
+    days_past_due: int | None = None
+    #: Other people the row names, from a note field the export keeps inside
+    #: the description (`Ghi chú: TaiPH9,LocLP3,HieuHV1`). Shown beside the
+    #: task, never folded into `Member.name`: the file says these people are
+    #: named on the work, and does not say they report to whoever owns it.
+    also_named: list[str] = Field(default_factory=list)
     phase: str | None = None
     progress: float | None = None
 

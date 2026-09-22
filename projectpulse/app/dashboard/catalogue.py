@@ -34,6 +34,11 @@ DataSource = Literal[
     "gantt",
     "forecast",
     "team",
+    #: `GET /api/traceability` - a `tracelink` run attached to this project:
+    #: its backlog adjudicated against the code, and its own documentation
+    #: read as a record of work. The only bundle here that is not built from
+    #: the database, which is why it needs a signal of its own.
+    "traceability",
 ]
 #: What shape of content this tile renders - purely for the Add Tiles
 #: picker's preview swatch (`AddTilesModal`), so a person can tell a stat
@@ -71,6 +76,10 @@ Signal = Literal[
     "program",
     #: The program has more than one project to roll up.
     "siblings",
+    #: A `tracelink` run is attached, so the backlog has been compared to a
+    #: codebase and to the team's own documents. Absent on every project
+    #: ingested from a tracker alone, which is most of them.
+    "traceability",
 ]
 
 
@@ -277,6 +286,33 @@ CATALOGUE: tuple[TileSpec, ...] = (
         "missing one would unlock - so a quiet dashboard reads as a gap in the "
         "data rather than a clean bill of health.",
         "project", "insight", default_w=4, default_h=6,
+    ),
+    TileSpec(
+        "source_disagreements", "Where the Sources Disagree", "Quality",
+        "Every place the tracker, the team's documents and the code tell "
+        "different stories - ranked by how certain each kind is, because a "
+        "rule re-run against the code is not the same evidence as a document "
+        "claiming a file that is not there.",
+        "project", "traceability", default_w=6, default_h=6,
+        requires=("traceability",),
+    ),
+    TileSpec(
+        "management_vs_delivery", "Management vs Delivery", "Schedule",
+        "The tracker's own issue type, split: how much of each kind of work "
+        "is finished, dated and past due. Pooling them hides that one side "
+        "can report itself almost complete while the other reports nothing "
+        "finished at all.",
+        "project", "gantt", default_w=6, default_h=4, preview="stat",
+        requires=("tasks",),
+    ),
+    TileSpec(
+        "what_the_tracker_records", "What the Tracker Records", "Schedule",
+        "Coverage of the fields a schedule is built from - dates, "
+        "dependencies, progress, effort. A board that is empty because the "
+        "columns are empty should say so rather than read as a project with "
+        "nothing happening.",
+        "project", "gantt", default_w=6, default_h=4, preview="stat",
+        requires=("tasks",),
     ),
     TileSpec(
         "overdue_and_due_soon", "Overdue & Due Soon", "Schedule",

@@ -36,6 +36,12 @@ class GanttRow(Response):
     title: str | None = None
     status: str | None = None
     assignee: str | None = None
+    #: What kind of work this row is - the tracker's own issue type, not a
+    #: judgement. On the CoWorkLocal export it separates 16 `PM Task` rows
+    #: from 173 `Task` rows, and the two report themselves completely
+    #: differently: the coding side says 82% done, the management side says
+    #: nothing is finished at all. A board that pools them shows neither.
+    phase: str | None = None
 
     start: date | None = None
     baseline_end: date | None = None

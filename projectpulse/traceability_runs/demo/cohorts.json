@@ -1,0 +1,107 @@
+{
+ "schema_version": 1,
+ "produced_by": "cohorts",
+ "meta": {
+  "inputs": {
+   "tickets": "99f10489902c8ed2",
+   "translations": "7bb06be3ff3f2a2d",
+   "verdicts": "3029506211b50451"
+  }
+ },
+ "payload": {
+  "seam": {
+   "field": "fix_version?",
+   "groups": 2,
+   "runs": 4,
+   "contiguity": 0.5
+  },
+  "cohorts": [
+   {
+    "value": "set",
+    "label": "set",
+    "n": 149,
+    "span": [
+     158,
+     328
+    ],
+    "status": {
+     "Release it": 139,
+     "In Progress": 7,
+     "To Do": 3
+    },
+    "lang": {
+     "en": 147,
+     "Vietnamese": 2
+    },
+    "verdicts": {
+     "unverified": 72,
+     "corroborated": 75,
+     "contradicted": 2
+    },
+    "corroboration": 0.503,
+    "owners": {
+     "roles": [
+      "BA",
+      "Developer",
+      "PO"
+     ],
+     "holders": {
+      "QuanDh14": 443,
+      "FSG/QuanDh14": 1,
+      "FSG": 1,
+      "HoachBV": 1
+     },
+     "solo": 147,
+     "n": 149,
+     "top": "QuanDh14",
+     "share": 0.993,
+     "assignments": 446
+    }
+   },
+   {
+    "value": "unset",
+    "label": "unset",
+    "n": 24,
+    "span": [
+     306,
+     330
+    ],
+    "status": {
+     "In Progress": 9,
+     "To Do": 12,
+     "Release it": 3
+    },
+    "lang": {
+     "Vietnamese": 22,
+     "en": 2
+    },
+    "verdicts": {
+     "unverified": 23,
+     "corroborated": 1
+    },
+    "corroboration": 0.042,
+    "owners": {
+     "roles": [
+      "BA",
+      "Developer",
+      "PO"
+     ],
+     "holders": {
+      "FSG": 26,
+      "Mynt4": 5,
+      "FNS": 5,
+      "HoachBV": 4,
+      "FSG/QuanDh14": 3,
+      "QuanDh14": 2,
+      "Quangld1": 2
+     },
+     "solo": 0,
+     "n": 24,
+     "top": "FSG",
+     "share": 0.553,
+     "assignments": 47
+    }
+   }
+  ]
+ }
+}

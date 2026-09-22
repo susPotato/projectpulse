@@ -3,7 +3,13 @@
  "produced_by": "candidates",
  "meta": {
   "hubdocs": [],
-  "n_indexed": 169
+  "n_indexed": 169,
+  "inputs": {
+   "corpus": "e6efcfbae0cbd378",
+   "features": "6cc6c7bfd7e907df",
+   "tickets": "99f10489902c8ed2",
+   "translations": "7bb06be3ff3f2a2d"
+  }
  },
  "payload": [
   {

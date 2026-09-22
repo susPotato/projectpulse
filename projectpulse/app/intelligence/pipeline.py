@@ -1172,10 +1172,25 @@ def team_project(
         select(QaItem).where(QaItem.project_id.in_(project_ids))
     ).all()
 
+    # Same rule the agent brief answers "what's overdue?" with - open, and a
+    # planned finish already behind us. Imported rather than restated: two
+    # definitions of late is how a page and a chat answer disagree about the
+    # same task.
+    from app.agent.brief import CLOSED
+    from app.ingest.sources.jira.export_sheet import people_in_note
+
+    today = date.today()
+
     by_owner: dict[str, list[MemberTask]] = defaultdict(list)
     for task in rows:
         owner = (task.assignee or "").strip() or "Unassigned"
         projection = impact.projections.get(task.id)
+        open_row = (task.status or "").upper() not in CLOSED
+        past_due = (
+            (today - task.due_date).days
+            if open_row and task.due_date and task.due_date < today
+            else None
+        )
         by_owner[owner].append(
             MemberTask(
                 entity_id=task.id,
@@ -1186,6 +1201,8 @@ def team_project(
                 planned_end=task.due_date,
                 projected_end=projection.projected_end if projection else None,
                 propagated_days=projection.propagated_days if projection else None,
+                days_past_due=past_due,
+                also_named=people_in_note(task.description),
                 phase=task.phase,
                 progress=float(task.progress) if task.progress is not None else None,
             )
@@ -1523,6 +1540,14 @@ def gantt_project(
             select(Task.id, Task.assignee).where(Task.project_id.in_(project_ids))
         ).all()
     )
+    #: Same reasoning, same shape: the issue type is display data the
+    #: scheduler never reasons over, and it is what separates management
+    #: work from delivery work on a board that would otherwise pool them.
+    phases = dict(
+        session.execute(
+            select(Task.id, Task.phase).where(Task.project_id.in_(project_ids))
+        ).all()
+    )
     tasks = load_tasks(session, project_ids)
     edges = load_edges(session, project_ids)
 
@@ -1548,6 +1573,7 @@ def gantt_project(
                 title=task.title,
                 status=task.status,
                 assignee=owners.get(task.entity_id),
+                phase=phases.get(task.entity_id),
                 start=task.start_date,
                 baseline_end=task.baseline_end,
                 planned_end=task.planned_end,

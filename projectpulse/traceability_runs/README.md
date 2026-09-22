@@ -16,8 +16,14 @@ working whether or not that pipeline is installed anywhere nearby.
 ## What is here, and what is not
 
 Kept: `run`, `tickets`, `corpus`, `candidates`, `verdicts`, `grounding`,
-`links`, `explain`, `shadow`, `diagnosis`, `translations`, and the delivery
-half — `progress`, `reconciliation`, `gates`.
+`links`, `explain`, `shadow`, `diagnosis`, `translations`, the delivery
+half — `progress`, `reconciliation`, `gates` — and the two readings of the
+backlog itself, `cohorts` and `governance`.
+
+The list is exactly `tracelink_view.PRODUCED_BY`, and a stage added there
+has to be copied here or the page reports it as a gap. Both of the last two
+are free to produce — neither calls a model — so a refresh does not cost
+what the first run did.
 
 `features.json` is left out with the index: 3.8 MB that only the retrieval
 and reconciliation stages read, and free to rebuild from `corpus.json` and

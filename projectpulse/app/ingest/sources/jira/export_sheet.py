@@ -413,6 +413,57 @@ def _from_description(text, labels: tuple[str, ...]):
     return None
 
 
+#: Labels whose value is a *list* of people rather than one, read by
+#: `people_in_note`. The same hand-maintained block quoted above ends with
+#: `Ghi chu: TaiPH9,LocLP3,HieuHV1` - three names on a row whose Developer
+#: is the vendor `FSG`, and twelve people across the file who appear
+#: nowhere else and were read by nothing.
+#:
+#: Deliberately *not* folded into `DESCRIPTION_PEOPLE`, which feeds the
+#: single `Owner` column. Whether these three report to FSG, review its
+#: work or do the work themselves is not written down anywhere, and the
+#: label says only "note" - so they are surfaced as people named on the
+#: task and never as its owner.
+NOTE_PEOPLE = (r"ghi\s+ch[uú]", r"note", r"members", r"th[aà]nh\s+vi[eê]n")
+
+#: Every label the block uses, so a value knows where it ends.
+#:
+#: Spelled out rather than discovered by splitting on any `word:`, because
+#: a generic splitter gets `Ngày nhận: 46246 Ghi chú: TaiPH9` wrong: it
+#: breaks at ` nhận:` and hands `Ngày` back as part of the previous value.
+#: Two-word labels are the norm here, and this module's own rule is that
+#: it reads a known schema and never becomes a free-text parser.
+BLOCK_LABELS = (
+    r"PO", r"BA", r"QA", r"Developer", r"Dev",
+    r"Ng[aà]y\s+nh[aậ]n", r"Received", *NOTE_PEOPLE,
+)
+
+_NOTE_VALUE = re.compile(
+    r"(?:^|\s)(?:" + "|".join(NOTE_PEOPLE) + r")\s*:\s*"
+    r"(.*?)(?=\s+(?:" + "|".join(BLOCK_LABELS) + r")\s*:|$)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def people_in_note(text: object) -> list[str]:
+    """Names listed under a note label, in the order written.
+
+    Comma-separated, each checked by `_looks_like_a_name` so a label
+    colliding with a sentence contributes nothing. Returns `[]` rather than
+    `None` because "no names here" and "no note here" are the same thing to
+    every caller.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return []
+    out: list[str] = []
+    for value in _NOTE_VALUE.findall(text):
+        for name in value.split(","):
+            name = name.strip()
+            if name and _looks_like_a_name(name) and name not in out:
+                out.append(name)
+    return out
+
+
 def _looks_like_a_name(value: str) -> bool:
     """Whether a description value is plausibly a person, not prose."""
     if len(value) > NAME_MAX_CHARS or len(value.split()) > NAME_MAX_WORDS:

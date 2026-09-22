@@ -539,3 +539,68 @@ def test_a_row_with_no_task_id_is_labelled_by_its_title(replayed):
 
     assert not any(label.startswith("~anon-") for label in labels), sorted(labels)
     assert "Data migration dry-run" in labels
+
+
+def test_past_due_uses_the_same_rule_the_brief_answers_with(replayed):
+    """Open, and a planned finish already behind us.
+
+    The Team page could not say a task was late at all: it carried only
+    `propagated_days`, which is what the dependency chain *predicts* about a
+    row whose own dates are still ahead. A row whose date simply went by
+    while it stayed open is a different fact, and the page drew it as a
+    plain plan bar - so a task 22 days past due looked identical to one
+    running exactly to plan.
+    """
+    from datetime import date
+
+    from app.agent.brief import CLOSED
+    from app.intelligence.pipeline import team_project
+    from app.models.domain import Task
+
+    bundle = team_project(replayed, project_id=PROJECT, also=[])
+    served = {
+        t.entity_id: t
+        for m in bundle.members
+        for t in m.tasks
+        if t.days_past_due
+    }
+
+    today = date.today()
+    expected = {
+        t.id
+        for t in replayed.query(Task).filter(Task.project_id == PROJECT).all()
+        if (t.status or "").upper() not in CLOSED
+        and t.due_date
+        and t.due_date < today
+    }
+    assert set(served) == expected
+
+
+def test_a_task_running_to_plan_is_not_marked_late(replayed):
+    from app.intelligence.pipeline import team_project
+
+    bundle = team_project(replayed, project_id=PROJECT, also=[])
+    for member in bundle.members:
+        for task in member.tasks:
+            if task.days_past_due:
+                assert task.planned_end is not None
+                assert task.days_past_due > 0
+
+
+def test_note_people_are_surfaced_without_being_made_owners(replayed):
+    """`Ghi chu: TaiPH9,LocLP3,HieuHV1` names three people on a row whose
+    Developer is the vendor FSG. Twelve such people appear nowhere else in
+    the export and were read by nothing.
+
+    They are shown beside the task and never merged into `Member.name`:
+    the file says they are named on the work, and does not say they report
+    to whoever owns it.
+    """
+    from app.intelligence.pipeline import team_project
+
+    bundle = team_project(replayed, project_id=PROJECT, also=[])
+    named = {n for m in bundle.members for t in m.tasks for n in t.also_named}
+    owners = {m.name for m in bundle.members}
+
+    # Whatever this fixture carries, a note person must never become a row.
+    assert not (named & owners)

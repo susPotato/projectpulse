@@ -35,6 +35,7 @@ from app.api.schemas.insight import (
     TimeInterval,
 )
 from app.ingest.sources.excel.identity import ANON_PREFIX
+from app.ingest.sources.jira.export_sheet import SYNTHETIC_PREFIX
 from app.intelligence.context import DeliveryContext
 from app.intelligence.rules.engine import RuleHit
 from app.intelligence.rules.tables import TOKEN
@@ -46,6 +47,17 @@ log = logging.getLogger(__name__)
 #: Fields whose value is a proportion and should be shown as a percentage.
 _RATIO_SUFFIXES = ("_ratio", "_coverage")
 
+#: Every prefix that marks an id this product derived rather than read.
+#:
+#: There are two, minted by two ingest paths that never meet: the Excel
+#: reader writes `~anon-` for a row with no Task ID, and the Jira converter
+#: writes `NOKEY-` for an issue row with no Key. Knowing only the first is
+#: how the Team page came to show `NOKEY-dc750470` beside four colleagues
+#: with real issue keys - the same failure this function was written to
+#: prevent, arriving through the other door. Any third path must add its
+#: prefix here.
+SYNTHESISED_PREFIXES = (ANON_PREFIX, SYNTHETIC_PREFIX)
+
 
 def entity_label(entity_id: str, *, title: str | None = None) -> str:
     """`excel:Task:1:WBS-108` -> `WBS-108`.
@@ -53,12 +65,15 @@ def entity_label(entity_id: str, *, title: str | None = None) -> str:
     Domain ids are self-describing by design, which makes them unreadable on a
     slide. The last component is what a human typed.
 
-    Except when nobody typed one. A row with no `Task ID` gets a synthesised
-    key (`~anon-<16 hex>`), and that key is correct - it is what holds the row's
-    identity across scans - but it is not a name. Printed as a label it looks
-    exactly like a data bug, and on the Team page it looked like one for a
-    while: a real task rendered as `~anon-ef0576ffa2b2a0f2` beside four
-    colleagues with proper WBS codes.
+    Except when nobody typed one. A row with no id gets a synthesised key -
+    `~anon-<16 hex>` from the Excel reader, `NOKEY-<8 hex>` from the Jira
+    converter - and that key is correct, it is what holds the row's identity
+    across scans, but it is not a name. Printed as a label it looks exactly
+    like a data bug, and on the Team page it has looked like one twice: once
+    as `~anon-ef0576ffa2b2a0f2` beside four colleagues with proper WBS
+    codes, and again as `NOKEY-dc750470` after a Jira export whose 173
+    delivery rows carry no Key at all. Both prefixes are in
+    `SYNTHESISED_PREFIXES` so the second cannot happen through a third door.
 
     So `title` is the fallback, used only for those keys: the row still has the
     words the person wrote in the summary column, and those are the best label
@@ -66,7 +81,7 @@ def entity_label(entity_id: str, *, title: str | None = None) -> str:
     than an empty cell - the row exists and hiding it would be worse.
     """
     tail = _row_key(entity_id)
-    if title and tail.startswith(ANON_PREFIX):
+    if title and tail.startswith(SYNTHESISED_PREFIXES):
         return title
     return tail
 

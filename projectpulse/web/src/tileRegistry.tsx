@@ -1881,6 +1881,259 @@ const DONE_LIKE = new Set(["done", "dropped"]);
 const isOpen = (row: { status?: string | null }) =>
   !DONE_LIKE.has((row.status ?? "").toLowerCase());
 
+/* Where the three sources tell different stories.
+
+   The tracker, the team's own documents and the code do not agree, and the
+   disagreements are not equally solid. A rule the team wrote and never ran,
+   re-run against the code, is a measurement. A document claiming a file
+   that is not in the repository may equally mean the document describes a
+   newer checkout than the one we were handed - so the two are ranked and
+   the weaker half carries the caveat rather than the whole tile.
+
+   Kinds, not rows: thirty-five separate "documented, not built" entries in a
+   tile this size is a scrollbar. The count is the finding; the page behind
+   it has the rows. */
+const DISAGREEMENT: Record<string, { says: string; sure: boolean }> = {
+  "gate-failing": {
+    says: "a rule the team set for itself, re-run and failing",
+    sure: true,
+  },
+  "contradicted": {
+    says: "the ticket says shipped, the code says otherwise",
+    sure: true,
+  },
+  "status-conflict": {
+    says: "the tracker's status and the code disagree",
+    sure: true,
+  },
+  "missing-test": {
+    says: "a finished task names a test file that is not there",
+    sure: false,
+  },
+  "documented-not-built": {
+    says: "the documents record it as delivered, the code has nothing",
+    sure: false,
+  },
+  "unsupported-citation": {
+    says: "the reason given for a verdict points at nothing real",
+    sure: true,
+  },
+};
+
+const SourceDisagreements: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useBundle<{
+    findings?: { kind: string; title: string }[];
+    run?: string | null;
+  }>(`/api/traceability?project=${encodeURIComponent(scopeId)}`);
+
+  /* Counted with its wording attached, rather than counted and looked up
+     again: the second lookup is what the compiler cannot prove safe, and
+     re-indexing a map by a key already in hand is how a rename turns into
+     a blank row instead of a build error. */
+  const counts = new Map<string, { n: number; says: string; sure: boolean }>();
+  for (const f of bundle?.findings ?? []) {
+    const spec = DISAGREEMENT[f.kind];
+    if (!spec) continue;
+    const seen = counts.get(f.kind);
+    counts.set(f.kind, { ...spec, n: (seen?.n ?? 0) + 1 });
+  }
+  const shown = [...counts.entries()].sort(([, a], [, b]) =>
+    a.sure === b.sure ? b.n - a.n : a.sure ? -1 : 1,
+  );
+  const total = [...counts.values()].reduce((n, v) => n + v.n, 0);
+  const soft = shown.some(([, v]) => !v.sure);
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {bundle && (
+        <div className="grid gap-2">
+          {total === 0 ? (
+            <p className="m-0 text-[12.5px] text-ink-3">
+              The tracker, the documents and the code agree everywhere they
+              were compared.
+            </p>
+          ) : (
+            <>
+              <div className="text-[12.5px]">
+                <b className="font-semibold text-orange">{total}</b>
+                <span className="text-ink"> disagreements between the tracker, the documents and the code</span>
+              </div>
+              {shown.map(([kind, v]) => (
+                <div key={kind} className="text-[12px]">
+                  <span className="inline-flex items-baseline gap-1.5">
+                    <b
+                      className={`font-semibold ${
+                        v.sure ? "text-red" : "text-orange"
+                      }`}
+                    >
+                      {v.n}
+                    </b>
+                    <span className="text-ink">{v.says}</span>
+                  </span>
+                  {!v.sure && (
+                    <span className="ml-1 text-[10.5px] text-ink-3 italic">
+                      · check which is newer first
+                    </span>
+                  )}
+                </div>
+              ))}
+              {soft && (
+                <p className="m-0 text-[11px] text-ink-3">
+                  The amber rows compare documents to a checkout. Before
+                  blaming anyone, confirm the two describe the same version.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </TileShell>
+  );
+};
+
+/* The tracker's own issue type, split in two.
+
+   These rows pool two kinds of work that report themselves in opposite
+   directions: on CoWorkLocal the 173 delivery rows say 142 are done, and the
+   16 management rows say nothing is finished at all. One completion figure
+   over both describes neither - and the side it flatters is the side with no
+   finished work. */
+const ManagementVsDelivery: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const asOf = useAsOf(bundle);
+  const rows = bundle?.rows ?? [];
+
+  /* Read off the label the tracker wrote, never inferred from the title, so
+     a project that names its phases differently still groups by its own
+     words rather than by ours. */
+  const isManagement = (p?: string | null) => /pm|manage|plan|admin/i.test(p ?? "");
+  const groups = [
+    { key: "Delivery", rows: rows.filter((r) => !isManagement(r.phase)) },
+    { key: "Management", rows: rows.filter((r) => isManagement(r.phase)) },
+  ].filter((g) => g.rows.length > 0);
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {bundle && (
+        <div className="grid gap-3">
+          {groups.length < 2 && (
+            <p className="m-0 text-[12.5px] text-ink-3">
+              Every row is one kind of work, so there is nothing to split.
+            </p>
+          )}
+          {groups.map((g) => {
+            const n = g.rows.length;
+            const done = g.rows.filter((r) => !isOpen(r)).length;
+            const dated = g.rows.filter((r) => r.planned_end).length;
+            const late = g.rows.filter(
+              (r) => isOpen(r) && r.planned_end && r.planned_end < asOf,
+            ).length;
+            const pct = Math.round((done / n) * 100);
+            return (
+              <div key={g.key}>
+                <div className="flex items-baseline justify-between">
+                  <b className="text-[12.5px] font-semibold">{g.key}</b>
+                  <span className="text-[11px] text-ink-3">{n} tasks</span>
+                </div>
+                <div className="mt-1 flex h-[9px] overflow-hidden rounded-sm bg-rule-2">
+                  <span style={{ width: `${pct}%`, background: "var(--viz-plan)" }} />
+                </div>
+                <div className="mt-1 text-[11.5px]">
+                  <b className={pct === 0 ? "text-orange" : "text-ink"}>{pct}% done</b>
+                  <span className="text-ink-3">
+                    {" "}
+                    · {dated}/{n} dated{late > 0 ? " · " : ""}
+                  </span>
+                  {late > 0 && <b className="text-red">{late} past due</b>}
+                </div>
+              </div>
+            );
+          })}
+          <p className="m-0 text-[11px] text-ink-3">
+            Issue type as the tracker records it - not a judgement about whose
+            fault anything is.
+          </p>
+        </div>
+      )}
+    </TileShell>
+  );
+};
+
+/* What the schedule is actually built from.
+
+   A board whose panels all read zero looks like a project where nothing is
+   happening. Usually it is a project where nobody filled the column in, and
+   those are opposite problems. This names which, and what each missing
+   column costs - so "no critical path" reads as "no dependency was ever
+   recorded" rather than as a broken page. */
+const WhatTheTrackerRecords: ComponentType<TileProps> = ({ scopeId }) => {
+  const { bundle, problem } = useGantt(scopeId);
+  const rows = bundle?.rows ?? [];
+  const total = rows.length;
+  const fields = [
+    {
+      label: "a due date",
+      have: rows.filter((r) => r.planned_end).length,
+      enables: "any schedule at all",
+    },
+    {
+      label: "a start date",
+      have: rows.filter((r) => r.start).length,
+      enables: "duration and workload",
+    },
+    {
+      label: "a dependency",
+      have: rows.filter((r) => (r.depends_on ?? []).length > 0).length,
+      enables: "a critical path",
+    },
+    {
+      label: "a progress %",
+      have: rows.filter((r) => r.progress != null).length,
+      enables: "a burndown",
+    },
+    {
+      label: "a baseline",
+      have: rows.filter((r) => r.baseline_end).length,
+      enables: "slip against a commitment",
+    },
+  ];
+
+  return (
+    <TileShell loading={!bundle && !problem} problem={problem}>
+      {bundle && total > 0 && (
+        <div className="grid gap-1.5">
+          {fields.map((f) => {
+            const pct = Math.round((f.have / total) * 100);
+            return (
+              <div key={f.label}>
+                <div className="flex items-baseline justify-between text-[12px]">
+                  <span className="text-ink">{f.label}</span>
+                  <span className={f.have === 0 ? "text-orange" : "text-ink-3"}>
+                    {f.have} of {total}
+                  </span>
+                </div>
+                <div className="mt-0.5 flex h-[6px] overflow-hidden rounded-sm bg-rule-2">
+                  <span
+                    style={{
+                      width: `${pct}%`,
+                      background: f.have === 0 ? "var(--viz-over)" : "var(--viz-plan)",
+                    }}
+                  />
+                </div>
+                {f.have === 0 && (
+                  <div className="text-[10.5px] text-ink-3 italic">
+                    nothing here can show {f.enables}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </TileShell>
+  );
+};
+
 const OverdueAndDueSoon: ComponentType<TileProps> = ({ scopeId }) => {
   const { bundle, problem } = useGantt(scopeId);
   const asOf = useAsOf(bundle);
@@ -2183,6 +2436,9 @@ export const TILE_REGISTRY: Record<string, ComponentType<TileProps>> = {
   mitigation_effect: MitigationEffect,
   ai_recommended_actions: AiRecommendedActions,
   data_readiness: DataReadiness,
+  source_disagreements: SourceDisagreements,
+  management_vs_delivery: ManagementVsDelivery,
+  what_the_tracker_records: WhatTheTrackerRecords,
   overdue_and_due_soon: OverdueAndDueSoon,
   deadline_load: DeadlineLoad,
   work_by_owner: WorkByOwner,

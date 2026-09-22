@@ -14,7 +14,12 @@
   "links": 188,
   "depends_on": 141,
   "shares_code": 47,
-  "high_confidence": 115
+  "high_confidence": 115,
+  "inputs": {
+   "corpus": "e6efcfbae0cbd378",
+   "tickets": "99f10489902c8ed2",
+   "verdicts": "3029506211b50451"
+  }
  },
  "payload": [
   {

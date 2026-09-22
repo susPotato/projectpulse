@@ -11,7 +11,11 @@
   "grounded": 159,
   "partly_grounded": 4,
   "ungrounded": 1,
-  "uncited": 9
+  "uncited": 9,
+  "inputs": {
+   "corpus": "e6efcfbae0cbd378",
+   "verdicts": "3029506211b50451"
+  }
  },
  "payload": [
   {

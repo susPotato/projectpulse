@@ -52,6 +52,12 @@ PRODUCED_BY = {
     "progress": "tracelink progress --docs <docs dir>",
     "reconciliation": "tracelink reconcile --done-status '<status>'",
     "gates": "tracelink gates",
+    # Two readings of the backlog itself rather than of the code. `cohorts`
+    # reports whether the export is one backlog or several appended;
+    # `governance` covers the keyed process tickets, which map to no code
+    # and are dropped by every other stage.
+    "cohorts": "tracelink cohorts",
+    "governance": "tracelink governance <export.xlsx> --docs <docs dir>",
 }
 
 
@@ -270,6 +276,12 @@ FINDING_KINDS = [
     "contradicted",
     "status-conflict",
     "gate-failing",
+    # Both come from the export's own text and need no comparison to code,
+    # so they are certain in a way the rows below are not: an unanswered
+    # form is unanswered, whichever snapshot of the repo you hold.
+    "acceptance-unanswered",
+    "process-undelegated",
+    "roles-concentrated",
     "missing-test",
     "documented-not-built",
     "unsupported-citation",
@@ -278,7 +290,9 @@ FINDING_KINDS = [
 
 
 def _findings(rows: list[dict[str, Any]], files: list[dict[str, Any]],
-              delivery: dict[str, Any]) -> list[dict[str, Any]]:
+              delivery: dict[str, Any],
+              governance: dict[str, Any] | None = None,
+              cohorts: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """One ranked list of things that want a human, across every stage.
 
     The page had five views and no answer to "what do I look at first".
@@ -371,6 +385,42 @@ def _findings(rows: list[dict[str, Any]], files: list[dict[str, Any]],
         add("missing-test", f"{u['wid']}  {u['name']}",
             "a completed task says it produced this test; it is not there",
             f"{u.get('doc', '')}:{u.get('line', '')}", "measured", wid=u["wid"])
+
+    # The process half. These read the tracker's own text and compare it to
+    # nothing, so they do not inherit the "which snapshot is newer" doubt
+    # that hangs over every row above that talks about code.
+    gov = governance or {}
+    acc = gov.get("acceptance_open") or {}
+    if acc.get("unanswered"):
+        add("acceptance-unanswered",
+            f"{acc['unanswered']} acceptance questions nobody has answered",
+            "across " + str(acc.get("tickets", 0)) + " process tickets — "
+            + ", ".join(acc.get("questions", [])[:4])
+            + (" …" if len(acc.get("questions", [])) > 4 else ""),
+            "", "measured")
+
+    deleg = gov.get("delegation") or {}
+    if deleg.get("single_assignee") and gov.get("n_steps"):
+        who = next(iter(deleg.get("assignees") or {}), "one person")
+        add("process-undelegated",
+            f"{gov['n_steps']} process steps all sit with {who}",
+            f"the procedures name {len(deleg.get('roles_named') or [])} "
+            f"different roles, and every process ticket is assigned to the "
+            f"same person",
+            "", "measured")
+
+    # Who the feature rows name. The export has no assignee column, so the
+    # only record of it is `PO:`/`BA:`/`Developer:` inside the description
+    # prose - which is why this went unnoticed until somebody said so.
+    for co in (cohorts or {}).get("cohorts", []):
+        own = co.get("owners") or {}
+        if own.get("solo") and own["solo"] >= 0.8 * co.get("n", 0):
+            add("roles-concentrated",
+                f"{own['solo']} of {co['n']} tickets have one person in every role",
+                f"{own.get('top')} is " + ", ".join(own.get("roles", []))
+                + f" on almost every row of this group, and holds "
+                + f"{own['share']:.0%} of its role assignments",
+                "", "measured")
 
     unclaimed = [f for f in files if f["coverage"] == "unclaimed"]
     if unclaimed:
@@ -660,6 +710,8 @@ def collect(run: Path) -> dict[str, Any]:
     explain = take("explain", [])
     links = take("links", [])
     diagnosis = take("diagnosis", {})
+    cohorts = take("cohorts", {})
+    governance = take("governance", {})
     # Citation checks. Deterministic and free, so if they are missing the
     # run simply has not had `verify` run over it yet.
     grounding = {g["uid"]: g for g in (take("grounding", []) or [])}
@@ -772,7 +824,7 @@ def collect(run: Path) -> dict[str, Any]:
     manifest = _manifest(run)
     return {
         "delivery": delivery,
-        "findings": _findings(rows, files, delivery),
+        "findings": _findings(rows, files, delivery, governance, cohorts),
         "run": str(run),
         "project_id": manifest.get("project_id"),
         "project_name": manifest.get("project_name"),
@@ -786,5 +838,7 @@ def collect(run: Path) -> dict[str, Any]:
         "explain": explain,
         "links": links,
         "diagnosis": diagnosis,
+        "cohorts": cohorts,
+        "governance": governance,
         "has_grounding": bool(grounding),
     }

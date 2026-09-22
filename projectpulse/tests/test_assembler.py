@@ -205,3 +205,48 @@ def test_the_context_record_is_shipped_for_the_rule_trace_ui():
 
     assert bundle.context["rows_rejected"] == 3
     assert "notes" not in bundle.context
+
+
+# A synthesised id is a key, never a label
+
+
+def test_a_jira_keyless_row_is_labelled_by_its_title():
+    """The 173 delivery rows of a Jira export carry no Key, so the converter
+    mints `NOKEY-<hex>`. The Team page showed that hex beside colleagues
+    with real issue keys."""
+    from app.intelligence.assembler import entity_label
+
+    got = entity_label("excel:Task:1:proj:NOKEY-dc750470", title="Update UI/UX")
+    assert got == "Update UI/UX"
+
+
+def test_an_excel_keyless_row_is_still_labelled_by_its_title():
+    from app.intelligence.assembler import entity_label
+
+    got = entity_label("excel:Task:1:proj:~anon-ef0576ffa2b2a0f2", title="Some row")
+    assert got == "Some row"
+
+
+def test_a_real_key_is_never_replaced_by_the_title():
+    from app.intelligence.assembler import entity_label
+
+    got = entity_label("excel:Task:1:proj:COWORKLOCAL-10", title="Study Input Document")
+    assert got == "COWORKLOCAL-10"
+
+
+def test_a_synthesised_id_with_no_title_still_shows_something():
+    """Hiding the row would be worse than showing an ugly key."""
+    from app.intelligence.assembler import entity_label
+
+    assert entity_label("excel:Task:1:proj:NOKEY-dc750470") == "NOKEY-dc750470"
+
+
+def test_both_ingest_paths_register_their_prefix():
+    """Each path that mints an id must be represented, or its rows leak a
+    hash onto a label the way the Jira one did."""
+    from app.ingest.sources.excel.identity import ANON_PREFIX
+    from app.ingest.sources.jira.export_sheet import SYNTHETIC_PREFIX
+    from app.intelligence.assembler import SYNTHESISED_PREFIXES
+
+    assert ANON_PREFIX in SYNTHESISED_PREFIXES
+    assert SYNTHETIC_PREFIX in SYNTHESISED_PREFIXES

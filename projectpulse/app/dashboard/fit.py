@@ -82,6 +82,16 @@ def project_signals(session, project_ids: Sequence[str]) -> set[Signal]:
     if count(Risk):
         found.add("risks")
 
+    #: The one probe that is not a database read, because the one bundle that
+    #: is not built from the database. A `tracelink` run is a directory on
+    #: disk that names the project it is about, so this is a listing rather
+    #: than a `SELECT` - comparable in cost, and the alternative is offering
+    #: a code-versus-documents tile to every project that has neither.
+    from app.api import tracelink_view
+
+    if any(tracelink_view.run_for_project(pid)[0] for pid in ids):
+        found.add("traceability")
+
     return found
 
 

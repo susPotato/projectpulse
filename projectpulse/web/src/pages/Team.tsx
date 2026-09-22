@@ -37,6 +37,47 @@ function days(from?: string | null, to?: string | null): number | null {
   return (Date.parse(to) - Date.parse(from)) / 86_400_000;
 }
 
+/* Dated ticks across the shared window.
+
+   The chart labelled only its two ends, so a bar's position carried no date
+   a reader could name: four tasks running 12-31 August sat somewhere in the
+   left third of a window captioned "2026-08-10" and "2026-10-02", and the
+   only way to learn when they ran was to hover one. An axis that cannot be
+   read is the same as no axis.
+
+   Weekly below ten weeks, monthly above, because a two-month window with
+   month ticks alone gets two gridlines and is no better than the endpoints
+   it replaced. */
+function scaleTicks(start: string, span: number): { at: number; label: string }[] {
+  const from = new Date(`${start}T00:00:00`);
+  if (!Number.isFinite(from.getTime()) || span <= 0) return [];
+
+  const weekly = span <= 70;
+  const cursor = new Date(from);
+  if (weekly) {
+    // Next Monday, so ticks land on a weekday boundary a person recognises.
+    cursor.setDate(cursor.getDate() + ((8 - cursor.getDay()) % 7 || 7));
+  } else {
+    cursor.setDate(1);
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  const ticks: { at: number; label: string }[] = [];
+  while (ticks.length < 24) {
+    const at = ((cursor.getTime() - from.getTime()) / 86_400_000 / span) * 100;
+    if (at >= 100) break;
+    ticks.push({
+      at,
+      label: weekly
+        ? `${cursor.getDate()} ${cursor.toLocaleDateString("en", { month: "short" })}`
+        : cursor.toLocaleDateString("en", { month: "short", year: "2-digit" }),
+    });
+    if (weekly) cursor.setDate(cursor.getDate() + 7);
+    else cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return ticks;
+}
+
 /* One member's dated tasks on the shared window. Bars are positioned as a
    percentage of the window so two rows are comparable by eye - which is the
    only reason to share an axis at all. */
@@ -79,10 +120,24 @@ function WorkloadRow({
             {dated.map((task) => {
               const offset = ((days(start, task.start) ?? 0) / span) * 100;
               const planned = ((days(task.start, task.planned_end) ?? 0) / span) * 100;
-              const over =
+
+              /* Two different tails, and they must not be added together.
+                 `propagated_days` is forward-looking: the chain says this
+                 row will land later than its own dates admit.
+                 `days_past_due` is backward-looking and factual: the date
+                 went by and the row is still open. Both start at the
+                 planned finish, so drawing both would double-count the same
+                 stretch of calendar. The longer one is drawn and named; the
+                 tooltip carries whichever is not. */
+              const chain =
                 task.propagated_days && task.propagated_days > 0
-                  ? (task.propagated_days / span) * 100
+                  ? task.propagated_days
                   : 0;
+              const late = task.days_past_due && task.days_past_due > 0
+                ? task.days_past_due
+                : 0;
+              const isLate = late > chain;
+              const over = (Math.max(chain, late) / span) * 100;
 
               return (
                 <div key={task.entity_id} className="relative h-[18px]">
@@ -90,8 +145,8 @@ function WorkloadRow({
                     className="absolute top-[5px] flex h-[8px] items-stretch"
                     style={{ left: `${offset}%`, width: `${planned + over}%` }}
                     title={`${task.label} ${task.title ?? ""} · plan ${task.start} to ${task.planned_end}${
-                      over > 0 ? ` · chain implies ${task.projected_end}` : ""
-                    }`}
+                      chain > 0 ? ` · chain implies ${task.projected_end}` : ""
+                    }${late > 0 ? ` · ${late}d past due, still open` : ""}`}
                   >
                     {/* 4px rounded data-ends; a 2px surface gap between the two
                         fills so the boundary reads as a boundary. */}
@@ -107,20 +162,40 @@ function WorkloadRow({
                         className="rounded-r-[4px] border-l-2 border-surface"
                         style={{
                           width: `${(over / (planned + over)) * 100}%`,
+                          /* Past due is the muted fill: it is a fact about
+                             a date that has gone by, not the forecast the
+                             brighter red is reserved for. */
                           background: "var(--viz-over)",
+                          opacity: isLate ? 0.62 : 1,
                         }}
                       />
                     )}
                   </div>
+                  {/* A keyless row is labelled by its summary, and a summary
+                      can be a paragraph: one here is 302 characters of
+                      deliverable spec that ran off the panel and over the
+                      next column. Clipped to a readable stub; the title
+                      attribute above still carries the whole thing. */}
                   <span
-                    className="absolute top-0 text-[10.5px] whitespace-nowrap text-ink-3"
+                    className="absolute top-0 max-w-[280px] overflow-hidden text-[10.5px] text-ellipsis whitespace-nowrap text-ink-3"
                     style={{ left: `calc(${offset + planned + over}% + 6px)` }}
                   >
                     {task.label}
-                    {over > 0 && (
-                      <b className="ml-1 font-semibold text-red">
-                        +{task.propagated_days}d
-                      </b>
+                    {isLate ? (
+                      <b className="ml-1 font-semibold text-red">{late}d late</b>
+                    ) : (
+                      chain > 0 && (
+                        <b className="ml-1 font-semibold text-red">+{chain}d</b>
+                      )
+                    )}
+                    {/* People the row names in its note field. Shown beside
+                        the owner, not merged into it: the sheet says they
+                        are named on this work and does not say who they
+                        report to. */}
+                    {task.also_named.length > 0 && (
+                      <span className="ml-1.5 text-ink-3 italic">
+                        with {task.also_named.join(", ")}
+                      </span>
                     )}
                   </span>
                 </div>
@@ -465,9 +540,29 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
         <Panel caption="Workload on one window" span={12}>
           {bundle.window_start ? (
             <>
-              <div className="mb-2 flex justify-between text-[10.5px] text-ink-3">
-                <span>{bundle.window_start}</span>
-                <span>{bundle.window_end}</span>
+              {/* Same geometry as WorkloadRow - a 150px name gutter, gap-3,
+                  and 76px reserved on the right for a bar's end label - or
+                  the ticks would name dates the bars below do not sit on. */}
+              <div className="mb-1 flex items-end gap-3">
+                <div className="w-[150px] shrink-0 text-[10.5px] text-ink-3">
+                  {bundle.window_start}
+                </div>
+                <div className="min-w-0 flex-1 pr-[76px]">
+                  <div className="relative h-[14px]">
+                    {scaleTicks(bundle.window_start, span).map((tick) => (
+                      <span
+                        key={tick.label}
+                        className="absolute top-0 -translate-x-1/2 text-[10px] whitespace-nowrap text-ink-3"
+                        style={{ left: `${tick.at}%` }}
+                      >
+                        {tick.label}
+                      </span>
+                    ))}
+                    <span className="absolute top-0 left-full ml-1.5 text-[10.5px] whitespace-nowrap text-ink-3">
+                      {bundle.window_end}
+                    </span>
+                  </div>
+                </div>
               </div>
               {bundle.members.map((member) => (
                 <WorkloadRow
@@ -491,6 +586,13 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
                     style={{ background: "var(--viz-over)" }}
                   />
                   beyond the plan - what the chain implies
+                </span>
+                <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+                  <span
+                    className="h-2.5 w-4 rounded-sm"
+                    style={{ background: "var(--viz-over)", opacity: 0.62 }}
+                  />
+                  past due - the date went by and the row is still open
                 </span>
               </div>
             </>

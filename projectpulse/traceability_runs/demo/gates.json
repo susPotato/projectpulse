@@ -1,7 +1,12 @@
 {
  "schema_version": 1,
  "produced_by": "gates",
- "meta": {},
+ "meta": {
+  "inputs": {
+   "corpus": "e6efcfbae0cbd378",
+   "progress": "85214e71be8f8001"
+  }
+ },
  "payload": [
   {
    "name": "Checkpoint 1: Contracts & Fakes",
