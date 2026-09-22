@@ -781,6 +781,259 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/jira/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Jira Connection
+         * @description Ask one Jira whether this credential works, and store nothing.
+         *
+         *     Admin-gated for two reasons, and the second is the real one. It spends
+         *     an outbound request, and more importantly it makes *this server* fetch
+         *     a URL somebody typed - `connect.normalise_site` refuses anything that
+         *     resolves onto our own network, but the ability to aim the server at all
+         *     is not something to hand out unauthenticated.
+         *
+         *     The token is used to build one header and is never written down: not to
+         *     the database, not to the log, and not into any message this returns.
+         */
+        post: operations["test_jira_connection_api_jira_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jira/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Jira Project
+         * @description What this Jira would give us for one project, before collecting any.
+         *
+         *     Same gate and same no-storage rule as the connection test. Reports
+         *     field coverage over a sample rather than a yes/no: "Jira has a created
+         *     date" and "this instance fills it in" are different claims, and only
+         *     the second one decides whether a live collector is worth building.
+         */
+        post: operations["preview_jira_project_api_jira_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jira/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Jira Connections
+         * @description Every Jira link, or one project's. Never returns a credential.
+         *
+         *     Readable without a token: it discloses a site, a project key and a
+         *     masked hint, which is what the Settings list needs to render. The
+         *     writes below are gated.
+         */
+        get: operations["list_jira_connections_api_jira_connections_get"];
+        put?: never;
+        /**
+         * Save Jira Connection
+         * @description Link a delivery project to a Jira project, credential and all.
+         */
+        post: operations["save_jira_connection_api_jira_connections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jira/connections/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Jira Connection
+         * @description Forget one link.
+         *
+         *     The rows it already collected stay, the same rule `delete_import`
+         *     keeps: removing a source does not empty the pages built from it.
+         */
+        delete: operations["delete_jira_connection_api_jira_connections__connection_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/jira": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Jira Page
+         * @description What has been collected from Jira, as rows.
+         */
+        get: operations["jira_page_jira_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jira/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Jira Issues
+         * @description Collected Jira issues, straight from the tool layer.
+         *
+         *     Deliberately the tool layer and not the domain: this screen exists to
+         *     show what Jira actually said, before any of this product's naming or
+         *     status mapping is applied. A row here disagreeing with the Schedule
+         *     page is a finding about the mapping, and flattening the two would hide
+         *     exactly that.
+         *
+         *     Read-only and unauthenticated: it discloses issue summaries, which the
+         *     tracker already shows everyone who can open it.
+         */
+        get: operations["read_jira_issues_api_jira_issues_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jira/connections/{connection_id}/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Collect Jira Connection
+         * @description Pull one linked Jira project into the raw tables, then extract it.
+         *
+         *     Incremental by construction: `live.collect` reads its watermark from
+         *     the rows it wrote last time, so the first call collects the project
+         *     and every later one collects the changes.
+         *
+         *     Synchronous on purpose for now. A first collection of a large project
+         *     is slow - pages are paced to stay under the rate limiter - and a
+         *     background job that fails silently is worse than a request that takes
+         *     a minute and says what happened.
+         */
+        post: operations["collect_jira_connection_api_jira_connections__connection_id__collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jira/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ingest Jira Issues
+         * @description Accept issues somebody else fetched, then run the ordinary pipeline.
+         *
+         *     This exists because of a network fact, not a design preference: the
+         *     Jira this was built against sits behind bot scoring that lets an
+         *     ordinary laptop through and refuses a request from a data centre, so
+         *     a hosted server cannot collect for itself. Measured both ways -
+         *     `/myself` answers 401 from a laptop and 403 with a challenge page
+         *     from Fly.
+         *
+         *     Only the *fetch* moves. The issues are written into the same raw
+         *     tables `live.collect` writes, and extract, convert and pairing run
+         *     here exactly as they would have - so the evidence trail, the
+         *     tool-layer rows and the exact-precision state changes are identical
+         *     to a collection that happened on this machine.
+         *
+         *     When the block is lifted, the Collect button starts working and this
+         *     becomes unnecessary rather than becoming load-bearing.
+         */
+        post: operations["ingest_jira_issues_api_jira_ingest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jira/sync-tool": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Jira Sync Tool
+         * @description A one-file PowerShell script that syncs one project, pre-filled.
+         *
+         *     The person who runs this is not the person who built the app. They
+         *     have a browser and a work laptop, so the tool has to be something
+         *     Windows can already run - no Python, no install, no build step - and
+         *     it has to arrive knowing the server, the Jira site and the project,
+         *     because every field somebody has to fill in is a field they can get
+         *     wrong while a demo waits.
+         *
+         *     **It carries this server's admin token**, which is what lets it post
+         *     what it collected. That is a real disclosure: whoever holds the file
+         *     can write to this instance until the token is rotated. Gated behind
+         *     the same token so only somebody who already has it can mint one, and
+         *     worth rotating after a demo rather than leaving it in a Downloads
+         *     folder forever.
+         */
+        get: operations["download_jira_sync_tool_api_jira_sync_tool_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/imports/resync": {
         parameters: {
             query?: never;
@@ -2649,6 +2902,112 @@ export interface components {
             } | null;
         };
         /**
+         * JiraIngestIn
+         * @description Issues collected elsewhere, for a server that cannot collect them.
+         */
+        JiraIngestIn: {
+            /**
+             * Project Key
+             * @default
+             */
+            project_key: string;
+            /**
+             * Issues
+             * @default []
+             */
+            issues: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Url
+             * @default
+             */
+            url: string;
+        };
+        /**
+         * JiraLinkIn
+         * @description One link between a delivery project and a Jira project.
+         */
+        JiraLinkIn: {
+            /**
+             * Project Id
+             * @default
+             */
+            project_id: string;
+            /**
+             * Site
+             * @default
+             */
+            site: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Project Key
+             * @default
+             */
+            project_key: string;
+            /**
+             * Token
+             * @default
+             */
+            token: string;
+        };
+        /**
+         * JiraPreviewIn
+         * @description The same credentials, plus the project to look at.
+         */
+        JiraPreviewIn: {
+            /**
+             * Site
+             * @default
+             */
+            site: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Token
+             * @default
+             */
+            token: string;
+            /**
+             * Project
+             * @default
+             */
+            project: string;
+            /**
+             * Sample
+             * @default 25
+             */
+            sample: number;
+        };
+        /**
+         * JiraProbeIn
+         * @description Credentials for one connection test. Never persisted.
+         */
+        JiraProbeIn: {
+            /**
+             * Site
+             * @default
+             */
+            site: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Token
+             * @default
+             */
+            token: string;
+        };
+        /**
          * LiveSource
          * @description How to recompute a tool-sourced tile's rows live, instead of trusting
          *     the snapshot taken when it was drafted.
@@ -3803,6 +4162,16 @@ export interface components {
              * @default
              */
             project_id: string;
+            /**
+             * File Name
+             * @default
+             */
+            file_name: string;
+            /**
+             * Removable
+             * @default false
+             */
+            removable: boolean;
         };
     };
     responses: never;
@@ -4703,6 +5072,330 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_jira_connection_api_jira_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JiraProbeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_jira_project_api_jira_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JiraPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_jira_connections_api_jira_connections_get: {
+        parameters: {
+            query?: {
+                project?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_jira_connection_api_jira_connections_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JiraLinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_jira_connection_api_jira_connections__connection_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    jira_page_jira_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    read_jira_issues_api_jira_issues_get: {
+        parameters: {
+            query?: {
+                project_key?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    collect_jira_connection_api_jira_connections__connection_id__collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ingest_jira_issues_api_jira_ingest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JiraIngestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_jira_sync_tool_api_jira_sync_tool_get: {
+        parameters: {
+            query: {
+                project_key: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

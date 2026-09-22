@@ -45,6 +45,10 @@ data/*.xlsx
 
 # Local secrets - copy .env.example to .env and fill it in.
 .env
+# Generated on first run by run-with-log.ps1. Losing it makes any
+# locally stored Jira or LLM token undecryptable - which is fine for
+# a dev box and is why it is never committed.
+.secrets.local.ps1
 
 # Screenshots from `python -m scripts.shots` - regenerate, never commit.
 shots/

@@ -35,6 +35,9 @@ const TABS = [
      It still belongs in the rail: a page reachable only by typing its URL is
      a page nobody opens. A plain <a> leaves the bundle and that is correct. */
   { href: "/traceability", label: "Trace" },
+  /* Also hand-written, and for the same reason: it reads the tool layer
+     directly to show what Jira said before this product maps it. */
+  { href: "/jira", label: "Jira" },
   { href: "/risk", label: "Risk" },
   { href: "/team", label: "Team" },
   { href: "/reports", label: "Reports" },
@@ -98,6 +101,12 @@ const ICONS: Record<string, ReactNode> = {
       <circle cx="4" cy="6" r="1.6" />
       <circle cx="4" cy="12" r="1.6" />
       <circle cx="4" cy="18" r="1.6" />
+    </>
+  ),
+  "/jira": (
+    <>
+      <rect x="3" y="4" width="18" height="6" rx="1" />
+      <rect x="3" y="14" width="18" height="6" rx="1" />
     </>
   ),
   "/agent": (

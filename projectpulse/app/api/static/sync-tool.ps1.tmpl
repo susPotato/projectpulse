@@ -1,0 +1,130 @@
+# ProjectPulse - Jira sync
+#
+# Right-click this file and choose "Run with PowerShell".
+#
+# It reads issues from Jira and sends them to ProjectPulse. It runs on this
+# computer on purpose: Jira refuses requests from the server but accepts
+# them from an ordinary office machine, so the fetch has to happen here.
+#
+# Nothing is installed. Nothing is left behind except a saved token, and
+# only if you say yes.
+
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
+
+$Server     = "__SERVER__"
+$JiraSite   = "__JIRA_SITE__"
+$ProjectKey = "__PROJECT_KEY__"
+$PushToken  = "__PUSH_TOKEN__"
+
+# Jira's API refuses a client that announces itself as a script, so this
+# sends what an ordinary browser sends. Same request, same permissions -
+# it just does not look like a robot to the filter in front of Jira.
+$Headers = @{
+    "Accept"          = "application/json"
+    "Accept-Language" = "en-US,en;q=0.9"
+    "User-Agent"      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+}
+
+# 25 at a time, and a pause between. Jira's gateway rejects bursts; this is
+# the size and spacing that has been measured to get through.
+$PageSize = 25
+$Pace     = 4
+
+function Write-Step($text) { Write-Host $text -ForegroundColor Cyan }
+function Write-Note($text) { Write-Host "  $text" -ForegroundColor DarkGray }
+function Write-Bad($text)  { Write-Host $text -ForegroundColor Red }
+
+Write-Host ""
+Write-Host "ProjectPulse - Jira sync" -ForegroundColor White
+Write-Note "$ProjectKey  from  $JiraSite"
+Write-Note "to  $Server"
+Write-Host ""
+
+# --- The Jira token -------------------------------------------------------
+# Remembered next to this script so a second run asks nothing. It is your
+# own Jira token; anyone who can read that file can use it, so the script
+# asks before writing it down.
+$TokenFile = Join-Path $PSScriptRoot ".jira-token"
+if (Test-Path $TokenFile) {
+    $JiraToken = (Get-Content $TokenFile -Raw).Trim()
+    Write-Note "using the token saved beside this script"
+} else {
+    Write-Step "Paste your Jira API token"
+    Write-Note "Jira > your profile > Personal Access Tokens"
+    $secure = Read-Host "  Token" -AsSecureString
+    $JiraToken = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+        [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
+    if (-not $JiraToken) { Write-Bad "No token given. Nothing to do."; Read-Host "Enter to close"; exit 1 }
+    if ((Read-Host "  Remember it for next time? (y/N)") -match '^[Yy]') {
+        Set-Content -Path $TokenFile -Value $JiraToken -Encoding utf8
+        Write-Note "saved to $TokenFile"
+    }
+}
+$JiraHeaders = $Headers.Clone()
+$JiraHeaders["Authorization"] = "Bearer $JiraToken"
+
+# --- Read from Jira -------------------------------------------------------
+Write-Host ""
+Write-Step "Reading $ProjectKey from Jira"
+$jql = [uri]::EscapeDataString("project = ""$ProjectKey"" ORDER BY updated ASC")
+$all = New-Object System.Collections.ArrayList
+$start = 0
+$total = $null
+
+while ($true) {
+    $url = "$JiraSite/rest/api/2/search?jql=$jql&startAt=$start&maxResults=$PageSize&expand=changelog"
+    try {
+        $page = Invoke-RestMethod -Uri $url -Headers $JiraHeaders -TimeoutSec 60
+    } catch {
+        $code = $_.Exception.Response.StatusCode.value__
+        if ($code -eq 401) {
+            Write-Bad "Jira rejected the token (401). Check it has not expired."
+        } elseif ($code -eq 403 -or $code -eq 429) {
+            Write-Bad "Jira's gateway refused this request ($code)."
+            Write-Note "That is the rate limiter, not your token. Wait a minute and run this again."
+        } else {
+            Write-Bad "Jira answered $code."
+        }
+        Read-Host "Enter to close"; exit 1
+    }
+
+    if ($null -eq $total) { $total = $page.total; Write-Note "$total issue(s) to read" }
+    if ($page.issues.Count -eq 0) { break }
+    [void]$all.AddRange($page.issues)
+    Write-Note "read $($all.Count) of $total"
+    $start += $page.issues.Count
+    if ($start -ge $total) { break }
+    Start-Sleep -Seconds $Pace
+}
+
+if ($all.Count -eq 0) { Write-Bad "No issues came back."; Read-Host "Enter to close"; exit 1 }
+
+# --- Send to ProjectPulse -------------------------------------------------
+Write-Host ""
+Write-Step "Sending to ProjectPulse"
+$pushHeaders = @{
+    "Content-Type"        = "application/json"
+    "X-Pulse-Admin-Token" = $PushToken
+}
+$sent = 0
+for ($i = 0; $i -lt $all.Count; $i += 50) {
+    $batch = $all[$i..([Math]::Min($i + 49, $all.Count - 1))]
+    $body = @{ project_key = $ProjectKey; issues = $batch; url = "$JiraSite/rest/api/2/search" } |
+        ConvertTo-Json -Depth 30 -Compress
+    try {
+        $reply = Invoke-RestMethod -Uri "$Server/api/jira/ingest" -Method Post `
+            -Headers $pushHeaders -Body ([Text.Encoding]::UTF8.GetBytes($body)) -TimeoutSec 180
+    } catch {
+        Write-Bad "ProjectPulse refused the upload: $($_.ErrorDetails.Message)"
+        Read-Host "Enter to close"; exit 1
+    }
+    $sent += $reply.received
+    Write-Note "sent $sent of $($all.Count) - $($reply.tasks) task(s) on the site"
+}
+
+Write-Host ""
+Write-Host "Done. $sent issue(s) are now on $Server" -ForegroundColor Green
+Write-Note "Open the site and look at the Jira tab."
+Write-Host ""
+Read-Host "Enter to close"

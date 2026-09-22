@@ -16,6 +16,7 @@ from app.models.base import Base
 from app.models import (  # noqa: F401
     dashboard,
     domain,
+    jira,
     llm,
     narration,
     onedrive,

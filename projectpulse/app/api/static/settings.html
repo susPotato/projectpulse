@@ -96,6 +96,7 @@
   <a href="/gantt"><svg viewBox="0 0 24 24"><path d="M4 6h9M4 12h14M4 18h6"/></svg><span>Schedule</span></a>
   <a href="/insight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Insight</span></a>
   <a href="/traceability"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="4" cy="18" r="1.6"/></svg><span>Trace</span></a>
+  <a href="/jira"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/></svg><span>Jira</span></a>
   <a href="/risk"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Risk</span></a>
   <a href="/team"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5"/><path d="M18 20a6 6 0 0 0-2-4.5"/></svg><span>Team</span></a>
   <a href="/reports"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Reports</span></a>
@@ -205,6 +206,56 @@
       "stay</b> &mdash; removing a superseded upload does not empty the pages " +
       'built from it. To remove those too, delete the project on <a href="/imports">Imports</a>.</div>' +
       "</div>" +
+      '<div class="card"><div class="lbl">Test a Jira connection</div>' +
+      '<div class="hint" style="margin:6px 0 12px">Checks one credential against ' +
+      "<code>myself</code> and reports who it belongs to. " +
+      "<b>Nothing is saved</b> &mdash; the token is used for one request and " +
+      "discarded. Cloud and Data Center are both tried, so you do not need to " +
+      "know which you are on.</div>" +
+      '<label for="jt-site">Site</label>' +
+      '<input type="text" id="jt-site" placeholder="acme.atlassian.net  or  insight.example.com/jiradc" autocomplete="off">' +
+      '<div class="hint" style="margin:4px 0 0">Paste any Jira URL &mdash; the ' +
+      "ticket you are looking at is fine. A self-hosted Jira often sits under " +
+      "a path such as <code>/jira</code> or <code>/jiradc</code>, and that part " +
+      "is kept.</div>" +
+      '<label for="jt-email">Email <span class="hint">(Jira Cloud; blank for a Data Center token)</span></label>' +
+      '<input type="text" id="jt-email" placeholder="you@company.com" autocomplete="off">' +
+      '<label for="jt-token">API token</label>' +
+      '<input type="password" id="jt-token" autocomplete="off" spellcheck="false">' +
+      '<label for="jt-project">Project key <span class="hint">(optional)</span></label>' +
+      '<input type="text" id="jt-project" placeholder="COWORKLOCAL" autocomplete="off">' +
+      '<div class="hint" style="margin:4px 0 0">Give one and the test also ' +
+      "reports what the API carries for it &mdash; which is the question a " +
+      "spreadsheet export cannot answer.</div>" +
+      '<div class="row" style="margin-top:14px">' +
+        '<button class="primary" id="jt-submit">Test connection</button>' +
+        '<span id="jt-status" class="hint" style="margin:0"></span>' +
+      "</div><div id=\"jt-result\"></div></div>" +
+      '<div class="card"><div class="lbl">Jira connections</div>' +
+      '<div class="hint" style="margin:6px 0 12px">Which Jira project feeds ' +
+      "which delivery project. A portfolio has many of both and they do not " +
+      "line up one to one, so this is a list rather than a setting. The token " +
+      "is sealed with <code>PULSE_SECRET_KEY</code>; only a masked hint is " +
+      "shown. <b>Collect</b> pulls issues in &mdash; the first run fetches the " +
+      'project, later ones only what changed. Results appear on <a href="/jira">Jira</a>.</div>' +
+      '<table class="grid" id="jc-table"><tr><th>Delivery project</th>' +
+      "<th>Jira</th><th>Key</th><th>Token</th><th></th></tr></table>" +
+      '<div class="hint" id="jc-empty" style="margin:8px 0 0"></div>' +
+      '<div style="margin-top:14px">' +
+      '<label for="jc-project">Link a project</label>' +
+      '<select id="jc-project">' + projectOptions + "</select>" +
+      '<label for="jc-site">Jira site</label>' +
+      '<input type="text" id="jc-site" placeholder="insight.example.com/jiradc" autocomplete="off">' +
+      '<label for="jc-email">Email <span class="hint">(blank for a Data Center token)</span></label>' +
+      '<input type="text" id="jc-email" autocomplete="off">' +
+      '<label for="jc-key">Jira project key</label>' +
+      '<input type="text" id="jc-key" placeholder="COWORKLOCAL" autocomplete="off">' +
+      '<label for="jc-token">API token <span class="hint">(blank keeps the stored one)</span></label>' +
+      '<input type="password" id="jc-token" autocomplete="off" spellcheck="false">' +
+      '<div class="row" style="margin-top:14px">' +
+        '<button class="primary" id="jc-save">Save connection</button>' +
+        '<span id="jc-status" class="hint" style="margin:0"></span>' +
+      "</div></div></div>" +
       '<div class="card"><div class="lbl">Project pairing</div>' +
       '<div class="hint" style="margin:6px 0 12px">One delivery project can have several source ids. ' +
       "Jira and Excel each create their own row for the same work, and without this pairing a Jira event " +
@@ -221,6 +272,10 @@
     syncNameField();
 
     document.getElementById("up-submit").addEventListener("click", uploadSource);
+
+    document.getElementById("jt-submit").addEventListener("click", testJira);
+    document.getElementById("jc-save").addEventListener("click", saveConnection);
+    loadConnections();
 
     /* Forgetting a source. Deliberately the same endpoint, the same wording
        and the same gate as the Imports page rather than a second way to do
@@ -242,12 +297,7 @@
 
         btn.disabled = true;
         fetch("/api/imports/" + encodeURIComponent(file), { method: "DELETE", headers: h })
-          .then(function (r) {
-            return r.json().then(function (j) {
-              if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
-              return j;
-            });
-          })
+          .then(readBody)
           .then(function () { return loadProgram(); })
           .catch(function (e) {
             btn.disabled = false;
@@ -275,6 +325,320 @@
     }
     kindEl.addEventListener("change", describeKind);
     describeKind();
+  }
+
+  /* One connection test.
+
+     The token field is never read back into the page after the request and
+     never lands in a URL - it goes in a JSON body, which does not end up in
+     a browser history entry or a proxy access log the way a query string
+     does. The result says which auth scheme was tried, because "wrong
+     token" and "right token, wrong scheme for this Jira" look identical
+     otherwise. */
+  function testJira() {
+    var statusEl = document.getElementById("jt-status");
+    var resultEl = document.getElementById("jt-result");
+    var btn = document.getElementById("jt-submit");
+    var body = {
+      site: document.getElementById("jt-site").value.trim(),
+      email: document.getElementById("jt-email").value.trim(),
+      token: document.getElementById("jt-token").value
+    };
+
+    var h = { "Content-Type": "application/json" };
+    try {
+      var t = sessionStorage.getItem("pulse-admin-token");
+      if (t) h["X-Pulse-Admin-Token"] = t;
+    } catch (e) { /* refused below, with a reason */ }
+
+    statusEl.className = "hint";
+    statusEl.textContent = "Testing…";
+    resultEl.innerHTML = "";
+    btn.disabled = true;
+
+    fetch("/api/jira/test", { method: "POST", headers: h, body: JSON.stringify(body) })
+      .then(readBody)
+      .then(function (j) {
+        statusEl.textContent = "";
+        var who = j.account && j.account.accountId
+          ? '<div class="hint" style="margin-top:4px">accountId <code>' +
+            esc(j.account.accountId) + "</code></div>"
+          : "";
+        resultEl.innerHTML = '<div class="hint ' + (j.ok ? "ok" : "bad") +
+          '" style="margin-top:8px">' + esc(j.detail) + "</div>" + who +
+          '<div class="hint" style="margin-top:4px">tried: ' +
+          esc(j.scheme || "") + "</div>";
+        // Only worth asking once the credential is known to work.
+        var key = document.getElementById("jt-project").value.trim();
+        if (j.ok && key) return previewJira(key, body, h, resultEl);
+      })
+      .catch(function (e) {
+        statusEl.textContent = "";
+        resultEl.innerHTML = '<div class="hint bad" style="margin-top:8px">' +
+          esc(e.message) + "</div>";
+      })
+      .then(function () { btn.disabled = false; });
+  }
+
+  /* What the API carries for one project, appended under the test result.
+
+     Field coverage rather than a yes/no. "Jira has a created date" and
+     "this instance fills it in" are different claims, and only the second
+     decides whether a live collector beats the spreadsheet somebody is
+     emailing around. A field nobody fills is shown at zero rather than
+     hidden - an empty column is the finding. */
+  /* Can the spreadsheet be retired?
+
+     One question decides it. The export's Description column carries a
+     block the tracker has no fields for - PO, BA, Developer, and a
+     `Ghi chu` list naming twelve people who appear nowhere else. If Jira's
+     own description is empty, that block lives only in the spreadsheet and
+     dropping it loses the ownership record.
+
+     Stated as evidence, never as a verdict: a sample of 25 is not proof
+     about 190. */
+  function binVerdict(j) {
+    var e = j.only_in_export;
+    if (!e) return "";
+    var names = Object.keys(e.assignees || {}).map(function (n) {
+      return esc(n) + " (" + e.assignees[n] + ")";
+    }).join(", ");
+    var keeps = e.with_export_block > 0;
+    return '<div class="hint" style="margin-top:12px"><b>Can the export go?' +
+      "</b><br>" +
+      "Jira fills a description on <b>" + e.described + " of " + j.sampled +
+      "</b> sampled issues, and <b>" + e.with_export_block +
+      "</b> of those carry the <code>PO:/BA:/Developer:</code> block the " +
+      "spreadsheet keeps." +
+      (keeps
+        ? " So the block is in Jira too &mdash; the export adds nothing here."
+        : " <b>So that block is only in the spreadsheet.</b> Retiring the " +
+          "export would lose the PO and BA roles and the <code>Ghi chú</code> " +
+          "names, none of which Jira has a field for.") +
+      (names ? "<br>Jira&rsquo;s own assignees in the sample: " + names : "") +
+      '<br><span class="hint">A sample of ' + j.sampled + " is evidence " +
+      "about " + j.total + ", not proof.</span></div>";
+  }
+
+  function previewJira(key, creds, headers, resultEl) {
+    var payload = {
+      site: creds.site, email: creds.email, token: creds.token, project: key
+    };
+    resultEl.insertAdjacentHTML("beforeend",
+      '<div class="hint" id="jp-wait" style="margin-top:10px">Looking at ' +
+      esc(key) + "&hellip;</div>");
+
+    return fetch("/api/jira/preview",
+                 { method: "POST", headers: headers, body: JSON.stringify(payload) })
+      .then(readBody)
+      .then(function (j) {
+        var wait = document.getElementById("jp-wait");
+        if (wait) wait.remove();
+        if (!j.ok) {
+          resultEl.insertAdjacentHTML("beforeend",
+            '<div class="hint bad" style="margin-top:8px">' + esc(j.detail) + "</div>");
+          return;
+        }
+        var rows = j.fields.map(function (f) {
+          var none = f.filled === 0;
+          return "<tr><td>" + (none ? '<span class="bad">' : "<b>") +
+            esc(f.name) + (none ? "</span>" : "</b>") +
+            '</td><td style="text-align:right">' + f.filled + " / " + j.sampled +
+            '</td><td class="hint" style="padding-left:10px">' +
+            esc(f.unlocks) + "</td></tr>";
+        }).join("");
+        resultEl.insertAdjacentHTML("beforeend",
+          '<div class="hint" style="margin-top:12px"><b>' + esc(j.project) +
+          "</b> &mdash; " + j.total + " issues, " + j.sampled + " sampled, " +
+          j.histories + " change-history entries in the sample.</div>" +
+          '<table class="grid" style="margin-top:6px">' +
+          "<tr><th>Field</th><th>Filled</th><th>What it unlocks</th></tr>" +
+          rows + "</table>" +
+          '<div class="hint" style="margin-top:6px">A field at 0 is one this ' +
+          "instance does not fill in &mdash; the API having it is not the same " +
+          "as the team using it.</div>" + binVerdict(j));
+      })
+      .catch(function (e) {
+        var wait = document.getElementById("jp-wait");
+        if (wait) wait.remove();
+        resultEl.insertAdjacentHTML("beforeend",
+          '<div class="hint bad" style="margin-top:8px">' + esc(e.message) + "</div>");
+      });
+  }
+
+  /* Jira connections: list, save, collect, forget.
+
+     `adminHeaders` rather than a per-call copy - four of these need the
+     same gate, and a fifth that forgot it would fail in a way that reads
+     as a server problem. */
+  /* Read one response, whatever it turned out to be.
+
+     Every handler here used to assume the body is JSON, which holds until
+     something 500s: FastAPI answers plain `Internal Server Error`, the
+     parse fails, and the page reports `Unexpected token 'I'` - a message
+     about the error message rather than the error. The real cause was a
+     missing PULSE_SECRET_KEY, and none of that reached the screen. */
+  function readBody(r) {
+    return r.text().then(function (text) {
+      var data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+      if (!r.ok) {
+        throw new Error(
+          (data && data.detail) ||
+          (text ? text.slice(0, 300) : "HTTP " + r.status)
+        );
+      }
+      return data;
+    });
+  }
+
+  function adminHeaders() {
+    var h = { "Content-Type": "application/json" };
+    try {
+      var t = sessionStorage.getItem("pulse-admin-token");
+      if (t) h["X-Pulse-Admin-Token"] = t;
+    } catch (e) { /* refused below, with a reason */ }
+    return h;
+  }
+
+  function loadConnections() {
+    return fetch("/api/jira/connections")
+      .then(function (r) { return r.ok ? r.json() : { connections: [] }; })
+      .then(function (j) {
+        var table = document.getElementById("jc-table");
+        var empty = document.getElementById("jc-empty");
+        if (!table) return;
+        // Keep the header row, replace the rest.
+        while (table.rows.length > 1) table.deleteRow(1);
+        var rows = j.connections || [];
+        empty.textContent = rows.length ? ""
+          : "No Jira is linked yet. Nothing will appear on the Jira page until one is.";
+        rows.forEach(function (c) {
+          var tr = table.insertRow();
+          tr.innerHTML =
+            "<td><b>" + esc(c.project_id) + "</b></td>" +
+            "<td><code>" + esc(c.site) + "</code></td>" +
+            "<td><b>" + esc(c.project_key) + "</b></td>" +
+            '<td><span class="hint">' + esc(c.hint || "stored") + "</span></td>" +
+            '<td><button type="button" class="small" data-collect="' + c.id +
+            '">Collect</button> ' +
+            '<button type="button" class="small" data-tool="' +
+            esc(c.project_key) + '">Sync tool</button> ' +
+            '<button type="button" class="small" data-drop="' + c.id +
+            '">Forget</button></td>';
+        });
+        wireConnectionButtons();
+      });
+  }
+
+  function wireConnectionButtons() {
+    [].forEach.call(programBox.querySelectorAll("[data-collect]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-collect");
+        var was = btn.textContent;
+        // A first collection pages through the whole project with a gap
+        // between requests, so this is slow by design. Saying so beats a
+        // button that looks stuck.
+        btn.disabled = true;
+        btn.textContent = "Collecting…";
+        fetch("/api/jira/connections/" + id + "/collect",
+              { method: "POST", headers: adminHeaders() })
+          .then(readBody)
+          .then(function (j) {
+            btn.textContent = was;
+            btn.disabled = false;
+            alert("Collected " + j.project_key + "\n\n" +
+                  j.issues + " issue(s), " + j.changelogs + " change(s), " +
+                  j.pages + " page(s)" +
+                  (j.truncated ? " (stopped at the page cap)" : "") + "\n" +
+                  j.extracted_issues + " issue(s) read into the tool layer.\n\n" +
+                  (j.since ? "Only changes since " + j.since + "."
+                           : "First collection - everything."));
+          })
+          .catch(function (e) {
+            btn.textContent = was;
+            btn.disabled = false;
+            alert("Could not collect.\n\n" + e.message);
+          });
+      });
+    });
+
+    /* The sync tool, downloaded rather than linked.
+
+       It carries this server's admin token so it can post what it
+       collects, so it is fetched with the token rather than exposed at a
+       plain URL - and the warning is said out loud, because a file that
+       can write to the server does not look dangerous sitting in a
+       Downloads folder. */
+    [].forEach.call(programBox.querySelectorAll("[data-tool]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var key = btn.getAttribute("data-tool");
+        if (!confirm("Download the sync tool for " + key + "?\n\n" +
+                     "It is a PowerShell script that reads Jira on whichever " +
+                     "computer runs it and sends the result here - for a " +
+                     "machine that Jira accepts but this server does not.\n\n" +
+                     "It contains this server's admin token, so treat the " +
+                     "file as a credential and rotate the token afterwards.")) return;
+        fetch("/api/jira/sync-tool?project_key=" + encodeURIComponent(key),
+              { headers: adminHeaders() })
+          .then(function (r) {
+            if (!r.ok) return readBody(r);
+            return r.blob().then(function (blob) {
+              var a = document.createElement("a");
+              a.href = URL.createObjectURL(blob);
+              a.download = "sync-" + key.toLowerCase() + ".ps1";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(a.href);
+            });
+          })
+          .catch(function (e) { alert("Could not build the tool.\n\n" + e.message); });
+      });
+    });
+
+    [].forEach.call(programBox.querySelectorAll("[data-drop]"), function (btn) {
+      btn.addEventListener("click", function () {
+        if (!confirm("Forget this Jira connection?\n\nThe issues it already " +
+                     "collected stay; only the link and its token go.")) return;
+        fetch("/api/jira/connections/" + btn.getAttribute("data-drop"),
+              { method: "DELETE", headers: adminHeaders() })
+          .then(readBody)
+          .then(loadConnections)
+          .catch(function (e) { alert("Could not forget it.\n\n" + e.message); });
+      });
+    });
+  }
+
+  function saveConnection() {
+    var statusEl = document.getElementById("jc-status");
+    var body = {
+      project_id: document.getElementById("jc-project").value,
+      site: document.getElementById("jc-site").value.trim(),
+      email: document.getElementById("jc-email").value.trim(),
+      project_key: document.getElementById("jc-key").value.trim(),
+      token: document.getElementById("jc-token").value
+    };
+    if (body.project_id === "__new__") {
+      statusEl.className = "hint bad";
+      statusEl.textContent = "Pick an existing project - a Jira link needs one to feed.";
+      return;
+    }
+    statusEl.className = "hint";
+    statusEl.textContent = "Saving…";
+
+    fetch("/api/jira/connections",
+          { method: "POST", headers: adminHeaders(), body: JSON.stringify(body) })
+      .then(readBody)
+      .then(function () {
+        statusEl.textContent = "Saved. Use Collect to pull the issues in.";
+        document.getElementById("jc-token").value = "";
+        return loadConnections();
+      })
+      .catch(function (e) {
+        statusEl.className = "hint bad";
+        statusEl.textContent = e.message;
+      });
   }
 
   function uploadSource() {
@@ -311,12 +675,7 @@
     document.getElementById("up-submit").disabled = true;
 
     fetch("/api/sources/upload", { method: "POST", body: body })
-      .then(function (r) {
-        return r.json().then(function (j) {
-          if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
-          return j;
-        });
-      })
+      .then(readBody)
       .then(function (j) {
         if (!j.ok) {
           statusEl.textContent = "";

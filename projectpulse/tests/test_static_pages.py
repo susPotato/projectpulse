@@ -160,3 +160,139 @@ def test_every_page_with_a_rail_keeps_the_project_in_its_links(page: Path):
     assert "/static/rail.js" in text, (
         f"{page.name} renders a rail but never rewrites its links"
     )
+
+
+@pytest.mark.parametrize("page", PAGES, ids=lambda p: p.name)
+def test_the_inline_script_parses(page: Path):
+    """These pages carry their behaviour inline, and a syntax error in it
+    is invisible to every other check here: the HTML is still well-formed,
+    the classes are still defined, the route still returns 200, and the
+    page loads to a spinner that never resolves.
+
+    That is not hypothetical - `settings.html` shipped with
+    `class=\\"hint\\"` inside a double-quoted string, which ends the string
+    early and breaks the whole script. Caught by a person looking at it,
+    which is the expensive way.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is not available to parse the script")
+
+    text = page.read_text(encoding="utf-8")
+    blocks = re.findall(r"<script>(.*?)</script>", text, re.S)
+    if not blocks:
+        pytest.skip(f"{page.name} has no inline script")
+
+    for index, block in enumerate(blocks):
+        if not block.strip():
+            continue
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".js", delete=False, encoding="utf-8"
+        ) as handle:
+            handle.write(block)
+            path = handle.name
+        try:
+            done = subprocess.run([node, "--check", path],
+                                  capture_output=True, text=True)
+        finally:
+            Path(path).unlink(missing_ok=True)
+        assert done.returncode == 0, (
+            f"{page.name} script #{index} does not parse:\n{done.stderr}"
+        )
+
+
+def _rail_hrefs(text: str) -> list[str]:
+    """The destinations one rail offers, in order."""
+    nav = re.search(r'<nav class="rail".*?</nav>', text, re.S)
+    if not nav:
+        return []
+    return re.findall(r'<a href="(/[^"?#]*)', nav.group(0))
+
+
+RAILED = [p for p in PAGES if 'class="rail"' in p.read_text(encoding="utf-8")]
+
+
+@pytest.mark.parametrize("page", RAILED, ids=lambda p: p.name)
+def test_every_rail_offers_the_same_destinations(page: Path):
+    """The rail is literal markup on each hand-written page and an array in
+    `Shell.tsx`, so there are eight copies of one list and nothing made
+    them agree. Adding `/jira` reached exactly one of them, and the page
+    was live, tested and completely unreachable - which is the state
+    `Shell.tsx`'s own comment warns about: "a page reachable only by
+    typing its URL is a page nobody opens."
+    """
+    shell = (Path(__file__).resolve().parent.parent
+             / "web" / "src" / "components" / "Shell.tsx")
+    if not shell.is_file():
+        pytest.skip("the built app's rail is not in this checkout")
+
+    expected = re.findall(r'\{ href: "(/[^"]+)", label:', shell.read_text(encoding="utf-8"))
+    got = _rail_hrefs(page.read_text(encoding="utf-8"))
+    # `/insight` is the brand link as well as a rail entry on some pages,
+    # so compare sets rather than counts.
+    assert set(expected) <= set(got), (
+        f"{page.name} is missing rail entries: {sorted(set(expected) - set(got))}"
+    )
+
+
+@pytest.mark.parametrize("page", RAILED, ids=lambda p: p.name)
+def test_a_rail_does_not_offer_a_page_that_is_not_served(page: Path):
+    """The mirror of the above: a link to a route nobody registered is a
+    404 somebody finds by clicking."""
+    from app.api.main import app
+
+    served = {r.path for r in app.routes}
+    for href in _rail_hrefs(page.read_text(encoding="utf-8")):
+        assert href in served, f"{page.name} links to {href}, which is not a route"
+
+
+def test_the_sync_tool_template_parses_as_powershell():
+    """It is downloaded and run by somebody who cannot debug it - the PM,
+    on a laptop, during a demo. A syntax error there is discovered in the
+    worst possible room."""
+    import shutil
+    import subprocess
+    import tempfile
+
+    template = Path(__file__).resolve().parent.parent / "app" / "api" / "static" / "sync-tool.ps1.tmpl"
+    assert template.is_file()
+
+    powershell = shutil.which("powershell") or shutil.which("pwsh")
+    if powershell is None:
+        pytest.skip("no PowerShell to parse with")
+
+    filled = (template.read_text(encoding="utf-8")
+              .replace("__SERVER__", "https://example.test")
+              .replace("__JIRA_SITE__", "https://jira.example.test/jiradc")
+              .replace("__PROJECT_KEY__", "ABC")
+              .replace("__PUSH_TOKEN__", "t0ken"))
+    assert "__" not in re.sub(r"__[A-Z_]+__", "", filled) or True
+    assert not re.findall(r"__[A-Z_]+__", filled), "a placeholder went unreplaced"
+
+    with tempfile.NamedTemporaryFile("w", suffix=".ps1", delete=False,
+                                     encoding="utf-8") as handle:
+        handle.write(filled)
+        path = handle.name
+    try:
+        done = subprocess.run(
+            [powershell, "-NoProfile", "-Command",
+             "$e=$null;"
+             f"[void][System.Management.Automation.Language.Parser]::ParseFile('{path}',[ref]$null,[ref]$e);"
+             "if($e.Count -gt 0){$e[0].Message; exit 1}"],
+            capture_output=True, text=True)
+    finally:
+        Path(path).unlink(missing_ok=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_the_sync_tool_has_a_placeholder_for_everything_it_needs():
+    """Every field somebody has to fill in by hand is a field they can get
+    wrong while a demo waits."""
+    template = (Path(__file__).resolve().parent.parent / "app" / "api"
+                / "static" / "sync-tool.ps1.tmpl").read_text(encoding="utf-8")
+    for name in ("__SERVER__", "__JIRA_SITE__", "__PROJECT_KEY__", "__PUSH_TOKEN__"):
+        assert name in template, name

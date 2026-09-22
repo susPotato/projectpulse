@@ -1170,6 +1170,477 @@ def delete_import(request: Request, file_name: str) -> dict:
     return {"deleted": file_name}
 
 
+class JiraProbeIn(BaseModel):
+    """Credentials for one connection test. Never persisted."""
+
+    site: str = ""
+    email: str = ""
+    token: str = ""
+
+
+@app.post("/api/jira/test")
+def test_jira_connection(request: Request, body: JiraProbeIn) -> dict:
+    """Ask one Jira whether this credential works, and store nothing.
+
+    Admin-gated for two reasons, and the second is the real one. It spends
+    an outbound request, and more importantly it makes *this server* fetch
+    a URL somebody typed - `connect.normalise_site` refuses anything that
+    resolves onto our own network, but the ability to aim the server at all
+    is not something to hand out unauthenticated.
+
+    The token is used to build one header and is never written down: not to
+    the database, not to the log, and not into any message this returns.
+    """
+    from app import admin
+    from app.ingest.sources.jira import connect
+
+    admin.require(request)
+
+    try:
+        result = connect.probe(body.site, body.email, body.token)
+    except connect.ConnectionRefused as exc:
+        # A refusal to attempt is a 400 about the input, not a failed test -
+        # the page shows them differently because they need different fixes.
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    return result.as_dict()
+
+
+class JiraPreviewIn(JiraProbeIn):
+    """The same credentials, plus the project to look at."""
+
+    project: str = ""
+    sample: int = 25
+
+
+@app.post("/api/jira/preview")
+def preview_jira_project(request: Request, body: JiraPreviewIn) -> dict:
+    """What this Jira would give us for one project, before collecting any.
+
+    Same gate and same no-storage rule as the connection test. Reports
+    field coverage over a sample rather than a yes/no: "Jira has a created
+    date" and "this instance fills it in" are different claims, and only
+    the second one decides whether a live collector is worth building.
+    """
+    from app import admin
+    from app.ingest.sources.jira import connect
+
+    admin.require(request)
+
+    try:
+        return connect.preview(body.site, body.email, body.token,
+                               body.project, min(int(body.sample or 25), 50))
+    except connect.ConnectionRefused as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+
+class JiraLinkIn(BaseModel):
+    """One link between a delivery project and a Jira project."""
+
+    project_id: str = ""
+    site: str = ""
+    email: str = ""
+    project_key: str = ""
+    #: Blank on an edit keeps the stored credential.
+    token: str = ""
+
+
+@app.get("/api/jira/connections")
+def list_jira_connections(project: str | None = None) -> dict:
+    """Every Jira link, or one project's. Never returns a credential.
+
+    Readable without a token: it discloses a site, a project key and a
+    masked hint, which is what the Settings list needs to render. The
+    writes below are gated.
+    """
+    from app.ingest.sources.jira import store
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        return {"connections": store.listing(session, project)}
+
+
+@app.post("/api/jira/connections")
+def save_jira_connection(request: Request, body: JiraLinkIn) -> dict:
+    """Link a delivery project to a Jira project, credential and all."""
+    from app import admin
+    from app.ingest.sources.jira import connect, store
+
+    actor = admin.require(request)
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    from app.llm.keys import KeyStoreUnavailable
+
+    try:
+        with session_scope() as session:
+            row = store.save(
+                session, project_id=body.project_id, site=body.site,
+                email=body.email, project_key=body.project_key,
+                token=body.token, actor=actor,
+            )
+            session.flush()
+            saved = {"id": row.id, "project_id": row.project_id,
+                     "site": row.site, "project_key": row.project_key,
+                     "hint": row.hint}
+    except KeyStoreUnavailable as exc:
+        # A deployment that has not opted in, not a bad request. The
+        # message already names the command that fixes it, and losing it
+        # to a 500 is how this first failed: the page showed a JSON parse
+        # error about the words "Internal Server Error".
+        raise HTTPException(status_code=503, detail=str(exc)) from None
+    except connect.ConnectionRefused as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    return {"ok": True, **saved}
+
+
+@app.delete("/api/jira/connections/{connection_id}")
+def delete_jira_connection(request: Request, connection_id: int) -> dict:
+    """Forget one link.
+
+    The rows it already collected stay, the same rule `delete_import`
+    keeps: removing a source does not empty the pages built from it.
+    """
+    from app import admin
+    from app.ingest.sources.jira import store
+
+    admin.require(request)
+
+    with session_scope() as session:
+        if not store.delete(session, connection_id):
+            raise HTTPException(status_code=404, detail="no such connection")
+    return {"deleted": connection_id}
+
+
+@app.get("/jira")
+def jira_page() -> FileResponse:
+    """What has been collected from Jira, as rows."""
+    return FileResponse(STATIC / "jira.html")
+
+
+@app.get("/api/jira/issues")
+def read_jira_issues(project_key: str | None = None, limit: int = 500) -> dict:
+    """Collected Jira issues, straight from the tool layer.
+
+    Deliberately the tool layer and not the domain: this screen exists to
+    show what Jira actually said, before any of this product's naming or
+    status mapping is applied. A row here disagreeing with the Schedule
+    page is a finding about the mapping, and flattening the two would hide
+    exactly that.
+
+    Read-only and unauthenticated: it discloses issue summaries, which the
+    tracker already shows everyone who can open it.
+    """
+    from app.models.tool import ToolJiraIssue
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        query = select(ToolJiraIssue)
+        if project_key:
+            query = query.where(ToolJiraIssue.project_key == project_key.strip().upper())
+        query = query.order_by(ToolJiraIssue.updated_at_src.desc()).limit(
+            max(1, min(int(limit), 2000))
+        )
+        rows = session.scalars(query).all()
+        keys = sorted({r.project_key for r in session.scalars(
+            select(ToolJiraIssue)).all() if r.project_key})
+        return {
+            "project_keys": keys,
+            "issues": [
+                {
+                    "issue_key": r.issue_key,
+                    "project_key": r.project_key,
+                    "summary": r.summary,
+                    "issue_type": r.issue_type,
+                    "status": r.status,
+                    "assignee": r.assignee,
+                    "created": r.created_at_src.isoformat() if r.created_at_src else None,
+                    "updated": r.updated_at_src.isoformat() if r.updated_at_src else None,
+                    "due_date": r.due_date,
+                    "story_points": r.story_points,
+                }
+                for r in rows
+            ],
+        }
+
+
+@app.post("/api/jira/connections/{connection_id}/collect")
+def collect_jira_connection(request: Request, connection_id: int) -> dict:
+    """Pull one linked Jira project into the raw tables, then extract it.
+
+    Incremental by construction: `live.collect` reads its watermark from
+    the rows it wrote last time, so the first call collects the project
+    and every later one collects the changes.
+
+    Synchronous on purpose for now. A first collection of a large project
+    is slow - pages are paced to stay under the rate limiter - and a
+    background job that fails silently is worse than a request that takes
+    a minute and says what happened.
+    """
+    from datetime import datetime, timezone
+
+    from app import admin
+    from app.ingest.sources.jira import convertor, live, store
+    from app.ingest.sources.jira.extractor import extract_changelogs, extract_issues
+    from app.models.jira import JiraConnection
+
+    admin.require(request)
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        row = session.get(JiraConnection, connection_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="no such connection")
+        try:
+            token = store.token_for(row)
+        except store.NoCredential as exc:
+            # A link with no token is a deliberate state, not a fault.
+            raise HTTPException(status_code=400, detail=str(exc)) from None
+        except Exception as exc:  # noqa: BLE001 - a sealed row we cannot read
+            raise HTTPException(
+                status_code=503,
+                detail=("this connection was sealed with a different "
+                        f"PULSE_SECRET_KEY and cannot be read: {exc}"),
+            ) from None
+
+        try:
+            report = live.collect(
+                session, connection_id=row.id, project_key=row.project_key,
+                site=row.site, email=row.email, token=token,
+                now=datetime.now(timezone.utc).replace(tzinfo=None),
+            )
+        except ConnectionError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from None
+        session.flush()
+
+        # Straight on into the tool layer, so the Jira page has rows to
+        # show rather than raw JSON nobody can read.
+        issues = extract_issues(session, connection_id=row.id)
+        changes = extract_changelogs(session, connection_id=row.id)
+        session.flush()
+
+        # ...and on into the domain, which is what every other page reads.
+        # Stopping at the tool layer is why the first collection filled the
+        # Jira tab and changed nothing anywhere else.
+        jira_project = convertor.ensure_project(
+            session, connection_id=row.id, project_key=row.project_key,
+            name=row.project_key,
+        )
+        session.flush()
+        tasks = convertor.convert_issues(
+            session, connection_id=row.id, project_id=jira_project)
+        state_changes = convertor.convert_changelogs(
+            session, connection_id=row.id,
+            now=datetime.now(timezone.utc).replace(tzinfo=None))
+        delivery_id, jira_source_id = row.project_id, jira_project
+
+    # Pair the two source ids onto one delivery project - invariant 7. The
+    # convertor mints its own `jira:Project:...` id, so without this the
+    # portfolio grows a second project with the same work in it, and the
+    # spreadsheet's rows and Jira's rows describe one project from two
+    # places that never meet.
+    paired = _pair_source(delivery_id, jira_source_id)
+
+    return {"ok": True, "project_key": row.project_key,
+            "extracted_issues": issues, "extracted_changes": changes,
+            "tasks": tasks, "state_changes": state_changes,
+            "jira_project_id": jira_source_id, "paired_with": paired,
+            **report.as_dict()}
+
+
+def _pair_source(delivery_id: str, source_id: str) -> str | None:
+    """Add `source_id` to the delivery project's `also` list, idempotently.
+
+    Returns the delivery project it was paired onto, or None when that
+    project is not registered - which is not a failure: an unregistered
+    project simply has no pairing row to extend, and the Jira rows stand
+    on their own until somebody registers one.
+    """
+    from app import scope
+
+    known = scope.find(delivery_id)
+    if known is None:
+        return None
+    also = list(known.also)
+    if source_id not in also and source_id != delivery_id:
+        also.append(source_id)
+        scope.register(delivery_id, known.name, tuple(also), known.program_id)
+    return delivery_id
+
+
+class JiraIngestIn(BaseModel):
+    """Issues collected elsewhere, for a server that cannot collect them."""
+
+    project_key: str = ""
+    #: Whole Jira issue objects, `changelog` still attached, exactly as the
+    #: search endpoint returned them.
+    issues: list[dict] = []
+    #: What the collector recorded as the source URL, kept for provenance.
+    url: str = ""
+
+
+@app.post("/api/jira/ingest")
+def ingest_jira_issues(request: Request, body: JiraIngestIn) -> dict:
+    """Accept issues somebody else fetched, then run the ordinary pipeline.
+
+    This exists because of a network fact, not a design preference: the
+    Jira this was built against sits behind bot scoring that lets an
+    ordinary laptop through and refuses a request from a data centre, so
+    a hosted server cannot collect for itself. Measured both ways -
+    `/myself` answers 401 from a laptop and 403 with a challenge page
+    from Fly.
+
+    Only the *fetch* moves. The issues are written into the same raw
+    tables `live.collect` writes, and extract, convert and pairing run
+    here exactly as they would have - so the evidence trail, the
+    tool-layer rows and the exact-precision state changes are identical
+    to a collection that happened on this machine.
+
+    When the block is lifted, the Collect button starts working and this
+    becomes unnecessary rather than becoming load-bearing.
+    """
+    import json as _json
+    from datetime import datetime, timezone
+
+    from app import admin
+    from app.ingest.sources.jira import convertor
+    from app.ingest.sources.jira.extractor import extract_changelogs, extract_issues
+    from app.models.jira import JiraConnection
+    from app.models.raw import RawJiraChangelogs, RawJiraIssues
+
+    admin.require(request)
+
+    key = (body.project_key or "").strip().upper()
+    if not key:
+        raise HTTPException(status_code=400, detail="project_key is required")
+    if not body.issues:
+        raise HTTPException(status_code=400, detail="no issues in the payload")
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    with session_scope() as session:
+        # The connection is what binds these rows to a delivery project.
+        # Without one the issues would land with no way to pair them, so
+        # this refuses rather than importing rows nothing can reach.
+        row = session.scalar(
+            select(JiraConnection).where(JiraConnection.project_key == key)
+        )
+        if row is None:
+            raise HTTPException(
+                status_code=400,
+                detail=(f"no Jira connection on this server names {key!r}. "
+                        f"Save one on Settings first - it is what binds "
+                        f"these issues to a delivery project."),
+            )
+
+        params = _json.dumps({"connection_id": row.id, "board_key": key})
+        url = body.url or f"{row.site}/rest/api/2/search"
+        issues = changelogs = 0
+        for issue in body.issues:
+            changelog = issue.pop("changelog", {}) or {}
+            session.add(RawJiraIssues(
+                params=params, data=_json.dumps(issue).encode("utf-8"),
+                url=url, input=None, fetched_at=now))
+            issues += 1
+            for history in changelog.get("histories", []):
+                session.add(RawJiraChangelogs(
+                    params=params,
+                    data=_json.dumps(history).encode("utf-8"),
+                    url=f"{row.site}/rest/api/2/issue/{issue.get('id')}/changelog",
+                    input=_json.dumps({"issue_id": issue.get("id"),
+                                       "issue_key": issue.get("key")}),
+                    fetched_at=now))
+                changelogs += 1
+        session.flush()
+
+        extracted = extract_issues(session, connection_id=row.id)
+        changes_extracted = extract_changelogs(session, connection_id=row.id)
+        session.flush()
+
+        jira_project = convertor.ensure_project(
+            session, connection_id=row.id, project_key=key, name=key)
+        session.flush()
+        tasks = convertor.convert_issues(
+            session, connection_id=row.id, project_id=jira_project)
+        state_changes = convertor.convert_changelogs(
+            session, connection_id=row.id, now=now)
+        delivery_id = row.project_id
+
+    paired = _pair_source(delivery_id, jira_project)
+
+    return {"ok": True, "project_key": key, "received": issues,
+            "changelogs": changelogs, "extracted_issues": extracted,
+            "extracted_changes": changes_extracted, "tasks": tasks,
+            "state_changes": state_changes, "paired_with": paired}
+
+
+@app.get("/api/jira/sync-tool")
+def download_jira_sync_tool(request: Request, project_key: str) -> Response:
+    """A one-file PowerShell script that syncs one project, pre-filled.
+
+    The person who runs this is not the person who built the app. They
+    have a browser and a work laptop, so the tool has to be something
+    Windows can already run - no Python, no install, no build step - and
+    it has to arrive knowing the server, the Jira site and the project,
+    because every field somebody has to fill in is a field they can get
+    wrong while a demo waits.
+
+    **It carries this server's admin token**, which is what lets it post
+    what it collected. That is a real disclosure: whoever holds the file
+    can write to this instance until the token is rotated. Gated behind
+    the same token so only somebody who already has it can mint one, and
+    worth rotating after a demo rather than leaving it in a Downloads
+    folder forever.
+    """
+    from app import admin
+    from app.models.jira import JiraConnection
+
+    admin.require(request)
+
+    key = (project_key or "").strip().upper()
+    with session_scope() as session:
+        row = session.scalar(
+            select(JiraConnection).where(JiraConnection.project_key == key)
+        )
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(f"no Jira connection names {key!r}. Save one on "
+                        f"Settings first - the tool needs to know which "
+                        f"delivery project these issues belong to."),
+            )
+        site = row.site
+
+    template = (STATIC / "sync-tool.ps1.tmpl").read_text(encoding="utf-8")
+    script = (template
+              .replace("__SERVER__", str(request.base_url).rstrip("/"))
+              .replace("__JIRA_SITE__", site)
+              .replace("__PROJECT_KEY__", key)
+              .replace("__PUSH_TOKEN__", os.environ.get(admin.TOKEN_ENV, "").strip()))
+    return Response(
+        content=script,
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition":
+                 f'attachment; filename="sync-{key.lower()}.ps1"'},
+    )
+
+
 @app.post("/api/imports/resync")
 def resync_imports(request: Request) -> dict:
     """Re-read every watched sheet through the ordinary reader, differ and rules.
