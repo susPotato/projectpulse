@@ -2818,6 +2818,8 @@ export interface components {
             planned_end: string | null;
             /** Projected End */
             projected_end: string | null;
+            /** Actual End */
+            actual_end: string | null;
             /** Propagated Days */
             propagated_days: number | null;
             /** Recorded Slip Days */
@@ -3084,6 +3086,15 @@ export interface components {
             days_past_due: number | null;
             /** Also Named */
             also_named: string[];
+            /** Actual End */
+            actual_end: string | null;
+            /** Finished Early Days */
+            finished_early_days: number | null;
+            /**
+             * Closed
+             * @default false
+             */
+            closed: boolean;
             /** Phase */
             phase: string | null;
             /** Progress */

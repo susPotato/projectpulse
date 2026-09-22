@@ -2,7 +2,7 @@
   Who is carrying what, and what has moved.
 
   Every figure comes from a column a PM actually fills in, and one panel still
-  says what the sheets cannot support. See `api/schemas/team.py` for the full
+  says what the source cannot support. See `api/schemas/team.py` for the full
   reasoning.
 
   The burn chart used to be in that "cannot support" list: the worklog had
@@ -26,6 +26,7 @@ import {
   type ApiProblem,
   type BurnSeries,
   type Member,
+  type MemberTask,
   type TeamBundle,
   withProject,
 } from "../api";
@@ -81,16 +82,140 @@ function scaleTicks(start: string, span: number): { at: number; label: string }[
 /* One member's dated tasks on the shared window. Bars are positioned as a
    percentage of the window so two rows are comparable by eye - which is the
    only reason to share an axis at all. */
+/* Work with no drawable bar, listed rather than omitted.
+
+   A task reaches here for one of two reasons and they mean opposite things:
+   it never started, or it started before the history we hold. Saying which
+   costs one word and saves the reader guessing. */
+/* Ordering a roster. 190 tasks across six people is past the point where
+   "the order the server sent them" is an answer, and the two questions a
+   lead actually asks are "who is carrying the most" and "who is stuck". */
+const MEMBER_SORTS = [
+  ["load", "most work"],
+  ["late", "most overdue"],
+  ["dated", "most scheduled"],
+  ["name", "name"],
+] as const;
+
+type MemberSort = (typeof MEMBER_SORTS)[number][0];
+
+/* Which tasks a member is shown as carrying. `all` is the honest default -
+   a filter that hides finished work makes a busy week look empty - but the
+   other two are how somebody finds the thing they came for. */
+const TASK_FILTERS = [
+  ["all", "all tasks"],
+  ["open", "not finished"],
+  ["overdue", "past due"],
+  ["done", "finished"],
+] as const;
+
+type TaskFilter = (typeof TASK_FILTERS)[number][0];
+
+function keeps(task: MemberTask, filter: TaskFilter) {
+  if (filter === "open") return !task.closed;
+  if (filter === "done") return task.closed;
+  if (filter === "overdue") {
+    return !task.closed && (task.days_past_due ?? 0) > 0;
+  }
+  return true;
+}
+
+function matches(task: MemberTask, query: string) {
+  if (!query) return true;
+  return [task.label, task.title, task.phase]
+    .join(" ")
+    .toLowerCase()
+    .includes(query);
+}
+
+function overdueCount(member: Member) {
+  return member.tasks.filter((t) => !t.closed && (t.days_past_due ?? 0) > 0)
+    .length;
+}
+
+function orderMembers(members: Member[], sort: MemberSort) {
+  const copy = members.slice();
+  if (sort === "name") {
+    copy.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sort === "late") {
+    copy.sort((a, b) => overdueCount(b) - overdueCount(a));
+  } else if (sort === "dated") {
+    const dated = (m: Member) =>
+      m.tasks.filter((t) => t.start && t.planned_end).length;
+    copy.sort((a, b) => dated(b) - dated(a));
+  } else {
+    copy.sort((a, b) => b.tasks.length - a.tasks.length);
+  }
+  return copy;
+}
+
+function why(task: MemberTask) {
+  if (task.closed) return "finished, no start recorded";
+  if (task.start) return "started, no due date";
+  if (task.planned_end) return `due ${task.planned_end}, not started`;
+  return "no dates";
+}
+
+/* How many undated rows to print before folding the rest away. Eleven
+   Vietnamese titles at full length filled a screen on their own, and this
+   panel is a summary of one person's week, not a backlog export. */
+const FEW = 3;
+
+function UndatedList({ tasks }: { tasks: MemberTask[] }) {
+  const [open, setOpen] = useState(false);
+  const shown = open ? tasks : tasks.slice(0, FEW);
+  const rest = tasks.length - shown.length;
+
+  return (
+    <div className="grid gap-0.5 py-1">
+      {shown.map((t) => (
+        <div key={t.entity_id} className="truncate text-[11.5px] text-ink-3">
+          <b className="font-semibold text-ink-2">{t.label}</b>
+          {t.title && t.title !== t.label && (
+            <span className="ml-1.5">{t.title}</span>
+          )}
+          <span className="ml-1.5 italic">{why(t)}</span>
+        </div>
+      ))}
+      {(rest > 0 || open) && (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="w-fit cursor-pointer border-0 bg-transparent p-0 text-[11px] text-blue underline"
+        >
+          {open ? "show fewer" : `${rest} more`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+
 function WorkloadRow({
   member,
   start,
   span,
+  filter,
+  query,
 }: {
   member: Member;
   start: string;
   span: number;
+  filter: TaskFilter;
+  query: string;
 }) {
-  const dated = member.tasks.filter((t) => t.start && t.planned_end);
+  /* Filter once, here, so the bars and the folded list below them are the
+     same set of tasks. Filtering them separately is how a row comes to say
+     "2 dated" above a list of eleven. */
+  const tasks = member.tasks.filter(
+    (t) => keeps(t, filter) && matches(t, query),
+  );
+  const dated = tasks.filter((t) => t.start && t.planned_end);
+  /* Everything else. A bar needs both ends, but "has no start date" is not
+     the same as "has no work": thirteen To Do tasks three weeks past their
+     due date were reading as an empty row, which is the one reading that
+     makes an unstarted backlog look like nothing to worry about. */
+  const undated = tasks.filter((t) => !(t.start && t.planned_end));
 
   return (
     <div className="flex items-start gap-3 border-b border-rule-2 py-2 last:border-b-0">
@@ -110,11 +235,13 @@ function WorkloadRow({
           worst slip was the one figure that could not be read, which is the
           same mistake the Gantt already fixed once. */}
       <div className="min-w-0 flex-1 pr-[76px]">
-        {dated.length === 0 ? (
+        {dated.length === 0 && undated.length === 0 ? (
           <div className="py-2 text-[11.5px] text-ink-3 italic">
-            No dated task in the schedule sheet
+            No task recorded for this person
             {member.qa_items > 0 && " - this person appears only on the worklog"}
           </div>
+        ) : dated.length === 0 ? (
+          <UndatedList tasks={undated} />
         ) : (
           <div className="grid gap-1.5">
             {dated.map((task) => {
@@ -139,6 +266,18 @@ function WorkloadRow({
               const isLate = late > chain;
               const over = (Math.max(chain, late) / span) * 100;
 
+              /* A finished task is green. `days_past_due` is only ever set on
+                 an open row, so a closed one has no red tail to draw and the
+                 whole bar is the work that got done.
+
+                 Landing late is still green, deliberately: the bar says what
+                 happened, and "finished, 3 days after the date" is a
+                 completed task however it reads on a report. The label
+                 carries the number so the fact is not lost in the colour. */
+              const done = task.closed && !!task.actual_end;
+              const early = task.finished_early_days;
+              const fill = done ? "var(--viz-done)" : "var(--viz-plan)";
+
               return (
                 <div key={task.entity_id} className="relative h-[18px]">
                   <div
@@ -154,7 +293,7 @@ function WorkloadRow({
                       className="rounded-l-[4px]"
                       style={{
                         width: `${(planned / (planned + over)) * 100}%`,
-                        background: "var(--viz-plan)",
+                        background: fill,
                       }}
                     />
                     {over > 0 && (
@@ -180,8 +319,21 @@ function WorkloadRow({
                     className="absolute top-0 max-w-[280px] overflow-hidden text-[10.5px] text-ellipsis whitespace-nowrap text-ink-3"
                     style={{ left: `calc(${offset + planned + over}% + 6px)` }}
                   >
-                    {task.label}
-                    {isLate ? (
+                    <b className="font-semibold text-ink-2">{task.label}</b>
+                    {task.title && task.title !== task.label && (
+                      <span className="ml-1.5">{task.title}</span>
+                    )}
+                    {done && early != null && early > 0 ? (
+                      <b className="ml-1 font-semibold text-green">
+                        {early}d early
+                      </b>
+                    ) : done && early != null && early < 0 ? (
+                      <b className="ml-1 font-semibold text-ink-3">
+                        done {-early}d late
+                      </b>
+                    ) : done ? (
+                      <b className="ml-1 font-semibold text-green">on time</b>
+                    ) : isLate ? (
                       <b className="ml-1 font-semibold text-red">{late}d late</b>
                     ) : (
                       chain > 0 && (
@@ -189,7 +341,7 @@ function WorkloadRow({
                       )
                     )}
                     {/* People the row names in its note field. Shown beside
-                        the owner, not merged into it: the sheet says they
+                        the owner, not merged into it: the source says they
                         are named on this work and does not say who they
                         report to. */}
                     {task.also_named.length > 0 && (
@@ -201,6 +353,7 @@ function WorkloadRow({
                 </div>
               );
             })}
+            {undated.length > 0 && <UndatedList tasks={undated} />}
           </div>
         )}
       </div>
@@ -220,7 +373,7 @@ function Hours({ members }: { members: Member[] }) {
   if (withEffort.length === 0) {
     return (
       <p className="m-0 text-[12.5px] text-ink-2">
-        No sheet carried an <code className="font-mono">Estimate</code> or{" "}
+        No source carried an <code className="font-mono">Estimate</code> or{" "}
         <code className="font-mono">Hours</code> column with anything in it, so there is
         no effort to show.
       </p>
@@ -284,7 +437,7 @@ function Hours({ members }: { members: Member[] }) {
    Two series, so a legend is always present: the logged line in `--viz-plan`
    and the planned total as a recessive dashed reference. The trailing stretch
    where nothing was logged is washed in `--viz-over` - the same red that means
-   "beyond the plan" everywhere else in the app, because a stall is exactly
+   "later than planned" everywhere else in the app, because a stall is exactly
    that. No new hue is introduced, so no new palette needs validating. */
 function Burn({ burn }: { burn: BurnSeries }) {
   if (burn.points.length < 2) {
@@ -497,6 +650,23 @@ function Activity({ bundle }: { bundle: TeamBundle }) {
 }
 
 export function TeamView({ bundle }: { bundle: TeamBundle }) {
+  const [query, setQuery] = useState("");
+  const [memberSort, setMemberSort] = useState<MemberSort>("load");
+  const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
+
+  const needle = query.trim().toLowerCase();
+  const shownMembers = orderMembers(bundle.members, memberSort).filter(
+    (m) =>
+      m.tasks.some((t) => keeps(t, taskFilter) && matches(t, needle)) ||
+      (!needle && taskFilter === "all"),
+  );
+  const totalTasks = bundle.members.reduce((n, m) => n + m.tasks.length, 0);
+  const shownTasks = bundle.members.reduce(
+    (n, m) =>
+      n + m.tasks.filter((t) => keeps(t, taskFilter) && matches(t, needle)).length,
+    0,
+  );
+
   const span = days(bundle.window_start, bundle.window_end) ?? 1;
   const dated = bundle.members.filter((m) =>
     m.tasks.some((t) => t.start && t.planned_end),
@@ -506,7 +676,7 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
     <Page
       current="/team"
       title="Team"
-      scope={`${bundle.members.length} people named in the sheets`}
+      scope={`${bundle.members.length} people named in the tracker`}
       asof={
         bundle.window_start
           ? `${bundle.window_start} to ${bundle.window_end}`
@@ -538,6 +708,48 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
 
       <Board className="mb-6">
         <Panel caption="Workload on one window" span={12}>
+          {/* Controls above the window, not inside it: they change which
+              rows exist, and a control that sits among the rows it removes
+              moves as you use it. */}
+          <div className="mb-2.5 flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search key, title, type..."
+              aria-label="Search tasks"
+              className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-2.5 py-1.5 text-[13px] text-ink"
+            />
+            <select
+              value={memberSort}
+              onChange={(e) => setMemberSort(e.target.value as MemberSort)}
+              aria-label="Sort people"
+              className="rounded-md border border-rule bg-surface px-2.5 py-1.5 text-[13px] text-ink"
+            >
+              {MEMBER_SORTS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  Sort: {label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={taskFilter}
+              onChange={(e) => setTaskFilter(e.target.value as TaskFilter)}
+              aria-label="Filter tasks by status"
+              className="rounded-md border border-rule bg-surface px-2.5 py-1.5 text-[13px] text-ink"
+            >
+              {TASK_FILTERS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  Show: {label}
+                </option>
+              ))}
+            </select>
+            <span className="ml-auto text-[11.5px] text-ink-3">
+              {shownTasks === totalTasks
+                ? `${totalTasks} tasks`
+                : `${shownTasks} of ${totalTasks} tasks`}
+            </span>
+          </div>
           {bundle.window_start ? (
             <>
               {/* Same geometry as WorkloadRow - a 150px name gutter, gap-3,
@@ -564,28 +776,36 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
                   </div>
                 </div>
               </div>
-              {bundle.members.map((member) => (
-                <WorkloadRow
-                  key={member.name}
-                  member={member}
-                  start={bundle.window_start!}
-                  span={span}
-                />
-              ))}
+              {shownMembers.length === 0 ? (
+                <p className="m-0 py-3 text-[12.5px] text-ink-3 italic">
+                  Nothing matches that. Clear the search to see everyone.
+                </p>
+              ) : (
+                shownMembers.map((member) => (
+                  <WorkloadRow
+                    key={member.name}
+                    member={member}
+                    start={bundle.window_start!}
+                    span={span}
+                    filter={taskFilter}
+                    query={query.trim().toLowerCase()}
+                  />
+                ))
+              )}
               <div className="mt-3 flex flex-wrap gap-4 border-t border-rule pt-2.5">
                 <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
                   <span
                     className="h-2.5 w-4 rounded-sm"
                     style={{ background: "var(--viz-plan)" }}
                   />
-                  plan - what the sheet says
+                  plan - what the tracker says
                 </span>
                 <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
                   <span
                     className="h-2.5 w-4 rounded-sm"
                     style={{ background: "var(--viz-over)" }}
                   />
-                  beyond the plan - what the chain implies
+                  later than planned - the slip the chain implies
                 </span>
                 <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
                   <span
@@ -607,7 +827,7 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
         <Panel caption="Effort logged against plan" span={12}>
           <Burn burn={bundle.burn} />
           <p className="mt-2.5 mb-0 text-[11.5px] text-ink-3">
-            One point per scan of the worklog sheet. Every rise is a{" "}
+            One point per scan of the work log. Every rise is a{" "}
             <code className="font-mono text-[11px]">hours_spent</code> change the differ
             detected, so a flat stretch is evidence that nothing was logged &mdash; not
             evidence that nobody looked. The planned line is one value because{" "}
@@ -631,7 +851,7 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
         </Panel>
       </Board>
 
-      <Section title="What these sheets cannot show">
+      <Section title="What this data cannot show">
         <Card className="grid gap-2.5">
           <div>
             <b className="font-semibold">A planned line that moves.</b>{" "}

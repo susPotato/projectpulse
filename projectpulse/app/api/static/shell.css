@@ -42,6 +42,11 @@
      values declared under BOTH the media query and the `data-theme` scope. */
   --viz-plan: #2a78d6;
   --viz-over: #d03b3b;
+  /* Finished work. The third meaning in the hue rule: blue is the plan, red
+     is the overrun the chain implies, green is work that is done. Matches
+     `--color-green` in `web/src/index.css`, so a bar and the words beside it
+     are the same green. */
+  --viz-done: #157f4a;
   --viz-base: var(--ink-3);
 
   color-scheme: light;
@@ -71,6 +76,7 @@
     --rule-2: #1C2531;
 
     --viz-plan: #3987e5;
+  --viz-done: #42c98a;
 
     color-scheme: dark;
   }
@@ -98,6 +104,7 @@
   --rule-2: #1C2531;
 
   --viz-plan: #3987e5;
+  --viz-done: #42c98a;
 
   color-scheme: dark;
 }

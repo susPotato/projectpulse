@@ -23,6 +23,7 @@ export type PortfolioBundle = components["schemas"]["PortfolioBundle"];
 export type ProjectRow = components["schemas"]["ProjectRow"];
 export type TeamBundle = components["schemas"]["TeamBundle"];
 export type Member = components["schemas"]["Member"];
+export type MemberTask = components["schemas"]["MemberTask"];
 export type BurnSeries = components["schemas"]["BurnSeries"];
 export type BurnPoint = components["schemas"]["BurnPoint"];
 export type ProgramBundle = components["schemas"]["ProgramBundle"];

@@ -22,7 +22,7 @@
   editing in Excel and re-uploads the sheet from Settings > Sources.
 
   Three bars per row, and the third is the product: baseline (what was
-  committed), plan (what the sheet says today), and the projected overrun (what
+  committed), plan (what the tracker says today), and the projected overrun (what
   the dependency chain implies and nobody has written down).
 
   Computes nothing. Every date arrives already decided by project_schedule().
@@ -65,6 +65,22 @@
      this is the only tabular thing on the page, and the one property that
      matters is that a 173-row body scrolls inside a fixed box instead of
      pushing the milestones section off the screen. */
+  /* Search and ordering for the chart. Same shapes as `.ft-controls` below,
+     which does the same job for the features table - one visual language for
+     "narrow this list", whichever list it is. */
+  .g-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin: 0 0 10px; }
+  .g-controls input[type="search"] { font: inherit; font-size: 13px;
+    padding: 6px 9px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--rule); border-radius: 6px; min-width: 260px;
+    flex: 1 1 260px; }
+  .g-controls select { font: inherit; font-size: 13px; padding: 6px 9px;
+    color: var(--ink); background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 6px; }
+  /* Pushed to the far end: it is the answer to "did my search do anything",
+     read after the controls rather than between them. */
+  .g-count { margin-left: auto; font-size: 12px; color: var(--ink-3); }
+
   .ft-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
     margin: 12px 0 8px; }
   .ft-controls input[type="search"] { font: inherit; font-size: 13px;
@@ -311,7 +327,7 @@
 
     var tiles = [
       [bundle.rows.length, "tasks", false],
-      [d(bundle.project_end_planned), "sheet says finish", false],
+      [d(bundle.project_end_planned), "tracker says finish", false],
       [overdue, "past due, still open", overdue > 0]
     ];
     if (linked) {
@@ -359,6 +375,132 @@
     return frag;
   }
 
+  /* Searching and ordering 190 rows.
+
+     The chart draws every task it is given, in the order the server sent
+     them, which was fine at 20 rows and is a page and a half of scrolling at
+     190. Both controls narrow or reorder the *data* and re-render, rather
+     than hiding rows with CSS: a hidden row still occupies the time axis and
+     still counts in "3 x same dates", so the chart would disagree with
+     itself.
+
+     State lives here rather than in the URL. It is a view preference, not a
+     thing to link somebody to - and the project *is* in the URL, so a
+     reloaded page comes back to the same data with a clean view. */
+  var view = { q: "", sort: "due" };
+
+  /* What each ordering is for, in the order somebody reaches for them.
+     `due` first because the question is almost always "what is next". */
+  var SORTS = [
+    ["due", "due date"],
+    ["late", "most overdue"],
+    ["slip", "biggest slip"],
+    ["start", "start date"],
+    ["owner", "owner"],
+    ["name", "name"]
+  ];
+
+  function haystack(row) {
+    return [row.label, row.title, row.assignee, row.milestone_name, row.phase,
+            row.status].join(" ").toLowerCase();
+  }
+
+  /* A missing date sorts last in every date ordering. Ascending would put
+     every undated row at the top, which is the one group nobody opened the
+     chart to look at. */
+  function by(pick) {
+    return function (a, b) {
+      var x = pick(a), y = pick(b);
+      if (x === null || x === undefined || x === "") return 1;
+      if (y === null || y === undefined || y === "") return -1;
+      return x < y ? -1 : x > y ? 1 : 0;
+    };
+  }
+
+  var ORDER = {
+    due: by(function (r) { return r.planned_end; }),
+    start: by(function (r) { return r.start; }),
+    name: by(function (r) { return (r.title || r.label || "").toLowerCase(); }),
+    owner: by(function (r) { return (r.assignee || "").toLowerCase(); }),
+    late: function (a, b) {
+      return (b.days_past_due || 0) - (a.days_past_due || 0);
+    },
+    slip: function (a, b) {
+      return (b.propagated_days || 0) - (a.propagated_days || 0);
+    }
+  };
+
+  /* The bundle the chart is actually handed. Milestones are left whole: the
+     grouping headers still make sense when a search leaves one task under
+     one feature, and dropping them would make the chart reshape itself as
+     somebody types. */
+  function narrow(bundle) {
+    var q = view.q.trim().toLowerCase();
+    var rows = bundle.rows.slice();
+    if (q) {
+      rows = rows.filter(function (r) { return haystack(r).indexOf(q) >= 0; });
+    }
+    rows.sort(ORDER[view.sort] || ORDER.due);
+    var out = {};
+    for (var k in bundle) if (bundle.hasOwnProperty(k)) out[k] = bundle[k];
+    out.rows = rows;
+    return out;
+  }
+
+  function controls(bundle, card) {
+    var bar = $("div", "g-controls");
+
+    var search = document.createElement("input");
+    search.type = "search";
+    search.placeholder = "Search key, title, owner, feature...";
+    search.value = view.q;
+    search.setAttribute("aria-label", "Search tasks on this chart");
+
+    var order = document.createElement("select");
+    order.setAttribute("aria-label", "Sort tasks");
+    SORTS.forEach(function (pair) {
+      var option = document.createElement("option");
+      option.value = pair[0];
+      option.textContent = "Sort: " + pair[1];
+      if (pair[0] === view.sort) option.selected = true;
+      order.appendChild(option);
+    });
+
+    var count = $("span", "g-count");
+
+    function redraw() {
+      var shown = narrow(bundle);
+      count.textContent = shown.rows.length === bundle.rows.length
+        ? bundle.rows.length + " tasks"
+        : shown.rows.length + " of " + bundle.rows.length + " tasks";
+      /* Replace only the chart. Rebuilding the whole card would rebuild the
+         search box too, and an input that is recreated on every keystroke
+         loses focus after the first character. */
+      var old = card.querySelector(".gantt");
+      if (old) card.replaceChild(PulseGantt.render(shown), old);
+    }
+
+    var typing = null;
+    search.addEventListener("input", function () {
+      view.q = search.value;
+      // The chart is a full SVG rebuild, so one per keystroke is visible as
+      // a stutter on a 190-row board.
+      clearTimeout(typing);
+      typing = setTimeout(redraw, 120);
+    });
+    order.addEventListener("change", function () {
+      view.sort = order.value;
+      redraw();
+    });
+
+    bar.appendChild(search);
+    bar.appendChild(order);
+    bar.appendChild(count);
+    count.textContent = bundle.rows.length + " tasks";
+    return bar;
+  }
+
+
   function render(bundle) {
     document.getElementById("sub").textContent =
       bundle.project_id + "  -  " + bundle.rows.length + " tasks, " +
@@ -374,7 +516,8 @@
     main.appendChild(renderStats(bundle));
 
     var card = $("div", "card");
-    card.appendChild(PulseGantt.render(bundle));
+    card.appendChild(controls(bundle, card));
+    card.appendChild(PulseGantt.render(narrow(bundle)));
     card.appendChild($("p", "sub",
       "Bold rows and red arrows are the driving path - the only chain that can " +
       "be shortened to pull the finish date in. Hover any row or bar for its dates."));
@@ -532,8 +675,40 @@
             carried + " of the " + ordered.length + " issues on this chart.</p>";
         }
 
+        /* A flat backlog has nothing to roll up.
+
+           This breakdown exists to show how a hundred-odd feature rows
+           distribute across the handful of keyed issues they sit under -
+           which is a real question when the export nests, and no question
+           at all when it does not. Read from Jira every ticket is its own
+           row, so every block here reads "of 1 features, 0 are backed by
+           code": one hundred and ninety times, saying nothing the sortable
+           table below does not say better. */
+        var nested = keys.some(function (k) {
+          return data.parents[k].features > 1;
+        });
+
+        if (!nested) {
+          var backed = 0, unver = 0, clash = 0, grounded = 0;
+          keys.forEach(function (k) {
+            var p = data.parents[k];
+            backed += p.corroborated; unver += p.unverified;
+            clash += p.conflicts; grounded += p.grounded;
+          });
+          html += '<p class="sub">Every row here is its own issue, so there ' +
+            "is no roll-up to do - each one is listed in the table below. " +
+            "Across all " + keys.length + ": <b>" + backed +
+            "</b> backed by code" +
+            (grounded ? ' (<b style="color:var(--green)">' + grounded +
+              "</b> with every cited name found in the file)" : "") +
+            (unver ? ", " + unver + " not verified from the candidate code" : "") +
+            (clash ? ', <b style="color:var(--orange)">' + clash +
+              " status conflict" + (clash === 1 ? "" : "s") + "</b>" : "") +
+            ".</p>";
+        }
+
         // Claimed-versus-verified, for the issues that carry work.
-        keys.forEach(function (key) {
+        if (nested) keys.forEach(function (key) {
           var p = data.parents[key];
           if (!p.features) return;
           var adjudicated = p.corroborated + p.contradicted + p.unverified;

@@ -83,6 +83,20 @@ class MemberTask(Response):
     #: task, never folded into `Member.name`: the file says these people are
     #: named on the work, and does not say they report to whoever owns it.
     also_named: list[str] = Field(default_factory=list)
+    #: When the work actually finished, from the tracker's changelog. Held
+    #: beside `planned_end` rather than replacing it, because the interesting
+    #: fact is the gap between them: a task that landed before the date it was
+    #: promised is the one thing a schedule view could never say before.
+    actual_end: date | None = None
+    #: Days early (positive) or late (negative) against `planned_end`, for a
+    #: task that has actually finished. None while the work is still open -
+    #: "not finished yet" and "finished exactly on time" are different answers
+    #: and must not share a zero.
+    finished_early_days: int | None = None
+    #: Whether the tracker considers this closed, by the shared vocabulary.
+    #: The page needs it to tell an unstarted task from a finished one when
+    #: neither draws a bar.
+    closed: bool = False
     phase: str | None = None
     progress: float | None = None
 

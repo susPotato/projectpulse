@@ -1191,6 +1191,13 @@ def team_project(
         owner = (task.assignee or "").strip() or "Unassigned"
         projection = impact.projections.get(task.id)
         open_row = (task.status or "").upper() not in CLOSED
+        # Early is positive, late is negative, and both need a real finish
+        # date: an open task has no answer here rather than a zero.
+        early = (
+            (task.due_date - task.actual_end).days
+            if task.actual_end and task.due_date
+            else None
+        )
         past_due = (
             (today - task.due_date).days
             if open_row and task.due_date and task.due_date < today
@@ -1200,6 +1207,9 @@ def team_project(
             MemberTask(
                 entity_id=task.id,
                 label=entity_label(task.id, title=task.title),
+                actual_end=task.actual_end,
+                finished_early_days=early,
+                closed=not open_row,
                 title=task.title,
                 start=task.start_date,
                 # `due_date` is where the convertor puts the planned finish.
@@ -1553,6 +1563,14 @@ def gantt_project(
             select(Task.id, Task.phase).where(Task.project_id.in_(project_ids))
         ).all()
     )
+    #: And again for the real finish date. The forward pass reasons about what
+    #: a task *will* do; when it actually landed is a fact about the past that
+    #: the schedule engine has no use for, so it stays out of `TaskNode`.
+    landed = dict(
+        session.execute(
+            select(Task.id, Task.actual_end).where(Task.project_id.in_(project_ids))
+        ).all()
+    )
     tasks = load_tasks(session, project_ids)
     edges = load_edges(session, project_ids)
 
@@ -1582,6 +1600,7 @@ def gantt_project(
                 start=task.start_date,
                 baseline_end=task.baseline_end,
                 planned_end=task.planned_end,
+                actual_end=landed.get(task.entity_id),
                 projected_end=projection.projected_end,
                 propagated_days=projection.propagated_days,
                 recorded_slip_days=projection.recorded_slip_days,

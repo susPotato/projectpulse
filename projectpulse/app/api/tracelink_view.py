@@ -214,6 +214,41 @@ def index_by_file(
     return out
 
 
+#: How long a person's name can plausibly be. `parse_inline_fields` pulls
+#: every `Label: value` pair out of a description, which is right for
+#: "BA: QuanDh14" and wrong for "Email subject: [Project code] - Request
+#: review CM Plan" - both are a label and a value, only one names anybody.
+#: Bounding the value is what separates them without a list of field names
+#: this product would have to keep up to date per tracker.
+NAME_MAX = 48
+
+#: Labels that hold an address or a link rather than a person, even when the
+#: value is short enough to pass. Matched on the label because that is where
+#: the team said what the field is for.
+NOT_PEOPLE = ("email", "subject", "link", "url", "note", "date", "time")
+
+
+def _people(inline: dict[str, Any]) -> dict[str, str]:
+    """The `Label: value` pairs that plausibly name somebody.
+
+    Deliberately permissive about *who*: `FSG`, `QuanDh14` and
+    `TaiPH9,LocLP3,HieuHV1` are all real answers on this board and none of
+    them looks like a display name. The filter is about the shape of the
+    value, not a roster - a thing this product does not have and should not
+    invent.
+    """
+    out: dict[str, str] = {}
+    for label, value in inline.items():
+        text = str(value or "").strip()
+        if not text or len(text) > NAME_MAX:
+            continue
+        low = str(label or "").lower()
+        if any(word in low for word in NOT_PEOPLE):
+            continue
+        out[label] = text
+    return out
+
+
 def rollup_by_parent(run: Path) -> dict[str, Any]:
     """Traceability folded onto the tracker keys the Schedule page draws.
 
@@ -227,6 +262,15 @@ def rollup_by_parent(run: Path) -> dict[str, Any]:
     under a single `Product` issue, so one bar carries the entire backlog and
     the other sixteen carry none. Reporting `0` against those sixteen is
     correct - they are planning tasks, and no code should back them.
+
+    **A flat backlog has no parents, and folding it onto one is wrong.** That
+    nesting is a property of the spreadsheet export, where the real work sat
+    in unkeyed rows beneath the keyed ones. Read the same board from Jira and
+    every row is its own issue with its own key, so `parent` is empty on all
+    of them and every ticket landed in a single `(none)` bucket - which the
+    Schedule page then reported as "190 of 190 feature rows are not on the
+    chart". A ticket that carries its own key *is* its own row, so it folds
+    onto that.
     """
     tickets, t_problem = _read(run, "tickets")
     verdicts, _ = _read(run, "verdicts")
@@ -240,7 +284,7 @@ def rollup_by_parent(run: Path) -> dict[str, Any]:
     by_uid = {v["uid"]: v for v in (verdicts or [])}
     parents: dict[str, dict[str, Any]] = {}
     for t in tickets:
-        key = t.get("parent") or "(none)"
+        key = t.get("parent") or t.get("key") or "(none)"
         row = parents.setdefault(key, {
             "features": 0, "corroborated": 0, "contradicted": 0,
             "unverified": 0, "not_adjudicated": 0, "conflicts": 0,
@@ -670,7 +714,7 @@ def feature_rows(run: Path) -> list[dict[str, Any]]:
             # Whatever the sheet's people fields are called. Sent as a dict so
             # the page can label a column with the team's own word instead of
             # one this product picked - see `_ownership`.
-            "people": {k: v for k, v in inline.items() if str(v or "").strip()},
+            "people": _people(inline),
             # Which of the fields this sheet expects every row to carry are
             # blank here. The table's "nobody assigned" filter reads this, so
             # it counts the same rows `_ownership` reports as gaps.

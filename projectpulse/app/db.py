@@ -126,6 +126,11 @@ _ADDITIVE_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("tasks", "description", "TEXT"),
     ("risks", "origin", "VARCHAR(20)"),
     ("risks", "cited_task_ids", "TEXT"),
+    # When a task actually finished, derived from the Jira changelog. Nullable
+    # with no default, so a database that predates it self-heals on boot: a
+    # task with no recorded transition into a closed status simply has none,
+    # which is the same answer it would get from a fresh conversion.
+    ("tasks", "actual_end", "DATE"),
 )
 
 

@@ -296,3 +296,119 @@ def test_the_sync_tool_has_a_placeholder_for_everything_it_needs():
                 / "static" / "sync-tool.ps1.tmpl").read_text(encoding="utf-8")
     for name in ("__SERVER__", "__JIRA_SITE__", "__PROJECT_KEY__", "__PUSH_TOKEN__"):
         assert name in template, name
+
+
+def _client():
+    from fastapi.testclient import TestClient
+
+    from app.api import main
+
+    return TestClient(main.app)
+
+
+def test_a_hand_written_asset_must_be_revalidated():
+    """`gantt.js` keeps its name through every edit, so a browser that
+    cached it once will keep showing the old chart. A legend fix looked
+    like it had not deployed for exactly this reason."""
+    reply = _client().get("/static/gantt.js")
+    assert reply.status_code == 200
+    assert reply.headers["cache-control"] == "no-cache"
+
+
+def test_a_fingerprinted_bundle_may_be_cached_forever():
+    """Vite hashes the name, so changed bytes are a changed URL."""
+    assets = STATIC / "app" / "assets"
+    bundle = next(assets.glob("index-*.js"))
+    reply = _client().get(f"/static/app/assets/{bundle.name}")
+    assert reply.status_code == 200
+    assert "immutable" in reply.headers["cache-control"]
+
+
+def test_a_page_fingerprints_the_assets_it_loads():
+    """`no-cache` only helps a browser that asks. A content hash in the URL
+    means it never has to: a changed file is a URL it has not seen. This was
+    mistaken for a failed deploy twice."""
+    body = _client().get("/gantt").text
+    assert 'src="/static/gantt.js?v=' in body
+    assert 'href="/static/shell.css?v=' in body
+
+
+def test_the_fingerprint_follows_the_file():
+    """A stamp that never changes is decoration, not cache busting."""
+    import hashlib
+    import re
+
+    body = _client().get("/gantt").text
+    stamp = re.search(r'/static/gantt\.js\?v=([0-9a-f]+)', body).group(1)
+    expected = hashlib.sha256((STATIC / "gantt.js").read_bytes()).hexdigest()
+    assert expected.startswith(stamp)
+
+
+def test_a_flat_backlog_folds_onto_its_own_keys(tmp_path):
+    """`parent` is a property of the spreadsheet's nesting. Read the same
+    board from Jira and every row is its own keyed issue, so folding on
+    `parent` put all 190 into one `(none)` bucket - which the Schedule page
+    reported as "190 of 190 feature rows are not on the chart"."""
+    import json
+
+    from app.api import tracelink_view
+
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "tickets.json").write_text(json.dumps({
+        "payload": [
+            {"uid": "T1", "key": "AB-1", "parent": None, "status": "Release"},
+            {"uid": "T2", "key": "AB-2", "parent": None, "status": "Release"},
+        ]
+    }), encoding="utf-8")
+
+    rollup = tracelink_view.rollup_by_parent(run)
+    assert set(rollup["parents"]) == {"AB-1", "AB-2"}
+    assert "(none)" not in rollup["parents"]
+
+
+def test_a_nested_backlog_still_folds_onto_its_parent(tmp_path):
+    """The spreadsheet shape must keep working: unkeyed feature rows roll up
+    to the keyed issue they sit under."""
+    import json
+
+    from app.api import tracelink_view
+
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "tickets.json").write_text(json.dumps({
+        "payload": [
+            {"uid": "T1", "key": None, "parent": "AB-1", "status": "Release"},
+            {"uid": "T2", "key": None, "parent": "AB-1", "status": "To Do"},
+        ]
+    }), encoding="utf-8")
+
+    rollup = tracelink_view.rollup_by_parent(run)
+    assert set(rollup["parents"]) == {"AB-1"}
+    assert rollup["parents"]["AB-1"]["features"] == 2
+
+
+def test_an_email_subject_is_not_a_person():
+    """`parse_inline_fields` pulls every Label: value pair out of a
+    description. "Email subject: [Project code] - Request review CM Plan"
+    is one, and it was being printed in the "named on the row" column."""
+    from app.api.tracelink_view import _people
+
+    got = _people({
+        "BA": "QuanDh14",
+        "Developer": "FNS",
+        "Email subject": "[Project code] - Request review CM Plan",
+        "Review Email": "CMP.Review@fpt.com",
+        "Note": "1 document thiet ke + 1 JSON schema + 2 sample manifests",
+    })
+    assert got == {"BA": "QuanDh14", "Developer": "FNS"}
+
+
+def test_a_short_unfamiliar_name_is_still_a_person():
+    """`FSG` and `TaiPH9,LocLP3,HieuHV1` are real answers on this board.
+    The filter is about the shape of the value, not a roster."""
+    from app.api.tracelink_view import _people
+
+    got = _people({"BA": "FSG", "Ghi chú": "TaiPH9,LocLP3,HieuHV1"})
+    assert got["BA"] == "FSG"
+    assert got["Ghi chú"] == "TaiPH9,LocLP3,HieuHV1"

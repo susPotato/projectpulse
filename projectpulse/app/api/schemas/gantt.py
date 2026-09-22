@@ -47,6 +47,10 @@ class GanttRow(Response):
     baseline_end: date | None = None
     planned_end: date | None = None
     projected_end: date | None = None
+    #: When the work actually finished, from the tracker's changelog. A chart
+    #: that holds this alongside `planned_end` can draw a bar that *ended*
+    #: rather than one that merely stopped being updated.
+    actual_end: date | None = None
 
     #: Slip the chain implies that the sheet does not show.
     propagated_days: int | None = None

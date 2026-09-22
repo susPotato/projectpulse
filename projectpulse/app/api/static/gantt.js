@@ -77,7 +77,7 @@
   /* Open, and past the due date it gives itself.
 
      The one lateness claim available to a source with no dependency graph.
-     `propagated_days` - the red "beyond the plan" segment - is a forward-pass
+     `propagated_days` - the red "later than planned" segment - is a forward-pass
      result over a DAG, so on an export with no links it is 0 on every row and
      nothing on the chart is ever red. That is correct and it is also useless:
      four tasks thirteen days past their due date drew as ordinary blue bars.
@@ -117,6 +117,11 @@
     return [
       row.start || "-", row.planned_end || "-", row.projected_end || "-",
       row.baseline_end || "-", row.status || "-",
+      //: When it actually landed. Two tasks that finished on different days
+      //: are not the same statement, however alike their plans were - and a
+      //: merge that ignored this produced a row with no finish date at all,
+      //: which then drew as an unfinished due-date marker.
+      row.actual_end || "-",
       //: Predecessors are part of what makes two rows the same row here, not a
       //: reason to refuse merging. Sixteen tasks that share dates *and* share
       //: the same single predecessor are sixteen identical statements; keeping
@@ -203,6 +208,8 @@
         start: first.start,
         baseline_end: first.baseline_end,
         planned_end: first.planned_end,
+        //: Part of the merge key above, so every member shares it.
+        actual_end: first.actual_end,
         projected_end: first.projected_end,
         propagated_days: first.propagated_days,
         recorded_slip_days: null,
@@ -415,7 +422,37 @@
         var tip = svg("title");
         tip.textContent = tooltip(row);
 
-        if (start === null && plan !== null) {
+        /* Finished, with a real finish date. On this board that is most of
+           the chart: 151 of 190. Whether it can be drawn as a *bar* depends
+           on whether anything recorded a start, and usually nothing did -
+           tickets go from To Do to Release in one step, so the history knows
+           the day work stopped and nothing at all about when it began. */
+        var done = (row.status === "DONE" || row.status === "DROPPED") &&
+          day(row.actual_end) !== null;
+
+        if (done && start === null) {
+          /* A point at the date it landed, green. Not a bar: a bar needs two
+             ends and this has one, and a bar drawn from an assumed start is
+             the chart inventing the very number the tracker is missing. */
+          var dx = x(day(row.actual_end));
+          var mark = svg("circle", {
+            class: "point", cx: dx, cy: y + 10, r: 5,
+            fill: "var(--viz-done)"
+          });
+          mark.appendChild(tip);
+          g.appendChild(mark);
+          /* Against the date it was promised, which is the only comparison
+             available when there is no duration to show. */
+          var label = "finished " + row.actual_end;
+          if (plan !== null) {
+            var gap = Math.round((plan - day(row.actual_end)) / 86400000);
+            label += gap > 0 ? " - " + gap + "d early"
+              : gap < 0 ? " - " + (-gap) + "d late" : " - on time";
+          }
+          g.appendChild(svgText(
+            { x: dx + 10, y: y + 14, class: "dim" }, label
+          ));
+        } else if (start === null && plan !== null) {
           // A source that gives an end date and no start - Jira due dates do
           // this. A point marker is honest; a bar from an assumed start would
           // be a date we invented.
@@ -460,10 +497,17 @@
           }
 
           var overrun = proj !== null && proj > plan;
+          /* Work the tracker says is finished, with a recorded finish date.
+             Drawn green and ended at the date it actually landed, not at the
+             date it was promised: a bar that stops where the plan stopped
+             cannot show that the work came in early. */
+          var finished = done;
+          var ends = finished ? day(row.actual_end) : plan;
           var bar = svg("rect", {
             class: "mark", x: x(start), y: y + 4,
-            width: Math.max(x(plan) - x(start), 3), height: BAR_H,
-            rx: overrun ? 0 : 4, fill: "var(--viz-plan)"
+            width: Math.max(x(ends) - x(start), 3), height: BAR_H,
+            rx: overrun && !finished ? 0 : 4,
+            fill: finished ? "var(--viz-done)" : "var(--viz-plan)"
           });
           /* Not started, drawn hollow. The dates are a plan either way, so it
              is the same bar - but a task nobody has picked up is a different
@@ -488,7 +532,7 @@
             }));
           }
 
-          if (overrun) {
+          if (overrun && !finished) {
             // 2px surface gap, so the two fills read as two separate facts.
             g.appendChild(svg("rect", {
               class: "mark", x: x(plan) + 2, y: y + 4,
@@ -578,8 +622,9 @@
     var wrap = el("div", "g-key");
     var items = [
       ["base", "baseline - what was committed"],
-      ["plan", "plan - what the sheet says today"],
-      ["over", "beyond the plan - what the chain implies"],
+      ["plan", "plan - what the tracker says today"],
+      ["over", "later than planned - the slip the chain implies"],
+      ["done", "finished - the date the work actually landed"],
       ["ms", "milestone"]
     ];
     if (bundle.rows.some(function (r) { return !r.start && r.planned_end; })) {

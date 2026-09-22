@@ -5,6 +5,10 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 pulse.db
+# Copies taken before a destructive maintenance script. They hold the whole
+# database - real ticket text and the Fernet-encrypted Jira token - so they
+# are a credential and a data export at once, and neither belongs in git.
+pulse.db.bak*
 data/demo/*.xlsx
 # Anything else written into the data root: uploaded sheets, and workbooks
 # converted from a customer's own export (scripts/from_jira_export.py). Real

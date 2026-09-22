@@ -108,6 +108,11 @@ class Task(DomainEntity, Base):
     assignee: Mapped[str | None] = mapped_column(Text, default=None)
     start_date: Mapped[date | None] = mapped_column(Date, default=None)
     due_date: Mapped[date | None] = mapped_column(Date, default=None)
+    #: When the work actually finished, from the tracker's own record of the
+    #: transition into a closed status - never from a plan. Distinct from
+    #: `due_date`, which is when it was promised: holding both is what lets a
+    #: page say a task landed early rather than only that it is no longer open.
+    actual_end: Mapped[date | None] = mapped_column(Date, default=None)
     baseline_end: Mapped[date | None] = mapped_column(Date, default=None)
     progress: Mapped[float | None] = mapped_column(Numeric(5, 2), default=None)
     #: When the *source system* last says this row changed - Jira's `Updated`.

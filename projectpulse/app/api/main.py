@@ -50,6 +50,7 @@ import importlib.util
 import json
 import logging
 import os
+import hashlib
 import re
 import sys
 import tempfile
@@ -59,7 +60,7 @@ from io import BytesIO
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.api import tracelink_view
@@ -142,7 +143,68 @@ STATIC = Path(__file__).parent / "static"
 # Mounted so the three pages can share one stylesheet instead of each declaring
 # its own `:root` - which is exactly how the six mockups ended up with two
 # conflicting token families.
-app.mount("/static", StaticFiles(directory=STATIC), name="static")
+#: Hand-written assets whose filename never changes. A build-time hash would
+#: be better, but these are not built - they are edited in place, which is the
+#: whole reason a browser goes on serving a stale copy of them.
+_VERSIONED = re.compile(
+    r'(?P<attr>href|src)="(?P<path>/static/[^"?]+\.(?:js|css))"')
+
+
+def _page(name: str) -> HTMLResponse:
+    """A hand-written page, with its own assets fingerprinted in the URL.
+
+    `no-cache` on the asset makes a browser *revalidate*; it does not help
+    the copy it cached before that header existed, and it still costs a
+    round trip per file per page load. Putting the file's content hash in
+    the query string is the stronger and cheaper answer: a changed file is a
+    changed URL, so the browser fetches it because it has never seen it
+    before, and an unchanged one is served from cache with no request at
+    all. This has now been mistaken for "the deploy did not work" twice.
+    """
+    html = (STATIC / name).read_text(encoding="utf-8")
+
+    def stamp(match: re.Match[str]) -> str:
+        target = STATIC / match.group("path")[len("/static/"):]
+        if not target.exists():
+            return match.group(0)
+        digest = hashlib.sha256(target.read_bytes()).hexdigest()[:10]
+        return f'{match.group("attr")}="{match.group("path")}?v={digest}"'
+
+    return HTMLResponse(_VERSIONED.sub(stamp, html))
+
+
+class _Revalidating(StaticFiles):
+    """Static files that a browser must re-check before reusing.
+
+    Two kinds of file live under this one mount and they want opposite
+    caching. Vite's output is content-hashed - `index-Dh28aHl8.js` - so a
+    changed bundle is a changed URL and the old one can be cached forever.
+    The hand-written pages are not: `gantt.js` keeps its name through every
+    edit, so a browser that cached it once keeps showing the old chart. That
+    is not hypothetical - a legend fix looked like it had not deployed,
+    because the server was serving the new file and the browser was not
+    asking for it.
+
+    `no-cache` does not mean "do not store": it means revalidate first. The
+    ETag `StaticFiles` already sends turns that into a 304 on the common
+    path, so the cost of correctness here is one conditional request.
+    """
+
+    #: Content-hashed by the build, so the name changes when the bytes do.
+    IMMUTABLE = "/app/assets/"
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        path = str(kwargs.get("full_path") or (args[0] if args else ""))
+        fingerprinted = self.IMMUTABLE.strip("/") in path.replace("\\", "/")
+        response.headers["Cache-Control"] = (
+            "public, max-age=31536000, immutable" if fingerprinted
+            else "no-cache"
+        )
+        return response
+
+
+app.mount("/static", _Revalidating(directory=STATIC), name="static")
 
 
 class SyncRequest(BaseModel):
@@ -218,7 +280,7 @@ def traceability_page() -> FileResponse:
     bundle: the data comes from a *different* repository's run directory, so
     the page must not make the bundle depend on that pipeline existing.
     """
-    return FileResponse(STATIC / "traceability.html")
+    return _page("traceability.html")
 
 
 @dataclass(frozen=True)
@@ -393,7 +455,7 @@ def gantt_page() -> FileResponse:
     Read-only by design - see `api/schemas/gantt.py` for why making it editable
     would cost the precision model.
     """
-    return FileResponse(STATIC / "gantt.html")
+    return _page("gantt.html")
 
 
 @app.get("/api/gantt", response_model=GanttBundle)
@@ -1082,7 +1144,7 @@ def program() -> ProgramBundle:
 @app.get("/imports")
 def imports_page() -> FileResponse:
     """What has been imported, what it feeds, and what reads it."""
-    return FileResponse(STATIC / "imports.html")
+    return _page("imports.html")
 
 
 @app.get("/api/imports")
@@ -1321,7 +1383,7 @@ def delete_jira_connection(request: Request, connection_id: int) -> dict:
 @app.get("/jira")
 def jira_page() -> FileResponse:
     """What has been collected from Jira, as rows."""
-    return FileResponse(STATIC / "jira.html")
+    return _page("jira.html")
 
 
 @app.get("/api/jira/issues")
@@ -1440,10 +1502,16 @@ def collect_jira_connection(request: Request, connection_id: int) -> dict:
         )
         session.flush()
         tasks = convertor.convert_issues(
-            session, connection_id=row.id, project_id=jira_project)
+            session, connection_id=row.id, project_id=jira_project,
+            project_key=row.project_key)
         state_changes = convertor.convert_changelogs(
-            session, connection_id=row.id,
+            session, connection_id=row.id, project_key=row.project_key,
             now=datetime.now(timezone.utc).replace(tzinfo=None))
+        session.flush()
+        # Jira has no start date, so the workload window and the Gantt had
+        # nothing to draw. The changelog does know - see `derive_start_dates`.
+        convertor.derive_start_dates(session, project_id=jira_project)
+        convertor.derive_end_dates(session, project_id=jira_project)
         delivery_id, jira_source_id = row.project_id, jira_project
 
     # Pair the two source ids onto one delivery project - invariant 7. The
@@ -1577,9 +1645,13 @@ def ingest_jira_issues(request: Request, body: JiraIngestIn) -> dict:
             session, connection_id=row.id, project_key=key, name=key)
         session.flush()
         tasks = convertor.convert_issues(
-            session, connection_id=row.id, project_id=jira_project)
+            session, connection_id=row.id, project_id=jira_project,
+            project_key=key)
         state_changes = convertor.convert_changelogs(
-            session, connection_id=row.id, now=now)
+            session, connection_id=row.id, project_key=key, now=now)
+        session.flush()
+        convertor.derive_start_dates(session, project_id=jira_project)
+        convertor.derive_end_dates(session, project_id=jira_project)
         delivery_id = row.project_id
 
     paired = _pair_source(delivery_id, jira_project)
@@ -2000,7 +2072,7 @@ class NarrationSettingsIn(BaseModel):
 @app.get("/settings")
 def settings_page() -> FileResponse:
     """Where a person turns narration on and pastes a key."""
-    return FileResponse(STATIC / "settings.html")
+    return _page("settings.html")
 
 
 @app.get("/api/settings")
@@ -2087,13 +2159,13 @@ class RateIn(BaseModel):
 @app.get("/llm")
 def llm_page() -> FileResponse:
     """Where each feature's model is chosen and keys are managed."""
-    return FileResponse(STATIC / "llm.html")
+    return _page("llm.html")
 
 
 @app.get("/usage")
 def usage_page() -> FileResponse:
     """What the models have cost."""
-    return FileResponse(STATIC / "usage.html")
+    return _page("usage.html")
 
 
 @app.get("/api/llm/features")

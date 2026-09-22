@@ -28,63 +28,16 @@ from sqlalchemy import select
 
 from app.ids import domain_id
 from app.ingest.programs import ensure_program
+from app.ingest.status import STATUS_MAP as _STATUS_MAP
 from app.models.domain import Milestone, Project, QaItem, Task
 from app.models.tool import ToolExcelRow
 
 SOURCE = "excel"
 
-#: Spreadsheet status text -> the normalized vocabulary the rules compare against.
-#: Anything unmapped becomes OTHER rather than being guessed at.
-STATUS_MAP = {
-    "not started": "TODO",
-    "todo": "TODO",
-    "to do": "TODO",
-    "open": "TODO",
-    "in progress": "IN_PROGRESS",
-    "wip": "IN_PROGRESS",
-    "blocked": "BLOCKED",
-    "on hold": "BLOCKED",
-    "done": "DONE",
-    "complete": "DONE",
-    "completed": "DONE",
-    "closed": "DONE",
-    # `Resolved` is one of the commonest states in a real Jira workflow and was
-    # falling through to OTHER, which every downstream count reads as *open* -
-    # so a finished task was reported overdue, in progress and stale at once.
-    "resolved": "DONE",
-    "fixed": "DONE",
-    "delivered": "DONE",
-    # The terminal state in the FPT Jira workflow this app reads: the work is
-    # shipped. Spelled as an instruction rather than a state, which is why it
-    # read as ambiguous and fell through to OTHER - and OTHER is counted as
-    # *open* everywhere downstream, so 142 released items on one board were
-    # reporting as unfinished work and suppressing every completion figure.
-    "release it": "DONE",
-    "released": "DONE",
-    # Work that will not happen. Its own state rather than DONE, because it was
-    # not delivered - counting it as complete would inflate a completion figure,
-    # and counting it as open would report a cancelled task as late forever.
-    "cancelled": "DROPPED",
-    "canceled": "DROPPED",
-    "won't do": "DROPPED",
-    "wont do": "DROPPED",
-    "will not do": "DROPPED",
-    "rejected": "DROPPED",
-    "duplicate": "DROPPED",
-    "abandoned": "DROPPED",
-    "obsolete": "DROPPED",
-    # Common board columns that are unambiguously one of the three live states.
-    # Anything genuinely ambiguous is still left as OTHER rather than guessed:
-    # a wrong mapping is worse than an honest unknown.
-    "backlog": "TODO",
-    "new": "TODO",
-    "in review": "IN_PROGRESS",
-    "review": "IN_PROGRESS",
-    "in testing": "IN_PROGRESS",
-    "testing": "IN_PROGRESS",
-    "impeded": "BLOCKED",
-    "waiting": "BLOCKED",
-}
+#: The shared vocabulary, re-exported under the name this module has always
+#: used. It moved to `app/ingest/status.py` when the Jira convertor turned out
+#: to be carrying a five-entry copy that disagreed with it - see that module.
+STATUS_MAP = _STATUS_MAP
 
 #: A worklog row is blocked if either column says so. The sheets in the wild use
 #: one or the other, and sometimes both.

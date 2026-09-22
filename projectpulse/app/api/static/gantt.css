@@ -248,6 +248,7 @@
 
 .g-key i.base { background: var(--viz-base); height: 4px; }
 .g-key i.plan { background: var(--viz-plan); }
+.g-key i.done { background: var(--viz-done); }
 .g-key i.over { background: var(--viz-over); }
 .g-key i.point {
   width: 9px; height: 9px; border-radius: 50%; background: var(--viz-plan);
