@@ -1082,6 +1082,11 @@ def program_config(session) -> "ProgramBundle":
                 last_scan=scan.scanned_at if scan else None,
                 rows=scan.row_count if scan else 0,
                 project_id=watched.project_id,
+                file_name=watched.file_name,
+                # Only a stored upload can be forgotten: `delete_import`
+                # removes an `uploaded_sheets` row, and a demo sheet is
+                # compiled into the image rather than stored.
+                removable=watched.file_name in stored,
             )
         )
 

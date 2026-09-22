@@ -1117,3 +1117,36 @@ def test_a_project_with_no_run_does_not_get_the_disagreements_tile(session):
         if set(t.requires) <= signals
     }
     assert "source_disagreements" not in offered
+
+
+# Forgetting a source from Settings
+
+
+def test_a_watched_source_carries_what_the_delete_endpoint_needs(session):
+    """The Settings table deletes by `file_name`, which is served rather
+    than split back out of `scope` - a file name may contain the `#` that
+    key is built with, and a screen guessing at it would delete the wrong
+    row or none."""
+    from app.intelligence.pipeline import program_config
+
+    bundle = program_config(session)
+    for src in bundle.sources:
+        if src.kind == "jira_replay":
+            continue
+        assert src.file_name, src.scope
+        assert src.scope.startswith(src.file_name)
+
+
+def test_only_a_stored_upload_is_offered_as_removable(session):
+    """`delete_import` removes an `uploaded_sheets` row. A demo sheet is
+    compiled into the image, so a button on it would always fail."""
+    from sqlalchemy import select
+
+    from app.intelligence.pipeline import program_config
+    from app.models.uploads import UploadedSheet
+
+    stored = set(session.scalars(select(UploadedSheet.file_name)).all())
+    for src in program_config(session).sources:
+        if src.kind == "jira_replay":
+            continue
+        assert src.removable == (src.file_name in stored), src.scope

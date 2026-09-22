@@ -57,6 +57,8 @@
     button { font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
              border-radius: 6px; padding: 9px 16px; border: 1px solid var(--rule);
              background: var(--bg); color: var(--ink); }
+    /* Same as the Imports page, because it is the same control. */
+    button.small { font-size: 12px; padding: 5px 10px; font-weight: 600; }
     button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
     button:disabled { opacity: .55; cursor: default; }
     .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
@@ -137,11 +139,19 @@
   function renderSources() {
     var rows = program.sources.map(function (src) {
       var when = src.last_scan ? String(src.last_scan).replace("T", " ").slice(0, 16) : "never";
-      return "<tr><td><b>" + esc(src.scope) + "</b><div class=\"hint\" style=\"margin:2px 0 0\">" +
+      /* Only a stored upload can be forgotten. A demo sheet is compiled
+         into the image, and a button that always fails is worse than no
+         button - the row says why instead. */
+      var action = src.removable
+        ? '<button type="button" class="small del">Forget</button>'
+        : '<span class="hint">part of the image</span>';
+      return "<tr data-file=\"" + esc(src.file_name || "") + "\"><td><b>" +
+        esc(src.scope) + "</b><div class=\"hint\" style=\"margin:2px 0 0\">" +
         "<code>" + esc(src.path) + "</code></div></td>" +
         "<td>" + esc(src.kind) + "</td>" +
         "<td>" + (src.exists ? '<span class="ok">present</span>' : '<span class="bad">missing</span>') + "</td>" +
-        "<td>" + esc(when) + "</td><td>" + src.rows + "</td></tr>";
+        "<td>" + esc(when) + "</td><td>" + src.rows + "</td>" +
+        "<td>" + action + "</td></tr>";
     }).join("");
 
     var scope = program.scope.map(function (p) {
@@ -188,8 +198,13 @@
       '<div class="card"><div class="lbl">Watched sources</div>' +
       '<div class="hint" style="margin:6px 0 12px">Read from <code>' + esc(program.data_root) +
       "</code>. A missing file is a note, not a failure &mdash; someone has not uploaded this week&rsquo;s sheet yet.</div>" +
-      '<table class="grid"><tr><th>Scope</th><th>Kind</th><th>File</th><th>Last scan</th><th>Rows</th></tr>' +
-      rows + "</table></div>" +
+      '<table class="grid"><tr><th>Scope</th><th>Kind</th><th>File</th><th>Last scan</th><th>Rows</th><th></th></tr>' +
+      rows + "</table>" +
+      '<div class="hint" style="margin:10px 0 0">Forgetting a source removes the ' +
+      "stored workbook and its watch registration. <b>The tasks it produced " +
+      "stay</b> &mdash; removing a superseded upload does not empty the pages " +
+      'built from it. To remove those too, delete the project on <a href="/imports">Imports</a>.</div>' +
+      "</div>" +
       '<div class="card"><div class="lbl">Project pairing</div>' +
       '<div class="hint" style="margin:6px 0 12px">One delivery project can have several source ids. ' +
       "Jira and Excel each create their own row for the same work, and without this pairing a Jira event " +
@@ -206,6 +221,42 @@
     syncNameField();
 
     document.getElementById("up-submit").addEventListener("click", uploadSource);
+
+    /* Forgetting a source. Deliberately the same endpoint, the same wording
+       and the same gate as the Imports page rather than a second way to do
+       it: two screens that delete the same thing must not be able to
+       disagree about what deleting means. */
+    [].forEach.call(programBox.querySelectorAll("tr[data-file] .del"), function (btn) {
+      btn.addEventListener("click", function () {
+        var file = btn.closest("tr").getAttribute("data-file");
+        if (!file) return;
+        if (!confirm("Forget this import?\n\n" + file +
+            "\n\nThe tasks it produced stay; only the stored workbook and its " +
+            "watch registration go.")) return;
+
+        var h = {};
+        try {
+          var t = sessionStorage.getItem("pulse-admin-token");
+          if (t) h["X-Pulse-Admin-Token"] = t;
+        } catch (e) { /* private mode - the request will be refused and say so */ }
+
+        btn.disabled = true;
+        fetch("/api/imports/" + encodeURIComponent(file), { method: "DELETE", headers: h })
+          .then(function (r) {
+            return r.json().then(function (j) {
+              if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
+              return j;
+            });
+          })
+          .then(function () { return loadProgram(); })
+          .catch(function (e) {
+            btn.disabled = false;
+            // Says which of the two refusals happened, because "no token is
+            // configured" and "your token is wrong" need opposite fixes.
+            alert("Could not forget this source.\n\n" + e.message);
+          });
+      });
+    });
 
     // Said before the upload, not after: a Jira export cannot carry a baseline
     // or dependency edges, and finding that out from a flat dashboard is worse

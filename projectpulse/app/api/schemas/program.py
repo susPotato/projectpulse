@@ -30,6 +30,15 @@ class WatchedSource(Response):
     last_scan: datetime | None = None
     rows: int = 0
     project_id: str = ""
+    #: The identifier `DELETE /api/imports/{file_name}` takes. Served rather
+    #: than split back out of `scope`, because a file name may contain the
+    #: `#` that key is built with and a screen guessing at it would delete
+    #: the wrong row, or none.
+    file_name: str = ""
+    #: True when this is a stored upload, which is the only kind that can be
+    #: removed. A sheet compiled into the demo image is part of the build,
+    #: and offering a button that always fails is worse than offering none.
+    removable: bool = False
 
 
 class ScopeEntry(Response):
