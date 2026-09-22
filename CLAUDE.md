@@ -4,6 +4,80 @@ Read this first. It is the handoff between sessions.
 
 ---
 
+## ✅ Done — the product runs on real Jira data, live 2026-09-23
+
+**Nothing is owed. Production is current with `main` and holds the real backlog.**
+Verified live, not assumed:
+
+```
+task_count 190   sources: excel:Project:upload:cowork-local + jira:Project:1:COWORKLOCAL
+finished with a real end date 151 | grouped under a milestone 180 | milestones 29
+phases: Story 173 / PM Task 16 / Product 1     Jira tab: 194 (COWORKLOCAL + HRMS)
+```
+
+**What changed.** The spreadsheet is gone as an input. CoWorkLocal is fed by 190 Jira
+issues and 523 changelog entries collected over HTTP, converted by the ordinary
+pipeline, and pushed to production through `/api/jira/ingest` because that server cannot
+reach Jira (see §7a of the architecture doc). The Excel source row is emptied but its
+project id survives, because everything references it.
+
+**The six defects real data found** — each one invisible to synthetic input, each one a
+vocabulary, a scope or a key that had only been tested against data we authored. The
+table is in `ProjectPulseAI_Architecture.md` §13. The worst of them:
+`derive_start_dates` read "first move out of To Do" as a start, which on this board *is*
+the closing transition, so it manufactured 151 start dates equal to their finish dates
+and the Gantt drew 151 zero-width bars. **It was reported as a win before it was
+measured.** The rule is now `STARTED = {IN_PROGRESS, BLOCKED}` and the honest answer is
+two real starts.
+
+**Docs are current as of this session:** `ProjectPulseAI_Architecture.md` is v2, revised
+against the running application — new §7a (Jira ingress) and §8a (tracelink), rewritten
+§§0, 2, 11, 12, 13, 15, 17, and §16 marked historical. Read its header table before
+reading v1 statements anywhere else.
+
+### Read this before touching production data
+
+- **Pairing sums, it does not merge.** Two sources describing the same 190 items report
+  380 tasks. Check the count after every push. Remedy: `carry_milestones` then
+  `drop_source --forget-upload`.
+- **Never run `projects.remove` to retire one source.** It deletes the delivery project
+  and *every* source paired onto it — it would have taken 380 tasks and 540 state
+  changes. Use `scripts/drop_source.py`.
+- **`drop_source` without `--keep-milestones` destroys the feature grouping**, and no
+  source system can rebuild it: Jira's `components` is empty on all 194 issues. This has
+  already cost one restore from a file copy.
+- **`pulse.db.bak*` is a credential and a data export at once** — real ticket text plus
+  the Fernet-encrypted Jira token. Gitignored. Never commit one.
+- **`PULSE_ADMIN_TOKEN` cannot be read back from Fly**, only rotated. A rotation
+  invalidates every `sync-tool.ps1` anybody downloaded, because the token is baked into
+  the file.
+- **Production's `jira_connections` row holds no token, deliberately.** It is a link, not
+  a login. That server can never reach Jira, so a credential there is liability with no
+  capability.
+
+### Traceability on production is the *committed* run, not the new one
+
+`TRACELINK_RUNS=/app/traceability_runs`, copied in by the Dockerfile. Production
+currently serves the earlier Excel-derived run (63 delivery tasks, 76/2/95). The new
+Jira-based run lives at `traceability/runs/jira` on the laptop only. Putting it live is a
+**code deploy**: copy it into `projectpulse/traceability_runs/` and `fly deploy`.
+
+### Deliberately deferred — the user said "we will come back to these"
+
+| | Why it matters |
+|---|---|
+| 173 of 190 tickets share due date `2026-08-31` | every early/late figure is measured against one bulk edit |
+| role field vs `assignee` disagree on 151 tickets | `QuanDh14` vs `Quan Do Hong`; FSG/FNS group codes |
+| one junk inline label survives: `a. TCV >= 500.000$` | cosmetic, on the Traceability page |
+| `diagnosis` and `translations` tabs are empty | both optional stages, never run for this project |
+| GitHub sync without crashing the server | **not started.** 512 MB, no volume, `source.resolve()` clones to local disk |
+
+⚠️ Still true: `fly ssh console` exits 1 with "Error: The handle is invalid" after every
+command on Windows/Git-Bash. Local pty artifact, not a remote failure — the command's own
+stdout above it is the truth.
+
+---
+
 ## ✅ Done — traceability deployed to production 2026-09-22
 
 **Nothing is owed. Production is current with `main`.** Checked live rather

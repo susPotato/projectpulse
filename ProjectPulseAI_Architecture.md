@@ -2,13 +2,30 @@
 
 > Companion to `ProjectPulseAI_Product_Design_v2.md`. That document says **what** the
 > product is and **why**. This one says **how it is built**: layers, schema, contracts,
-> repository structure, and the build sequence to the PiMSathon round-1 gate.
+> repository structure, and what actually shipped.
 >
-> **Status:** design of record, v1. Written 2026-09-06.
-> **Constraints this design is built against:** one developer, round-1 code submission
-> Fri 2026-09-11 with live evaluation Sat 2026-09-12 (~30 min per team, judges *run* and
-> *read* the code), round 2 ≈2 weeks later, October final judged on PM capability and
-> presentation as much as on the system.
+> **Status:** v2, revised 2026-09-23 against the running application. v1 (2026-09-06) was
+> a design written before the code; where the two disagree, the code won and this
+> document has been changed to match it.
+>
+> **What v2 changed, so a reader of v1 knows where to look:**
+>
+> | | |
+> |---|---|
+> | §0, §2 | the diagrams now show what exists: two Jira ingress paths, no retrieval producer, traceability joined on |
+> | §7a **new** | why a hosted server cannot collect from this Jira, and the push path that answers it |
+> | §8a **new** | `tracelink` — the out-of-process code-vs-backlog pipeline, and why it lives outside the deployed artifact |
+> | §11, §12 | the real front end (a React bundle *and* seven hand-written pages) and the real tree |
+> | §13 | the primary input is a real 190-issue Jira backlog, and the six defects it found |
+> | §15 | Fly + Neon, the constraints that follow from 512 MB with no volume, and how data gets there |
+> | §17 | a live risk register; the round-1 one is kept, marked resolved |
+> | §16 | marked historical |
+>
+> Sections not listed above are unchanged from v1 and still describe the system: the
+> governing rule (§1), the stack (§2a), the three layers (§3), identity and provenance
+> (§4), the data model (§5), **the precision model (§6)** — which is the core correctness
+> rule and has never needed a correction — ingestion (§7), intelligence (§8), the
+> `InsightBundle` contract (§9) and the narration contract (§10).
 
 ---
 
@@ -16,37 +33,60 @@
 
 ```mermaid
 flowchart LR
-    SRC[Jira · Excel · Docs] --> DB[(PostgreSQL<br/>normalized + history)]
+    subgraph IN[Sources]
+      J[Jira REST<br/>changelogs]
+      X[Excel / CSV<br/>snapshots]
+      G[Code repository]
+    end
+
+    J & X --> DB[(Postgres / SQLite<br/>raw - tool - domain)]
 
     DB --> R[Rules<br/>what is at risk]
     DB --> S[Schedule<br/>what it delays]
     DB --> T[Temporal<br/>why it happened]
-    DB --> P[Retrieval<br/>seen before?]
 
-    R & S & T & P --> A[Assembler<br/>every number born here]
+    R & S & T --> A[Assembler<br/>every number born here]
     A --> L[LLM<br/>writes sentences only]
     L --> UI[Insight card<br/>+ click to evidence]
 
+    J -.export.-> TL[tracelink<br/>separate package]
+    G --> TL
+    TL -->|JSON run dir| UI
+
     style A fill:#0D2B5E,color:#fff
     style L fill:#F47920,color:#fff
+    style TL fill:#0F766E,color:#fff
 ```
 
 Read left to right, the product is one sentence: **collect the data, compute the
-finding four ways, then let a language model put it into words it is not allowed to
+finding several ways, then let a language model put it into words it is not allowed to
 change.**
 
-The two coloured boxes are the whole thesis. Everything left of **Assembler** is
-deterministic — rules, graph traversal, arithmetic — and produces every number and
+The two dark boxes are the whole thesis. Everything left of **Assembler** is
+deterministic - rules, graph traversal, arithmetic - and produces every number and
 date in the product. The **LLM** receives those findings and writes prose around them;
 it cannot introduce a figure, because figures reach it as placeholders that the server
 fills in afterwards. Reverse that order and this becomes a chatbot with a database.
 
-| The four producers | Answers | How |
-|---|---|---|
-| Rules | *What is at risk?* | editable decision tables, with a trace of what fired |
-| Schedule | *What will it impact?* | critical-path math over the task graph |
-| Temporal | *Why is it happening?* | ordered state changes, only where time permits the claim |
-| Retrieval | *Has this happened before?* | similar past cases and cited documents |
+The teal box is the later addition and it answers a different question from the other
+three: not *is this project late* but *does the code agree with the backlog*. It is a
+separate Python package, outside the repository that deploys, and it writes plain JSON
+that the app reads as data (§8a). It is drawn joined to the picture because a reader of
+the Traceability page cannot tell the difference; it is drawn apart because nothing in
+the app imports it, and the app runs with it absent.
+
+| The producers | Answers | How | State |
+|---|---|---|---|
+| Rules | *What is at risk?* | editable decision tables, with a trace of what fired | shipped |
+| Schedule | *What will it impact?* | forward pass over the task graph | shipped |
+| Temporal | *Why is it happening?* | ordered state changes, only where time permits the claim | shipped |
+| Traceability | *Does the code back the claim?* | retrieval + adjudication over repo and backlog | shipped, out of process |
+| Retrieval | *Has this happened before?* | pgvector over past cases | **cut** - see §8.4 |
+
+Retrieval is listed because the original design had four producers and the fourth never
+shipped. `intelligence/confidence.py` states in its own docstring that precedent is not
+in the formula; the band is coverage x freshness and says so. An architecture document
+that quietly drops a component it once promised is worse than one that records the cut.
 
 ---
 
@@ -79,66 +119,79 @@ implementation detail.
 flowchart TB
     subgraph SRC[Sources]
         J[Jira REST API<br/>changelogs = exact timestamps]
-        X[Excel on OneDrive<br/>worklog / todo / schedule<br/>snapshots only]
-        D[Documents on OneDrive<br/>meeting minutes, status reports]
+        X[Excel / CSV upload<br/>worklog / todo / schedule<br/>snapshots only]
+        O[OneDrive / Graph<br/>watched workbooks]
     end
 
-    subgraph ING[Ingestion — one path, two triggers]
+    subgraph ING[Ingestion - one pipeline, three triggers]
         C[Collector<br/>writes immutable JSON]
+        P[POST /api/jira/ingest<br/>someone else's fetch]
         E[Extractor<br/>raw JSON to vendor shape]
         V[Convertor<br/>vendor to domain]
         DF[Snapshot differ<br/>scan N-1 vs N]
     end
 
-    subgraph STORE[PostgreSQL + pgvector]
+    subgraph STORE[Postgres in production, SQLite on a laptop]
         R[(_raw_*<br/>immutable, url + fetched_at)]
         T[(_tool_*<br/>vendor shape)]
         DOM[(domain tables<br/>vendor-neutral)]
         SC[(state_changes<br/>exact or bounded)]
     end
 
-    subgraph INTEL[Intelligence — four independent producers]
-        RU[Rule engine<br/>ZEN decision tables]
-        SCH[Schedule engine<br/>NetworkX critical path]
-        TMP[Temporal engine<br/>template matcher]
-        RET[Retrieval<br/>pgvector cases + docs]
+    subgraph INTEL[Intelligence]
+        RU[Rule engine<br/>ZEN + built-in evaluator]
+        SCH[Schedule<br/>NetworkX graph, forecast, what-if]
+        TMP[Temporal<br/>template matcher]
     end
 
-    ML[Duration classifier<br/>advisory signal only]
+    ML[Duration classifier<br/>advisory, optional install]
 
     ASM[assembler.py<br/>ALL numbers born here]
     NAR[Narration<br/>tokens only, never digits]
     VAL[Validator<br/>8 stages, hard gate]
-    FB[Deterministic fallback<br/>Jinja]
+    FB[Deterministic fallback<br/>Python renderer]
 
-    UI[React UI<br/>insight card + evidence panel]
+    TLR[(tracelink run dir<br/>JSON on disk)]
+
+    UI[One FastAPI process<br/>React bundle + hand-written pages]
 
     J --> C
+    J -.blocked from a data centre.-> P
     X --> C
-    D --> C
-    C --> R --> E --> T --> V --> DOM
+    O --> C
+    C --> R
+    P --> R
+    R --> E --> T --> V --> DOM
     T --> DF --> SC
-    DOM --> RU & SCH & TMP & RET
+    DOM --> RU & SCH & TMP
     SC --> TMP
     ML -.advisory feature.-> RU
-    RU & SCH & TMP & RET --> ASM
+    RU & SCH & TMP --> ASM
     ASM --> NAR --> VAL --> UI
     VAL -.on failure.-> FB --> UI
     R -.evidence pointer.-> UI
+    TLR --> UI
 
     style ASM fill:#0D2B5E,color:#fff
     style VAL fill:#DC2626,color:#fff
     style SC fill:#F47920,color:#fff
 ```
 
-**Trust boundary.** The React app is served from Cloudflare Pages; the API is reached over a
-Cloudflare Tunnel to the host running Postgres and FastAPI. These are different origins, so
-CORS is a day-one configuration item, not an afterthought (§15).
+**There is no trust boundary, because there is one origin.** The built React bundle is
+committed and served by the same FastAPI process that serves the API
+(`app.mount("/static", ...)`), so there is no CORS configuration anywhere in the codebase.
+The two-origin Cloudflare Pages topology in the original §15 was the plan and was not
+the outcome.
 
-> ⚠️ **Superseded by what shipped — see §2a.2.** The built React bundle is committed and
-> served by the same FastAPI process (`app.mount("/static", …)`), so frontend and API are
-> the **same origin** and there is no CORS configuration at all. The two-origin topology
-> above was the plan, not the outcome.
+**Three things in this picture were not in the original design and are load-bearing now:**
+
+1. `POST /api/jira/ingest` - the dotted path. The Jira this was built against refuses a
+   request from a data centre, so the hosted server cannot collect for itself. Only the
+   *fetch* moves; everything downstream is the same code (§7a).
+2. The tracelink run directory - JSON files on disk, read as data, never imported (§8a).
+3. Hand-written pages beside the React bundle. `/gantt`, `/jira`, `/traceability`,
+   `/imports`, `/settings`, `/llm`, `/usage` are plain HTML served by the same app
+   (§11).
 
 ---
 
@@ -918,6 +971,73 @@ uses content-hash + path as identity. Build both behind the interface; demo whic
 
 ---
 
+## 7a. Jira ingress - two paths into the same pipeline
+
+This section exists because of a network fact, not a design preference, and it is the
+most-asked question about the deployment.
+
+The Jira this product was built against - `insight.fsoft.com.vn/jiradc` - sits behind
+Cloudflare bot scoring that judges the **class of the IP**, not an allowlist. Measured
+both ways against `/rest/api/2/myself`:
+
+| Caller | Result |
+|---|---|
+| A work laptop on the corporate network | `401` - reached Jira, wrong credential |
+| The hosted app on Fly | `403` plus a challenge page - never reached Jira |
+
+A 401 is the server talking. A 403 with a challenge is the edge talking. No token fixes
+the second one, so **the hosted instance can never collect for itself** and no amount of
+credential handling would change that.
+
+### The split
+
+```
+local  :  live.collect  -> _raw_jira_*  -> extract -> convert -> pair
+web    :  laptop fetch  -> POST /api/jira/ingest -> _raw_jira_* -> extract -> convert -> pair
+                           ^ the only thing that moved
+```
+
+**Only the fetch moves.** The payload posted is the JSON Jira sent, unaltered, and the
+receiving end writes it into the same raw tables `live.collect` writes and then runs the
+ordinary extractor, convertor and pairing. What lands on production is indistinguishable
+from a collection that happened there - same evidence trail, same tool rows, same
+`precision='exact'` state changes. When the block is lifted the Collect button starts
+working and this path becomes unnecessary rather than becoming load-bearing.
+
+Three ways to drive the push, in order of who runs them:
+
+| Path | Who | What it is |
+|---|---|---|
+| `scripts/jira_push.py` | whoever collected | reads this machine's raw tables and posts them in batches of 50 |
+| `GET /api/jira/sync-tool?project_key=X` | a PM with a browser | a one-file PowerShell script, pre-filled with server, site and key, no Python and no install |
+| `POST /api/jira/ingest` | anything | the endpoint both of the above use |
+
+**Batching is not an optimisation.** The receiving server does real work per batch -
+extract, convert, pair - so one post of two thousand issues is a request that times out
+having written half of them.
+
+### What production deliberately does not hold
+
+The production `jira_connections` row carries **no token**. A connection with no
+credential is a *link*: it binds a Jira project key to a delivery project, which is all
+`/api/jira/ingest` needs. Storing a credential on a server that can never use it is a
+liability with no corresponding capability.
+
+### Who is allowed to push
+
+`app/admin.py`. Default-deny: with no `PULSE_ADMIN_TOKEN` set, a remote write is refused,
+and loopback passes without a token so a laptop behaves as it always has. The token is
+compared with `hmac.compare_digest` and never stored by the app - it lives wherever
+platform secrets live, which on Fly means it can be rotated but never read back.
+
+That last property has an operational consequence worth writing down: **recovering access
+to a deployed instance means rotating the token, not retrieving it.** And
+`/api/jira/sync-tool` embeds the current token in the file it hands out, so a rotation
+invalidates every script anybody downloaded earlier. Both are correct behaviours; both
+surprise people.
+
+---
+
 ## 8. Intelligence layer
 
 Four producers, each independently inspectable, each emitting structured findings — never prose.
@@ -935,6 +1055,11 @@ of our rules are aggregates (*"QA backlog grew 40% in 14 days"*). All aggregatio
 `intelligence/context.py`, which produces a flat `RuleContext` of ~30 scalars; ZEN decides
 only on scalars. Fighting ZEN to aggregate costs a day and yields nothing.
 
+> ⚠️ **Shipped as `intelligence/rules/tables.py`, not a directory of JSON.** Same four
+> tables, same editability through the settings surface; one module rather than four
+> files because nothing ever needed to ship a table without shipping the code that
+> reads it. The paragraph below is otherwise accurate.
+
 Decision tables live in `intelligence/rules/tables/*.json` — `schedule_risk`, `qa_risk`,
 `resource_risk`, `dependency_risk` — and are editable without a deploy, which is design §19's
 mitigation for the opaque-health-score risk.
@@ -942,8 +1067,12 @@ mitigation for the opaque-health-score risk.
 ### 8.2 Schedule engine
 
 `schedule/graph.py` builds a NetworkX `DiGraph` from `tasks` + `dependencies` + `milestones`;
-`critical_path.py` runs the forward/backward pass for total float; `impact.py` emits
-`delay_days`, `affected_milestones`, `critical_path_tasks`.
+`impact.py` runs the forward pass and emits `delay_days`, `affected_milestones` and
+`critical_path_tasks`. There is no separate `critical_path.py` — the pass lives in
+`impact.py`, and `forecast.py` and `whatif.py` joined the package later: the delivery
+forecast that resamples this project's own drift and **refuses with a reason** when the
+data cannot support a range, and the what-if that re-runs the graph against a changed
+assumption.
 
 **Every date and day-count in the product originates here or in §8.3 — never in §9.**
 
@@ -969,7 +1098,15 @@ emits the chain with its `ordering_basis`. Two days of work, and far more defens
 general engine: *"we assert only the causal patterns a PM told us to look for, and only where
 the timestamps permit the claim."*
 
-### 8.4 Retrieval
+### 8.4 Retrieval — **cut, not deferred**
+
+> ⚠️ **This producer was never built, and nothing pretends otherwise.** There is no
+> pgvector, no `intelligence/retrieval/`, and no `historical_cases` in the running
+> system. `intelligence/confidence.py` says so in its own docstring: precedent is not
+> in the formula, and the band is coverage × freshness. The paragraph below is the
+> plan, and its own advice — *do not fake it with hardcoded "3 similar cases"* — is
+> what was followed.
+
 
 pgvector cosine over `historical_cases.embedding` and document chunks. If it slips, **do not
 fake it with hardcoded "3 similar cases"** — drop `precedent` from the confidence computation
@@ -979,7 +1116,7 @@ Thirty hand-authored `historical_cases` rows is half a day and is genuinely real
 
 ### 8.5 The ML signal — advisory only
 
-`intelligence/signals/duration_classifier.py` loads
+`app/ml/duration.py` (planned as `intelligence/signals/duration_classifier.py`) loads
 `omaradly/jira-task-duration-classifier` — a ~950 KB scikit-learn TF-IDF + LogisticRegression
 joblib (MIT), predicting three ordinal buckets (≤3d / 3–15d / >15d) at 0.80 accuracy
 (long-running F1 0.74). It loads in-process; no model server, no GPU, no torch.
@@ -997,7 +1134,8 @@ It returns `{bucket, ordinal, model_version}` — **never a probability, never a
    Verify this early; it skews every prediction quietly.
 
 **Structural barrier, enforced not merely agreed:** `intelligence/schedule/` must not import
-`signals/`. `tests/test_import_boundaries.py` asserts it. Its only legitimate use is as a
+`app.ml`. `tests/test_ml.py` asserts it by walking the AST of every module under
+`app/intelligence/` — the check outlived the planned filename. Its only legitimate use is as a
 boolean feature inside a rule — `predicted_bucket == 'long' AND remaining_days < 5` → estimate
 risk — with the trace displaying *"ML signal (advisory; 0.80 acc; uncalibrated; trained on
 balanced Apache-Jira data)."* If a single delay-day ever traces back to it, the "the model
@@ -1018,6 +1156,74 @@ between organisations — is cheap to retrain here.
 
 A band, never a percentage. Design §10 already establishes why: a model-produced number is
 uncalibrated and PMs anchor on it hard.
+
+---
+
+## 8a. Traceability - a second pipeline, out of process
+
+The three producers in §8 all answer *is this project in trouble*. This one answers a
+question no tracker can: **does the code agree with the backlog?** A ticket marked
+released whose feature is nowhere in the repository, and a subsystem in the repository
+that no ticket has ever mentioned, are both defects in the record rather than in the
+software, and both are invisible to every other screen in this product.
+
+### It is outside the deployed artifact, and that is the design
+
+`tracelink` is a standalone Python package under `traceability/`, in the surrounding
+workspace repository rather than in the one that ships (§12). It has its own tests, its
+own CLI (`python -m tracelink`) and its own README. ProjectPulse **does not import it**. `app/api/tracelink_view.py` reads the JSON files a run leaves on disk, as data.
+
+The reasons are worth stating because the coupling is tempting:
+
+- The pipeline spends money. The app must never be one mis-click from a paid call.
+- The pipeline needs a *checkout of the code being analysed*. A 512 MB web dyno with no
+  persistent volume cannot hold one.
+- A run takes minutes to hours. Nothing in a request cycle can wait for it.
+- The app must work with the pipeline absent, and does: every missing artifact is
+  reported on the page as a named gap **with the command that produces it**, which is the
+  same rule the rest of this API follows.
+
+### The stages
+
+Free first, always; nothing costs money until it is asked to, and every paid call is
+cached by content so re-running after a change pays only for what changed.
+
+| | Stage | What it does | Cost |
+|---|---|---|---|
+| 1 | `diagnose` | what shape is this export, before anything assumes one | free |
+| 2 | `tickets` | backlog rows -> normalised tickets, with the canonical project id | free |
+| 3 | `corpus` | every file by role; AST symbols; import edges | free |
+| 4 | `features` / `progress` | the team's own docs, claim by claim | free |
+| 5 | `retrieve` | candidate files per ticket, three IDF-weighted matchers | free |
+| 6 | `adjudicate` | a model reads ticket and candidates and returns a verdict with citations | **paid** |
+| 7 | `verify` | every citation checked against the source; a hallucinated line number is caught here | free |
+| 8 | `couple` / `shadow` / `cohorts` | structural cross-checks on the verdicts | free |
+| 9 | `explain` | the narrative for the findings that survived | **paid** |
+| 10 | `governance` / `gates` / `reconcile` / `cost` / `stale` | process tickets, quality gates, tracker-vs-code disagreement, spend, freshness | free |
+
+`python -m tracelink --run <dir> pipeline ...` runs every free stage in dependency order
+and then **names the paid ones with the command for each** rather than running them. A
+pipeline that bills you for asking it to read a repository is a trap.
+
+`--into ../projectpulse/traceability_runs/<name>` copies the artifacts the product page
+reads to where it will find them. `TRACELINK_RUNS` (a directory of runs) or
+`TRACELINK_RUN` (one run) points the app at them; the Dockerfile copies
+`traceability_runs/` into the image, which is how production serves findings without the
+pipeline being installed there.
+
+### A run is a property of a project, not of the server
+
+A run declares in its `run.json` which delivery project it is about, and the page asks
+for a project id - invariant 7, the same as every other screen. A project with no run
+says so plainly rather than showing another project's findings.
+
+### What it found, which is the point
+
+On CoWorkLocal - 190 Jira issues against the `pimsathon-main` repository - 151 tickets
+were adjudicated, 74 corroborated, and **9 tickets marked `Cancelled` are in fact built
+and present in the code**. That last finding was reached independently by `reconcile`
+(structural) and `explain` (narrative), which is the only reason it is stated as a
+finding rather than a suspicion. Total model spend for the run: $8.36.
 
 ---
 
@@ -1159,17 +1365,45 @@ validator bug still cannot put a fabricated number into a number slot.
 
 ## 11. Frontend architecture
 
-**Vite + React + TypeScript.** Scoped honestly for a solo build: a React port of all six
-mockups is ~2–3 weeks (they are ~3,500 lines of ES5 across two independently-authored code
-lineages) and cannot coexist with building the backend in five days.
+**Two front ends in one process, on purpose.** A built React bundle serves the pages
+whose data comes from the domain model; seven hand-written HTML pages serve the ones
+whose data does not. Both are served by the same FastAPI app at the same origin, share
+`shell.css` for tokens and `rail.js` for navigation, and a person clicking between them
+cannot tell which is which.
 
-**Round 1 ships one real route** — the insight/evidence screen. It is the only screen the
-judges have not already seen in the pitch deck, and the only one that demonstrates the
-thesis. The other five mockups are served as static HTML alongside and are ported in round 2.
+| | Pages | Why this half |
+|---|---|---|
+| React bundle (`web/`) | `/` and `/programs`, `/projects`, `/portfolio`, `/team`, `/risk`, `/reports`, `/agent`, `/insight`, `/programs/dashboard`, `/project/dashboard` | They read the domain model through typed bundles and share heavy components - the dashboard canvas, the tile builder, the project picker |
+| Hand-written (`app/api/static/`) | `/gantt`, `/jira`, `/traceability`, `/imports`, `/settings`, `/llm`, `/usage` | Each reads something that is **not** the domain model - a tracker connection, a run directory on disk, a key store, a usage ledger. Putting them in the bundle would make it depend on subsystems that can legitimately be absent |
 
-### Token reconciliation — step zero
+`/traceability` is the clearest case: its data comes from a different repository's run
+directory. If it were a bundle route, building the app would couple to a pipeline that
+need not be installed.
 
-The mockups contain **two conflicting design systems** and a merge without this step
+### No router, and no build step for half the app
+
+`main.tsx` picks the page from `window.location.pathname` against a literal map. A router
+would add a dependency and a second source of truth about which URLs exist - the rail in
+`Shell.tsx` already declares them. The server serves the same `index.html` for every
+bundle route.
+
+The hand-written pages have no build step at all, which is a feature until it is a bug:
+**they are not fingerprinted by a bundler, so a browser will happily serve a cached
+`gantt.js` for a week.** This cost two rounds of "the fix did not deploy" before it was
+diagnosed. The fix is in `app/api/main.py`:
+
+- `_Revalidating(StaticFiles)` sends `immutable` for `/static/app/assets/` (Vite already
+  content-hashes those names) and `no-cache` for everything else.
+- `_page(name)` rewrites `href`/`src="/static/x.js"` to `?v=<sha256[:10]>` as the page is
+  served, so a hand-written asset gets the same content-addressed cache behaviour as a
+  built one without a bundler.
+
+`no-cache` does not mean "do not cache" - it means "revalidate before use". Getting that
+distinction wrong is why the first attempt still served stale files.
+
+### Token reconciliation - the step that had to come first
+
+The mockups contained **two conflicting design systems**, and a merge without this step
 breaks pages:
 
 | Token | Family A (`home`, `programs`, `dashboard`) | Family B (`risk`, `schedule`, `project-schedule`) |
@@ -1182,214 +1416,327 @@ breaks pages:
 | `--red` | `#DC2626` | `#DC2626` / `#EF4444` |
 | `--amber` | `#D97706` | `#F59E0B` / `#D97706` |
 
-Family A is Tailwind **slate**, Family B is **gray**. Constant across all six and therefore
-safe: `--navy:#0D2B5E`, `--blue:#1565C0`, `--orange:#F47920`, `--green:#16A34A`, Inter at 14px.
+Family A is Tailwind **slate**, Family B is **gray**. Constant across all six and
+therefore safe: `--navy:#0D2B5E`, `--blue:#1565C0`, `--orange:#F47920`, `--green:#16A34A`,
+Inter at 14px.
 
-There are also **selector collisions with different meanings** — `.mode-toggle`, `.toolbar`,
-`.tb-btn`, `.section-head`, `.field-row`, `.toggle`, `.table-footer`, `.modal` — and
-`fpt-pm-dashboard.html:186` references `var(--red)` which that file never declares, so the
-rule silently no-ops. CSS Modules per component avoids the collisions structurally.
+The reconciliation landed in `app/api/static/shell.css` as one `:root`, shared by both
+halves, and it carries a dark palette the mockups never had - a judge on a dark-themed
+laptop should not get white-on-white. Each hand-written page sets `<html data-theme>`
+from an inline script in `<head>` *before* first paint; `theme.js` only paints the icon
+and handles the click, so there is no flash of the wrong palette.
 
-### Structure
+### Charts are hand-written SVG
 
-```
-frontend/
-├── index.html
-├── vite.config.ts                 proxy /api -> tunnel origin in dev
-├── src/
-│   ├── main.tsx                   router
-│   ├── styles/
-│   │   ├── tokens.css             the reconciled :root — single source of colour truth
-│   │   └── globals.css            reset, Inter, scrollbar rules
-│   ├── api/
-│   │   ├── client.ts              fetch wrapper, base URL from import.meta.env
-│   │   └── types.ts               generated from the FastAPI OpenAPI schema
-│   ├── components/
-│   │   ├── AppShell.tsx           sidebar variant (iconOnly | withLabels) + topbar (search | breadcrumb) as props
-│   │   ├── Pill.tsx               replaces SIX independent pill implementations
-│   │   ├── DataTable.tsx  Drawer.tsx  Modal.tsx  ContextMenu.tsx
-│   │   ├── Toolbar.tsx    Tabs.tsx    SegmentedToggle.tsx  Toggle.tsx
-│   │   └── Toast.tsx      EmptyState.tsx  Field.tsx
-│   └── features/insight/
-│       ├── InsightPage.tsx        the round-1 route
-│       ├── InsightCard.tsx        headline, severity, confidence band
-│       ├── CausalChain.tsx        ordered steps; renders precision as a visible property
-│       ├── ComputedImpact.tsx     delay days + affected milestones, from computed_impact ONLY
-│       ├── RecommendedActions.tsx
-│       ├── EvidencePanel.tsx      click a step -> raw JSON + url + fetched_at
-│       ├── RuleTrace.tsx          which rules fired on which records
-│       └── ConfidenceBand.tsx     band + the three inputs on hover
-└── public/legacy/                 the 5 un-ported mockups, served as-is
-```
+No charting library, for the reason in §2a.10: a library's own aggregation would be a
+second place a number could be born. `gantt.js` is the largest of them and the one that
+has needed the most care, because every visual decision it makes is a claim:
 
-**Design note for `CausalChain.tsx`:** render `precision` and `ordering_basis` as visible UI,
-not debug output. *"Environment Setup slipped (exact, from Jira changelog) → QA backlog grew
-(observed between Mar 16 and Mar 18, from worklog snapshot)"* is the most differentiating
-sentence the product can put on screen, and it is a competitive advantage rather than a
-disclaimer.
+- A green point rather than a bar when a task finished but never recorded a start. The
+  alternative - drawing a bar from the finish to the finish - is a zero-width lie.
+- A merged row for tasks sharing dates carries the group's `actual_end`, or a finished
+  group silently renders as an unfinished one.
+- Search, sort and a collapsed backlog, because 190 rows is not a chart anybody reads.
+  The input is replaced in place (`card.replaceChild`) with a 120 ms debounce so typing
+  does not lose focus on every keystroke.
 
-The mockups are desktop-fixed-width with **no media queries at all**. Round 1 matches that;
-responsive is a round-2 decision.
+The mockups are desktop-fixed-width with **no media queries at all**, and the app still
+matches that. Responsive remains undone.
 
 ---
 
 ## 12. Repository structure
 
+**Two git repositories, one nested inside the other**, because §8a's pipeline must stay
+independent of the product. The outer one is the analysis workspace: it holds the
+pipeline, the codebase being analysed, and the backlog exports. The inner one is the
+product, and it is the only one that deploys.
+
 ```
-projectpulse/
-├── docker-compose.yml             postgres+pgvector, api, frontend — the judged artifact
-├── Dockerfile
-├── pyproject.toml
-├── alembic.ini
-├── alembic/versions/              migrations; the DDL frozen day 1
-├── app/
-│   ├── main.py                    FastAPI factory, routers, CORS for the Pages origin
-│   ├── config.py                  pydantic-settings: DB URL, LLM key, source creds, poll interval
-│   ├── db.py                      engine, session dependency, pgvector registration
-│   ├── ids.py                     domain_id(source, entity, connection_id, *pks) — the didgen port
-│   ├── api/
-│   │   ├── routers/
-│   │   │   ├── projects.py        GET /projects, /projects/{id}/health
-│   │   │   ├── insights.py        GET /projects/{id}/insights, GET /insights/{id}
-│   │   │   ├── evidence.py        GET /evidence/{ref} -> raw JSON + url + fetched_at
-│   │   │   ├── rules.py           GET/PUT decision tables, GET /traces/{id}
-│   │   │   ├── sync.py            POST /sync/run (202 + job_id), GET /sync/status/{id}
-│   │   │   └── feedback.py        POST /insights/{id}/feedback
-│   │   └── schemas/
-│   │       ├── insight.py         InsightBundle & friends — FROZEN DAY 1
-│   │       └── evidence.py
-│   ├── models/
-│   │   ├── base.py                Base + RawDataOrigin mixin (the six audit columns)
-│   │   ├── raw.py                 _raw_* table factory
-│   │   ├── tool/                  jira.py  excel.py  onedrive.py
-│   │   ├── domain/                program.py project.py milestone.py task.py dependency.py
-│   │   │                          issue.py risk.py resource.py qa_item.py action_item.py
-│   │   │                          state_change.py historical_case.py document.py
-│   │   ├── analysis/              insight.py rule_trace.py health_snapshot.py feedback.py
-│   │   └── sync_state.py
-│   ├── ingest/
-│   │   ├── runner.py              run_sync(); advisory lock; watermark advanced ONLY on success
-│   │   ├── scheduler.py           APScheduler 2h -> run_sync(trigger='scheduled')
-│   │   ├── base.py                Collector / Extractor / Convertor ABCs
-│   │   └── sources/
-│   │       ├── jira/              collector.py extractor.py convertor.py replay.py
-│   │       ├── excel/             reader.py  snapshot_diff.py  identity.py     ** HIGH RISK **
-│   │       └── onedrive/          client.py  local.py  graph.py  documents.py
-│   ├── intelligence/
-│   │   ├── context.py             build_rule_context() -> ~30 flat scalars
-│   │   ├── rules/                 engine.py (ONLY zen importer)  trace.py  tables/*.json
-│   │   ├── schedule/              graph.py  critical_path.py  impact.py
-│   │   ├── temporal/              events.py  ordering.py  templates.py  chains.py  ** HIGH RISK **
-│   │   ├── retrieval/             embeddings.py  cases.py  documents.py
-│   │   ├── signals/               duration_classifier.py   (advisory only)
-│   │   ├── confidence.py
-│   │   └── assembler.py           ALL numbers born here
-│   └── narration/
-│       ├── prompt.py              system prompt + bundle serialiser
-│       ├── client.py              LLM call, structured output
-│       ├── validator.py           the 8 stages                     ** HARD GATE **
-│       └── fallback.py            Jinja renderer — BUILD THIS FIRST
-├── models/                        duration_logistic_regression_classifier.joblib
-├── scripts/
-│   ├── gen_demo_portfolio.py      simulator -> raw-layer artifacts
-│   ├── sample_gpt2sp_text.py      issue-text corpus
-│   └── load_tawos.py              round 2
-├── tests/
-│   ├── test_ordering.py           property: same-scan bounded pairs are never ordered
-│   ├── test_snapshot_diff.py      rename/reorder/insert must not manufacture changes
-│   ├── test_validator.py          golden bundles + adversarial model outputs
-│   ├── test_ids.py                re-run idempotency
-│   └── test_import_boundaries.py  schedule/ must not import signals/
-├── frontend/                      see §11
-└── cloudflared/config.yml
+hackathon/                        <- OUTER repo: the analysis workspace
+├── pimsathon-main/                the CoWorkLocal desktop app - the code under analysis
+├── Jira Cowork Local_*.xlsx       backlog exports
+├── traceability/                  the tracelink package (§8a) - bottom of this tree
+└── hackathon/                     <- INNER repo: ProjectPulse, the deployed artifact
 ```
+
+The inner repo:
+
+```
+hackathon/
+├── ProjectPulseAI_Architecture.md        this file
+├── ProjectPulseAI_Product_Design_v2.md   what the product is and why
+├── ingestion-architecture-v3.md          the ingestion design in full
+├── CLAUDE.md                             working context, newest section at the top
+└── projectpulse/
+    ├── Dockerfile  docker-compose.yml  fly.toml  pyproject.toml
+    ├── DEPLOY.md  README.md  WORKLOG.md
+    ├── app/
+    │   ├── admin.py              who may write to a deployed instance (§7a)
+    │   ├── config.py  db.py  ids.py  scope.py  units.py
+    │   ├── projects.py           create / remove a delivery project, pairing included
+    │   ├── imports.py            uploaded sheets, re-sync, removal
+    │   ├── api/
+    │   │   ├── main.py           every route; ~3,000 lines, no routers package
+    │   │   ├── tracelink_view.py reads a run directory as data - never imports tracelink
+    │   │   ├── schemas/          one module per bundle: gantt, team, risk, report, ...
+    │   │   └── static/           the seven hand-written pages + shell.css, rail.js,
+    │   │                         theme.js, gantt.js, sync-tool.ps1.tmpl, app/ (Vite out)
+    │   ├── models/               flat modules, not packages: domain.py, tool.py, raw.py,
+    │   │                         jira.py, llm.py, dashboard.py, uploads.py, sync.py, ...
+    │   ├── ingest/
+    │   │   ├── runner.py         advisory lock; watermark advanced only on success
+    │   │   ├── programs.py       program resolution through the project's pairing
+    │   │   ├── status.py         THE status vocabulary - one map, every source
+    │   │   └── sources/
+    │   │       ├── jira/         connect live replay extractor convertor store
+    │   │       │                 export_sheet source
+    │   │       └── excel/        reader snapshot_diff identity convertor dependencies
+    │   │                         source transport graph_source graph_auth ingest
+    │   ├── intelligence/
+    │   │   ├── assembler.py      ALL numbers born here
+    │   │   ├── context.py  confidence.py  effort.py  contention.py  explain.py
+    │   │   ├── pipeline.py       the member/task rollup the Team page reads
+    │   │   ├── rules/            engine.py (only zen importer) + tables.py
+    │   │   ├── schedule/         graph.py impact.py forecast.py whatif.py
+    │   │   └── temporal/         ordering.py templates.py chains.py
+    │   ├── ml/duration.py        the advisory classifier, optional install
+    │   ├── narration/            prompt+client, providers, validator, fallback, cache, store
+    │   ├── llm/                  keys (Fernet) features pricing usage
+    │   ├── dashboard/            catalogue, generator, fit, custom tiles, service
+    │   ├── risks/                matrix, drafts, service
+    │   ├── exports/              report, document (.docx), workbook (.xlsx), markdown
+    │   └── agent/                chat, brief, link_fetch
+    ├── web/                      Vite + React + TS; src/pages/*.tsx, src/components/*.tsx
+    ├── scripts/                  25 CLIs - see below
+    ├── tests/                    46 modules, 1,186 tests, no database required
+    ├── traceability_runs/        run snapshots baked into the image
+    └── data/                     demo upload fixtures
+```
+
+And the pipeline, beside it in the outer repo:
+
+```
+traceability/
+├── tracelink/                    the package: cli, pipeline, and one module per stage
+├── tests/                        24 modules, 464 tests
+├── runs/                         run directories, gitignored
+└── codewiki-docs/                the analysed repo's own generated docs, as an input
+```
+
+### The scripts, grouped by what they are for
+
+`scripts/` is not a junk drawer; it is where every operation that must be repeatable but
+should not be a button lives.
+
+| Group | Scripts |
+|---|---|
+| Run it | `serve.py` (schema, seed-if-empty, serve - the container entry point), `demo.py`, `replay.py` |
+| Make data | `gen_demo_data.py`, `gen_demo_jira.py`, `gen_demo_upload.py`, `gen_jira_data.py`, `gen_portfolio_data.py`, `seed_extras.py`, `from_jira_export.py` |
+| Jira operations | `jira_push.py` (§7a), `jira_rebuild.py` |
+| Surgery on a live database | `drop_source.py`, `carry_milestones.py`, `restore_milestones.py`, `migrate_ids.py`, `migrate_programs.py`, `migrate_task_columns.py` |
+| Everything else | `sync.py` (the ingestion CLI), `secret.py`, `fetch_model.py`, `probe_fpt.py`, `publish.py`, `shots.py`, `index_code.py` |
+
+**The surgery scripts each exist because a general operation was wrong for a specific
+case**, and their docstrings say which. `drop_source.py` exists because `projects.remove`
+deletes a delivery project *and every source paired onto it* - correct when the project
+is going away, and exactly wrong when one source has superseded another. Running the
+general one would have taken 380 tasks and 540 state changes with it.
+
+`restore_milestones.py` exists because the first version of that surgery destroyed 29
+milestones that no source system can rebuild - Jira's `components` field is empty on all
+194 issues, so the feature grouping lived only in the spreadsheet. It was recovered from
+a file copy. `--keep-milestones` was added to `drop_source.py` the same day.
 
 ---
 
-## 13. Demo data
+## 13. The data the app runs on
 
-**Primary: a simulator. GPT2SP for issue *text* only. TAWOS in round 2.**
+**The primary input is now a real backlog, not the simulator.** CoWorkLocal - 190 Jira
+issues collected over HTTP from `insight.fsoft.com.vn/jiradc`, with 523 changelog
+entries - replaced the spreadsheet that fed the project originally. The simulator is
+still there and still seeds an empty database, but it is no longer what the demo shows.
 
-`scripts/gen_demo_portfolio.py` walks a virtual clock day by day over 18 months across
-1 program / 4 projects (reusing the mockups' names — Example Project, SAIN, HRMS Portal V2,
-Cloud Migration Wave 2 — so the existing pages stay coherent), ~250 tasks, ~40 milestones,
-applying scripted perturbations: Environment Setup slips 12 days on 2026-03-04, blocked-test
-count climbs, one engineer's allocation drops to 40%.
+| | |
+|---|---:|
+| tasks | 190 |
+| issue types | Story 173 · PM Task 16 · Product 1 |
+| exact state changes | 351 |
+| tasks with a real finish date | 151 |
+| tasks with a real start date | **2** |
+| features (milestones) | 29, grouping 180 tasks |
 
-**The decisive design detail:** it emits *the artifacts a real source would emit* —
-Jira-shaped changelog JSON into `_raw_jira_*`, and a series of dated `.xlsx` files consumed by
-the real reader — **not** seeded domain rows. The real pipeline then runs over them. Nobody
-can claim the answer is hardcoded, and the Excel differ, the sha256 skip, the identity
-resolver and the bounded-precision path all get genuinely exercised.
+### What real data broke, and why each break is worth recording
+
+Every row below was a defect the synthetic data could not have found, because the
+simulator produced well-formed inputs and a real board does not.
+
+| What was wrong | Consequence | Fix |
+|---|---|---|
+| `STATUS_MAP` had never heard of `Release`, `Cancelled` or `Re-Open` - the three commonest states on this board | 152 of 190 tasks normalised to `OTHER`, counted as open, so 129 released tickets reported overdue | one shared vocabulary in `app/ingest/status.py`, used by every source |
+| `convert_issues` scoped by `connection_id` alone | connection 1 held 4 HRMS rows beside 190 CoWorkLocal ones, so HRMS issues were filed into CoWorkLocal | scope by `project_key` too |
+| Tasks keyed by numeric issue id | the Team page showed `1101143` where a person expects `COWORKLOCAL-10` | key by issue key; changelogs resolve id -> key to match |
+| "Start = first move out of To Do" | 153 of 156 tickets go `To Do -> Release` in one step, so that event *is* the close: 151 tasks got start == finish and the chart drew zero-width bars | `STARTED = {IN_PROGRESS, BLOCKED}`. Two real starts, and the chart says so rather than inventing 151 |
+| `rollup_by_parent` keyed on `parent` | `parent` is the spreadsheet's nesting and is empty on Jira rows, so all 190 folded into `(none)` and the page claimed "189 planning tasks" | fall back to the ticket's own key |
+| "Named on the row" took every `Label: value` pair | email subjects were printed as people | `NOT_PEOPLE` filter on the label |
+
+The pattern is one thing said six ways: **a vocabulary, a scope or a key that was only
+ever tested against data we authored.** That is the argument for running a real export
+through the whole pipeline before believing any number on any page.
+
+### What is still wrong with the data, stated rather than smoothed over
+
+- **173 of 190 tickets carry the same due date, `2026-08-31`.** That is a bulk field-set,
+  not a schedule. Every "early" and "late" figure in the product is therefore measured
+  against one keystroke. The arithmetic is right and the input is not.
+- **The role field and the assignee field disagree on 151 tickets.** Jira's
+  `customfield_10228` carries FSG/FNS group codes and a short username (`QuanDh14`);
+  `assignee` carries a person (`Quan Do Hong`). Both are shown in places and they are not
+  the same thing.
+- **`reconcile` reports a degenerate axis** - `tracker 'done' on all 63 rows`. This
+  survived the swap from spreadsheet to Jira because the cause is join width (median 30),
+  not the source.
+
+### The simulator, which is still the fallback
+
+`scripts/gen_demo_data.py` and friends walk a virtual clock over 18 months across
+1 program / 4 projects, ~250 tasks, ~40 milestones, applying scripted perturbations. The
+decisive detail is unchanged: it emits **the artifacts a real source would emit** -
+Jira-shaped changelog JSON into `_raw_jira_*`, dated `.xlsx` files consumed by the real
+reader - not seeded domain rows. Nobody can claim the answer is hardcoded, and the Excel
+differ, the sha256 skip, the identity resolver and the bounded-precision path all get
+genuinely exercised.
 
 **Why not GPT2SP as the dataset.** Its 16 CSVs (23,313 rows) are exactly
-`issuekey,title,description,storypoint,split_mark` — zero timestamps, zero status, zero
+`issuekey,title,description,storypoint,split_mark` - zero timestamps, zero status, zero
 assignee, zero links. It cannot produce a single `state_changes` row, therefore it cannot
-drive the rule engine, the temporal engine, or the schedule engine. Two legitimate uses:
-realistic issue titles and descriptions so the demo does not read "Task 1, Task 2", and input
-text for the duration classifier.
+drive the rule engine, the temporal engine, or the schedule engine. It is useful for
+issue *text* and as input to the duration classifier, and nothing else.
 
-**Why not TAWOS first.** Right shape — it has the changelogs — but it is a MySQL dump not yet
-downloaded (half a day to a day before the first row lands), its 44 open-source projects have
-no milestones, no PM, no phases and no resource allocation, and critically **no
-hand-maintained Excel**, so the entire bounded-precision half of the architecture would have
-nothing to ingest. Worst of all, a demo needs a *specific* narrative, and finding a project
-among 509,000 issues that happens to exhibit a rule's exact firing pattern is an
-unschedulable search sitting on the critical path. TAWOS lands in round 2 as a second
-connection to answer *"does it work on data you didn't author"* — a credibility exercise that
-belongs after the slice works.
-
-**Licensing:** TAWOS is research-use-only and GPT2SP repackages public Jira data. Fine for
-prototyping and internal demonstration. Use synthetic text for any recorded demo or
-screenshot, and replace both before any commercial deployment.
+**Licensing:** TAWOS is research-use-only and GPT2SP repackages public Jira data. Fine
+for prototyping and internal demonstration. The CoWorkLocal data is real internal project
+data - it is in the database and the backups, and `pulse.db.bak*` is gitignored for that
+reason. Treat a backup as a data export, because that is what it is.
 
 ---
 
 ## 14. The scenario the demo tells
 
-One project, one insight, end to end:
+**The original, from the simulator.** One project, one insight, end to end:
 
-> Environment Setup milestone slipped 12 days (**Jira changelog — exact timestamp**) →
-> QA blocked-test count rose 4 → 17 (**Excel worklog snapshot — bounded interval**) →
-> UAT projected 2026-05-14 → 2026-05-26 (**NetworkX critical path**).
+> Environment Setup milestone slipped 12 days (**Jira changelog - exact timestamp**) ->
+> QA blocked-test count rose 4 -> 17 (**Excel worklog snapshot - bounded interval**) ->
+> UAT projected 2026-05-14 -> 2026-05-26 (**NetworkX critical path**).
 
-Chosen deliberately: it forces one exact-precision and one bounded-precision event into the
-same chain, so §6 — the most defensible engineering in the system — is *visible on screen*
-rather than buried in a table. The demo click path is: insight card → causal chain → click
-step 2 → evidence panel showing the actual spreadsheet row, its file, and its scan time →
-rule trace showing which rule fired on which record.
+Chosen deliberately: it forces one exact-precision and one bounded-precision event into
+the same chain, so §6 - the most defensible engineering in the system - is *visible on
+screen* rather than buried in a table. The click path is: insight card -> causal chain ->
+click step 2 -> evidence panel showing the actual spreadsheet row, its file and its scan
+time -> rule trace showing which rules fired on which records.
+
+**The one real data now supports, which is stronger.** It needs no perturbation script,
+because nobody authored it:
+
+> Nine CoWorkLocal tickets are marked **Cancelled** in Jira. The code that implements
+> them is in the repository, cited file and line, and the citations were checked against
+> the source rather than taken from the model.
+
+It is stronger for three reasons. The data is real and the audience recognises it. The
+finding is one the tracker cannot produce by itself and neither can the repository -
+only the join. And it was reached twice independently, by `reconcile` structurally and by
+`explain` narratively, which is the difference between a finding and a guess.
+
+The honest caveat belongs on the slide with it: **173 of 190 tickets share one due date**
+(§13), so this backlog cannot support a schedule claim. Say that before somebody asks,
+and the traceability claim survives the question.
 
 ---
 
 ## 15. Deployment
 
-> ⚠️ **Topology B below was not what shipped.** Production is **Fly.io + Neon Postgres**
-> at `projectpulse.fly.dev`, single-origin, with no Cloudflare Tunnel and no Pages — so
-> no CORS and no `202 + poll` requirement. The live stack is in **§2a.9**, the operational
-> detail in `projectpulse/DEPLOY.md`. Topology A is still exactly right and still works.
+**What shipped: Fly.io + Neon Postgres, single origin.** `projectpulse.fly.dev`, region
+`sin`, `shared-cpu-1x` with 512 MB and **no persistent volume**. The Cloudflare Pages +
+Tunnel topology in the original plan was not built and is not needed: the React bundle is
+committed and served by the same process as the API, so there is no second origin, no
+CORS, and no `202 + poll` requirement.
 
-**Two topologies, both needed.**
+`docker compose up -d` remains exactly right and still works - Postgres+pgvector and the
+app built from the same Dockerfile the deploy target uses. It is the artifact somebody
+reads and runs in thirty minutes.
 
-**A. `docker compose up` — the judged artifact.** Judges run and read the code in ~30 minutes.
-One command must bring up Postgres+pgvector, run migrations, seed the simulator, and serve
-the API and UI. A README with a single command and a 60-second walkthrough is worth more
-than any extra feature built on day 5.
+### The constraints that shape everything else
 
-**B. Cloudflare — the live demo.** Workers cannot host this (sklearn + a Postgres pool is not
-a Workers workload). What the owned domain actually buys:
+| Constraint | What it rules out |
+|---|---|
+| 512 MB, no volume | Cloning a repository on the server. This is why §8a's pipeline runs elsewhere and ships its output as JSON in the image |
+| Outbound requests come from a data centre | Collecting from Jira at all (§7a) |
+| The machine's disk is ephemeral | Any state that is not in Neon or in the image |
+| Fly stores secret digests, not secrets | Reading `PULSE_ADMIN_TOKEN` back. Losing it means rotating it |
 
-- **`cloudflared` Tunnel** — the demo runs on a laptop or VM behind FPT's NAT but is publicly
-  reachable over HTTPS with no port forwarding and no firewall ticket. The highest-value use.
-- **Cloudflare Pages** — the React build, on the CDN, API proxied to the tunnel.
-- **Cloudflare Access** — gate it to judges' emails if any real project data is present.
+### Schema changes without a migration tool
 
-**Two details that each cost an afternoon if unhandled:** Pages and the tunnel are different
-origins, so CORS must be set on day 1; and `POST /sync/run` must be 202 + poll, because a full
-sync will exceed the proxy timeout and the "Update now" button will look broken.
+There is no Alembic. `create_all()` runs on boot and `_ADDITIVE_COLUMNS` in `app/db.py`
+adds nullable columns that the ORM knows about and the deployed table does not - so a
+deploy that adds `tasks.actual_end` self-heals rather than needing a migration step
+somebody has to remember at 2am.
+
+This is deliberate and it is bounded: **additive and nullable only.** A rename or a type
+change is not expressible this way and would need a real migration. What was actually
+needed twice was an idempotent re-keying script, not a migration chain - see §12's
+surgery scripts.
+
+### The health check is a route the product really serves
+
+`GET /api/portfolio`. It pointed at `/api/state` until that endpoint was deleted with the
+retriever console, and Fly took both machines out of the pool while the app was serving
+every real page correctly - because a 404 from a health check reads as *unhealthy*, not
+as *that path is gone*. `/api/portfolio` is the landing page's own bundle, so a machine
+that passes the check can answer the first request a visitor makes.
+
+### Getting data onto production
+
+Code and data deploy by different routes, and conflating them is how a demo goes wrong.
+
+```bash
+# 1. Code.
+fly deploy
+
+# 2. A connection with no credential - a link, not a login (§7a).
+curl -X POST .../api/jira/connections -H "X-Pulse-Admin-Token: $TOK" ...
+
+# 3. The data somebody else fetched.
+python -m scripts.jira_push --to https://projectpulse.fly.dev \
+       --project COWORKLOCAL --token "$TOK"
+
+# 4. Check the count, because pairing sums rather than merges.
+curl -s ".../api/portfolio" | ...     # 190, not 380
+```
+
+Step 4 is not optional. Invariant 7 pairs several source ids onto one delivery project
+**on the assumption that the sources are complementary**. A spreadsheet and a Jira
+collection describing the same 190 work items are not complementary, they are duplicates,
+and pairing them reports 380 tasks. The fix is `carry_milestones` (move the grouping onto
+the surviving source) then `drop_source --forget-upload` (empty the superseded one,
+keeping the project row and its id, which everything else references).
+
+`flyctl ssh console -C "..."` is how those run on a deployed instance. On Windows it
+always exits with `Error: The handle is invalid.` after printing correct output - a local
+pty artifact, not a remote failure. The stdout above it is the truth.
+
+### Traceability findings are baked into the image, not loaded
+
+`traceability_runs/` is copied into the image by the Dockerfile and `TRACELINK_RUNS`
+points at `/app/traceability_runs`. So **production serves whichever run was committed at
+build time**, not whatever is on a laptop. Putting a new run live means copying it into
+`projectpulse/traceability_runs/` and deploying - a code deploy, not a data push.
 
 ---
 
 ## 16. Build sequence (solo, to 2026-09-11)
+
+> **Historical.** This is the round-1 plan as written on 2026-09-06, kept as the record
+> of what was committed to and in what order. It is not a description of the current
+> system; §§0-15 are.
 
 **Day 1 — contracts and skeleton.** DDL + Alembic migration. `models/base.py` mixin.
 `ids.py`. **Freeze `InsightBundle`** + the fixture. `docker-compose.yml` up and green. ZEN
@@ -1432,20 +1779,36 @@ an organisation adopting it.
 
 ## 17. Risk register
 
-Supersedes design §19.
+Supersedes design §19. The original round-1 register is kept below, marked, because
+which risks *did not* materialise is information.
 
-| Risk | Likelihood | Mitigation |
+### Live risks
+
+| Risk | Likelihood | Status / mitigation |
 |---|---|---|
-| **Causal engine scope-creeps into general discovery** | High | Ship ~6 named templates, not an engine. Two days, bounded, and more defensible under questioning. |
-| **Excel row identity churn manufactures false state changes** | High | Require `Task ID`; fuzzy matches get `identity_confidence='low'` and are excluded from causal chains; sha256 skip; pinned column map. |
-| **No dependency edges exist in any source** | Certain | Add `Predecessor` to the template we own; derive WBS-implicit edges; Jira `issuelinks` as bonus. Decide day 1. |
-| **ZEN wheel/aggregation shape mismatch** | Medium | 2h day-1 spike; aggregate in `context.py`; `engine.py` is the only importer, so the fallback is a file swap. |
-| **Narration contradicts computed values** | Medium | Model emits tokens, never digits; 8-stage validator; server-side substitution; numbers rendered in their own components. |
-| **Classifier miscalibration is taken for a real probability** | Medium | Advisory only; buckets not probabilities; import barrier tested; caveats shown in the trace. |
-| **Solo build overruns the 5 days** | High | Pre-committed cut order (§16). Fallback prose before LLM. One React route, not six. |
-| **Venue network fails during the demo** | Medium | `fallback.py` means the product works with the LLM off; `docker compose up` runs entirely locally. |
-| **PMs distrust an opaque health score** | Medium | Trace on every score, rules visible from day one, evidence click-through on every claim. |
-| **Second system of record emerges** | Low | Read-mostly. Write back only PM-confirmed actions; never overwrite the source tool. |
+| **A demo number is measured against a field nobody set** | **Certain, present** | 173 of 190 tickets share due date `2026-08-31`. The arithmetic is correct; the input is a bulk edit. Say it before showing an early/late figure (§13) |
+| **Two identities for one person** | **Certain, present** | The role field and `assignee` disagree on 151 tickets. Unresolved - the pages show both in different places |
+| **Pairing sums duplicate sources instead of merging them** | Certain when it happens | Invariant 7 assumes sources are complementary. Check the task count after every data push; `drop_source.py` is the remedy (§15) |
+| **Cloning a repository on a 512 MB dyno with no volume** | High, if attempted | Not attempted. `tracelink` runs off-server and ships JSON in the image (§8a). **A GitHub sync inside the web process would break it**, and that work is not started |
+| **A traceability run on the laptop is mistaken for the one in production** | Medium | The image carries the committed run. Compare a live figure, not a local one, before believing the page is current (§15) |
+| **A rotated admin token silently breaks downloaded sync tools** | Medium | `/api/jira/sync-tool` embeds the token in the file. After a rotation every previously downloaded script must be re-downloaded (§7a) |
+| **A database backup treated as a file rather than as a data export** | Medium | `pulse.db.bak*` holds real ticket text and the Fernet-encrypted Jira token. Gitignored; never commit one |
+| **Deriving a fact from a changelog that does not contain it** | Medium, recurring | The "start = first move out of To Do" bug shipped once and manufactured 151 dates. Any new derivation needs the same question: *is the event I am reading actually the event I mean?* |
+| **PMs distrust an opaque health score** | Medium | Trace on every score, rules visible, evidence click-through on every claim |
+| **Second system of record emerges** | Low | Read-mostly. Write back only PM-confirmed actions; never overwrite the source tool |
+
+### Round-1 register, resolved
+
+| Risk | What happened |
+|---|---|
+| Causal engine scope-creeps into general discovery | Did not. Six named templates, as planned |
+| Excel row identity churn manufactures false state changes | Held. `Task ID` required; fuzzy matches marked `identity_confidence='low'` and excluded from chains |
+| No dependency edges exist in any source | Materialised as expected; `Predecessor` in our own template plus WBS-implicit edges |
+| ZEN wheel/aggregation shape mismatch | Mitigated better than planned - `rules/engine.py` carries a complete built-in evaluator and reports which backend ran; both are checked against each other |
+| Narration contradicts computed values | Held. Tokens never digits, 8-stage validator, server-side substitution |
+| Classifier miscalibration read as a real probability | Held, and the classifier is optional - it does not install on Python 3.14 and the product says so rather than crashing |
+| Solo build overruns the 5 days | It did, and the cut order held: retrieval/precedent was cut and `confidence.py` says so in its own docstring (§0) |
+| Venue network fails during the demo | Held. `fallback.py` means the product works with the LLM off |
 
 ---
 

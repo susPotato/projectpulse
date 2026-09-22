@@ -8,39 +8,47 @@ and must not be hand-edited.
 
 ## Now
 
-**Idle.** Ten screens over HTTP behind the design's app shell, four narration
-providers, and a test suite of 634 in ~70s.
+**Idle.** The product runs on a real backlog. 190 Jira issues, 523 changelog entries,
+351 exact state changes, live on production and on this machine. **1,186 tests pass in
+38s** here, and `tracelink`'s own 464 in 6s.
 
 Landed this session, newest first:
 
-- **`tests/test_scenario.py`** - the journey a PM actually takes (Program, Insight,
-  Calculation, Schedule, Recovery, Forecast, a report they send) asserting that the
-  **surfaces agree with each other**. Mutation-checked.
-- **The FPT AI gateway** as a fourth provider, and **the first live model calls made
-  from this machine**: `source=model` end to end. All 17 models on the permission
-  screen were probed - 9 chat, 8 of those pass the eight-stage gate. The default is
-  `gemma-4-31B-it` on measurement (2.3-3.1s against DeepSeek-V4-Flash's 73.6s).
-- **A delivery forecast** that resamples this project's own drift and **refuses with a
-  reason** when the data cannot support a range.
-- **`/reports`** - the report builder, one `ReportDoc` behind `.docx` / `.xlsx` / `.md`
-  and a live preview.
-- **A `.gitignore` repair.** A bare `models/` had been silently dropping new
-  `app/models/*.py` files from every commit, and the pushed branch could not
-  `import app.db` at all. Check `git status --porcelain --ignored` after adding a table.
+- **Documentation caught up with the code.** `ProjectPulseAI_Architecture.md` is v2,
+  revised against the running application: new §7a (why a hosted server cannot collect
+  from this Jira, and the push path), new §8a (`tracelink` as an out-of-process
+  pipeline), rewritten §§0, 2, 11, 12, 13, 15 and 17, and §16 marked historical. Its
+  header carries a table of what moved, so a reader of v1 knows where to look.
+- **Jira replaced the spreadsheet as CoWorkLocal's input**, end to end: collection,
+  conversion, the push to production, the milestone carry, and the count check that
+  catches pairing summing 190 + 190 to 380.
+- **One status vocabulary** in `app/ingest/status.py`. The old five-entry map had never
+  heard of `Release`, `Cancelled` or `Re-Open` — the three commonest states on this
+  board — so 152 of 190 tasks normalised to `OTHER`, were counted open, and 129
+  released tickets reported overdue.
+- **`derive_end_dates`**, and **`derive_start_dates` corrected**. Jira records when work
+  was promised and nothing about when it landed; the changelog has the answer. The first
+  version of the start rule read "first move out of To Do", which on this board *is* the
+  closing transition — it manufactured 151 starts equal to their finishes. Now
+  `STARTED = {IN_PROGRESS, BLOCKED}`, and the honest answer is two.
+- **Content-hash fingerprinting for hand-written assets.** `_page()` rewrites
+  `/static/x.js` to `?v=<sha256[:10]>` as the page is served, and `_Revalidating`
+  sends `immutable` only for Vite's own hashed names. Twice a fix looked undeployed
+  because a browser was serving a week-old `gantt.js`.
+- **Search, sort and filter on the Gantt and the Team page.** 190 rows is not a chart
+  anybody reads. The Gantt collapses a flat backlog, and finished-but-never-started work
+  draws a point rather than a zero-width bar.
+- **Four surgery scripts** — `drop_source.py`, `carry_milestones.py`,
+  `restore_milestones.py`, `jira_rebuild.py` — each with a docstring saying which
+  general operation was wrong for this specific case. `restore_milestones.py` exists
+  because the first run of the surgery destroyed 29 milestones no source can rebuild.
 
-Next per CLAUDE.md section 8: **reconcile the pitch deck with the product** - the one
-big item left, and it is not in the code.
+**Deliberately not done**, at the user's direction: the uniform `2026-08-31` due date on
+173 tickets, the role-vs-`assignee` disagreement on 151, and GitHub sync (512 MB, no
+volume — not started). See CLAUDE.md, top section.
 
 **Still not verifiable here:** the image has never been built (no Docker daemon), and
-the duration classifier cannot load on Python 3.14 - it needs 3.12/3.13. See entry 21.
-The container *logic* is verified: `python -m scripts.serve --check` seeds an empty
-database and leaves a populated one alone.
-
-**On the model path**, what remains unproven is now narrow. Anthropic's and OpenAI's
-*response parsing* has still never run against their own endpoints - no credentials
-here for either. Everything else is closed: FPT is verified live end to end, Gemini ran
-in production (see CLAUDE.md section 0), and the failure path is verified for all four
-- the template is served and the reason prints.
+the duration classifier cannot load on Python 3.14 — it needs 3.12/3.13. See entry 21.
 
 ---
 
@@ -48,6 +56,67 @@ in production (see CLAUDE.md section 0), and the failure path is verified for al
 
 Newest first. Each entry names the functions that changed, so a reader can jump
 straight to them.
+
+### 35 - The spreadsheet is gone: a real Jira backlog through the whole pipeline
+
+The input changed and six things broke. Every one of them was a vocabulary, a scope or
+a key that had only ever been tested against data we authored, which is the whole
+argument for doing this before believing any number on any page.
+
+**`app/ingest/status.py` (new)** - `STATUS_MAP`, `CLOSED`, `normalise()`. One vocabulary
+for every source. The Jira convertor carried its own five entries and had never heard of
+`Release`, `Cancelled` or `Re-Open`.
+
+**`app/ingest/sources/jira/convertor.py`** - `_mapped_or_raw()`, `_issue_ids()`,
+`_keys_by_issue_id()`, `derive_start_dates()`, `derive_end_dates()`; `convert_issues()`
+and `convert_changelogs()` both take `project_key` now. Tasks are keyed by issue *key*,
+so the Team page says `COWORKLOCAL-10` rather than `1101143`, and a changelog resolves
+id -> key or it names a task that does not exist - silently, because the row writes fine
+and joins to nothing.
+
+**`app/models/domain.py`, `app/db.py`** - `Task.actual_end`, plus its entry in
+`_ADDITIVE_COLUMNS` so a deployed database self-heals on boot.
+
+**`app/intelligence/pipeline.py`** - a `landed` side dict rather than a field on
+`TaskNode`, which carries scheduling fields only. `MemberTask` gains `actual_end`,
+`finished_early_days`, `closed`.
+
+**`app/api/tracelink_view.py`** - `rollup_by_parent` keyed on `parent`, which is the
+spreadsheet's nesting and empty on Jira rows: all 190 folded into `(none)` and the page
+claimed "189 planning tasks". Falls back to the ticket's own key. `_people()` no longer
+prints email subjects as team members.
+
+**`app/api/main.py`** - `_Revalidating`, `_VERSIONED`, `_page()`. Cache headers and
+content-hash query strings for the seven hand-written pages.
+
+**`app/api/static/gantt.{js,html}`** - the green finish point, `actual_end` carried
+through the merge key, search and sort with a 120 ms debounce that does not steal focus,
+and the flat-backlog collapse.
+
+**`web/src/pages/Team.tsx`** - `MEMBER_SORTS`, `TASK_FILTERS`, `keeps()`, `matches()`,
+`orderMembers()`, `why()`, a collapsible `UndatedList`.
+
+**`scripts/`** - `jira_rebuild.py`, `drop_source.py` (`--keep-milestones`,
+`--forget-upload`), `carry_milestones.py`, `restore_milestones.py` (`--backup-project`,
+because milestone names like "Go-Live" repeat across projects and an unfiltered read
+drags another delivery's phases onto this chart).
+
+**`traceability/tracelink/governance.py`** - `is_management_type()`, `select()`,
+`acceptance_text()`. Process work is selected by *what it is*, not by the shape of one
+spreadsheet, and `select()` returns a reason with the rows.
+
+**Tests** - `tests/test_jira_convert_scope.py` (10), additions to `test_static_pages.py`,
+`traceability/tests/test_governance.py`, `test_tickets_tabular.py`. 1,186 pass here, 464
+in `tracelink`.
+
+**Two things I got wrong in the doing, recorded because the pattern repeats.** I reported
+"0 -> 152 dated tasks" as a win when the rule producing those dates was reading the close
+as a start. And I diagnosed the missing state changes as a pairing re-key problem when
+`_pair_source` only appends to `also` - the real cause was that conversion had never run.
+Both were caught by measuring rather than by reading, and both measurements were wrong
+first: one filtered on `StateChange.task_id`, which does not exist, so it matched nothing
+and said so quietly.
+
 
 ### 34 - Which of the gateway's models we can actually use, and a journey test
 Asked to check every model, and to test a normal scenario through the app.
@@ -921,6 +990,7 @@ Ingestion complete for both sources plus `provably_before()`. 56 tests.
 | Shared Gantt component | 407 | ~7s |
 | Script-ordering fix | 414 | ~7s |
 | Asset-path fix | 416 | ~7s |
+| Real Jira backlog end to end | 1,186 | 38s |
 
 <!-- BEGIN GENERATED INDEX -->
 
@@ -928,12 +998,28 @@ Ingestion complete for both sources plus `provably_before()`. 56 tests.
 
 _Generated by `python -m scripts.index_code`. Do not edit below the marker._
 
+### `app/admin.py`
+_Who may change anything on a deployed instance._
+
+- `configured()` - Whether a token has been set, so remote administration is possible.
+- `is_local(request)` - Whether this request came from the machine the app runs on.
+- `presented_token(request)` - The token this request carries, from either accepted place.
+- `actor(request)` - `"loopback"`, `"admin-token"`, or `""` when this request may not write.
+- `may_write(request)` - 
+- `require(request)` - The actor, or an `HTTPException` explaining what is missing.
+- `status()` - What the page may know about the auth setup. Never the token.
+
+### `app/agent/brief.py`
+_What the Agent tab is told about the project being asked about._
+
+- `build_brief(session, project_id, as_of)` - Everything the model is told about one project, or `None` if unknown.
+
 ### `app/agent/chat.py`
 _Multi-turn chat, via whichever vendor narration is already configured with._
 
 - **`class ChatUnavailable`** - The model could not be reached, or answered with nothing usable.
 - **`class ChatTurn`** - 
-- `chat(turns, *, provider, model, api_key, base_url)` - One reply, given the whole conversation so far - dispatched to
+- `chat(turns, *, provider, model, api_key, base_url, context)` - One reply, given the whole conversation so far - dispatched to
 
 ### `app/agent/link_fetch.py`
 _Best-effort URL reading, so a pasted link behaves like an attachment._
@@ -943,23 +1029,24 @@ _Best-effort URL reading, so a pasted link behaves like an attachment._
 - `fetch_and_extract(url)` - The text at `url`, or a one-line note explaining why there isn't any.
 
 ### `app/api/main.py`
-_A small local console for watching the retriever work._
+_The whole server: the JSON API, the built web app, and the static pages._
 
+- **`class _Revalidating`** - Static files that a browser must re-check before reusing. - methods: `file_response`
 - **`class SyncRequest`** - 
 - **`class StepRequest`** - 
 - `index()` - The landing page: the Program board, worst project first.
-- `console_page()` - The retriever console: what was read, what was refused, what changed.
-- `state()` - Everything the console renders, in one round trip.
-- `sync(request)` - The same call the scheduler and the PM's button make.
-- `write_step(request)` - Overwrite the demo workbooks at a given point in their story.
-- `write_jira()` - 
-- `reset()` - Drop and recreate the schema, so a timeline can be replayed from scratch.
 - `insight_page()` - The insight screen.
+- `traceability_page()` - Jira-to-code traceability: which tickets the code backs up, and what it
+- **`class _Traceability`** - A run's findings, in the shape the report exporter expects.
+- `default_project_id()` - Which project a request that names none is about.
+- `project_param(project)` - `?project=`, or the default above - never a hard-coded id.
+- `api_traceability(project)` - The traceability run for one delivery project.
+- `api_traceability_rollup(project)` - Traceability folded onto the tracker keys the Schedule page draws.
+- `api_traceability_rows(project)` - The feature rows, flat, for a table somebody filters.
 - `gantt_page()` - The schedule view.
 - `api_gantt(project, also)` - Tasks, milestones and dependency edges on one shared time window.
-- `explain_page()` - The arithmetic behind every number.
-- `api_explain(project, also)` - The forward pass, with the working, for one project.
 - `template(kind)` - A blank input workbook, generated from the sheet contract itself.
+- `api_explain(project, also)` - The forward pass, with the working, for one project.
 - `forecast(project, also)` - A range of finish dates, resampled from this project's observed drift.
 - `reports_page()` - The report builder: choose an audience, see it, download it.
 - `report_options(project)` - What the builder screen may offer, straight from the exporter.
@@ -973,30 +1060,73 @@ _A small local console for watching the retriever work._
 - `projects_page()` - Every project, flat and searchable - pick one and open it.
 - `programs_api()` - Every Program, with a project count and its worst project's band.
 - `program_detail_api(program_id)` - One program's cross-project rollup: ranked projects, resources, and
+- `create_program_route(body)` - Create a program from the Programs tab.
+- `create_project_route(body)` - Create a project from the Projects tab, with no document yet.
+- `preview_project_removal(project_id)` - What removing this project would destroy, without removing anything.
+- `remove_project_route(request, project_id)` - Remove a project and everything that was only ever about it.
 - `team_page()` - Who is carrying what, and what moved.
 - `team(project, also)` - Workload, effort and activity, from columns the sheets actually carry.
 - `program()` - Program configuration: watched sources, project pairing, the rule table.
-- `upload_source(file, sheet_kind, project_name, project_id)` - Ingest one Excel sheet for a project, from a file picked in the browser.
+- `imports_page()` - What has been imported, what it feeds, and what reads it.
+- `read_imports(request)` - Every import with its project, its availability and its consumers.
+- `delete_import(request, file_name)` - Forget one import.
+- **`class JiraProbeIn`** - Credentials for one connection test. Never persisted.
+- `test_jira_connection(request, body)` - Ask one Jira whether this credential works, and store nothing.
+- **`class JiraPreviewIn`** - The same credentials, plus the project to look at.
+- `preview_jira_project(request, body)` - What this Jira would give us for one project, before collecting any.
+- **`class JiraLinkIn`** - One link between a delivery project and a Jira project.
+- `list_jira_connections(project)` - Every Jira link, or one project's. Never returns a credential.
+- `save_jira_connection(request, body)` - Link a delivery project to a Jira project, credential and all.
+- `delete_jira_connection(request, connection_id)` - Forget one link.
+- `jira_page()` - What has been collected from Jira, as rows.
+- `read_jira_issues(project_key, limit)` - Collected Jira issues, straight from the tool layer.
+- `collect_jira_connection(request, connection_id)` - Pull one linked Jira project into the raw tables, then extract it.
+- **`class JiraIngestIn`** - Issues collected elsewhere, for a server that cannot collect them.
+- `ingest_jira_issues(request, body)` - Accept issues somebody else fetched, then run the ordinary pipeline.
+- `download_jira_sync_tool(request, project_key)` - A one-file PowerShell script that syncs one project, pre-filled.
+- `resync_imports(request)` - Re-read every watched sheet through the ordinary reader, differ and rules.
+- `upload_source(file, sheet_kind, project_name, project_id, program_id)` - Ingest one Excel sheet for a project, from a file picked in the browser.
 - `scenarios(project, also)` - What the schedule would do if one thing changed.
-- **`class NarrationSettingsIn`** - What the settings page may change.
+- **`class NarrationSettingsIn`** - The global model default that features fall back to.
 - `settings_page()` - Where a person turns narration on and pastes a key.
-- `read_settings()` - Current narration settings. Never includes the key itself.
+- `read_settings(request)` - Current narration settings. Never includes the key itself.
 - `write_settings(request, body)` - 
+- **`class FeatureOverrideIn`** - One feature's model settings. Every field is optional on purpose.
+- **`class ApiKeyIn`** - A vendor credential on its way to the encrypted store.
+- **`class RateIn`** - US dollars per million tokens. Zero input and output removes the rate.
+- `llm_page()` - Where each feature's model is chosen and keys are managed.
+- `usage_page()` - What the models have cost.
+- `llm_features(request)` - Every feature, the model it resolves to, and where that came from.
+- `set_llm_feature(request, feature, body)` - 
+- `test_llm_feature(request, feature)` - Ask this feature's configured model to answer, and report what happened.
+- `llm_keys(request)` - Which vendors have a key, and where each one lives. Never a key.
+- `save_llm_key(request, provider, body)` - 
+- `delete_llm_key(request, provider)` - 
+- `llm_usage(days)` - Tokens and cost, grouped by feature, model and day.
+- `llm_pricing(request)` - 
+- `set_llm_rate(request, model, body)` - 
+- `purge_llm_usage(request, older_than_days)` - Trim the usage log. Retention is a decision, so nothing does this itself.
 - `test_settings(request)` - Ask the configured model for a narrative, and report exactly what happened.
 - `risk_page()` - The risk register: what a PM tracks by hand, not what the engine finds.
 - `read_risks(project)` - Every risk, program-wide by default - `Layout/fpt-pm-risk.html` lists
 - `create_risk_route(body)` - 
 - `update_risk_route(risk_id, body)` - 
 - `delete_risk_route(risk_id)` - 
+- `read_risk_drafts(project)` - Proposals waiting on a person for one project, with the rows they cite.
+- `generate_risk_drafts(request, project)` - Read this project's task text and propose risks from it.
+- `accept_risk_draft(risk_id)` - Promote one proposal into the register. The act that makes it a risk.
+- `dismiss_risk_draft(risk_id)` - 
 - `program_dashboard_page()` - The Program canvas. Same shell as every other page; picked by path.
 - `project_dashboard_page()` - The Project canvas. Same shell as every other page; picked by path.
 - `dashboard_catalogue_api()` - 
 - `get_dashboard_api(scope_type, scope_id)` - 
 - `reset_dashboard_api(scope_type, scope_id)` - 
 - `apply_template_api(scope_type, scope_id, template)` - 
-- `generate_dashboard_api(body)` - Create with AI: the model picks tiles from the catalogue, never data.
-- `draft_custom_tile_api(body)` - Parse pasted data into a chart - not saved yet. Reuses whichever
-- `chat_custom_tile_api(body)` - The tile builder, one turn at a time: describe a chart, look at it, say
+- `apply_default_dashboard_api(scope_type, scope_id)` - Default setup: this scope's starting board, without picking anything.
+- `fit_dashboard_api(scope_type, scope_id)` - Build a board from the signals this scope's data actually carries.
+- `generate_dashboard_api(request, body)` - Create with AI: the model picks tiles from the catalogue, never data.
+- `draft_custom_tile_api(request, body)` - Parse pasted data into a chart - not saved yet. Reuses whichever
+- `chat_custom_tile_api(request, body)` - The tile builder, one turn at a time: describe a chart, look at it, say
 - `list_custom_tiles_api()` - 
 - `create_custom_tile_api(body)` - 
 - `get_custom_tile_api(tile_id)` - 
@@ -1006,7 +1136,7 @@ _A small local console for watching the retriever work._
 - `duplicate_tile_api(tile_id)` - 
 - `delete_tile_api(tile_id)` - 
 - `agent_page()` - Free-form chat - the one page with no deterministic engine behind it.
-- `agent_chat(body)` - One reply, given the whole conversation so far.
+- `agent_chat(request, body)` - One reply, given the whole conversation so far.
 - `insight(project, also)` - The whole intelligence layer for one project, as one object.
 
 ### `app/api/schemas/agent.py`
@@ -1032,6 +1162,7 @@ _The dashboard canvas: the tile catalogue, and saved layouts._
 - **`class DashboardOut`** - 
 - **`class GenerateRequest`** - 
 - **`class CustomTileDraftRequest`** - 
+- **`class LiveSource`** - How to recompute a tool-sourced tile's rows live, instead of trusting
 - **`class CustomChartDraft`** - A proposed `{title, chart_type, labels, values}` - not saved yet. The
 - **`class DraftChange`** - One difference between the draft a person was looking at and the one
 - **`class CustomChartDraftIn`** - The draft as it arrives from the browser, echoed back with each turn.
@@ -1087,7 +1218,7 @@ _The program view: every delivery project, ranked, with bands not scores._
 _Program-level configuration, read-only._
 
 - **`class WatchedSource`** - One sheet or payload folder the retriever looks at.
-- **`class ScopeEntry`** - Which source ids are one delivery project (invariant 7).
+- **`class ScopeEntry`** - Which source ids are one delivery project (invariant 7), and its program.
 - **`class RuleRow`** - One row of the decision table, as a reader would challenge it.
 - **`class ProgramBundle`** - 
 
@@ -1097,8 +1228,13 @@ _The Program level: the list of programs, and one program's rollup._
 - **`class ProgramSummary`** - One row on the Programs list (`Layout_Program` image12).
 - **`class ProgramListBundle`** - 
 - **`class ResourceRow`** - One person's allocation on one project within the program.
-- **`class ResourceConflict`** - One person allocated over 100% combined, across this program's projects.
+- **`class ProjectShortfall`** - One project's apportioned share of a person's excess demand.
+- **`class ResourceConflict`** - One person whose committed demand exceeds their capacity in a window.
 - **`class ProgramRollupBundle`** - Everything the Program dashboard's cross-project tiles read from.
+- **`class ProgramIn`** - What the Programs tab's "Add program" form sends.
+- **`class ProjectIn`** - What the Projects tab's "Add project" form sends.
+- **`class CreatedProject`** - A project that now exists, as `app/scope.py` knows it.
+- **`class CreatedProgram`** - 
 
 ### `app/api/schemas/report.py`
 _The report builder's contract: what can be chosen, and what it will produce._
@@ -1119,6 +1255,8 @@ _The risk register contract._
 - **`class RiskMatrixCell`** - One cell of the 5x5 heat-map: its rating, and how many risks sit in it.
 - **`class ProjectOption`** - One project a risk may be filed against, for the form's picker.
 - **`class RiskBundle`** - Everything the risk register screen renders.
+- **`class CitedTask`** - One task a draft was read from, as the Evidence tab shows it.
+- **`class RiskDraftBundle`** - The proposals waiting on a person, and everything needed to check them.
 
 ### `app/api/schemas/scenario.py`
 _What the schedule would do if one thing changed, ready to serve._
@@ -1136,6 +1274,19 @@ _Who is carrying what, and what has moved - from data the sheets actually have._
 - **`class BurnPoint`** - Cumulative logged effort as at one scan of the worklog.
 - **`class BurnSeries`** - Effort logged over time against the plan it is burning.
 - **`class TeamBundle`** - 
+
+### `app/api/tracelink_view.py`
+_Read a `tracelink` run directory and shape it for the Traceability page._
+
+- `run_dir()` - The single run named by `TRACELINK_RUN`, if that is how it is set up.
+- `runs_root()` - 
+- `available_runs()` - Every run this server can see, newest-looking first.
+- `run_for_project(project_id)` - Resolve a project id to its run. Returns (run, all_available).
+- `index_by_file(corpus_files, rows)` - The inverse of the ticket view: for each file, the tickets that claim it.
+- `rollup_by_parent(run)` - Traceability folded onto the tracker keys the Schedule page draws.
+- `expected_fields(rows)` - The inline fields this sheet expects every row to carry, and how many do.
+- `feature_rows(run)` - One flat row per feature, small enough for a page that is not the trace.
+- `collect(run)` - Everything the page needs, in one object.
 
 ### `app/config.py`
 _Runtime configuration._
@@ -1165,6 +1316,14 @@ _Custom tiles: parse a person's own pasted data into a chart, never invent one._
 - `get_custom_tile(session, tile_id)` - 
 - `delete_custom_tile(session, tile_id)` - 
 
+### `app/dashboard/fit.py`
+_Build a dashboard from what a project actually has._
+
+- `project_signals(session, project_ids)` - Which signals this project's ingested data actually carries.
+- `program_signals(session, program_id)` - The same question one level up.
+- `fitted_tiles(scope, available)` - The tiles this data can fill, in catalogue order.
+- `missing_for(scope, available)` - Which tiles each absent signal is holding back.
+
 ### `app/dashboard/generator.py`
 _The AI Dashboard Generator: a prompt selects tiles, it never invents them._
 
@@ -1179,6 +1338,8 @@ _CRUD for dashboard layouts and tiles, and the catalogue they draw from._
 - `replace_dashboard(session, scope_type, scope_id, *, name, source, ai_prompt, tiles)` - Reset this scope's dashboard: new name/source, and a fresh tile set.
 - `reset_blank(session, scope_type, scope_id)` - Blank Canvas: an empty dashboard, ready for "+ Add Tiles".
 - `apply_template(session, scope_type, scope_id, template)` - Browse Templates: one of the canned starter sets in `catalogue.TEMPLATES`.
+- `apply_default(session, scope_type, scope_id)` - Default setup: the starting board for this scope, in one click.
+- `apply_fitted(session, scope_type, scope_id)` - Fit a board to what this scope's data actually carries.
 - `seed_default_dashboard(session, scope_type, scope_id, template)` - Give a scope a starting layout, but only if it has none.
 - `generate(session, scope_type, scope_id, prompt, drafter)` - Create with AI: the generator picks tiles, this places and saves them.
 - `add_tile(session, scope_type, scope_id, data)` - 
@@ -1204,7 +1365,7 @@ _The report, once, in a form no file format has an opinion about._
 - **`class Preset`** - A named audience, and the sections it wants.
 - `preset(preset_id)` - 
 - `resolve_sections(*, preset_id, sections)` - Which sections to build, from either a preset name or an explicit list.
-- `build_document(bundle, *, explain, scenarios, forecast, risks, sections, project_name, generated_at)` - The whole report as blocks, for any renderer to walk.
+- `build_document(bundle, *, explain, scenarios, forecast, risks, drafts, traceability, sections, project_name, generated_at)` - The whole report as blocks, for any renderer to walk.
 
 ### `app/exports/markdown.py`
 _A `ReportDoc` as Markdown, for the email or the wiki page._
@@ -1238,6 +1399,19 @@ _Deterministic domain identifiers._
 - `domain_id(source, entity, connection_id, *pks)` - Build a domain id. At least one primary-key component is required.
 - `parse_domain_id(value)` - Inverse of :func:`domain_id`. Returns (source, entity, connection_id, pks).
 - `source_of(value)` - Which system a row came from, without parsing the whole id.
+
+### `app/imports.py`
+_What has been imported, what it feeds, and what reads it._
+
+- **`class Consumer`** - One thing downstream that reads a kind of sheet.
+- **`class ImportRow`** - One imported thing, everything known about it in one place. - methods: `ingested`
+- `inventory(session)` - Every import, newest scan first.
+- `orphan_projects(session)` - Registered projects with no import and nothing ingested.
+
+### `app/ingest/programs.py`
+_The one path a collector takes to attach a project to its program._
+
+- `ensure_program(session, project_id)` - The program `project_id` belongs to, with its row created if absent.
 
 ### `app/ingest/runner.py`
 _One sync path, two triggers._
@@ -1329,12 +1503,35 @@ _How a watched workbook's bytes reach us - and nothing else._
 - **`class _TempFetched`** - A fetch backed by a temp file, which `release()` has to delete. - methods: `release`
 - **`class LocalFolderSource`** - Read from a folder on disk - the OneDrive sync client's output. - methods: `fetch`
 
+### `app/ingest/sources/jira/connect.py`
+_Can we reach this Jira, with these credentials, right now?_
+
+- **`class ConnectionRefused`** - The request was not attempted, and the message says why.
+- **`class Probe`** - What one attempt found. Never carries the credential. - methods: `as_dict`
+- `normalise_site(site)` - `acme.atlassian.net` -> `https://acme.atlassian.net`, and validate it.
+- `probe(site, email, token)` - Ask one Jira who this credential belongs to.
+- `preview(site, email, token, project, sample)` - What this Jira would actually give us for one project.
+
 ### `app/ingest/sources/jira/convertor.py`
 _Convertor: Jira tool rows -> the vendor-neutral domain model._
 
 - `ensure_project(session, *, connection_id, project_key, name)` - Create the program/project rows the tasks hang off, if absent.
-- `convert_issues(session, *, connection_id, project_id)` - `_tool_jira_issues` -> `tasks`.
-- `convert_changelogs(session, *, connection_id, now)` - `_tool_jira_changelogs` -> `state_changes`, all of them exact.
+- `convert_issues(session, *, connection_id, project_id, project_key)` - `_tool_jira_issues` -> `tasks`.
+- `derive_end_dates(session, *, project_id)` - When each task actually finished, from the tracker's own changelog.
+- `derive_start_dates(session, *, project_id)` - Give each task the date its work actually began, from the changelog.
+- `convert_changelogs(session, *, connection_id, now, project_key)` - `_tool_jira_changelogs` -> `state_changes`, all of them exact.
+
+### `app/ingest/sources/jira/export_sheet.py`
+_A Jira issue export, converted into the schedule sheet this app reads._
+
+- **`class NotAJiraExport`** - The workbook has no Jira issue table in it.
+- `people_in_note(text)` - Names listed under a note label, in the order written.
+- `read_export(source, sheet)` - `(headers, issue_rows)` from a Jira export, whichever tab holds it.
+- `convert(headers, rows, *, sources, columns)` - `(records, chosen)` - the template rows, and which Jira column fed each.
+- `write_schedule(records, out)` - 
+- `to_bytes(records, contract)` - The same workbook as `write_schedule`, in memory.
+- `coverage(records, chosen, headers, rows, columns)` - What came across, what did not, and what that costs.
+- `convert_workbook(source, sheet, kind)` - A Jira export in, a schedule workbook and its coverage report out.
 
 ### `app/ingest/sources/jira/extractor.py`
 _Extractor: raw Jira JSON -> tool-layer rows, still in Jira's own shape._
@@ -1342,6 +1539,13 @@ _Extractor: raw Jira JSON -> tool-layer rows, still in Jira's own shape._
 - `parse_jira_datetime(value)` - Jira sends `2026-03-04T09:12:00.000+0000`, which %z accepts.
 - `extract_issues(session, *, connection_id, since)` - `_raw_jira_issues` -> `_tool_jira_issues`.
 - `extract_changelogs(session, *, connection_id, since)` - `_raw_jira_changelogs` -> `_tool_jira_changelogs`.
+
+### `app/ingest/sources/jira/live.py`
+_Collector: a real Jira over HTTP, raw rows out._
+
+- **`class CollectReport`** -  - methods: `as_dict`
+- `watermark(session, connection_id, project_key)` - When this project was last collected, from the rows themselves.
+- `collect(session, *, connection_id, project_key, site, email, token, now, since, page_size)` - Page one project into `_raw_jira_*`. Returns what was written.
 
 ### `app/ingest/sources/jira/replay.py`
 _Collector: Jira JSON in, raw rows out._
@@ -1353,6 +1557,20 @@ _Collector: Jira JSON in, raw rows out._
 _The Jira source: collect -> extract -> convert, wired into the runner._
 
 - `run_jira_sync(session, *, connection_id, now, sync_run_id, data_root)` - 
+
+### `app/ingest/sources/jira/store.py`
+_Saving, listing and using a Jira connection._
+
+- `save(session, *, project_id, site, email, project_key, token, actor)` - Create or update the link between one delivery project and one Jira.
+- **`class NoCredential`** - This link holds no token, so nothing can be fetched with it.
+- `token_for(row)` - The credential, decrypted. Raises if there is none, or it is sealed
+- `listing(session, project_id)` - Every connection, or one project's, without decrypting anything.
+- `delete(session, connection_id)` - Forget one link. The rows it collected stay, as `delete_import` does.
+
+### `app/ingest/status.py`
+_The one vocabulary every source normalises its status text into._
+
+- `normalise(value)` - Tracker status text -> the shared vocabulary, or OTHER.
 
 ### `app/intelligence/assembler.py`
 _Where every number in the product is born, and the only place it is formatted._
@@ -1370,11 +1588,31 @@ _How much to trust the delivery-outlook figure._
 - **`class DeliveryConfidence`** - How much of the outlook figure rests on known, recent data.
 - `compute(*, coverage, hours_since_sync)` - The confidence band for one project's outlook figure.
 
+### `app/intelligence/contention.py`
+_Channel 1: what it costs when two projects need the same person._
+
+- `normalize_person(name)` - A person's name reduced to a comparison key.
+- **`class Allocation`** - One person's committed share of one project over one window. - methods: `key`
+- **`class Window`** - The period contention is assessed over. Inclusive on both ends. - methods: `label`
+- **`class Demand`** - One project's claim on a person inside the assessed window.
+- **`class Shortfall`** - What one project does not get, and the delay that would follow.
+- **`class Absorption`** - How the organisation would absorb a shortfall, stated not assumed. - methods: `describe`
+- **`class ContentionResult`** - One person, one window: the excess and who absorbs it. - methods: `contended`, `projects`, `pressure_for`, `check`
+- `demands_in_window(allocations, window, units)` - Each project's demand on one person inside `window`, in effort-days.
+- `apportion(*, person, window, demands, units, priority, month_to_date_overtime_hours)` - The excess on one person in one window, shared among the projects losing it.
+- `assess(allocations, window, *, program_id, priority, overtime_by_person)` - Every contended person in one window, worst first.
+- **`class ProgramContext`** - The program a project is analysed inside. - methods: `pressure_for`, `results_for`
+- `month_periods(start, end)` - `[start, end]` cut into calendar months.
+- `assess_periods(allocations, periods, *, program_id, priority, overtime_by_person)` - Contention in each period, worst first across all of them.
+- `pressure_by_project(results)` - Total `contention_pressure` per project, in effort-days.
+- `as_effort(value)` - Wrap a pressure figure as a unit-carrying quantity for display.
+
 ### `app/intelligence/context.py`
 _Everything the rules engine is allowed to see, flattened to scalars._
 
 - **`class DeliveryContext`** - ~30 scalars describing one project at one moment. - methods: `as_record`
-- `build_context(*, project_id, as_of, schedule, impact, chains, changes, qa_items, edges, rows_rejected, stated_only_impact, newly_blocked_qa, data_age_hours)` - Aggregate one project into the scalars the rules compare.
+- `shift_date(value, days)` - `value` moved by `days`, clamped to what a `date` can represent.
+- `build_context(*, project_id, as_of, schedule, impact, chains, changes, qa_items, edges, rows_rejected, stated_only_impact, newly_blocked_qa, data_age_hours, program, source_ids, owners)` - Aggregate one project into the scalars the rules compare.
 
 ### `app/intelligence/effort.py`
 _Cumulative logged effort over time, from what the differ actually saw._
@@ -1401,11 +1639,15 @@ _Show the arithmetic as input, algorithm, output._
 ### `app/intelligence/pipeline.py`
 _Run the whole intelligence layer for one project and return one bundle._
 
+- **`class _Unset`** - Sentinel distinguishing "resolve the program" from "there is none".
+- `load_owners(session, project_ids)` - Who each task belongs to, keyed by the task's id.
 - `load_tasks(session, project_ids)` - 
 - `load_edges(session, project_ids)` - 
 - `evidence_resolver(session)` - Turn a `_raw_data_id` into something a PM can look at.
-- `analyze_project(session, *, project_id, also, as_of, generated_at, table, engine, narrator)` - Everything the insight screen needs for one project.
+- `analyze_project(session, *, project_id, also, as_of, generated_at, table, engine, narrator, program)` - Everything the insight screen needs for one project.
 - `explain_project(session, *, project_id, also)` - The schedule arithmetic for one project, ready to serve.
+- `load_allocations(session, program_id)` - Every allocation on every project in one program, with a dated window.
+- `program_context(session, program_id, *, window, priority)` - Build the context one program's projects are analysed inside.
 - `portfolio(session)` - Every delivery project in the program, ranked worst first.
 - `list_programs(session)` - Every Program, each with its own ranked projects.
 - `program_rollup(session, program_id)` - One program's cross-project rollup: ranked projects, resources, and
@@ -1500,6 +1742,55 @@ _The named hypotheses a causal chain is allowed to claim._
 - **`class ChangePattern`** - What a state change has to look like to play a role in a chain. - methods: `matches`
 - **`class CausalTemplate`** - One named hypothesis, and everything needed to test it. - methods: `matches`
 
+### `app/llm/features.py`
+_Which model each feature uses._
+
+- **`class Feature`** - One place in the product that calls a model.
+- **`class Resolution`** - The answer to "what does this feature run on, and why that?". - methods: `has_credential`, `model_config`
+- `overrides()` - Saved per-feature overrides, keyed by feature.
+- `set_override(feature, **changes)` - Change one feature's model settings and persist.
+- `resolve(feature)` - What `feature` should call, with everything filled in.
+- `attributed_drafter(feature)` - `drafter_for(...)` for a feature, with its spend booked to that feature.
+- `public_view()` - Every feature, what it resolves to and where that came from.
+
+### `app/llm/keys.py`
+_Vendor API keys, encrypted at rest._
+
+- **`class KeyStoreUnavailable`** - No usable `PULSE_SECRET_KEY`, so nothing can be sealed or opened.
+- `generate_secret()` - A fresh value for `PULSE_SECRET_KEY`. Printed by `scripts.secret`.
+- `available()` - Whether keys can be read and written at all, without raising to ask.
+- `unavailable_reason()` - Why the store is unusable, for the page to show. Empty when it is fine.
+- `mask(key)` - A hint that identifies a key without disclosing it.
+- `save(provider, api_key, actor)` - Seal a key and store it. Returns the hint the page may display.
+- `delete(provider)` - 
+- `get(provider)` - The stored key for a vendor, or `""` when there is none to read.
+- `status()` - Per-vendor key state for the settings page. Never the keys themselves.
+- `rotate()` - Re-seal every row with the current key. Returns how many were rewritten.
+- `adopt_legacy()` - Move a plaintext key out of `app_settings.narration` into this store.
+
+### `app/llm/pricing.py`
+_What a call costs, in US dollars per million tokens._
+
+- **`class Rate`** - US dollars per million tokens. - methods: `resolved`
+- `rate_for(model)` - The rate for a model, or `None` when nobody has supplied one.
+- `set_rate(model, **fields)` - Save a rate. `input=0` and `output=0` removes it again.
+- `estimate(model, input_tokens, output_tokens, cached_input_tokens, cache_write_tokens)` - `(cost_in_usd, priced)` for one call.
+- `table()` - Every model with a rate, plus the ones known to need one.
+
+### `app/llm/usage.py`
+_Recording what every model call spent, and adding it up._
+
+- `for_feature(feature)` - Attribute every model call inside this block to `feature`.
+- `current_feature()` - 
+- **`class Call`** - A call in flight. The adapter reports its token counts through this. - methods: `tokens`, `from_anthropic`, `from_openai`, `from_gemini`, `from_mapping`
+- `track(provider, model)` - Time a model call and record one row for it, success or failure.
+- `report_anthropic(response)` - 
+- `report_openai(response)` - 
+- `report_gemini(response)` - 
+- `report_mapping(payload)` - For an adapter holding a parsed JSON body rather than an SDK object.
+- `summary(days)` - Everything the usage board shows, in one query pass.
+- `purge(older_than_days)` - Delete rows older than `older_than_days`. Returns how many went.
+
 ### `app/ml/duration.py`
 _The duration classifier. Advisory, and structurally unable to be otherwise._
 
@@ -1525,7 +1816,7 @@ _A saved canvas layout: which tiles, where, on a Program or Project dashboard._
 
 - **`class Dashboard`** - 
 - **`class DashboardTile`** - 
-- **`class CustomTile`** - A person's own chart, drafted from data they pasted in - never from
+- **`class CustomTile`** - A person's own chart - either pasted/typed data, or one the tile
 
 ### `app/models/domain.py`
 _The domain layer: one vendor-neutral model, whatever the source system was._
@@ -1539,6 +1830,17 @@ _The domain layer: one vendor-neutral model, whatever the source system was._
 - **`class QaItem`** - 
 - **`class StateChange`** - One field of one entity changing value, with honest bounds on *when*.
 - **`class Risk`** - A risk a PM tracks by hand - probability, impact, cost and delay
+
+### `app/models/jira.py`
+_Which Jira a delivery project is collected from._
+
+- **`class JiraConnection`** - One delivery project, one Jira project, one credential.
+
+### `app/models/llm.py`
+_What each model call cost, and where the credentials to make it live._
+
+- **`class LlmUsage`** - One call to a language model, priced at the moment it was made.
+- **`class LlmCredential`** - One vendor's API key, encrypted at rest.
 
 ### `app/models/narration.py`
 _Where a model's phrasing is remembered, so the same facts are paid for once._
@@ -1577,6 +1879,7 @@ _State a deployed app has to keep, and a container's disk cannot._
 - **`class UploadedSheet`** - One manually imported workbook: its bytes, and what we read it as.
 - **`class AppSetting`** - A small JSON document someone changed while the app was running.
 - **`class RegisteredProject`** - A delivery project somebody added, as opposed to the built-in demo seed.
+- **`class RegisteredProgram`** - A program somebody created, as opposed to the built-in demo seed.
 
 ### `app/narration/cache.py`
 _Caches a model's phrasing so the same facts are never asked for twice._
@@ -1621,6 +1924,21 @@ _The gate every model draft passes before a reader sees it._
 - `contains_quantity(text)` - Whether `text` states a figure that must have come from the server.
 - `validate_draft(draft, *, facts, allowed_entities, required_tokens, has_causal_link)` - Run all eight stages against one model draft.
 
+### `app/projects.py`
+_Removing a delivery project, and everything that was only ever about it._
+
+- **`class RemovalPlan`** - What removing this project would destroy. - methods: `irreplaceable`
+- `plan(session, project_id)` - What `remove` would do, without doing any of it.
+- `remove(session, project_id)` - Delete the project and everything that was only ever about it.
+
+### `app/risks/drafts.py`
+_A model reading issue text, and proposing risks a person then decides on._
+
+- **`class DraftsUnavailable`** - No proposals could be produced, with a reason fit to show a person.
+- `readable_tasks(session, project_ids)` - The tasks worth sending: the ones whose text says something.
+- `build_prompt(tasks, categories)` - The user half of the request: the task text, and nothing else.
+- `propose(session, project_id, drafter, categories)` - Read this project's task text and write the proposals as draft rows.
+
 ### `app/risks/matrix.py`
 _The probability x impact heat-map a risk's rating is read off._
 
@@ -1635,17 +1953,41 @@ _CRUD for the risk register, and the heat-map built from it._
 - `create_risk(session, data)` - 
 - `update_risk(session, risk_id, data)` - Merge only the fields the request actually set. `None` on the model
 - `delete_risk(session, risk_id)` - 
+- `list_drafts(session, project_ids)` - The proposals waiting on somebody, newest first.
+- `accept_draft(session, risk_id)` - Promote one proposal into the register, as the person who read it.
+- `dismiss_draft(session, risk_id)` - Throw one proposal away. Deleted rather than marked, because a rejected
 
 ### `app/scope.py`
-_Which source ids are one delivery project._
+_Which source ids are one delivery project, and which program owns it._
 
+- `program_domain_id(key)` - The id of the program known by `key`.
+- **`class DeliveryProgram`** - A program: the thing projects are grouped under, and the tenant boundary.
 - **`class DeliveryProject`** - One project as a delivery manager thinks of it, whatever fed it. - methods: `source_ids`
 - `all_projects()` - Every delivery project: the built-in demo, plus anything registered
-- `register(canonical_id, name, also)` - Add a project, or update its pairing/name if the id already exists.
+- `register(canonical_id, name, also, program_id)` - Add a project, or update its pairing/name if the id already exists.
 - `find(canonical_id)` - 
 - `resolve(source_id)` - The delivery project a source id belongs to, canonical or paired.
 - `source_ids_for(source_id)` - Every id one delivery project may have been filed under.
-- `also_for(canonical_id)` - The other source ids for this project, for `analyze_project(also=...)`.
+- `program_for(source_id)` - The program a project belongs to, given *any* of its source ids.
+- `all_programs()` - Every program: the demo seed, the ones somebody created, and any a
+- `slugify(name)` - A name reduced to the key half of a domain id.
+- `register_program(name, owner, status)` - Create a program, or rename one whose key the name already maps to.
+- `find_program(program_id)` - 
+- `projects_in(program_id)` - Every delivery project in one program.
+- `also_for(source_id)` - The project's *other* source ids, for `analyze_project(also=...)`.
+- `canonical_pairing(source_id)` - `(canonical_id, other_ids)` for whichever of a project's ids you hold.
+
+### `app/units.py`
+_Effort units and the working-day calendar - one owner, no exceptions._
+
+- **`class UnitError`** - A unit was missing, unrecognised, or wrong for the operation asked for.
+- `normalize_unit(raw)` - Map a unit as written onto the vocabulary, or raise.
+- **`class Calendar`** - Which days count as working days. - methods: `is_working_day`, `working_days`, `overlap_working_days`
+- **`class ProgramUnits`** - The conversion factors and calendar one program works in. - methods: `to_effort_days`, `percent_to_effort_days`, `supply_effort_days`, `for_program`
+- **`class Effort`** - An effort quantity that knows its unit and how it got there. - methods: `rounded`
+- `units_for(program_id)` - The factor set a program works in.
+- `configure_program(program_id, units)` - Register a program's factors. Used at configuration time and by tests.
+- `working_days(start, end, *, program_id)` - Working days in `[start, end]` on a program's own calendar.
 
 ### `scripts/_bootstrap.py`
 _Make every `python -m scripts.*` command work, whatever Python you typed._
@@ -1655,10 +1997,20 @@ _Make every `python -m scripts.*` command work, whatever Python you typed._
 - `printable_console()` - Never crash on a character the console cannot encode.
 - `bootstrap(url)` - All three fixes, in the order they have to happen.
 
+### `scripts/carry_milestones.py`
+_Carry a feature grouping from one source of a project onto another._
+
+- `main(argv)` - 
+
 ### `scripts/demo.py`
 _Start the retriever console._
 
 - `main()` - 
+
+### `scripts/drop_source.py`
+_Remove one *source* of a paired project, keeping the project itself._
+
+- `main(argv)` - 
 
 ### `scripts/fetch_model.py`
 _Download the advisory duration classifier from Hugging Face._
@@ -1666,9 +2018,30 @@ _Download the advisory duration classifier from Hugging Face._
 - `fetch(destination, repo, filename)` - Copy one file out of a Hugging Face repo into `destination`.
 - `main(argv)` - 
 
+### `scripts/from_jira_export.py`
+_Turn a Jira issue export into the schedule workbook this app reads._
+
+- `report(cover)` - The coverage report, printed.
+- `main()` - 
+
 ### `scripts/gen_demo_data.py`
 _Write the demo spreadsheets at a given point in their history._
 
+- `main()` - 
+
+### `scripts/gen_demo_jira.py`
+_Write the same three-project demo as Jira issue exports._
+
+- `d(offset)` - 
+- `write_export(key, out)` - 
+- `main()` - 
+
+### `scripts/gen_demo_upload.py`
+_Write a three-project program as workbooks somebody can upload live._
+
+- `d(offset)` - 
+- `write_schedule(key, out)` - 
+- `write_worklog(key, out)` - 
 - `main()` - 
 
 ### `scripts/gen_jira_data.py`
@@ -1691,12 +2064,34 @@ _Regenerate the function index in WORKLOG.md._
 - `render()` - 
 - `main()` - 
 
+### `scripts/jira_push.py`
+_Send locally collected Jira issues to a server that cannot collect them._
+
+- `main()` - 
+
+### `scripts/jira_rebuild.py`
+_Rebuild the tool and domain layers from Jira rows already collected._
+
+- `main(argv)` - 
+
 ### `scripts/migrate_ids.py`
 _Re-key Excel-derived rows onto project-namespaced domain ids._
 
 - `plan(session)` - What would change, as (table, old, new) triples. Reads only.
 - `apply(session, work)` - Rename what can be renamed; delete what a later sync already wrote.
 - `main(argv)` - 
+
+### `scripts/migrate_programs.py`
+_Merge the duplicate program rows onto one source-neutral id._
+
+- `plan(session)` - Work out the moves without making any.
+- `main()` - 
+
+### `scripts/migrate_task_columns.py`
+_Add `tasks.source_updated_at` to a database that predates it._
+
+- `missing(session)` - The columns this database does not have yet.
+- `main()` - 
 
 ### `scripts/probe_fpt.py`
 _Ask the FPT gateway which of its models this product can actually use._
@@ -1717,6 +2112,16 @@ _Build the whole demo from nothing, in one command._
 - `sqlite_file_to_remove(target, *, postgres)` - The SQLite file this run is about to rebuild, if any.
 - `run(args, env)` - 
 - `main()` - 
+
+### `scripts/restore_milestones.py`
+_Put a project's feature grouping back from a database backup._
+
+- `main(argv)` - 
+
+### `scripts/secret.py`
+_Print the two secrets a deployed instance needs to manage its own keys._
+
+- `main(argv)` - 
 
 ### `scripts/seed_extras.py`
 _Seed the things no source system produces: a second Program, resource_
