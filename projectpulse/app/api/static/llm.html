@@ -171,7 +171,21 @@
     var f = state.features;
     if (!f) return;
     if (f.writable) {
-      elAuth.innerHTML = "";
+      /* An open instance must not look like a locked one. When the gate is
+         off, every reader of this page can change what is on it - including
+         the keys and the model budget - and the page says so rather than
+         leaving that fact only in an environment variable nobody re-reads. */
+      elAuth.innerHTML = (f.auth && f.auth.open)
+        ? '<div class="card" style="border-left:3px solid var(--red)">' +
+          "<h2>Anyone can change this page</h2>" +
+          '<div class="hint" style="margin-top:4px;">The admin gate is off ' +
+          "(<code>" + (f.auth.open_env || "PULSE_OPEN_ADMIN") + "</code>), so " +
+          "no token is asked for and any visitor to this host can replace the " +
+          "stored keys and run the actions that spend this deployment&rsquo;s " +
+          "model budget. Remove that setting and redeploy to require " +
+          "<code>" + (f.auth.env_var || "PULSE_ADMIN_TOKEN") + "</code> again." +
+          "</div></div>"
+        : "";
       return;
     }
     var configured = f.auth && f.auth.token_configured;

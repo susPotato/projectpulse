@@ -32,6 +32,27 @@ import os
 
 TOKEN_ENV = "PULSE_ADMIN_TOKEN"
 
+#: Set this to turn the gate off entirely, so a deployed instance accepts
+#: administrative writes from anyone who can reach it.
+#:
+#: **This is an opt-out from the security model, not a configuration
+#: preference**, and it exists because the alternative people actually reach
+#: for is worse: unsetting `PULSE_ADMIN_TOKEN` does not open the door, it
+#: bolts it - `actor()` then refuses every remote write - so somebody who
+#: wants to stop being asked for a token, and finds that unsetting it makes
+#: the app *less* usable, ends up editing this module by hand and leaving no
+#: trace of what they changed or how to undo it.
+#:
+#: One named flag is reversible in one command, greppable, and reported to
+#: the browser by `status()` so the state is visible on the page rather than
+#: only in an environment nobody re-reads.
+#:
+#: What it exposes, on a public URL, is worth stating plainly rather than
+#: leaving to be discovered: every route listed in `require`'s docstring, and
+#: in particular the six that call a language model on this deployment's own
+#: API key. An open instance is one whose model spend is open too.
+OPEN_ENV = "PULSE_OPEN_ADMIN"
+
 #: Checked before `Authorization`, so a browser's own auth header cannot
 #: collide with this.
 HEADER = "X-Pulse-Admin-Token"
@@ -40,6 +61,17 @@ HEADER = "X-Pulse-Admin-Token"
 def configured() -> bool:
     """Whether a token has been set, so remote administration is possible."""
     return bool(os.environ.get(TOKEN_ENV, "").strip())
+
+
+def is_open() -> bool:
+    """Whether the gate has been deliberately switched off.
+
+    Truthy strings only, and `"0"`/`"false"`/`"no"` read as off - an env var
+    that is present but disabled is the commonest way a flag like this gets
+    turned on by accident.
+    """
+    raw = os.environ.get(OPEN_ENV, "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
 
 
 def is_local(request) -> bool:
@@ -74,6 +106,12 @@ def actor(request) -> str:
     """
     if is_local(request):
         return "loopback"
+
+    # Checked before the token, and reported as its own actor rather than as
+    # `"admin-token"`: a log line saying a token was presented when none was
+    # is a worse problem than the open door itself.
+    if is_open():
+        return "open"
 
     expected = os.environ.get(TOKEN_ENV, "").strip()
     presented = presented_token(request)
@@ -134,4 +172,11 @@ def status() -> dict:
         "token_configured": configured(),
         "header": HEADER,
         "env_var": TOKEN_ENV,
+        # So a page can say the gate is off. An open instance that looks
+        # exactly like a locked one is how an instance stays open for months
+        # - the same failure `fly.toml` records for `PULSE_NARRATION`, where
+        # the only readable configuration said the opposite of what
+        # production was doing.
+        "open": is_open(),
+        "open_env": OPEN_ENV,
     }

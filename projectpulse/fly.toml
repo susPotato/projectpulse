@@ -19,6 +19,16 @@ primary_region = 'sin'
 # sure it is not also a secret.
 [env]
   PORT = '8080'
+  # The admin gate, off. Deliberate, and here in git rather than as a secret
+  # because it is a boolean and not a credential - the same rule the comment
+  # above states. It means anybody who can reach this host can change
+  # settings, replace stored API keys, and run the routes that spend this
+  # deployment's model budget.
+  #
+  # Turn it back on with `fly secrets unset` on nothing - remove this line, or
+  # set it to '0', and deploy. `PULSE_ADMIN_TOKEN` is still set, so the token
+  # gate resumes working the moment this is off.
+  PULSE_OPEN_ADMIN = '1'
   # On, and visibly so. Both of these are booleans, not credentials, so they
   # belong in git rather than in `fly secrets` - the keys they gate are the
   # secrets.
