@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py wires a toast widget via self.toast.show_message(...) in both _on_scheduled_task_done and _notify_task, with an explicit comment that it is an \"In-app popup at the top-left (shown whether or not the window is focused)\". The toast widget's own implementation (and its auto-hide timer) is not in the shown files, so the auto-hiding part is inferred rather than seen, but the feature clearly exists and is in use.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._notify_task",
+   "why": "Calls self.toast.show_message with a comment describing an in-app popup at the top-left."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._on_scheduled_task_done",
+   "why": "Uses self.toast.show_message for task completion/failure notifications alongside tray balloons."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 3462,
+  "output_tokens": 409,
+  "model": "claude-opus-5"
+ }
+}

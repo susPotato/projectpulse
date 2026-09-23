@@ -1,0 +1,6 @@
+{
+ "capability": "Three settings dialogs that let a user create and edit configurable entities: a custom AI agent persona (name, role, icon, instructions with AI-assisted drafting, extra context, model picker, permission preset, attached skills and file attachments), an external CAD/CAE/Office connector (MCP-stdio command or REST base URL + API key, with presets and a connection test), and a plain external MCP server entry.",
+ "user_facing": true,
+ "suggested_ticket": "Settings editors for custom agents, MCP servers and external CAD/CAE/Office connectors",
+ "confidence": "high"
+}

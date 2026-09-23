@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The candidate files cover MS365 device-code auth (core/ms365_auth.py) and a Graph REST wrapper for mail/calendar/Teams (core/ms365_graph.py), plus an unrelated Co4E run manager. None of the shown code implements read/write/list tools over locally synced OneDrive/SharePoint files; the referenced ms365_tools.py is mentioned in a docstring but not included in the context. The documentation excerpt is explicitly flagged as not describing this repository and concerns Co4E canvas/run-history work, so it says nothing about local file tools.",
+ "evidence": [
+  {
+   "file": "core/ms365_graph.py",
+   "symbol": "_path_segment",
+   "why": "Shows Graph-side path encoding for OneDrive/SharePoint remote addressing, not access to locally synced files."
+  },
+  {
+   "file": "core/ms365_auth.py",
+   "symbol": "SCOPES",
+   "why": "Declares Files.Read.All/Files.ReadWrite.All Graph scopes, but this is sign-in configuration rather than any file read/write/list tool implementation."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager",
+   "why": "Retrieved via the documentation excerpt but concerns flow-run tracking and run history, unrelated to MS365 local file tools."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9456,
+  "output_tokens": 545,
+  "model": "claude-opus-5"
+ }
+}

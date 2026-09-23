@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrievable, and the ticket text itself contains no concrete technical claim beyond a vague 'Performance update' label. There is nothing to compare against the codebase.",
+ "evidence": [],
+ "status_conflict": false
+}

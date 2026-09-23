@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain a provider implementation; the closest hints are `PROVIDER_LABELS`/`active_provider` in app.py and a `Provider.chat(...)` call in core/agent_security.py, which show a provider abstraction exists but say nothing about an OpenAI-compatible adapter, streaming, model listing, or base_url override. The sandbox file is unrelated, and the cited design document is explicitly not describing this repository. The candidate subset simply doesn't cover the provider layer.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "_on_provider_changed",
+   "why": "Shows a provider selection UI backed by PROVIDER_LABELS/active_provider, but no OpenAI-compatible provider implementation."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "_ai_verdict",
+   "why": "Calls provider.chat(messages, tools=None), implying a Provider interface exists elsewhere but revealing nothing about streaming, model lists, or base_url."
+  },
+  {
+   "file": "core/appcontainer_sandbox.py",
+   "symbol": "AppContainerSandbox",
+   "why": "Windows sandbox code entirely unrelated to the provider ticket."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11466,
+  "output_tokens": 542,
+  "model": "claude-opus-5"
+ }
+}

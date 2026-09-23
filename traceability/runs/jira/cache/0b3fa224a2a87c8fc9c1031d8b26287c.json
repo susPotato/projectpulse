@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/co4e.py defines a CustomAgent dataclass alongside the Workflow/Step/Node graph model, with serialisation (agent_to_dict/agent_from_dict), minting (new_custom_agent) and a persistent store (agents_dir, list_custom_agents, save_custom_agent) under the Co4E agents folder; the module docstring states each node names an agent persona (built-in or custom) that compiles into per-stage prompts. core/custom_agents.py provides a parallel per-user preset store with prompt/provider/model overrides usable as Flow sub-agents. Status 'Release' matches built code.",
+ "evidence": [
+  {
+   "file": "core/co4e.py",
+   "symbol": "CustomAgent",
+   "why": "Dataclass representing a Co4E custom agent persona referenced by workflow step nodes."
+  },
+  {
+   "file": "core/co4e.py",
+   "symbol": "save_custom_agent",
+   "why": "Persists custom agents as one JSON per agent in the Co4E agents directory."
+  },
+  {
+   "file": "core/co4e.py",
+   "symbol": "new_custom_agent",
+   "why": "Factory for creating a new custom agent persona."
+  },
+  {
+   "file": "core/custom_agents.py",
+   "symbol": "CustomAgent",
+   "why": "User-defined reusable sub-agent preset with prompt/provider/model overrides used from Flow stages."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent",
+   "why": "Documents that custom_agents.py holds per-user Flow sub-agent presets, distinct from the admin catalog."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7182,
+  "output_tokens": 636,
+  "model": "claude-opus-5"
+ }
+}

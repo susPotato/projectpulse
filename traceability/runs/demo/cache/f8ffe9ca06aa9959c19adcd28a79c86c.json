@@ -1,0 +1,13 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/agent_security_alert.py implements the agent security alerting feature described, sending a best-effort admin email via the shared Microsoft 365 token whenever a guardrail layer blocks an action. The architecture doc also ties this module to the audit trail feeding the Monitoring Dashboard's Security Events panel, consistent with a shipped ('Release it') feature. The monitoring-dashboard side of 'real-time monitoring' is not visible here, so only the alerting half is directly evidenced.",
+ "evidence": [
+  {
+   "file": "core/agent_security_alert.py",
+   "symbol": "notify_admin",
+   "why": "Implements the admin security alert email triggered by an agent-security block, reusing the signed-in MS365 account and never raising on failure."
+  }
+ ],
+ "status_conflict": false
+}

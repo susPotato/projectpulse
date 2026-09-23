@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/d3_graph.py imports NODE_KIND_COLORS from a sibling core/structure_graph module and renders a StructureGraph's nodes/edges (id, label, kind, detail, path) plus typed edges into the bundled assets/graph_template.html D3 viewer, which is exactly a codebase structure graph pipeline. The architecture excerpt also references structure_graph_view.py as the GraphRAG codebase-memory surface. The generator module itself (core/structure_graph.py) is not shown, so only the rendering half is directly visible.",
+ "evidence": [
+  {
+   "file": "core/d3_graph.py",
+   "symbol": "build_html",
+   "why": "Serialises a StructureGraph's nodes and edges into the D3 template, showing a structure graph data model exists and is rendered."
+  },
+  {
+   "file": "core/d3_graph.py",
+   "symbol": "NODE_KIND_COLORS",
+   "why": "Imported from .structure_graph, evidencing a core/structure_graph module with node-kind taxonomy."
+  },
+  {
+   "file": "assets/graph_template.html",
+   "symbol": "",
+   "why": "Bundled D3 knowledge-graph UI with GRAPH_DATA_PLACEHOLDER and COLOR_MAP that build_html substitutes into."
+  }
+ ],
+ "status_conflict": false
+}

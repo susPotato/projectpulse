@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown code implements a per-workspace confirm-before-run gate for chat tool actions (AppContext.project_confirm_commands feeding PermissionDialog), which is command approval, not a scheduled-task `requires_approval` flag that blocks automatic scheduled execution until manually run. No scheduler, task model, or task editor code is in the candidate set — ui/task_editor_dialog.py is named in the docs but its contents were not shown, and the lookup notes the approval checkbox symbol is absent. The evidence neither establishes nor refutes the ticket's specific claim.",
+ "evidence": [
+  {
+   "file": "state.py",
+   "symbol": "AppContext.project_confirm_commands",
+   "why": "Implements a confirm-before-running-commands gate for the active workspace, but it is a chat/command policy, not a scheduled-task requires_approval field."
+  },
+  {
+   "file": "ui/permission_dialog.py",
+   "symbol": "PermissionDialog",
+   "why": "Provides the manual approve/reject dialog before a write/run action, showing a confirm mechanism exists at the UI layer."
+  },
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "ChatPanel._on_permission",
+   "why": "Wires the per-turn permission request to the workspace confirm setting, i.e. the chat-side approval path rather than task scheduling."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9530,
+  "output_tokens": 699,
+  "model": "claude-opus-5"
+ }
+}

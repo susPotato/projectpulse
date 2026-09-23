@@ -1,0 +1,381 @@
+{
+ "schema_version": 1,
+ "produced_by": "corpus",
+ "meta": {},
+ "payload": {
+  "files": [
+   {
+    "path": "auth/password.py",
+    "role": "code",
+    "size": 278,
+    "language": "python"
+   },
+   {
+    "path": "auth/session.py",
+    "role": "code",
+    "size": 274,
+    "language": "python"
+   },
+   {
+    "path": "billing/invoice.py",
+    "role": "code",
+    "size": 278,
+    "language": "python"
+   },
+   {
+    "path": "billing/refund.py",
+    "role": "code",
+    "size": 278,
+    "language": "python"
+   },
+   {
+    "path": "core/exporter.py",
+    "role": "code",
+    "size": 275,
+    "language": "python"
+   },
+   {
+    "path": "core/importer.py",
+    "role": "code",
+    "size": 277,
+    "language": "python"
+   },
+   {
+    "path": "core/logging_util.py",
+    "role": "code",
+    "size": 73,
+    "language": "python"
+   },
+   {
+    "path": "core/scheduler.py",
+    "role": "code",
+    "size": 279,
+    "language": "python"
+   },
+   {
+    "path": "integrations/outlook.py",
+    "role": "code",
+    "size": 283,
+    "language": "python"
+   },
+   {
+    "path": "integrations/slack.py",
+    "role": "code",
+    "size": 277,
+    "language": "python"
+   },
+   {
+    "path": "ui/dashboard.py",
+    "role": "code",
+    "size": 277,
+    "language": "python"
+   },
+   {
+    "path": "ui/sidebar.py",
+    "role": "code",
+    "size": 270,
+    "language": "python"
+   },
+   {
+    "path": "ui/toast.py",
+    "role": "code",
+    "size": 267,
+    "language": "python"
+   }
+  ],
+  "symbols": [
+   {
+    "sid": "auth/password.py::PasswordPolicy",
+    "path": "auth/password.py",
+    "name": "PasswordPolicy",
+    "kind": "class"
+   },
+   {
+    "sid": "auth/password.py::PasswordPolicy.__init__",
+    "path": "auth/password.py",
+    "name": "PasswordPolicy.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "auth/password.py::PasswordPolicy.run",
+    "path": "auth/password.py",
+    "name": "PasswordPolicy.run",
+    "kind": "method"
+   },
+   {
+    "sid": "auth/session.py::SessionStore",
+    "path": "auth/session.py",
+    "name": "SessionStore",
+    "kind": "class"
+   },
+   {
+    "sid": "auth/session.py::SessionStore.__init__",
+    "path": "auth/session.py",
+    "name": "SessionStore.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "auth/session.py::SessionStore.run",
+    "path": "auth/session.py",
+    "name": "SessionStore.run",
+    "kind": "method"
+   },
+   {
+    "sid": "billing/invoice.py::InvoiceEngine",
+    "path": "billing/invoice.py",
+    "name": "InvoiceEngine",
+    "kind": "class"
+   },
+   {
+    "sid": "billing/invoice.py::InvoiceEngine.__init__",
+    "path": "billing/invoice.py",
+    "name": "InvoiceEngine.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "billing/invoice.py::InvoiceEngine.run",
+    "path": "billing/invoice.py",
+    "name": "InvoiceEngine.run",
+    "kind": "method"
+   },
+   {
+    "sid": "billing/refund.py::RefundProcessor",
+    "path": "billing/refund.py",
+    "name": "RefundProcessor",
+    "kind": "class"
+   },
+   {
+    "sid": "billing/refund.py::RefundProcessor.__init__",
+    "path": "billing/refund.py",
+    "name": "RefundProcessor.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "billing/refund.py::RefundProcessor.run",
+    "path": "billing/refund.py",
+    "name": "RefundProcessor.run",
+    "kind": "method"
+   },
+   {
+    "sid": "core/exporter.py::CsvExporter",
+    "path": "core/exporter.py",
+    "name": "CsvExporter",
+    "kind": "class"
+   },
+   {
+    "sid": "core/exporter.py::CsvExporter.__init__",
+    "path": "core/exporter.py",
+    "name": "CsvExporter.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "core/exporter.py::CsvExporter.run",
+    "path": "core/exporter.py",
+    "name": "CsvExporter.run",
+    "kind": "method"
+   },
+   {
+    "sid": "core/importer.py::SheetImporter",
+    "path": "core/importer.py",
+    "name": "SheetImporter",
+    "kind": "class"
+   },
+   {
+    "sid": "core/importer.py::SheetImporter.__init__",
+    "path": "core/importer.py",
+    "name": "SheetImporter.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "core/importer.py::SheetImporter.run",
+    "path": "core/importer.py",
+    "name": "SheetImporter.run",
+    "kind": "method"
+   },
+   {
+    "sid": "core/logging_util.py::LogWriter",
+    "path": "core/logging_util.py",
+    "name": "LogWriter",
+    "kind": "class"
+   },
+   {
+    "sid": "core/logging_util.py::LogWriter.write",
+    "path": "core/logging_util.py",
+    "name": "LogWriter.write",
+    "kind": "method"
+   },
+   {
+    "sid": "core/scheduler.py::TaskScheduler",
+    "path": "core/scheduler.py",
+    "name": "TaskScheduler",
+    "kind": "class"
+   },
+   {
+    "sid": "core/scheduler.py::TaskScheduler.__init__",
+    "path": "core/scheduler.py",
+    "name": "TaskScheduler.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "core/scheduler.py::TaskScheduler.run",
+    "path": "core/scheduler.py",
+    "name": "TaskScheduler.run",
+    "kind": "method"
+   },
+   {
+    "sid": "integrations/outlook.py::OutlookMailer",
+    "path": "integrations/outlook.py",
+    "name": "OutlookMailer",
+    "kind": "class"
+   },
+   {
+    "sid": "integrations/outlook.py::OutlookMailer.__init__",
+    "path": "integrations/outlook.py",
+    "name": "OutlookMailer.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "integrations/outlook.py::OutlookMailer.run",
+    "path": "integrations/outlook.py",
+    "name": "OutlookMailer.run",
+    "kind": "method"
+   },
+   {
+    "sid": "integrations/slack.py::SlackClient",
+    "path": "integrations/slack.py",
+    "name": "SlackClient",
+    "kind": "class"
+   },
+   {
+    "sid": "integrations/slack.py::SlackClient.__init__",
+    "path": "integrations/slack.py",
+    "name": "SlackClient.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "integrations/slack.py::SlackClient.run",
+    "path": "integrations/slack.py",
+    "name": "SlackClient.run",
+    "kind": "method"
+   },
+   {
+    "sid": "ui/dashboard.py::DashboardView",
+    "path": "ui/dashboard.py",
+    "name": "DashboardView",
+    "kind": "class"
+   },
+   {
+    "sid": "ui/dashboard.py::DashboardView.__init__",
+    "path": "ui/dashboard.py",
+    "name": "DashboardView.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "ui/dashboard.py::DashboardView.run",
+    "path": "ui/dashboard.py",
+    "name": "DashboardView.run",
+    "kind": "method"
+   },
+   {
+    "sid": "ui/sidebar.py::SidebarNav",
+    "path": "ui/sidebar.py",
+    "name": "SidebarNav",
+    "kind": "class"
+   },
+   {
+    "sid": "ui/sidebar.py::SidebarNav.__init__",
+    "path": "ui/sidebar.py",
+    "name": "SidebarNav.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "ui/sidebar.py::SidebarNav.run",
+    "path": "ui/sidebar.py",
+    "name": "SidebarNav.run",
+    "kind": "method"
+   },
+   {
+    "sid": "ui/toast.py::ToastBanner",
+    "path": "ui/toast.py",
+    "name": "ToastBanner",
+    "kind": "class"
+   },
+   {
+    "sid": "ui/toast.py::ToastBanner.__init__",
+    "path": "ui/toast.py",
+    "name": "ToastBanner.__init__",
+    "kind": "method"
+   },
+   {
+    "sid": "ui/toast.py::ToastBanner.run",
+    "path": "ui/toast.py",
+    "name": "ToastBanner.run",
+    "kind": "method"
+   }
+  ],
+  "root": "C:\\Users\\Potato\\AppData\\Local\\Temp\\synthdata\\repo",
+  "analyzer": "codewiki",
+  "edges": [
+   {
+    "src": "auth/password.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "auth/session.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "billing/invoice.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "billing/refund.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "core/exporter.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "core/importer.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "core/scheduler.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "integrations/outlook.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "integrations/slack.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "ui/dashboard.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "ui/sidebar.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   },
+   {
+    "src": "ui/toast.py",
+    "dst": "core/logging_util.py",
+    "weight": 2
+   }
+  ]
+ }
+}

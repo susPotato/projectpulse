@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the candidate files are tests — config.py, core/ext_connectors.py and core/history.py are production modules with no pytest code, fixtures, or test scaffolding visible. The only test-related signals are the checklist's cited test files (tests/integration/test_history_dir_race.py, test_config_security.py, test_routing_wiring.py), all confirmed absent, and that document explicitly does not describe this repository, so it cannot establish a 95+ test suite either way. Nothing shown confirms or refutes the existence of a test suite in this codebase.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.routing_mode_for",
+   "why": "Production configuration code, not test code — offers no evidence of a test suite."
+  },
+  {
+   "file": "core/history.py",
+   "symbol": "save_conversation",
+   "why": "Persistence implementation shown without any accompanying unit test exercising it."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "build_ext_connector_tools",
+   "why": "Connector implementation only; no pytest module or assertions present in the retrieved context."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12480,
+  "output_tokens": 968,
+  "model": "claude-opus-5"
+ }
+}

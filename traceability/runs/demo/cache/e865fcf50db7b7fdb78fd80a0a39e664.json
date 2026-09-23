@@ -1,0 +1,12 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrieved for this ticket, so there is nothing to compare against the claim of a PySide6 desktop application framework. Absence of candidate code says nothing about whether MainWindow, navigation, top bar, or system tray exist in the repository.",
+ "evidence": [],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 150,
+  "output_tokens": 123,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only shown code touching tool scope is core/ms365_tools.py, which defines a MS365_WRITE_TOOLS set distinguishing write/send tools from read-only ones for a permission gate — that is a narrow connector-specific classification, not a general tool registry with read/write/exec scopes. core/tools.py is confirmed to exist by the documentation lookup but none of its contents are shown, so the registry claim cannot be settled. The two architecture documents are explicitly flagged as not describing this repository and place the tool registry in domain/tools/tool_registry.py, which does not exist here.",
+ "evidence": [
+  {
+   "file": "core/ms365_tools.py",
+   "symbol": "MS365_WRITE_TOOLS",
+   "why": "Shows a write-vs-read classification of tool names used by a permission gate, but only for MS365 connector tools, not a general scope-classified registry."
+  },
+  {
+   "file": "core/ms365_tools.py",
+   "symbol": "build_ms365_tools",
+   "why": "Builds ToolSpec lists per connector and an executor, i.e. tool exposure, without any read/write/exec scope field on the specs themselves."
+  },
+  {
+   "file": "core/tasks.py",
+   "symbol": "",
+   "why": "Unrelated to tool registration; it is the scheduled-task model and repository."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager",
+   "why": "Unrelated to tool scopes; it tracks concurrent flow runs and persists run history."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9797,
+  "output_tokens": 749,
+  "model": "claude-opus-5"
+ }
+}

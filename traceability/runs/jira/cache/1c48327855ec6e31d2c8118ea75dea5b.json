@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the candidate files address role-based access control for workspaces or tasks: app.py is a Qt MainWindow with navigation and scheduler wiring, RULEBASE.md is an agent content-security policy, and security_sandbox.yaml configures process sandboxing and risk routing. The architecture excerpt describes prompt/attachment/command validation layers, not user roles or permissions, and the split-map document is explicitly marked as not describing this repository. No positive evidence exists either for or against an RBAC implementation, which is consistent with the Cancelled status.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "Builds nav rail, pages and scheduler wiring with no notion of user roles or permission checks."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "",
+   "why": "Configures sandbox backends and risk routing for command execution, unrelated to workspace/task role permissions."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Agent content-disclosure rulebase; mentions 'agent permission matrix' only as something to never reveal, not an access-control implementation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7024,
+  "output_tokens": 570,
+  "model": "claude-opus-5"
+ }
+}

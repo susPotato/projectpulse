@@ -1,0 +1,8 @@
+{
+ "headline": "The connectors area — letting the product talk to external tools like CAD/CAE systems and Microsoft 365 — has working code behind most of the shipped tickets, with one ticket overstating what is built and three tickets the review could not settle either way.",
+ "what_is_there": "The code shows a unified connectors layer where users can configure external tool servers across CAD, CAE, Microsoft 365 and 'other' categories, with presets, add/edit/enable controls in settings, and automatic carry-over of older connector settings. Reading, writing and listing locally synced OneDrive/SharePoint files is implemented with path-safety checks and audit logging, and CAD/CAE integrations (NX, CATIA, ABAQUS, ANSYS) are wired into the shared tool pipeline.",
+ "what_is_unclear": "One ticket claims connections over both direct process and HTTP; the code reviewed only supports the direct-process route, and HTTP appears absent rather than simply unseen. Three items — a built-in Microsoft 365 connector server, the reusable tool-contract deliverable (design doc, schema, sample manifests, tests), and the ticket about building a real capability on the existing connector plumbing — could not be confirmed from the portion of the code examined, which does not mean they are missing.",
+ "suggested_action": "Ask the team whether HTTP transport for external tool connections is actually delivered or still planned, and where the tool-contract documents and schema live if they exist outside the code.",
+ "caveat": "",
+ "confidence": "medium"
+}

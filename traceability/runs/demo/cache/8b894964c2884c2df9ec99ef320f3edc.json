@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "low",
+ "reasoning": "No source files were retrieved or readable, so there is nothing to evaluate against the ticket. No evidence exists either for or against the presence of the 10 security hardening ST tests.",
+ "evidence": [],
+ "status_conflict": false
+}

@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/calendar_grid.py implements the calendar-grid math explicitly described as powering the Schedule Task tab's Calendar view: month/week grids, period navigation, and grouping scheduled tasks by their run_at date. The ticket's \"Release it\" status is consistent with this existing implementation; only the Qt view layer itself is not visible in the shown subset.",
+ "evidence": [
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "month_grid",
+   "why": "Builds full Mon-Sun week rows covering a month, i.e. the visual calendar grid layout."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "group_tasks_by_date",
+   "why": "Maps scheduled tasks onto calendar dates via schedule.run_at, which is what places tasks in the grid."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "shift_period",
+   "why": "Implements Prev/Next navigation across week/month/year granularities for the calendar view."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "month_task_counts",
+   "why": "Aggregates per-month task counts for a year-level calendar display."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_schedule",
+   "why": "Schedule page exists and is wired into the main window, consistent with a Schedule Task tab hosting the calendar view."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8637,
+  "output_tokens": 531,
+  "model": "claude-opus-5"
+ }
+}

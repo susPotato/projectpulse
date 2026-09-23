@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only sandbox-related artifacts shown are a YAML configuration file (config/security_sandbox.yaml) describing backends and risk routing, and a placeholder rulebase (assets/RULEforCode.md) that merely asserts the Code agent's safety comes from a sandbox. No executor, runner, or backend implementation code is present in the candidate set, so the existence of a working code runner with sandboxed execution cannot be confirmed or refuted.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "sandbox",
+   "why": "Declares sandbox backends (appcontainer, windows_sandbox, integrity_job_wfp), resource limits and risk routing, indicating a sandbox feature is at least configured."
+  },
+  {
+   "file": "assets/RULEforCode.md",
+   "symbol": "",
+   "why": "States the Code agent's safety comes from running inside a sandbox with resource limits, network policy and command whitelist, but contains no rules and no implementation."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Cowork-mode rulebase that forbids code generation/execution for the Cowork agent; unrelated to the Code runner implementation itself."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 3898,
+  "output_tokens": 552,
+  "model": "claude-opus-5"
+ }
+}

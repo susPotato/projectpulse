@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/admin_agents.py implements a full catalog of user/admin-defined agent personas: an AdminAgent dataclass with name, task_kind, a free-text `prompt` of custom instructions, and pinned provider/model, plus new_agent/save_agent/load_agent/list_agents/delete_agent persistence and effective_prompt() which appends the custom instructions to the kind's base persona. build_agent_provider resolves the persona's provider/model at run time, so the personas are actually wired into execution. Status is Release and the capability exists, so there is no status conflict; the retrieved docs are flagged as not describing this repo and were not relied on.",
+ "evidence": [
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent",
+   "why": "Dataclass defining a named agent persona with a custom `prompt` (extra instructions), task kind, provider and model."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "effective_prompt",
+   "why": "Combines the kind's base persona prompt with the user-supplied custom instructions, which is exactly the 'custom instructions' behaviour claimed."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "new_agent",
+   "why": "Creates a user-defined agent with a generated id from the given name, kind, prompt and provider/model."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "save_agent",
+   "why": "Persists each persona as a JSON file in a shared or local agents_admin directory, showing the personas are user-managed data."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "build_agent_provider",
+   "why": "Resolves the persona's pinned provider/model (or the machine default), wiring custom agents into actual execution."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 13211,
+  "output_tokens": 717,
+  "model": "claude-opus-5"
+ }
+}

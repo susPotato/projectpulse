@@ -1,0 +1,12 @@
+{
+ "summary_en": "Add attachment folder and URL section to Co4E step, for the purpose of handling information collection from sources (besides attached files and comments)",
+ "description_en": "BA: QuanDh14\nComponent: Co4E Workflow",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "Co4E",
+  "URL",
+  "BA",
+  "QuanDh14",
+  "Co4E Workflow"
+ ]
+}

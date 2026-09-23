@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "Network access control is directly implemented: `core/deps.py::network_blocked_env` sets black-hole proxy env vars as an explicit policy-level \"Network Control\" measure, and `config/security_sandbox.yaml` declares `block_network_by_default`, `disable_network` for the Windows Sandbox backend, and `block_network_with_wfp` for the integrity/job backend. The URL-guard and macro-blocking sub-claims are not visible in the shown files (the policy block covers source-code/secret/discovery/prompt-injection blocking but no URL or macro rules), and `ui/widgets.py` is unrelated to this ticket. Status \"Release it\" is consistent with the network-control code being present.",
+ "evidence": [
+  {
+   "file": "core/deps.py",
+   "symbol": "network_blocked_env",
+   "why": "Implements policy-level network blocking by pointing all proxy env vars at a black-hole loopback address, explicitly labelled as the Sandbox 'Network Control' capability."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares block_network_by_default, per-backend disable_network, and block_network_with_wfp, i.e. configuration-level network access control."
+  },
+  {
+   "file": "ui/widgets.py",
+   "symbol": "guard_wheel",
+   "why": "The only 'guard' in this file is a mouse-wheel event guard for form widgets, unrelated to URL guarding — a keyword-match false positive."
+  }
+ ],
+ "status_conflict": false
+}

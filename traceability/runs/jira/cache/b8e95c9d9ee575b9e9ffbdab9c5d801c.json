@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/pptx_edit.py exposes a deck as a marker-delimited document carrying per-shape type, position/size, text and font, and maps edits back onto shapes — exactly text, styles and structure extraction feeding an AI edit flow (its comments explicitly say \"This is how AI edit recognises & changes colour/font\"). core/link_fetch.py additionally calls doc_extract.extract_text for PDF/Office/OpenDocument content, showing a shared document-text extraction path exists. Status is Release and the code is present, so no status conflict.",
+ "evidence": [
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "apply_text_to_pptx",
+   "why": "Parses a structured per-shape document (type/pos/size/text/font) and writes text, geometry, font and image changes back to the deck."
+  },
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "_parse",
+   "why": "Implements parsing of the extracted marker-delimited representation of slides and boxes, i.e. the structure layer."
+  },
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "_apply_font",
+   "why": "Handles style (font name/size/bold/colour) as an extractable and editable field."
+  },
+  {
+   "file": "core/link_fetch.py",
+   "symbol": "_extract_document",
+   "why": "Delegates to doc_extract.extract_text for PDF/Office/ODF files, confirming a document text-extraction component exists in the repo."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10283,
+  "output_tokens": 645,
+  "model": "claude-opus-5"
+ }
+}

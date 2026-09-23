@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/agents_admin_tab.py implements a full Admin-only Agents tab with add/edit/delete CRUD, a table of agents (name, kind, model, enabled, status, updated) and a provider reachability check, backed by core/admin_agents.py's shared AdminAgent catalog (new_agent/save_agent/load_agent/list_agents/delete_agent/ensure_help_agent). This matches the ticket's claim of an Agents admin tab for managing agent configurations, and the 'Release it' status is consistent with the built code.",
+ "evidence": [
+  {
+   "file": "ui/agents_admin_tab.py",
+   "symbol": "AgentsAdminTab",
+   "why": "Implements the Admin-only Agents Admin tab with CRUD buttons, agent table refresh and status check."
+  },
+  {
+   "file": "ui/agents_admin_tab.py",
+   "symbol": "AgentEditDialog",
+   "why": "Editor dialog collecting name, task kind, prompt, provider and model for an agent preset."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent",
+   "why": "Defines the shared org-wide agent preset record and its persistence/provider-resolution helpers used by the tab."
+  }
+ ],
+ "status_conflict": false
+}

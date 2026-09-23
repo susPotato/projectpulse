@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "ui/dashboard_tab.py contains both _ai_analyze and _apply_saving_strategy (confirmed by the symbol lookups), and its _retranslate wires ai_analyze_btn and apply_strategy_btn with the dashboard.ai_analyze_btn / dashboard.strategy_btn labels, so the AI recommendation and apply-strategy controls exist on the Dashboard. The bodies of those methods are in the omitted lines, so the exact behaviour (auto-compress settings) is not visible, but the feature is clearly present and consistent with the Release status.",
+ "evidence": [
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "_apply_saving_strategy",
+   "why": "Listed among the module's symbols and confirmed by lookup as the cost-saving strategy apply handler."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "_ai_analyze",
+   "why": "Listed among the module's symbols and confirmed by lookup as the AI analysis handler."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "_retranslate",
+   "why": "Sets text/tooltips for self.ai_analyze_btn and self.apply_strategy_btn, showing both UI buttons are built on the Dashboard tab."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8958,
+  "output_tokens": 543,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The candidate files concern Co4E run tracking and model-routing probe/switch logic; none contain Teams webhook, Outlook email, or in-app notification bell code. The documentation excerpt is explicitly flagged as not describing this repository and only mentions unrelated email input fields, so nothing here settles whether task notifications exist.",
+ "evidence": [
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager",
+   "why": "Tracks concurrent flow runs and persists run history; contains no notification, webhook, or email delivery logic."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "make_judge",
+   "why": "LLM-as-judge benchmark probing, unrelated to task notifications."
+  },
+  {
+   "file": "core/routing/switch_controller.py",
+   "symbol": "PendingSwitchRegistry",
+   "why": "Manual model-switch confirmation store; user-facing prompts here are not Teams/Outlook/bell notifications."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9421,
+  "output_tokens": 352,
+  "model": "claude-opus-5"
+ }
+}

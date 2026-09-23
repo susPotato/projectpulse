@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/co4e_runner.py contains `_run_self_verify`, which runs post-step verification turns via run_cowork, looping up to `max(1, int(getattr(step, \"max_verify_rounds\", 1) or 1))` rounds and stopping early when the agent replies VERIFIED. That is exactly the automatic verification rounds with a configurable maximum described in the ticket, and the released status is consistent with the code being present.",
+ "evidence": [
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "_run_self_verify",
+   "why": "Implements repeated self-verification rounds bounded by the step's max_verify_rounds, breaking early on a 'VERIFIED' reply."
+  },
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "_VERIFY_PROMPT",
+   "why": "The prompt template instructing the agent to self-review and either reply VERIFIED or return corrected output."
+  },
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "run_workflow",
+   "why": "Wave-by-wave workflow executor that hosts the per-step execution into which self-verify is wired."
+  }
+ ],
+ "status_conflict": false
+}

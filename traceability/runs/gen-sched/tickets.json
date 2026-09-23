@@ -1,0 +1,107 @@
+{
+ "schema_version": 1,
+ "produced_by": "tickets",
+ "meta": {
+  "source": "../hackathon/projectpulse/data/upload_demo/mig_schedule.xlsx",
+  "convention": "flat",
+  "project": null
+ },
+ "payload": [
+  {
+   "uid": "T0000",
+   "summary": "Source system profiling",
+   "description": "",
+   "key": "MIG-1",
+   "parent": null,
+   "component": "Requirement",
+   "status": "Done",
+   "source_row": 2,
+   "source_sheet": "Activities",
+   "inline": {},
+   "extra": {
+    "fix_version": "Discovery",
+    "assignee": "Pham Hong D"
+   }
+  },
+  {
+   "uid": "T0001",
+   "summary": "Mapping specification",
+   "description": "",
+   "key": "MIG-2",
+   "parent": null,
+   "component": "Design",
+   "status": "Done",
+   "source_row": 3,
+   "source_sheet": "Activities",
+   "inline": {},
+   "extra": {
+    "fix_version": "Discovery",
+    "assignee": "Hoach Bach"
+   }
+  },
+  {
+   "uid": "T0002",
+   "summary": "Extract pipeline",
+   "description": "",
+   "key": "MIG-3",
+   "parent": null,
+   "component": "Development",
+   "status": "Done",
+   "source_row": 4,
+   "source_sheet": "Activities",
+   "inline": {},
+   "extra": {
+    "fix_version": "Build",
+    "assignee": "Pham Hong D"
+   }
+  },
+  {
+   "uid": "T0003",
+   "summary": "Transform rules",
+   "description": "",
+   "key": "MIG-4",
+   "parent": null,
+   "component": "Development",
+   "status": "In Progress",
+   "source_row": 5,
+   "source_sheet": "Activities",
+   "inline": {},
+   "extra": {
+    "fix_version": "Build",
+    "assignee": "Hoach Bach"
+   }
+  },
+  {
+   "uid": "T0004",
+   "summary": "Dry-run load",
+   "description": "",
+   "key": "MIG-5",
+   "parent": null,
+   "component": "Testing",
+   "status": "Not started",
+   "source_row": 6,
+   "source_sheet": "Activities",
+   "inline": {},
+   "extra": {
+    "fix_version": "Rehearsal",
+    "assignee": "Pham Hong D"
+   }
+  },
+  {
+   "uid": "T0005",
+   "summary": "Cutover rehearsal",
+   "description": "",
+   "key": "MIG-6",
+   "parent": null,
+   "component": "Testing",
+   "status": "Not started",
+   "source_row": 7,
+   "source_sheet": "Activities",
+   "inline": {},
+   "extra": {
+    "fix_version": "Rehearsal",
+    "assignee": "Hoach Bach"
+   }
+  }
+ ]
+}

@@ -1,0 +1,14 @@
+{
+ "summary_en": "Measure Semantic Search quality numerically; evaluate Japanese and only try Hybrid/Rerank when the baseline shows improvement is needed.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Knowledge & RAG",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "Semantic Search",
+  "Hybrid",
+  "Rerank",
+  "baseline",
+  "BA",
+  "FSG",
+  "Knowledge & RAG"
+ ]
+}

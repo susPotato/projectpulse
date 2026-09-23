@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/tools.py defines a central TOOL_SPECS registry plus a WRITE_TOOLS set that classifies write/exec actions (write_file, edit_file, run_command, install_package) apart from read-only ones, and enabled_tool_specs filters it against admin config. core/ms365_tools.py applies the same read vs write classification via MS365_WRITE_TOOLS, and ui/tools_admin_tab.py surfaces the registry for per-tool enable/disable. The classification is binary (read vs write/exec rather than three distinct labels), but the registry-with-scope concept is clearly implemented and matches the 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/tools.py",
+   "symbol": "TOOL_SPECS",
+   "why": "Central list of tool specs acting as the built-in tool registry."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "WRITE_TOOLS",
+   "why": "Classifies write/exec tools (write_file, edit_file, run_command, install_package) as gated, implying all others are read scope."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "enabled_tool_specs",
+   "why": "Filters the registry by admin-disabled tools, showing registry-level governance."
+  },
+  {
+   "file": "core/ms365_tools.py",
+   "symbol": "MS365_WRITE_TOOLS",
+   "why": "Applies the same read/write scope classification to MS365 connector tools for the permission gate."
+  },
+  {
+   "file": "ui/tools_admin_tab.py",
+   "symbol": "ToolsAdminTab.refresh",
+   "why": "Renders the TOOL_SPECS registry in an admin table with per-tool enable toggles."
+  }
+ ],
+ "status_conflict": false
+}

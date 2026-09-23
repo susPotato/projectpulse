@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/resource_limits.py implements check_limits() enforcing cpu_percent, memory_mb and disk_mb caps across a process tree via psutil, with prime_cpu_counter() for accurate first CPU sampling. config/security_sandbox.yaml supplies per-backend default_memory_mb/default_cpu_percent plus runtime limits, matching the ticket's sandboxed-process resource limits. Status 'Release it' is consistent with the code being present.",
+ "evidence": [
+  {
+   "file": "core/resource_limits.py",
+   "symbol": "check_limits",
+   "why": "Sums CPU, RSS memory and disk I/O across a process tree and returns a reason string when a configured cap is exceeded."
+  },
+  {
+   "file": "core/resource_limits.py",
+   "symbol": "prime_cpu_counter",
+   "why": "Primes psutil's CPU delta counter so the first limit poll is meaningful, showing integration with a polling enforcement loop."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Defines sandbox backend defaults default_memory_mb/default_cpu_percent and global runtime limits used for sandboxed execution."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4254,
+  "output_tokens": 426,
+  "model": "claude-opus-5"
+ }
+}

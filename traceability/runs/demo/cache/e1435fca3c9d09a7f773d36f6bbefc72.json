@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain any untrusted-content fencing or prompt-injection marker detection logic; core/agent_security.py, which the architecture doc names as the guardrail module, was not retrieved. assets/RULEBASE.md only states policy text requiring prompt-injection detection, and ms365_graph.py / providers/base.py are unrelated to the claim.",
+ "evidence": [
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "3.2 Validate Prompt For",
+   "why": "States policy that prompt injection must be detected, but is a rules document, not implementation of a content fence."
+  },
+  {
+   "file": "core/ms365_graph.py",
+   "symbol": "read_shared_file",
+   "why": "Graph wrapper used for remote rules fetch; unrelated to injection-marker fencing."
+  },
+  {
+   "file": "providers/base.py",
+   "symbol": "ThinkStreamSplitter",
+   "why": "Message/streaming plumbing with no untrusted-content fencing logic."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the retrieved files touch the Cowork tab or any \"superpowers\"/skills capability: the sandbox YAML is a static policy rulebook, ms365_local.py exposes synced OneDrive/SharePoint folders as agent tools, and models_config.sample.yaml documents routing schema. The architecture excerpt only mentions that CoworkTab exists and is owned by MainWindow, which says nothing about this feature. There is no positive evidence either for or against the ticket's claim in the shown subset.",
+ "evidence": [
+  {
+   "file": "core/ms365_local.py",
+   "symbol": "build_ms365_local_tools",
+   "why": "Provides local OneDrive/SharePoint filesystem tools, unrelated to a Cowork-tab superpowers feature."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Static sandbox backend/risk-routing policy; mentions cowork only in a code-generation block flag, not the ticket's feature."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Reference routing config sample listing providers/models; the 'cowork' key is only a routing surface-mode toggle."
+  }
+ ],
+ "status_conflict": false
+}

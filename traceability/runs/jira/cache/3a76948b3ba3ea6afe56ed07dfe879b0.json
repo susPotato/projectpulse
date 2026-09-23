@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the candidate files concern a task editor dialog: agent_manager_tab.py is a preset editor for custom AI agents, flow_dialog.py builds pipeline steps, and folder_tab.py is a file explorer/code editor. The documentation excerpt is flagged as not describing this repository, and the task-related symbols it cites (ui/schedule_task_tab.py::_generate, ui/workspace_tab.py::_create) are not among the files shown, so nothing here settles whether a task create/edit form exists.",
+ "evidence": [
+  {
+   "file": "ui/agent_manager_tab.py",
+   "symbol": "AgentManagerTab",
+   "why": "Implements a create/edit form for custom Agent presets (name, description, prompt, provider), not tasks."
+  },
+  {
+   "file": "ui/flow_dialog.py",
+   "symbol": "FlowBuilderDialog",
+   "why": "A dialog editing pipeline flow steps, unrelated to a task entity editor."
+  },
+  {
+   "file": "ui/folder_tab.py",
+   "symbol": "FolderTab",
+   "why": "A file explorer/code editor pane with no task form."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9778,
+  "output_tokens": 506,
+  "model": "claude-opus-5"
+ }
+}

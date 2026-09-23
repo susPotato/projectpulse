@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "low",
+ "reasoning": "No code was retrieved for this ticket, and the ticket itself is a bare placeholder with no concrete functional claim to test. Nothing in the provided context speaks to Windows COM integration either way.",
+ "evidence": [],
+ "status_conflict": false
+}

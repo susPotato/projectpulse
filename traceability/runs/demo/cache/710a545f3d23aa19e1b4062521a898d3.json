@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/calendar_grid.py is explicitly the grid math for the Schedule Task tab's Calendar view, providing month/week grids, period navigation, per-date task grouping from schedule.run_at, and per-month task counts. The architecture excerpt also lists a `ui.calendar` component (ui/calendar_view.py) as the calendar widget for scheduled items, consistent with a released feature; the Qt view file itself was not shown.",
+ "evidence": [
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "month_grid",
+   "why": "Builds full Mon-Sun week rows covering a month, i.e. the visual calendar grid layout."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "group_tasks_by_date",
+   "why": "Maps scheduled tasks onto calendar dates via schedule.run_at, the core of showing scheduled tasks on a calendar."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "shift_period",
+   "why": "Implements Prev/Next navigation across week/month/year granularities for the calendar view."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "month_task_counts",
+   "why": "Aggregates task counts per month for the year-level calendar display."
+  }
+ ],
+ "status_conflict": false
+}

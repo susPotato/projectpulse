@@ -1,0 +1,161 @@
+{
+ "schema_version": 1,
+ "produced_by": "index",
+ "meta": {},
+ "payload": {
+  "stem": {
+   "password": [
+    "auth/password.py"
+   ],
+   "auth": [
+    "auth/password.py",
+    "auth/session.py"
+   ],
+   "session": [
+    "auth/session.py"
+   ],
+   "invoice": [
+    "billing/invoice.py"
+   ],
+   "billing": [
+    "billing/invoice.py",
+    "billing/refund.py"
+   ],
+   "refund": [
+    "billing/refund.py"
+   ],
+   "exporter": [
+    "core/exporter.py"
+   ],
+   "core": [
+    "core/exporter.py",
+    "core/importer.py",
+    "core/logging_util.py",
+    "core/scheduler.py"
+   ],
+   "importer": [
+    "core/importer.py"
+   ],
+   "logging": [
+    "core/logging_util.py"
+   ],
+   "util": [
+    "core/logging_util.py"
+   ],
+   "scheduler": [
+    "core/scheduler.py"
+   ],
+   "outlook": [
+    "integrations/outlook.py"
+   ],
+   "integrations": [
+    "integrations/outlook.py",
+    "integrations/slack.py"
+   ],
+   "slack": [
+    "integrations/slack.py"
+   ],
+   "dashboard": [
+    "ui/dashboard.py"
+   ],
+   "sidebar": [
+    "ui/sidebar.py"
+   ],
+   "toast": [
+    "ui/toast.py"
+   ]
+  },
+  "sym": {
+   "password": [
+    "auth/password.py"
+   ],
+   "policy": [
+    "auth/password.py"
+   ],
+   "init": [
+    "auth/password.py",
+    "auth/session.py",
+    "billing/invoice.py",
+    "billing/refund.py",
+    "core/exporter.py",
+    "core/importer.py",
+    "core/scheduler.py",
+    "integrations/outlook.py",
+    "integrations/slack.py",
+    "ui/dashboard.py",
+    "ui/sidebar.py",
+    "ui/toast.py"
+   ],
+   "session": [
+    "auth/session.py"
+   ],
+   "store": [
+    "auth/session.py"
+   ],
+   "invoice": [
+    "billing/invoice.py"
+   ],
+   "engine": [
+    "billing/invoice.py"
+   ],
+   "refund": [
+    "billing/refund.py"
+   ],
+   "processor": [
+    "billing/refund.py"
+   ],
+   "exporter": [
+    "core/exporter.py"
+   ],
+   "sheet": [
+    "core/importer.py"
+   ],
+   "importer": [
+    "core/importer.py"
+   ],
+   "writer": [
+    "core/logging_util.py"
+   ],
+   "write": [
+    "core/logging_util.py"
+   ],
+   "task": [
+    "core/scheduler.py"
+   ],
+   "scheduler": [
+    "core/scheduler.py"
+   ],
+   "outlook": [
+    "integrations/outlook.py"
+   ],
+   "mailer": [
+    "integrations/outlook.py"
+   ],
+   "slack": [
+    "integrations/slack.py"
+   ],
+   "client": [
+    "integrations/slack.py"
+   ],
+   "dashboard": [
+    "ui/dashboard.py"
+   ],
+   "view": [
+    "ui/dashboard.py"
+   ],
+   "sidebar": [
+    "ui/sidebar.py"
+   ],
+   "toast": [
+    "ui/toast.py"
+   ],
+   "banner": [
+    "ui/toast.py"
+   ]
+  },
+  "prose": {},
+  "n_indexed": 13,
+  "n_prose_docs": 0,
+  "vocab_size": {}
+ }
+}

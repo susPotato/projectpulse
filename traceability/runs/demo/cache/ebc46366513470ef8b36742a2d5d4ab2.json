@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket text is a generic placeholder about adding support for a new function, with no specific feature described. No code was retrieved, so there is nothing to compare against.",
+ "evidence": [],
+ "status_conflict": false
+}

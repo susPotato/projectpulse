@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "providers/anthropic.py implements AnthropicProvider against the Anthropic Messages API with `\"stream\": True` in the payload, SSE-driven text/tool_use block assembly, retries on 429/overloaded, model listing with fallbacks, and vision/image block support. This directly matches the ticket's claim of a Claude API integration with native streaming, consistent with its 'Release it' status.",
+ "evidence": [
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "AnthropicProvider",
+   "why": "Module docstring and class declare the Anthropic Claude Messages API provider with streaming."
+  },
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "AnthropicProvider.chat",
+   "why": "Builds a payload with stream=True, tool defs via to_anthropic(), prompt caching, and assembles streamed content blocks."
+  },
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "AnthropicProvider.list_models",
+   "why": "Queries /v1/models with fallback Claude model IDs, showing full provider integration."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Routing config references anthropic provider with ANTHROPIC_API_KEY and Claude model ids, confirming integration into model routing."
+  }
+ ],
+ "status_conflict": false
+}

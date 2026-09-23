@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/agent_security.py implements the three-layer gate (validate_prompt/validate_attachment/validate_command) plus enforce_prompt/enforce_command wrappers that emit a UI notice, call audit_log.record(\"security_block\", ...), notify the admin, and raise SecurityBlocked. config.py's agent_security block defines the permission toggles (validate_commands, command_ai_check, cowork_confirm_commands, sandbox limits), and the documentation lookups confirm PermissionDialog exists in ui/permission_dialog.py. Status \"Release\" matches built code.",
+ "evidence": [
+  {
+   "file": "core/agent_security.py",
+   "symbol": "enforce_command",
+   "why": "Gates run_command/install_package through a validator before execution and raises SecurityBlocked on violation."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "validate_command",
+   "why": "Classifies a shell command as allowed/blocked via an AI control-agent prompt listing destructive/exfiltration categories."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "enforce_prompt",
+   "why": "Calls audit_log.record(\"security_block\", ...) and notify_admin when a request is blocked, showing audit logging is wired in."
+  },
+  {
+   "file": "config.py",
+   "symbol": "agent_security",
+   "why": "Config dict holds the per-layer permission switches, confirm-command dialog flag, and sandbox resource/network limits."
+  },
+  {
+   "file": "ui/permission_dialog.py",
+   "symbol": "PermissionDialog",
+   "why": "Confirmed present by the documentation lookup as the user-facing approve/reject permission gate."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11689,
+  "output_tokens": 708,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only workspace-management code shown is ui/workspace_tab.py, whose visible excerpt covers project listing, selection, and binding — the body of _delete is not included, and nothing about trash, soft delete, restore, or a deleted-items store appears anywhere in the candidate files. The other candidates (RULEBASE.md, per-workspace routing tests) are unrelated to deletion semantics, so neither presence nor absence of the feature can be settled here.",
+ "evidence": [
+  {
+   "file": "ui/workspace_tab.py",
+   "symbol": "WorkspaceTab._delete",
+   "why": "A delete action exists in the workspace UI but its implementation is omitted from the excerpt, so whether it soft-deletes with restore is undetermined."
+  },
+  {
+   "file": "ui/workspace_tab.py",
+   "symbol": "WorkspaceTab.refresh",
+   "why": "Lists projects via list_projects() with no visible filtering of trashed/deleted entries, but the omitted code prevents a conclusion."
+  },
+  {
+   "file": "tests/routing/test_per_workspace_modes.py",
+   "symbol": "test_project_dataclass_defaults",
+   "why": "Shows Project dataclass fields (routing_modes, auto_run) with no deleted/trashed flag visible, though this test is scoped to routing, not deletion."
+  }
+ ],
+ "status_conflict": false
+}

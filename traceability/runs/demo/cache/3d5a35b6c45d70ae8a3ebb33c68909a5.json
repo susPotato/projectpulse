@@ -1,0 +1,18 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/chat_agent.py is explicitly documented as the \"Chat loops for the Cowork tab\" and implements streaming: run_chat pushes incremental {\"type\": \"text\", \"delta\": ...} and reasoning deltas to an emit callback and appends the assistant reply to the message list, and run_cowork maintains the same message history plus tool calls. The Qt chat panel widget itself is not in the candidate set, so the UI half is inferred from the backend contract rather than seen directly.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_chat",
+   "why": "Streams assistant text and reasoning chunks via emit deltas and appends the assistant message to the conversation list."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Cowork-specific chat loop that carries the message history, injects a system prompt, and drives tool calls over many turns."
+  }
+ ],
+ "status_conflict": false
+}

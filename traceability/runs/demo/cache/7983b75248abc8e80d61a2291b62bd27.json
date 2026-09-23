@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/jira_tool.py is a full read-only Jira Cloud REST connector (search by JQL, get_issue, URL key extraction, Basic auth, TLS recovery), and core/tools.py wires jira_search / jira_get_issue into the agent tool executor plus permission previews and Jira-link resolution in _fetch_url. This matches the ticket's claim of a JIRA tool for issue tracking, consistent with its 'Release it' status. The cited documentation excerpt is unrelated to Jira and was not used.",
+ "evidence": [
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "search",
+   "why": "Implements JQL issue search against Jira REST API v2 with Basic auth and formatted output."
+  },
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "get_issue",
+   "why": "Fetches a single issue's fields/description by key."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "execute_tool",
+   "why": "Routes the jira_search and jira_get_issue tool names to the Jira connector."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "_fetch_url",
+   "why": "Resolves pasted Jira issue links on the configured host through the authenticated Jira API."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9276,
+  "output_tokens": 472,
+  "model": "claude-opus-5"
+ }
+}

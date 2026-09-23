@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown files concern a task model: core/model_pricing.py is an LLM price table, core/routing/models_config.sample.yaml documents model routing config, and the skill file is a prompt template. The documentation excerpt is explicitly flagged as not describing this repository and discusses a chat-view file split, not task CRUD or statuses. Nothing here confirms or refutes a Task entity with backlog/scheduled/running/done/failed/paused states.",
+ "evidence": [
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "add_entry",
+   "why": "CRUD-like helpers here operate on LLM pricing entries, not tasks or task statuses."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Describes provider/model routing configuration, unrelated to task types, priorities, or statuses."
+  },
+  {
+   "file": "skill_library/03-build-implementation.skill",
+   "symbol": "",
+   "why": "A prompt/skill template about implementation planning; contains no task-model code."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 6506,
+  "output_tokens": 406,
+  "model": "claude-opus-5"
+ }
+}

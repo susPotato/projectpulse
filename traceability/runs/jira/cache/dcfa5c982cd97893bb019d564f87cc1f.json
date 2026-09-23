@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py imports `LANGUAGE_SHORT, LANGUAGES, get_language, on_language_changed, set_language, tr` from a local `i18n` module and uses i18n keys like \"app.tab.dashboard\" for nav labels, which matches a tr()-based translation layer with runtime language switching (on_language_changed/set_language). config.py persists a `language` setting validated against `i18n.LANGUAGES` with a DEFAULT_LANGUAGE fallback. The specific set of three locales (EN/VI/JA) is not visible since i18n.py itself was not shown, but the mechanism is clearly present and the ticket is at Release status.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow",
+   "why": "Imports LANGUAGE_SHORT, LANGUAGES, get_language, on_language_changed, set_language, tr from .i18n and uses translation keys for nav labels, showing a runtime-switchable translation layer."
+  },
+  {
+   "file": "app.py",
+   "symbol": "_apply_nav_labels",
+   "why": "A method dedicated to re-applying navigation labels, consistent with re-translating the UI on a language change."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.language",
+   "why": "Persists the selected language and validates it against i18n.LANGUAGES with DEFAULT_LANGUAGE fallback."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9036,
+  "output_tokens": 602,
+  "model": "claude-opus-5"
+ }
+}

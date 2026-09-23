@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/context_budget.py implements exactly the described feature: per-model context window limits, a configurable threshold, auto-compact toggle, and in-place compression of older turns before the provider call via maybe_compact/compact_messages. Status 'Release it' matches shipped code, so there is no status conflict.",
+ "evidence": [
+  {
+   "file": "core/context_budget.py",
+   "symbol": "model_context_limit",
+   "why": "Maps model names to context window sizes, with a configurable override via context_limit."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "Checks auto_compact_enabled and threshold, then compacts the message list in place before sending, emitting a notice."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "compact_messages",
+   "why": "Summarizes middle messages into a single system note while keeping head and recent turns — the compress-before-send mechanism."
+  },
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "estimate_tokens",
+   "why": "Token estimator reused by estimate_messages_tokens to measure context usage."
+  }
+ ],
+ "status_conflict": false
+}

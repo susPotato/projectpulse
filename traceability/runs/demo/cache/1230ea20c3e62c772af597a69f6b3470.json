@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/task_import.py implements task bulk import dispatching .xlsx/.xls files to a dedicated core/task_excel module (task_excel.import_tasks, task_from_cells, resolve_depends, HEADERS template), which is exactly the Excel bulk-import capability the ticket describes. The export half is not directly visible here, only referenced indirectly via the 'fill-in template' HEADERS, so the Excel side of the feature is clearly built but export is inferred rather than shown. Status 'Release it' is consistent with the implemented code.",
+ "evidence": [
+  {
+   "file": "core/task_import.py",
+   "symbol": "import_tasks",
+   "why": "Dispatches .xlsx/.xls files to task_excel.import_tasks, showing Excel bulk task import exists."
+  },
+  {
+   "file": "core/task_import.py",
+   "symbol": "_import_csv",
+   "why": "Reuses task_excel.HEADERS/task_from_cells/resolve_depends, confirming an Excel template schema module backs the importer."
+  },
+  {
+   "file": "core/task_import.py",
+   "symbol": "auto_chain_in_order",
+   "why": "Bulk-operation behaviour: imported tasks are chained into a sequential run order."
+  }
+ ],
+ "status_conflict": false
+}

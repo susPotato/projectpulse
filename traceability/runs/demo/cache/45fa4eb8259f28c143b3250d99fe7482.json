@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The retrieved excerpts show the Co4E tab's flow editor, runs table, and config-panel wrapper, but none of the visible code exposes a step-level attachment folder or URL input; the step config panel body itself is omitted. core/task_executors.py handles project-folder inlining for scheduled tasks, not Co4E step attachments, and security/attachment_validator.py is a generic file check unrelated to URL/folder sourcing.",
+ "evidence": [
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab._wrap_config",
+   "why": "Only wraps the step-config panel with a collapse header; the actual field definitions (where attachment folder/URL would appear) are not shown."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_project_folder_input_text",
+   "why": "Inlines files from a task's linked project folder for scheduled tasks, which is a different feature from Co4E step attachment folder/URL inputs."
+  },
+  {
+   "file": "security/attachment_validator.py",
+   "symbol": "validate_attachment",
+   "why": "Generic per-file security check with no relation to Co4E step configuration or URL ingestion."
+  }
+ ],
+ "status_conflict": false
+}

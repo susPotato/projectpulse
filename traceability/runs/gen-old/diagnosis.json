@@ -1,0 +1,431 @@
+{
+ "schema_version": 1,
+ "produced_by": "diagnosis",
+ "meta": {
+  "source": "../Jira Cowork Local 1.xlsx",
+  "rows_scope": "all",
+  "project": null
+ },
+ "payload": {
+  "rows": 89,
+  "columns": 421,
+  "populated": [
+   [
+    "Project",
+    89,
+    1
+   ],
+   [
+    "Summary",
+    89,
+    89
+   ],
+   [
+    "Issue Type",
+    89,
+    3
+   ],
+   [
+    "Status",
+    89,
+    3
+   ],
+   [
+    "Description",
+    88,
+    17
+   ],
+   [
+    "Fix Version/s",
+    72,
+    2
+   ],
+   [
+    "Component/s",
+    72,
+    10
+   ],
+   [
+    "Key",
+    17,
+    17
+   ],
+   [
+    "Resolution",
+    17,
+    1
+   ],
+   [
+    "Assignee",
+    17,
+    1
+   ],
+   [
+    "Reporter",
+    17,
+    1
+   ],
+   [
+    "Creator",
+    17,
+    1
+   ],
+   [
+    "Created",
+    17,
+    1
+   ],
+   [
+    "Updated",
+    17,
+    2
+   ],
+   [
+    "Votes",
+    17,
+    1
+   ],
+   [
+    "Risks",
+    17,
+    1
+   ],
+   [
+    "QA ACC_Note",
+    17,
+    1
+   ],
+   [
+    "Rank (Obsolete)",
+    17,
+    1
+   ],
+   [
+    "Use for OB",
+    17,
+    1
+   ],
+   [
+    "Billing unit",
+    17,
+    1
+   ],
+   [
+    "Document type",
+    17,
+    1
+   ],
+   [
+    "Services",
+    17,
+    1
+   ],
+   [
+    "Permission scheme",
+    17,
+    1
+   ],
+   [
+    "Homework Type",
+    17,
+    1
+   ],
+   [
+    "Unlock Month",
+    17,
+    1
+   ],
+   [
+    "Aligned Strategy",
+    17,
+    1
+   ],
+   [
+    "Rank",
+    17,
+    17
+   ],
+   [
+    "Final",
+    17,
+    1
+   ],
+   [
+    "Use for Productivity",
+    17,
+    1
+   ],
+   [
+    "Is Deliverable",
+    17,
+    1
+   ],
+   [
+    "Technical Debt",
+    17,
+    1
+   ],
+   [
+    "BUILD INFOS",
+    17,
+    1
+   ],
+   [
+    "DEPLOY INFOS",
+    17,
+    1
+   ],
+   [
+    "FILEPATH",
+    17,
+    1
+   ],
+   [
+    "Department Owner",
+    17,
+    1
+   ],
+   [
+    "Backlog Type",
+    17,
+    1
+   ],
+   [
+    "Value Point",
+    17,
+    1
+   ],
+   [
+    "Last Viewed",
+    16,
+    5
+   ],
+   [
+    "Due Date",
+    16,
+    5
+   ],
+   [
+    "Product",
+    16,
+    1
+   ],
+   [
+    "Planned Start",
+    16,
+    1
+   ],
+   [
+    "Automation Flag",
+    2,
+    2
+   ],
+   [
+    "Priority",
+    1,
+    1
+   ],
+   [
+    "Milestone",
+    1,
+    1
+   ],
+   [
+    "Plan Size",
+    1,
+    1
+   ],
+   [
+    "Plan Release",
+    1,
+    1
+   ],
+   [
+    "Product Type",
+    1,
+    1
+   ],
+   [
+    "Unit",
+    1,
+    1
+   ]
+  ],
+  "constant": [
+   [
+    "Project",
+    "CoWorkLocal"
+   ]
+  ],
+  "relationships": {
+   "Sub-Tasks": 0,
+   "Linked Issues": 0,
+   "Related Issue ID": 0,
+   "Related JIRA ID": 0,
+   "Epic Name": 0,
+   "Sprint": 0,
+   "Epic Link": 0,
+   "Parent Link": 0
+  },
+  "schedule": {
+   "Due Date": 16,
+   "Original Estimate": 0,
+   "Remaining Estimate": 0,
+   "Time Spent": 0,
+   "Progress": 0,
+   "Σ Progress": 0,
+   "Σ Time Spent": 0,
+   "Σ Remaining Estimate": 0,
+   "Σ Original Estimate": 0,
+   "Discussion / Progress Update": 0,
+   "Task progress": 0,
+   "Story Points": 0,
+   "Original story points": 0,
+   "Target start": 0,
+   "Target end": 0,
+   "Start Date": 0,
+   "Plan Start Date": 0,
+   "Planned End Date": 0,
+   "Baseline start date": 0,
+   "Baseline end date": 0,
+   "Planned Start": 16,
+   "PercentDone": 0
+  },
+  "automatic": {
+   "Created": 17,
+   "Last Viewed": 16,
+   "Updated": 17,
+   "Resolved": 0,
+   "Resolved Date": 0
+  },
+  "partitions": [
+   [
+    "Issue Type",
+    3,
+    1.0
+   ],
+   [
+    "Status",
+    3,
+    1.0
+   ],
+   [
+    "Description",
+    17,
+    0.989
+   ],
+   [
+    "Fix Version/s",
+    2,
+    0.809
+   ],
+   [
+    "Component/s",
+    10,
+    0.809
+   ]
+  ],
+  "order_runs": {
+   "Issue Type": [
+    3,
+    3
+   ],
+   "Status": [
+    4,
+    3
+   ],
+   "Description": [
+    18,
+    17
+   ],
+   "Fix Version/s": [
+    6,
+    2
+   ],
+   "Component/s": [
+    11,
+    10
+   ]
+  },
+  "text_structure": {
+   "Description": {
+    "inline_fields": {
+     "PO": 72,
+     "BA": 72,
+     "Developer": 72
+    }
+   }
+  },
+  "title_convention": {
+   "titles": 89,
+   "with_separator": 72,
+   "distinct_heads": 65,
+   "shared_heads": 5,
+   "rows_under_a_shared_head": 29,
+   "worst": [
+    [
+     "Cowork Chat",
+     10
+    ],
+    [
+     "Dashboard",
+     6
+    ],
+    [
+     "AI Edit",
+     6
+    ],
+    [
+     "Workspace",
+     5
+    ],
+    [
+     "Task Scheduling",
+     2
+    ]
+   ]
+  },
+  "findings": [
+   {
+    "level": "blocker",
+    "topic": "no recorded dependencies",
+    "detail": "Every relationship field is empty (Epic Link, Epic Name, Linked Issues, Parent Link, Related Issue ID, Related JIRA ID). Nothing in this export says which work item depends on which, so any dependency shown downstream is inferred and must be labelled as such."
+   },
+   {
+    "level": "warning",
+    "topic": "planning field is a timestamp",
+    "detail": "'Planned Start' equals 'Created' on all 16 rows that have both. It records when the item was created, not when work is planned to start."
+   },
+   {
+    "level": "warning",
+    "topic": "planning field is a timestamp",
+    "detail": "'Planned Start' equals 'Updated' on all 16 rows that have both. It records when the item was created, not when work is planned to start."
+   },
+   {
+    "level": "note",
+    "topic": "row order is structure",
+    "detail": "The 89 rows form only 3 contiguous runs of 'Issue Type' (3 distinct values). The sheet was written in blocks of Issue Type, which is ordering no field records."
+   },
+   {
+    "level": "note",
+    "topic": "row order is structure",
+    "detail": "The 89 rows form only 4 contiguous runs of 'Status' (3 distinct values). The sheet was written in blocks of Status, which is ordering no field records."
+   },
+   {
+    "level": "note",
+    "topic": "row order is structure",
+    "detail": "The 89 rows form only 18 contiguous runs of 'Description' (17 distinct values). The sheet was written in blocks of Description, which is ordering no field records."
+   },
+   {
+    "level": "note",
+    "topic": "row order is structure",
+    "detail": "The 89 rows form only 11 contiguous runs of 'Component/s' (10 distinct values). The sheet was written in blocks of Component/s, which is ordering no field records."
+   },
+   {
+    "level": "note",
+    "topic": "fields inlined in text",
+    "detail": "'Description' carries key:value pairs — PO (72), BA (72), Developer (72). These are real fields the export does not have columns for."
+   }
+  ]
+ }
+}

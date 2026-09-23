@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files cover D3 knowledge-graph HTML rendering (core/d3_graph.py, assets/graph_template.html) and a security rulebase — none of them implement or reference semantic/embedding similarity search over the codebase. The graph template's only search is a client-side node name filter input, which is lexical, not semantic, and says nothing about whether a separate similarity module exists elsewhere.",
+ "evidence": [
+  {
+   "file": "core/d3_graph.py",
+   "symbol": "build_html",
+   "why": "Only injects StructureGraph nodes/edges into an HTML template; contains no similarity or embedding logic."
+  },
+  {
+   "file": "assets/graph_template.html",
+   "symbol": "",
+   "why": "Provides a plain text 'Search nodes…' input for filtering the rendered graph, not semantic similarity search."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy document unrelated to graph similarity."
+  }
+ ],
+ "status_conflict": false
+}

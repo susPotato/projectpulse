@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/pptx_edit.py is a dedicated module for in-place PPTX editing, exposing the deck as a marker-delimited editable document (text, pos/size, image replacement, font) explicitly intended for a human or the AI editor to modify and map back onto shapes. Supporting extraction of PPTX text and style also exists in core/doc_extract.py and core/doc_style_extract.py. The 'Release it' status matches a built feature.",
+ "evidence": [
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "pptx_to_text",
+   "why": "Renders every shape of a presentation into a marker-delimited editable document for AI/human editing."
+  },
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "_apply_font",
+   "why": "Applies edited font specs back onto the presentation shapes, showing write-back editing is implemented."
+  },
+  {
+   "file": "core/doc_style_extract.py",
+   "symbol": "extract_pptx_structure",
+   "why": "Extracts PPTX layout/font/color structure, supporting the presentation-editing workflow."
+  },
+  {
+   "file": "core/doc_extract.py",
+   "symbol": "_pptx",
+   "why": "Plain-text extraction of .pptx files used for prompt building."
+  }
+ ],
+ "status_conflict": false
+}

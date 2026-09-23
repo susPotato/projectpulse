@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "The floating in-app Help assistant is fully implemented: `ui/help_agent_widget.py` builds a launcher badge, chat panel, greeting and per-message provider chat, and `core/admin_agents.py` seeds a built-in help agent (`HELP_AGENT_ID`, `ensure_help_agent`) with a dedicated \"help\" task kind and system prompt restricting answers to app guidance. Status \"Release it\" matches the built code.",
+ "evidence": [
+  {
+   "file": "ui/help_agent_widget.py",
+   "symbol": "HelpAgentWidget",
+   "why": "Implements the floating in-app help chat panel with launcher, edge tab, greeting and message send flow."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "ensure_help_agent",
+   "why": "Seeds the built-in Help assistant agent preset resolved by the floating widget."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "_KIND_PROMPTS",
+   "why": "Contains the 'help' system prompt restricting the agent to guiding users through the app."
+  }
+ ],
+ "status_conflict": false
+}

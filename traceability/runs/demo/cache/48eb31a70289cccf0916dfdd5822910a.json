@@ -1,0 +1,20 @@
+{
+ "summary_en": "New function Create task and execute task, based on the team's plan, import from excel, AI create WBS, Export file, View status (kannban, calendar (with dependence task), Gpaph)",
+ "description_en": "BA: QuanDh14\nDeveloper: QuanDh14\nComponent: WBS",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "task",
+  "excel",
+  "AI",
+  "WBS",
+  "Export file",
+  "kannban",
+  "calendar",
+  "dependence task",
+  "Gpaph",
+  "BA",
+  "QuanDh14",
+  "Developer",
+  "Component"
+ ]
+}

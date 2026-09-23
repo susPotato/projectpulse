@@ -1,0 +1,4289 @@
+{
+ "schema_version": 1,
+ "produced_by": "tickets",
+ "meta": {
+  "source": "C:/Users/Potato/AppData/Local/Temp/claude/c--Users-Potato-Downloads-hackathon/07425bd3-0faa-4740-b680-5be3033a0847/scratchpad/jira_backlog.csv",
+  "convention": "flat",
+  "project": "COWORKLOCAL"
+ },
+ "payload": [
+  {
+   "uid": "T0000",
+   "summary": "Management",
+   "description": "",
+   "key": "COWORKLOCAL-1",
+   "parent": null,
+   "component": "Product",
+   "status": "In Progress",
+   "source_row": 2,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Product",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0001",
+   "summary": "[Planning Task] Resource Allocation",
+   "description": "Allocate member to the project's Resource Allocation list in FI2.0",
+   "key": "COWORKLOCAL-2",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 3,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0002",
+   "summary": "[Planning Task] Develop CM Plan",
+   "description": "1. PM assigns a member to play the role of CC for the project. If the project needs specific IT skill (such as installation, config setting, project server management,...), CC needs to be verified by IT.\r\n2. CC completes CM Plan and sends for review and approval following Fsoft RADIO for Project.\r\nSend requests to IT/ISM for CM Plan review:\r\n- Review Email: CMP.Review@fpt.com\r\n- Email subject: [Project code] – Request review CM Plan\r\n- Attach the latest version of the CM Plan\r\n- Resolved time follows the IT/ISM SLA: 3 working days\r\n\r\n3. If the project has any requests for equipment, connection, environment,… assigned member (maybe CC, PTL or PM) sends call-log to related units for support (such as to IT for connection, to Admin for equipment, ISM for security, ...).\r\n4. CM Plan include customer requirements related to security, environment, compliance, and other relevant aspects of the project.",
+   "key": "COWORKLOCAL-3",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 4,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "- Review Email": "CMP.Review@fpt.com",
+    "- Email subject": "[Project code] – Request review CM Plan"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0003",
+   "summary": "[Planning Task] Equip Facilities",
+   "description": "- Request working space (seat)\n- Request PC, Laptop, Monitor, VDI…",
+   "key": "COWORKLOCAL-4",
+   "parent": null,
+   "component": "PM Task",
+   "status": "In Progress",
+   "source_row": 5,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0004",
+   "summary": "[Planning Task] Define OSS",
+   "description": "Define regulation about using open source and get commitment from Customer/Product Owner:\n- PM discuss with customer and define the regulation about using open source in project.This regulation is transferred to team members and commit to follow.Detail refer to Guideline_Using OSS_3rd Party Component",
+   "key": "COWORKLOCAL-5",
+   "parent": null,
+   "component": "PM Task",
+   "status": "In Progress",
+   "source_row": 6,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0005",
+   "summary": "[Planning Task] Define ISMS Keyword",
+   "description": "Define keyword of project and submit on ISMS keyword management tool: https://insight.fsoft.com.vn/jira3/secure/ismsKeywordManagement.jspa",
+   "key": "COWORKLOCAL-6",
+   "parent": null,
+   "component": "PM Task",
+   "status": "In Progress",
+   "source_row": 7,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0006",
+   "summary": "[Planning Task] Request CI/CD",
+   "description": "- Prepare for Project CI/CD environment \r\n+ Add project to Akawork \r\n+ Submit CI/CD request to assess and apply CICD ( refer to Process_CICD for detail)",
+   "key": "COWORKLOCAL-7",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 8,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0007",
+   "summary": "[Planning Task] Define Project Config",
+   "description": "Update information on tab project configuration on FI2.0",
+   "key": "COWORKLOCAL-8",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 9,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0008",
+   "summary": "[Planning Task] Request Infra",
+   "description": "- Request subnets (Private LAN/Wifi Dev-Test) for the project\r\n- Request open/block network connection from subnets to external sites\r\n- Request project repository to store all documents, source codes, packages… of the project( GIT, OneDrive, SVN, Confluence))\r\n- Request server (VM, Cloud, Physical)\r\n- Request application service (Publishing/Deployment)\r\n- Request email service (Mail group, Free mail)\r\n- Request special account (Contact, Customer, Service)\r\n- Request cloud account (Azure, AWS, Google, FPT)",
+   "key": "COWORKLOCAL-9",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 10,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0009",
+   "summary": "[Planning Task] Study Input Document",
+   "description": "1. Collect project documents (NDA, proposal, customer requirement specification...) from AM, SM\r\n2. Upload documents to project repository\r\n3. PM studies obligations on FCMS tool and related documents.\r\nplan\r\n4. PM and team review the contract and related documents to ensure all requirements are understood and reflected in Project. With security requirements in the contract and NDA, PM needs reflect in the project plan, ISM Department needs to review\r\n5. Validate Project & Deliverable Acceptance Criteria defined in the Contract\r\n6. Confirm the acceptance criteria with the customer",
+   "key": "COWORKLOCAL-10",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 11,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0010",
+   "summary": "[Planning Task] Hold PrePlanning Meeting",
+   "description": "The meeting includes, but not limited to:\r\n- Validate the project objectives. \r\n- Discuss about the project requirements and key deliverables. \r\n- Discuss about the contract, acceptance criteria\r\n- Discuss and agree on the project approach & processes\r\n- Discuss about the project estimates & schedule.\r\n- Discuss about the project organization\r\n- Discuss about the project training plan\r\n- Discuss about the high-level constraints and assumptions \r\n- Discuss about the project acceptance criteria\r\n- Discuss about project risks & opportunity\r\n- Discuss any other unrecorded customer or project expectations. \r\n- Discuss about productivity strategy, goals, actions to improve productivityRequired: \r\n- A formal meeting must be held for projects ranked A/B/C and first new projects (new product and/or new customer). Required participants of the meeting are: Senior Manager, Operation Manager, PM and QA Representatives, \r\n- This meeting is optional and could be combined with the project kick-off meeting for project ranked D that are not first new project (new product and/or new customer) or continuous projects \r\n- Pre-planning meeting can be skipped for very short projects & projects conducted BeGreen",
+   "key": "COWORKLOCAL-11",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 12,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0011",
+   "summary": "[Planning Task] Hold Project KickOff Meeting",
+   "description": "This meeting includes, but not limited to: \r\n- Project overview, background, customer and project importance, etc.\r\n- Presentation of project deliverable \r\n- Presentation of project master schedule & plan\r\n- Review and confirm project goals & objectives in term (QPPO) \r\n- Discuss project dependencies - Discuss project approach & processes, particularly on quality plan, productivity improvement strategy, goals and actions, training plan \r\n- Discuss on initial project risks & opportunity - Introduce project team, organization structure, role and responsibility - Discuss and confirm communication plan \r\n- Presentation of project/team evaluation schema together with reward& penalty schema The tasks are: \r\n1. Prepare kick-off meeting agenda and presentation. \r\n2. PM share critical obligations of contract, NDA:+ Have contract, NDA before kick-off meeting: PM share in the kick-off meeting or within 25wds from the project started date.+ Haven't enough contract, NDA before kick-off meeting: conduct the sharing contract meeting within 10wds from receiving contract's obligations+ Sharing content: All obligations PM are transferred on FCMS, especially critical obligations\r\n3. Schedule kick-off meeting. \r\n4. Conduct kick-off meeting. Required participants are :\r\n- Senior Manager/Operation Manager, PM, PTL, QA\r\n- Attendance of higher managment ( HO representative, FSU OM, BU OM) : \r\nFor fixed price project, base on the scale, higher managment joins meeting as bellow: \r\na. TCV >= 500.000$: HO Prepresentative \r\nb. TCV in range of 200,000 USD ~ 500,000 USD : FSU OM c. TCV < 200,000 USD: BU OM\r\nIn case higher management has already attended BeGreen meeting, attending Kick off meeting is a nice to have activity",
+   "key": "COWORKLOCAL-12",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 13,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "a. TCV >= 500.000$": "HO Prepresentative"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0012",
+   "summary": "[Planning Task] Develop Detail Schedule",
+   "description": "Based on the project's requirement:\r\n1. Convert the project's requirement into work items (Epic => Story/Task/Enabler => Sub-task)\r\n2. Assign work items to members, with corresponding timeline & effort\r\n\r\nYou can input work items one by one, or you can import the list of work items as guided HERE",
+   "key": "COWORKLOCAL-13",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 14,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0013",
+   "summary": "[Planning Task] Conduct Start up baseline",
+   "description": "1. Perform the baseline according to the CI Baseline procedure defined in the CM Plan.\r\n2. All information describing the current status of CIs and CI revisions will be recorded in Sheet Baseline Report of CM report.\r\n3. Start-up baseline must be conducted within 10 working days after WO 1.0 is approved.\r\n4. An information CI is considered to be baselined when it is in any state in which others can use it.\r\n- Document CIs are baselined after the first version is reviewed and approved for release.\r\n- Source CIs are baselined after the first version reviewed and unit tested\r\n- Customer supplied CIs are baselined at the first time they are received by the project.",
+   "key": "COWORKLOCAL-14",
+   "parent": null,
+   "component": "PM Task",
+   "status": "In Progress",
+   "source_row": 15,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0014",
+   "summary": "[Planning Task] Develop Project Plan (PP) (*)",
+   "description": "1.Complete the information required in tab Project plan on FI2.0\r\n2. Review the PP with project team and relevant stakeholder to obtain commitments on the PP. Resolve conflict, if any\r\n3. Obtain final review and approvals required for the PP from the people as defined in FSOFT RADIO\r\n4. Record Project Planning data & information on FI2.0 PM inform criteria for determining project contribution rate.\r\n5. PM confirms implementation of the obligations.\r\n6. All review and approval activities will be recorded directly in FI2.0 where user can see historical change.",
+   "key": "COWORKLOCAL-15",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 16,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0015",
+   "summary": "[Planning Task] Define Project Productivity",
+   "description": "1. Define Project Productivity/ Scopes productivity objective in FI2.0. \r\n2. Get approval by FSU delivery head within 10 WDs (7 WDs- Very short project) from the Project Planned Start Date\r\n3. Define frequency to measure productivity in Project Plan. Frequency is weekly (recommended) or not longer than milestone periods (mandatory).",
+   "key": "COWORKLOCAL-16",
+   "parent": null,
+   "component": "PM Task",
+   "status": "Release",
+   "source_row": 17,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0016",
+   "summary": "[Planning Task] Develop Project Charter (*)",
+   "description": "1. Complete the information required in Project Charter on FI2.0, include Project Productivity target approved by FSU delivery head\r\n2. Obtain final review and approvals required for the Project Charter & its associates (Project Estimation, Project Schedule, Project Resource, Project Risk & opportunity) from the people as defined in FSOFT RADIO\r\n3. All review and approval activities will be recorded directly in FI2.0 where user can see historical change.",
+   "key": "COWORKLOCAL-17",
+   "parent": null,
+   "component": "PM Task",
+   "status": "In Progress",
+   "source_row": 18,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "PM Task",
+    "assignee": "Hoach Bach Van"
+   }
+  },
+  {
+   "uid": "T0017",
+   "summary": "Application Framework — PySide6 Desktop App (MainWindow, Navigation, Top Bar, System Tray)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-18",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 19,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0018",
+   "summary": "Configuration System — JSON config (~/.cowork_local/config.json), schema migration v0_v2, env var overrides",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-19",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 20,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0019",
+   "summary": "Shared AppContext — thread-safe state, MCP connections cache, provider factory",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-20",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 21,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0020",
+   "summary": "i18n Internationalization — 3 languages (EN/VI/JA), runtime language switch, tr() translation function",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-21",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 22,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0021",
+   "summary": "Theme System — Dark/Light themes, accent colors, CSS stylesheet generation",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-22",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 23,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0022",
+   "summary": "Welcome Dialog — First-run setup, nickname/email configuration",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-23",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 24,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0023",
+   "summary": "Settings Dialog — Provider config, theme, language, model selection, attachments limits",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-24",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 25,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0024",
+   "summary": "Provider Factory � Dynamic provider instantiation (OpenAI-compatible, Anthropic, Ollama, GitHub Copilot, Codex)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-25",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 26,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0025",
+   "summary": "OpenAI-compatible Provider — Chat completion, streaming, model list, base_url override",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-26",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 27,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0026",
+   "summary": "Anthropic Provider — Claude API integration, native streaming support",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-27",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 28,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0027",
+   "summary": "Model Routing — Auto-routing, cost router, model gate, concurrency control, per-provider queue",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-28",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 29,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0028",
+   "summary": "Model Pricing & Budget — Per-model pricing table, currency conversion (VND/USD/JPY), budget alerts",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-29",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 30,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0029",
+   "summary": "Model Scoring & Prober — Model health probing, latency scoring, metadata enrichment",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-30",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 31,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0030",
+   "summary": "Context Budget — Context window management, auto-compact, compress before send",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-31",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 32,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0031",
+   "summary": "Dashboard — Token usage stats, cost overview, period filter (today/week/month/all)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-32",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 33,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0032",
+   "summary": "Dashboard — Spline chart for usage trends (week/month/year granularity)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-33",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 34,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0033",
+   "summary": "Dashboard — Stat cards (total/input/output/cache tokens, cost per bucket)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-34",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 35,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0034",
+   "summary": "Dashboard — AI habits analysis (token usage patterns, busiest day/hour)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-35",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 36,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0035",
+   "summary": "Dashboard — AI cost-saving strategy recommendation & auto-apply",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-36",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 37,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0036",
+   "summary": "Dashboard — Currency picker (VND/USD/JPY) for cost display",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-37",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 38,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0037",
+   "summary": "Usage Tracker — Event logging per model turn, JSONL cache, summarize API",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-38",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 39,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0038",
+   "summary": "Workspace — Project management (create/rename/delete/duplicate projects)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-39",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 40,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0039",
+   "summary": "Workspace — Multi-tab Cowork chat panels with independent sessions",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-40",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 41,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0040",
+   "summary": "Workspace — GraphRAG knowledge graph (D3 visualization, similarity search)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-41",
+   "parent": null,
+   "component": "Story",
+   "status": "Re-Open",
+   "source_row": 42,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0041",
+   "summary": "Workspace — Chat history sidebar with session management",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-42",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 43,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0042",
+   "summary": "Workspace — Folder picker for AI-edit target files",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-43",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 44,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0043",
+   "summary": "Workspace Access Control — Member management, role-based permissions",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-44",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 45,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0044",
+   "summary": "Workspace Trash — Soft delete with restore capability",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-45",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 46,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0045",
+   "summary": "Cowork Chat — Chat panel with message history, streaming responses",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-46",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 47,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0046",
+   "summary": "Cowork Chat — Composer with attachment support (files, links)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-47",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 48,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0047",
+   "summary": "Cowork Chat — Agent model picker per tab, skill attachment",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-48",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 49,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0048",
+   "summary": "Cowork Chat — File deliverables output with auto-save to workspace",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-49",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 50,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0049",
+   "summary": "Cowork Chat — Code agent with file read/write/edit/save operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-50",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 51,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0050",
+   "summary": "Cowork Chat — Code runner with sandboxed execution",
+   "description": "App Conatiner on WIndown, chưa support on OS\nPO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-51",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 52,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0051",
+   "summary": "Cowork Chat — Terminal panel for command execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-52",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 53,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0052",
+   "summary": "Cowork Chat — Output tree for generated files display",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-53",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 54,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0053",
+   "summary": "Cowork Chat — Chat stop/cancel with proper reporting",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-54",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 55,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0054",
+   "summary": "Cowork Chat — Revision of earlier files, multi-file save",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-55",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 56,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0055",
+   "summary": "AI Edit — Excel file editing (xlsx_write, AI-driven cell manipulation)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-56",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 57,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0056",
+   "summary": "AI Edit — PPTX presentation editing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-57",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 58,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0057",
+   "summary": "AI Edit — Document extraction (text, styles, structure)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-58",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 59,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0058",
+   "summary": "AI Edit — LibreOffice document viewer",
+   "description": "Cần cài LibraOffice nếu muốn view pptx, do chức năng cần dựa vào nó để convert hiển thị trên app\nPO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-59",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 60,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0059",
+   "summary": "AI Edit — Image generation (DALL-E / model-based)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-60",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 61,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0060",
+   "summary": "AI Edit — Preview AI for file preview generation",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-61",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 62,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0061",
+   "summary": "Task Model — Task CRUD, statuses (backlog/scheduled/running/done/failed/paused), types, priorities",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-62",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 63,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0062",
+   "summary": "Task Scheduler — Background QTimer (30s tick), concurrent task execution (max 3)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-63",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 64,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0063",
+   "summary": "Task Scheduling — One-time, daily, weekly, monthly, cron expression support",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-64",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 65,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0064",
+   "summary": "Task Scheduling — Holiday calendar (skip holidays by country), working days only",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-65",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 66,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0065",
+   "summary": "Task Dependencies — DAG-based dependencies, fan-in, cycle detection",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-66",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 67,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0066",
+   "summary": "Task Chaining — Run-next modes (run_after_success/run_always/run_after_manual_confirm)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-67",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 68,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0067",
+   "summary": "Task Input/Output — Modes (empty/manual/file/previous_task_output), artifacts storage",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-68",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 69,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0068",
+   "summary": "Task Execution — Agent worker threads, model selection per task, skill application",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-69",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 70,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0069",
+   "summary": "Task Approval — requires_approval gate, manual confirm before execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-70",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 71,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0070",
+   "summary": "Task Notification — Teams webhook, Outlook email, in-app notification bell",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-71",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 72,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0071",
+   "summary": "Task Kanban Board — UI for task management with drag-and-drop",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-72",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 73,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0072",
+   "summary": "Task Editor Dialog — Create/edit tasks with full form",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-73",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 74,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0073",
+   "summary": "Task Import/Export — Excel import/export for task bulk operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-74",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 75,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0074",
+   "summary": "Task Calendar Grid — Visual calendar view of scheduled tasks",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-75",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 76,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0075",
+   "summary": "AI Task Planner — AI-generated task planning from natural language",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-76",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 77,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0076",
+   "summary": "Co4E Engine — Node-graph workflow engine with topological wave execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-77",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 78,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0077",
+   "summary": "Co4E Canvas — Visual node editor with drag-and-drop, zoom, pan",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-78",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 79,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0078",
+   "summary": "Co4E Nodes — Step, Parallel, Join, IF/Switch, Start, End node types",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-79",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 80,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0079",
+   "summary": "Co4E Parallel — Fan-out to multiple sub-agents with join stage",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-80",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 81,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0080",
+   "summary": "Co4E IF/Switch — Conditional branching with typed ports",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-81",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 82,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0081",
+   "summary": "Co4E Run Modes — Auto, Plan (read-only), Manual (step-by-step)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-82",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 83,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0082",
+   "summary": "Co4E Permission Presets — Inherit, read-only, standard, full",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-83",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 84,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0083",
+   "summary": "Co4E Runner — Stage execution with output threading between waves",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-84",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 85,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0084",
+   "summary": "Co4E Run Manager — Run history, reporting, step results dialog",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-85",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 86,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0085",
+   "summary": "Co4E Transfer — Workflow import/export between instances",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-86",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 87,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0086",
+   "summary": "Co4E Custom Agents — Define custom agent personas for workflow steps",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-87",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 88,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0087",
+   "summary": "Co4E Self-Verify — Automatic verification rounds with configurable max",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-88",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 89,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0088",
+   "summary": "Co4E Branch Gating — Skipped nodes when IF branch gates them off",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-89",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 90,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0089",
+   "summary": "Agent System — Chat agent with role-based prompts (cowork, code, admin)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-90",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 91,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0090",
+   "summary": "Agent Tools — Tool registry with scope classification (read/write/exec)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-91",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 92,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0091",
+   "summary": "Agent Security — Permission gates, command risk classification, audit logging",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-92",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 93,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0092",
+   "summary": "Agent Security Alert — Real-time security event monitoring",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-93",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 94,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0093",
+   "summary": "Agent Command — Command execution with approval workflow",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-94",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 95,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0094",
+   "summary": "Custom Agents — User-defined agent personas with custom instructions",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-95",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 96,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0095",
+   "summary": "Agent Admin — Agents admin tab for managing agent configurations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-96",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 97,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0096",
+   "summary": "Agent Manager — Agent manager tab with CRUD operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-97",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 98,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0097",
+   "summary": "Help Agent — In-app AI assistant for user guidance",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-98",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 99,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0098",
+   "summary": "MCP Client — Stdio & HTTP transport for MCP server connections",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-99",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 100,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0099",
+   "summary": "MS365 MCP Server — Built-in server for OneDrive/SharePoint local sync",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-100",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 101,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0100",
+   "summary": "MS365 Local Tools — File read/write/list for locally synced files",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-101",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 102,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0101",
+   "summary": "External Connectors — User-configured MCP servers (CAD/CAE/Other)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-102",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 103,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0102",
+   "summary": "Connectors Panel — UI for managing external connector configurations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-103",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 104,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0103",
+   "summary": "CAD/CAE Connectors — CATIA and other CAD tool integrations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-104",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 105,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0104",
+   "summary": "AppContainer Sandbox — Windows job object for process containment",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-105",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 106,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0105",
+   "summary": "Windows Sandbox VM — Hyper-V sandbox for untrusted code execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-106",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 107,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0106",
+   "summary": "Resource Limits — CPU, memory, disk limits for sandboxed processes",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-107",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 108,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0107",
+   "summary": "Network Guard — Network access control, URL guard, macro blocking",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-108",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 109,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0108",
+   "summary": "TLS Trust — Self-signed certificate auto-trust per host, CA bundle override",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-109",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 110,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0109",
+   "summary": "Untrusted Content Fence — Prompt injection markers detection & fencing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-110",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 111,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0110",
+   "summary": "Integrity Sandbox — File integrity verification in sandbox",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-111",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 112,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0111",
+   "summary": "Security Rules — Configurable security policy engine",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-112",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 113,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0112",
+   "summary": "Audit Log — Action logging with retention policy",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-113",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 114,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0113",
+   "summary": "Permissions System — Role-based access control for workspace & tasks",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-114",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 115,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0114",
+   "summary": "Monitoring Dashboard — Overview page with system health metrics",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-115",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 116,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0115",
+   "summary": "Monitoring — Security Events page with real-time alerts",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-116",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 117,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0116",
+   "summary": "Monitoring — MCP Call History page",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-117",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 118,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0117",
+   "summary": "Monitoring — Action Logs page with filtering",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-118",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 119,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0118",
+   "summary": "Monitoring — Agent Status page",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-119",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 120,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0119",
+   "summary": "Monitoring — Agents Admin tab",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-120",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 121,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0120",
+   "summary": "Monitoring — Sandbox Admin tab with capacity management",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-121",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 122,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0121",
+   "summary": "Monitoring — Tools Admin tab",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-122",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 123,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0122",
+   "summary": "Monitoring — Icons Admin tab for custom icon management",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-123",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 124,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0123",
+   "summary": "Monitoring — Skill Manager tab for CRUD skill operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-124",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 125,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0124",
+   "summary": "Telemetry — Shared telemetry for usage tracking",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-125",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 126,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0125",
+   "summary": "Notification Center — In-app notification bell with unread count",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-126",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 127,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0126",
+   "summary": "Teams Webhook — Notification cards via Microsoft Teams",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-127",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 128,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0127",
+   "summary": "Outlook Notify — Email notifications via Outlook COM",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-128",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 129,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0128",
+   "summary": "Notify Events — Event-driven notification routing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-129",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 130,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0129",
+   "summary": "Skill Library — 5 built-in skills (Analyze Requirement, Solution Design, Build, Demo Prep, Security Review)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-130",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 131,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0130",
+   "summary": "Skill Manager — CRUD operations for user-defined skills",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-131",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 132,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0131",
+   "summary": "Skill Dialog — Skill picker for attaching to tasks/chat",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-132",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 133,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0132",
+   "summary": "Structure Graph — Codebase structure graph generation",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-133",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 134,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0133",
+   "summary": "GraphRAG — Knowledge graph from file content with similarity search",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-134",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 135,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0134",
+   "summary": "D3 Graph Visualization — Interactive graph rendering in browser",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-135",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 136,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0135",
+   "summary": "Graph Similarity — Semantic similarity search across codebase",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-136",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 137,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0136",
+   "summary": "Codebase Memory — Persistent memory of codebase structure & content",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-137",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 138,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0137",
+   "summary": "JIRA Integration — JIRA tool for issue tracking",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-138",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 139,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0138",
+   "summary": "Git Workspace — Git operations integration",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-139",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 140,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0139",
+   "summary": "Java Runtime — Java code execution support",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-140",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 141,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0140",
+   "summary": "Link Fetch — URL preview with content fencing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-141",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 142,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0141",
+   "summary": "Flows Engine — Workflow definition & execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-142",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 143,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0142",
+   "summary": "App Batch — Batch processing for multiple operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-143",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 144,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0143",
+   "summary": "App COM — Windows COM integration",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-144",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 145,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0144",
+   "summary": "Navigation Sidebar — Collapsible/expandable nav rail with sub-tabs",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-145",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 146,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0145",
+   "summary": "Toast Notifications — Auto-hiding top-left notifications",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-146",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 147,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0146",
+   "summary": "Routing Toggle — UI toggle for model routing on/off",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-147",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 148,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0147",
+   "summary": "Spline Chart — Smooth line chart for dashboard metrics",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-148",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 149,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0148",
+   "summary": "File Edit Dialog — Generic file editing dialog",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-149",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 150,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0149",
+   "summary": "Permission Dialog — Permission request/confirmation UI",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-150",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 151,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0150",
+   "summary": "Workspace Access Dialog — Member management dialog",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-151",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 152,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0151",
+   "summary": "Test Suite — 95+ unit/integration/system tests (pytest)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-152",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 153,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0152",
+   "summary": "QA Report — 60 IPA test cases, 17 bugs found & documented",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-153",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 154,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0153",
+   "summary": "Security Hardening Tests — 10 ST tests for security features",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-154",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 155,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0154",
+   "summary": "Co4E Tests — 10+ tests for workflow engine, nodes, routing, transfers",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-155",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 156,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0155",
+   "summary": "Paths Utility — OneDrive root detection, config path resolution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-156",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 157,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0156",
+   "summary": "Log Retention — Configurable log file rotation & cleanup",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-157",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 158,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0157",
+   "summary": "Run Timing — Execution timing & performance tracking",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-158",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 159,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0158",
+   "summary": "Console — In-app console output display with hide option",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-159",
+   "parent": null,
+   "component": "Story",
+   "status": "Cancelled",
+   "source_row": 160,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0159",
+   "summary": "Dependencies Check — Runtime dependency verification",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-160",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 161,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0160",
+   "summary": "Sandbox Prep — Sandbox environment preparation scripts",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-161",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 162,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0161",
+   "summary": "Model Auto Routing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-162",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 163,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0162",
+   "summary": "Perfomance update",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-163",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 164,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0163",
+   "summary": "Superpowers_Cowork_Local(like Claude) on Cowork tab",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-164",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 165,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0164",
+   "summary": "Update UI/UX",
+   "description": "PO: HoachBV\r\nBA: FSG/QuanDh14\r\nDeveloper: FSG",
+   "key": "COWORKLOCAL-165",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 166,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG/QuanDh14",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Thanh Nguyen Van"
+   }
+  },
+  {
+   "uid": "T0165",
+   "summary": "Refactor code BE",
+   "description": "PO: HoachBV\r\nBA: FSG/QuanDh14\r\nDeveloper: FSG",
+   "key": "COWORKLOCAL-166",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 167,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG/QuanDh14",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Thanh Nguyen Van"
+   }
+  },
+  {
+   "uid": "T0166",
+   "summary": "Test UI/UX all feature",
+   "description": "PO: HoachBV\r\nBA: FSG/QuanDh14\r\nDeveloper: FSG",
+   "key": "COWORKLOCAL-167",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 168,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG/QuanDh14",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Thanh Nguyen Van"
+   }
+  },
+  {
+   "uid": "T0167",
+   "summary": "Create BD/DD documentation based on existing source code.",
+   "description": "PO: HoachBV\nBA: FSG",
+   "key": "COWORKLOCAL-168",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 169,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Thanh Nguyen Van"
+   }
+  },
+  {
+   "uid": "T0168",
+   "summary": "Define Reusable MCP Tool Contract",
+   "description": "Define Reusable MCP Tool Contract\r\n----------------------------------------\r\nDeliverable cuối cùng của member: 1 document thiết kế + 1 JSON schema + 2 sample manifests + validation testcase, đồng thời chứng minh kiến trúc chỉ dùng Cowork Tool Registry làm nguồn quản lý duy nhất (Single Source of Truth).",
+   "key": "COWORKLOCAL-169",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 170,
+   "source_sheet": "jira_backlog",
+   "inline": {},
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0169",
+   "summary": "Define Portable Knowledge Pack Specification",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-170",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 171,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0170",
+   "summary": "Chuẩn hóa cách Agent thu thập context từ RAG/Search/MCP thay vì mỗi Agent tự viết logic riêng.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-171",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 172,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0171",
+   "summary": "Đánh giá hiện trạng MCP, RAG/Search, Agent/Skill, LLM Routing và integration points của Cowork Local; xác định rõ phần nào Reuse / Improve / Build as Core Asset.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-172",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 173,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0172",
+   "summary": "Tận dụng MCP Client / Tool Registry / Permission / Audit có sẵn để tạo capability thật cho project, không xây MCP framework mới.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-173",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 174,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0173",
+   "summary": "Nâng knowledge/RAG hiện có thành gói có source, metadata, project isolation, citation và ground truth; không rebuild GraphRAG engine.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-174",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 175,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0174",
+   "summary": "Đo chất lượng Semantic Search bằng số; đánh giá tiếng Nhật và chỉ thử Hybrid/Rerank khi baseline cho thấy cần cải thiện.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-175",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 176,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0175",
+   "summary": "Chuẩn hóa Agent/Skill thành reusable assets thay vì prompt riêng lẻ; tạo các skill phục vụ project thực.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-176",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 177,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0176",
+   "summary": "Flagship product để chứng minh 4 workstream tạo ra một sản phẩm dùng được: review requirement dựa trên project knowledge và evidence.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-177",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 178,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0177",
+   "summary": "Biến chất lượng/safety thành PASS/WARN/FAIL có evidence thay vì đánh giá cảm tính; map Cowork controls vào CASAN H1–H7.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-178",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 179,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0178",
+   "summary": "Upstream các cải tiến generic về Cowork thay vì giữ fork riêng: Co4E branch, model routing, Superpowers và gap MCP/platform thực sự cần.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-179",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 180,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0179",
+   "summary": "Cải thiện trải nghiệm các flow AI mà Core Team dùng thực tế (Agent/Skill/MCP/RAG); tránh nhận redesign toàn bộ Cowork không gắn use case.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": "COWORKLOCAL-180",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 181,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Kien Nguyen Trung"
+   }
+  },
+  {
+   "uid": "T0180",
+   "summary": "Thêm chức năng đối ứng bug prodcution (phân tích nguyên nhân bug,phân tích ảnh hưởng, report cho khách, dev, apply fix, tự động retest",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": "COWORKLOCAL-181",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 182,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "My Nguyen Thi"
+   }
+  },
+  {
+   "uid": "T0181",
+   "summary": "Thêm chức năng đối ứng chức năng mới (đối ứng ticket mới..)",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": "COWORKLOCAL-182",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 183,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "My Nguyen Thi"
+   }
+  },
+  {
+   "uid": "T0182",
+   "summary": "Tách đồ thị hiện tại ra thành một màn hình mới  là tích hợp của souce và toàn bộ đặc tả của dự án, mỗi node gắn thêm file tài liệu và file soure code liên quan",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": "COWORKLOCAL-183",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 184,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "My Nguyen Thi"
+   }
+  },
+  {
+   "uid": "T0183",
+   "summary": "Thêm màn hình mô tả business của hệ thống dựa vào source  và tài liệu đặc tả của dự án(mục tiêu là khi fix bug hay thêm chức năng mới thì dễ nhìn chỗ mình sủa/thêm mới ở đâu trong hệ thống business của khách..)",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": "COWORKLOCAL-184",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 185,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "My Nguyen Thi"
+   }
+  },
+  {
+   "uid": "T0184",
+   "summary": "Thêm màn hình cấu hình report output cho dev và cho khách để dễ tùy chỉnh( ý tưởng)",
+   "description": "Hiện tại đã đối ứng ở 1 nhánh khác tên là \r\n[https://git3.fsoft.com.vn/GROUP-INTERNAL/stu/cuder/fjp/cowork-local/-/tree/Mynt4_CoworkAddBugHunter]\r\n và sẽ được merge ở trong sprint tới.\nBA: Mynt4\nDeveloper: FNS",
+   "key": "COWORKLOCAL-185",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 186,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "[https": "//git3.fsoft.com.vn/GROUP-INTERNAL/stu/cuder/fjp/cowork-local/-/tree/Mynt4_CoworkAddBugHunter]",
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "My Nguyen Thi"
+   }
+  },
+  {
+   "uid": "T0185",
+   "summary": "Thêm phần attachment folder và URL vào Co4E step, mục đích xử lí thu thập thông tin từ nguồn(ngoài file đính kèm và comment)",
+   "description": "BA: QuanDh14",
+   "key": "COWORKLOCAL-186",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 187,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0186",
+   "summary": "Check lại RULEBASE để tăng giảm các giàng buộc cho app",
+   "description": "BA: QuanDh14",
+   "key": "COWORKLOCAL-187",
+   "parent": null,
+   "component": "Story",
+   "status": "In Progress",
+   "source_row": 188,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0187",
+   "summary": "New function Tạo task và thực hiện task, base on plan của team, import form excel, AI create WBS, Export file, View status(kannban, calendar(có dependence task), Gpaph)",
+   "description": "BA: QuanDh14\nDeveloper: QuanDh14",
+   "key": "COWORKLOCAL-188",
+   "parent": null,
+   "component": "Story",
+   "status": "Release",
+   "source_row": 189,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quan Do Hong"
+   }
+  },
+  {
+   "uid": "T0188",
+   "summary": "Tích hợp thêm cài đặt thông báo qua team cho các kênh chat của nhóm, cài đặt lịch check gửi thông báo ..",
+   "description": "BA: Quangld1",
+   "key": "COWORKLOCAL-189",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 190,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "Quangld1"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quang Le Duc"
+   }
+  },
+  {
+   "uid": "T0189",
+   "summary": "Tích hợp remote qua slack",
+   "description": "BA: Quangld1",
+   "key": "COWORKLOCAL-190",
+   "parent": null,
+   "component": "Story",
+   "status": "To Do",
+   "source_row": 191,
+   "source_sheet": "jira_backlog",
+   "inline": {
+    "BA": "Quangld1"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Story",
+    "assignee": "Quang Le Duc"
+   }
+  }
+ ]
+}

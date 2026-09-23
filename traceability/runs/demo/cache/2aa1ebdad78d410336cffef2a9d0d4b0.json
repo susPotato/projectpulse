@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files relate to a report output configuration screen: app.py is the main window shell with nav rail/top bar, codebase_memory.py bridges an MCP binary, and prober.py does model benchmarking. The retrieved subset simply does not address report output settings UI either way.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "Builds Dashboard/Schedule/Workspace/Monitoring pages and top-bar controls, with no report-output configuration page."
+  },
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CodebaseMemory",
+   "why": "Unrelated MCP codebase-indexing integration, no bearing on report output settings."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "probe_candidates",
+   "why": "Model benchmarking/judging logic, unrelated to any report configuration screen."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/jira_tool.py implements a read-only Jira Cloud REST connector (search by JQL, get issue by key/URL, config check), core/tools.py wires jira_search/jira_get_issue into tool description and execution plus Jira-link resolution in fetch_url, and ui/connectors_panel.py provides the JiraConnectDialog setup/test UI. This matches the ticket's claim of a shipped JIRA integration tool.",
+ "evidence": [
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "search / get_issue / configured",
+   "why": "Implements the Jira REST v2 read-only connector with Basic auth and formatted issue output."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "execute_tool / _jira_search",
+   "why": "Registers and dispatches jira_search and jira_get_issue as agent tools, including Jira URL resolution in _fetch_url."
+  },
+  {
+   "file": "ui/connectors_panel.py",
+   "symbol": "JiraConnectDialog",
+   "why": "Provides the UI for entering and testing Jira base URL, email and API token, saved into config."
+  }
+ ],
+ "status_conflict": false
+}

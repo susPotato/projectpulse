@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain any Git integration code — the workspace tab manages projects, folders, chat, and GraphRAG sub-tabs with no version-control operations, and the other candidates (security rulebase, routing-mode tests) are unrelated to Git. The retrieval appears to have matched on 'workspace' rather than 'Git', so the evidence neither shows nor rules out a Git integration module elsewhere.",
+ "evidence": [
+  {
+   "file": "ui/workspace_tab.py",
+   "symbol": "WorkspaceTab",
+   "why": "Workspace screen handles project CRUD, instructions, sandbox folder and sub-tabs (Cowork/GraphRAG/Folder) with no Git operations visible."
+  },
+  {
+   "file": "tests/routing/test_per_workspace_modes.py",
+   "symbol": "test_per_workspace_routing_is_isolated",
+   "why": "Tests per-workspace routing/auto-run modes, unrelated to Git integration."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy document with no bearing on Git operations."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown files touch task input/output modes or artifact storage: RULEBASE.md and config/security_sandbox.yaml are security policy documents, and config.py's excerpt covers providers, security and usage settings with no task I/O mode constants. The documentation excerpts provided are all flagged as not describing this repository and concern routing modes, canvas widgets and StepConfigPanel, none of which address empty/manual/file/previous_task_output modes.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "Config defaults cover providers, agent_security, cowork output_dir and usage pricing but show no task input/output mode or artifacts storage keys."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox backend/risk-routing configuration, unrelated to task input modes or artifact persistence."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Agent security rulebase text with no bearing on task management I/O modes."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8027,
+  "output_tokens": 470,
+  "model": "claude-opus-5"
+ }
+}

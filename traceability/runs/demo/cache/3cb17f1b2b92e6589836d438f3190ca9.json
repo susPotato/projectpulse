@@ -1,0 +1,18 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The shown app.py code calls `self.toast.show_message(msg, ok=ok)` in both `_on_scheduled_task_done` and `_notify_task`, with the latter commented as \"In-app popup at the top-left\", matching the ticket's described toast notifications. The `_Toast` class body (auto-hide timer) is in the omitted region, so the auto-hiding behaviour is only documented, not directly visible, but the notification mechanism clearly exists and status \"Release it\" is consistent.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._notify_task",
+   "why": "Calls self.toast.show_message with an explicit comment that it is an in-app popup at the top-left for task done/error."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._on_scheduled_task_done",
+   "why": "Shows a toast for scheduled task success/failure alongside the tray balloon."
+  }
+ ],
+ "status_conflict": false
+}

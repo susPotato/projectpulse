@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files confirm a Co4E node-graph exists (Node/Edge model, canvas editor, wave-based runner, a 'parallel' palette kind mentioned in the canvas docstring), but the actual node-type definitions live in core/co4e.py which is not in the candidate set. Nothing visible names Join, IF/Switch, Start or End node types, and absence in this subset is not proof they are missing.",
+ "evidence": [
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "Co4ECanvas",
+   "why": "Implements a node-graph editor with Node/Edge items and mentions drops of agent/skill/parallel/whole-flow palette steps, showing a Co4E node system exists but not the specific node-type catalogue."
+  },
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "Co4ECanvas.relayout",
+   "why": "Uses compute_waves over nodes/edges, indicating dependency/parallel wave semantics but not distinct Join/IF/Switch node types."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Runs a saved Co4E node graph wave-by-wave via co4e_runner, confirming graph execution without revealing node-type handling."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12687,
+  "output_tokens": 586,
+  "model": "claude-opus-5"
+ }
+}

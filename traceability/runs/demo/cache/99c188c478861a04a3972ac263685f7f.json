@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown files relate to semantic search evaluation, Japanese-language benchmarking, or hybrid/rerank experiments — RULEBASE.md is a security policy, doc_extract.py is document text extraction, and jira_tool.py is a read-only Jira connector. The team guide excerpt is explicitly marked as not describing this repository, and its lookups show `_score_chunk`/`top_k` are absent, so it cannot support the claim either.",
+ "evidence": [
+  {
+   "file": "core/doc_extract.py",
+   "symbol": "extract_text",
+   "why": "Only performs plain text extraction from office/PDF files; contains no retrieval scoring or evaluation logic."
+  },
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "search",
+   "why": "A JQL-based Jira REST search, unrelated to semantic search quality measurement."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "A security/governance rulebase document with no bearing on search evaluation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8438,
+  "output_tokens": 398,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "summary_en": "Turn quality/safety into PASS/WARN/FAIL with evidence instead of subjective assessment; map Cowork controls into CASAN H1–H7.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Quality & Safety",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "PASS",
+  "WARN",
+  "FAIL",
+  "Cowork",
+  "CASAN",
+  "H1–H7",
+  "BA",
+  "FSG",
+  "Quality & Safety"
+ ]
+}

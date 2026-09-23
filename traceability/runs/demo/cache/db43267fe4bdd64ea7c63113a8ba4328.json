@@ -1,0 +1,8 @@
+{
+ "headline": "The Skills area covers a set of ready-made working skills plus the ability for users to manage their own and attach them to tasks or chat; the code confirms the built-in skill library, while the management and picker parts could not be confirmed from what was examined.",
+ "what_is_there": "There is a packaged library of built-in skills that is loaded and seeded into a user's skill collection the first time, with a one-time seeding flag so it doesn't repeat, and at least one fully authored skill (Analyze Requirement) matching the advertised set. The skills are stored as standalone definition files, so the underlying file format for skills clearly exists.",
+ "what_is_unclear": "The analysis did not see any code for creating, editing or deleting user-defined skills, nor any picker or dialog for attaching a skill to a task or chat conversation — only skill definition documents came up in the files reviewed. Because only a keyword-selected slice of the codebase was examined, this does not mean those features are absent, just that nothing confirmed them.",
+ "suggested_action": "Ask the team to point to where user skill management and the skill picker live, so those two tickets can be checked directly.",
+ "caveat": "Only one of the five named built-in skills was actually shown in full, though the file naming suggests the others sit alongside it.",
+ "confidence": "medium"
+}

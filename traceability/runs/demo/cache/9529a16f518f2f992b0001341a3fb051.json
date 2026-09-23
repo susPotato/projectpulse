@@ -1,0 +1,15 @@
+{
+ "summary_en": "Add a screen describing the business of the system based on source and the project's specification documents (the goal is that when fixing bugs or adding new functions, it is easy to see where the part you fix/add is in the customer's business system..)",
+ "description_en": "BA: Mynt4\nDeveloper: FNS\nComponent: New function",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "business",
+  "source",
+  "BA",
+  "Mynt4",
+  "Developer",
+  "FNS",
+  "Component",
+  "New function"
+ ]
+}

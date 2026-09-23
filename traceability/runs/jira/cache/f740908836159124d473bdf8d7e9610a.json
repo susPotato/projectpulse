@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/co4e_run_manager.py implements exactly the run-manager/run-history portion of the ticket: RunHandle serialization, capped on-disk run_history.json with atomic writes, restore-on-start, per-run status/progress and node_status tracking. The step-results dialog is UI and is not among the shown files, so that sub-part is unverified, but the core claim is clearly backed. Status is Release and the code exists, so no status conflict.",
+ "evidence": [
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager._load_history",
+   "why": "Restores past runs from run_history.json so the Flow Status tab keeps history across restarts."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager._save_history",
+   "why": "Persists capped run records atomically on every change, implementing run history."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "RunHandle.to_record",
+   "why": "Serializes per-run status, progress, node_status and workflow snapshot for reporting/reopening past runs."
+  },
+  {
+   "file": "core/sandbox_manager.py",
+   "symbol": "SandboxManager",
+   "why": "Unrelated to Co4E run history; matched only by keyword retrieval on the architecture excerpt."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 6160,
+  "output_tokens": 557,
+  "model": "claude-opus-5"
+ }
+}

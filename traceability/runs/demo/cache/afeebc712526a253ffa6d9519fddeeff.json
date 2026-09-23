@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "i18n.py defines LANGUAGES for en/ja/vi, a STRINGS table with all three translations, and exposes tr(), set_language(), get_language() and on_language_changed() listeners for runtime language switching. This directly matches the ticket's claims and its \"Release it\" status.",
+ "evidence": [
+  {
+   "file": "i18n.py",
+   "symbol": "LANGUAGES",
+   "why": "Defines the three supported languages en/ja/vi with display names."
+  },
+  {
+   "file": "i18n.py",
+   "symbol": "tr",
+   "why": "Translation lookup function with English fallback and format placeholder support as described."
+  },
+  {
+   "file": "i18n.py",
+   "symbol": "on_language_changed",
+   "why": "Listener registration enabling live UI updates when the language is switched at runtime."
+  },
+  {
+   "file": "i18n.py",
+   "symbol": "set_language",
+   "why": "Provides the runtime language switch entry point."
+  }
+ ],
+ "status_conflict": false
+}

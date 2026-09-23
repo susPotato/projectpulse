@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "providers/openai_compat.py implements OpenAICompatProvider with a streaming POST to {base_url}/chat/completions, tool/function-calling payloads, a list_models symbol, and a _url() that reads base_url from config and errors when unset. This matches all four claimed capabilities, and the ticket's \"Release it\" status is consistent with the code being present.",
+ "evidence": [
+  {
+   "file": "providers/openai_compat.py",
+   "symbol": "OpenAICompatProvider.chat",
+   "why": "Builds a streaming chat-completions request with tools and handles SSE content/reasoning streaming."
+  },
+  {
+   "file": "providers/openai_compat.py",
+   "symbol": "OpenAICompatProvider._url",
+   "why": "Reads base_url from provider conf and raises if it is not configured, showing the base_url override path."
+  },
+  {
+   "file": "providers/openai_compat.py",
+   "symbol": "OpenAICompatProvider.list_models",
+   "why": "Symbol present in the class, matching the model-list requirement."
+  },
+  {
+   "file": "providers/base.py",
+   "symbol": "Provider.list_models",
+   "why": "Base contract for model listing with last_error reporting that the OpenAI-compatible provider overrides."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,19 @@
+{
+ "summary_en": "Add function to handle production bug (analyze bug cause, analyze impact, report to customer, dev, apply fix, automatic retest",
+ "description_en": "BA: Mynt4\nDeveloper: FNS\nComponent: New function",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "bug",
+  "prodcution",
+  "report",
+  "dev",
+  "apply fix",
+  "retest",
+  "BA",
+  "Mynt4",
+  "Developer",
+  "FNS",
+  "Component",
+  "New function"
+ ]
+}

@@ -1,0 +1,13 @@
+{
+ "headline": "The security and sandboxing area covers isolating risky code execution, resource caps, network blocking, certificate trust, security policy rules and audit logging — of 11 tickets, 6 are backed by code we could read, 4 could not be settled from the code examined, and 1 describes something different from what the named component actually does.",
+ "what_is_there": "The code shows working process containment on Windows with CPU, memory and disk caps, a default-deny network posture for sandboxed work, a configurable security policy engine driven by an editable rulebase with per-layer toggles, per-host certificate trust with a CA-bundle override, and two separate audit trails recording tool calls, permission decisions, security blocks and every sandbox execution attempt.",
+ "what_is_unclear": "Four items could not be confirmed from the code examined — the Hyper-V based sandbox VM, prompt-injection fencing of untrusted content, role-based access control over workspaces and tasks, and the rulebase review task (a review leaves no code trace by design); this means unconfirmed, not missing. Two partially-confirmed items also have gaps: no log pruning or expiry logic was seen behind the audit retention policy, and the URL guard and macro-blocking parts of the network ticket were not visible.",
+ "suggested_action": "Ask the team to confirm three things directly: whether role-based access control and prompt-injection fencing exist elsewhere in the product, and whether audit log retention is actually enforced or just implied by the file layout. Separately, the certificate trust ticket is still marked In Progress although the feature looks complete — worth a status check.",
+ "caveat": "One ticket describes 'file integrity verification' but the component of that name does something else entirely: it enforces a Windows low-integrity execution level rather than verifying files. The ticket title and the code are talking about two different meanings of 'integrity', so the ticket may simply be misnamed rather than the work being wrong.",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 2422,
+  "output_tokens": 643,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/admin_agents.py implements a full admin-owned agent catalog — AdminAgent dataclass with name/task_kind/prompt/provider/model/enabled, new_agent/save_agent/load_agent/list_agents/delete_agent, a shared agents_admin_dir for cross-machine sync, and ensure_help_agent seeding for the Agents Admin screen. Its module docstring explicitly references the 'Monitoring → Agents Admin' editor, and the documentation lookup confirms ui/agents_admin_tab.py exists in this repository. Status 'Release it' is consistent with the implemented code.",
+ "evidence": [
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent",
+   "why": "Dataclass holding the per-agent configuration (name, task kind, prompt, provider, model, enabled) that the admin tab manages."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "agents_admin_dir",
+   "why": "Defines the shared agents_admin storage folder backing the admin catalog, with a local fallback."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "ensure_help_agent",
+   "why": "Seeds the built-in Help agent so it appears in Agents Admin for provider/model selection, showing the tab is a live consumer of this module."
+  },
+  {
+   "file": "ui/agents_admin_tab.py",
+   "symbol": "",
+   "why": "Documentation symbol lookup confirms the Agents admin tab UI file exists in this repository."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8191,
+  "output_tokens": 596,
+  "model": "claude-opus-5"
+ }
+}

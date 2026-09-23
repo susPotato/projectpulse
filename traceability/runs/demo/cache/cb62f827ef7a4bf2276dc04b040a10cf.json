@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the candidate files concern notifications: they implement a node-graph workflow canvas, the Co4E workflow tab, and a tools/connectors admin panel. No notification bell, unread counter, or notification center code is visible, so the ticket's claim can be neither confirmed nor refuted from this subset.",
+ "evidence": [
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "Co4ECanvas",
+   "why": "A QGraphicsView node-graph editor with no notification-related logic."
+  },
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab",
+   "why": "Workflow studio tab (flows, runs, chat) unrelated to in-app notifications."
+  },
+  {
+   "file": "ui/tools_admin_tab.py",
+   "symbol": "ToolsAdminTab",
+   "why": "Admin panel for built-in tools and connectors; contains no notification bell or unread count."
+  }
+ ],
+ "status_conflict": false
+}

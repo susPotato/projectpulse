@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a generic QA/testing task (\"Test UI/UX all feature\") with no specific functional claim to check against code. The retrieved files (core/ext_connectors.py, providers/base.py, ui/connectors_panel.py) are connector and provider implementations, not test artifacts or UI/UX test plans, so they neither support nor refute the ticket.",
+ "evidence": [
+  {
+   "file": "ui/connectors_panel.py",
+   "symbol": "ConnectorsPanel",
+   "why": "A connectors setup UI panel, unrelated to any QA test suite or UI/UX test evidence."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Connector runtime logic with no bearing on a testing ticket."
+  }
+ ],
+ "status_conflict": false
+}

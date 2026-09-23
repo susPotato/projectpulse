@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a project-management planning activity (breaking requirements into Epics/Stories and assigning timelines), not a software feature, and none of the shown files address work-item creation or scheduling of team assignments. app.py contains a nav page named \"Schedule\" and a TaskScheduler, but that is an in-app automated task runner, not a project work-breakdown planner; RULEBASE.md and the demo-preparation skill are unrelated.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "The 'schedule' nav page and TaskScheduler here are an automated task-run engine, not a project work-item/timeline planning tool."
+  },
+  {
+   "file": "skill_library/04-demo-preparation.skill",
+   "symbol": "Demo Preparation",
+   "why": "A presales demo skill definition with no relation to work-item breakdown or scheduling."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase content, unrelated to planning work items."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7810,
+  "output_tokens": 394,
+  "model": "claude-opus-5"
+ }
+}

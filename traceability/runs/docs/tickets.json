@@ -1,0 +1,4149 @@
+{
+ "schema_version": 1,
+ "produced_by": "tickets",
+ "meta": {
+  "source": "../Jira Cowork Local_0913.xlsx",
+  "convention": "unkeyed-subrows",
+  "project": "CoWorkLocal"
+ },
+ "payload": [
+  {
+   "uid": "T0000",
+   "summary": "Application Framework — PySide6 Desktop App (MainWindow, Navigation, Top Bar, System Tray)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Core Platform",
+   "status": "Release it",
+   "source_row": 158,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0001",
+   "summary": "Configuration System — JSON config (~/.cowork_local/config.json), schema migration v0→v2, env var overrides",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Core Platform",
+   "status": "Release it",
+   "source_row": 159,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0002",
+   "summary": "Shared AppContext — thread-safe state, MCP connections cache, provider factory",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Core Platform",
+   "status": "Release it",
+   "source_row": 160,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0003",
+   "summary": "i18n Internationalization — 3 languages (EN/VI/JA), runtime language switch, tr() translation function",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Core Platform",
+   "status": "Release it",
+   "source_row": 161,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0004",
+   "summary": "Theme System — Dark/Light themes, accent colors, CSS stylesheet generation",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 162,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0005",
+   "summary": "Welcome Dialog — First-run setup, nickname/email configuration",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 163,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0006",
+   "summary": "Settings Dialog — Provider config, theme, language, model selection, attachments limits",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 164,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0007",
+   "summary": "Provider Factory — Dynamic provider instantiation (OpenAI-compatible, Anthropic, Ollama, GitHub Copilot, Codex)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "LLM & Routing",
+   "status": "Release it",
+   "source_row": 165,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0008",
+   "summary": "OpenAI-compatible Provider — Chat completion, streaming, model list, base_url override",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "LLM & Routing",
+   "status": "Release it",
+   "source_row": 166,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0009",
+   "summary": "Anthropic Provider — Claude API integration, native streaming support",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "LLM & Routing",
+   "status": "Release it",
+   "source_row": 167,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0010",
+   "summary": "Model Routing — Auto-routing, cost router, model gate, concurrency control, per-provider queue",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "LLM & Routing",
+   "status": "Release it",
+   "source_row": 168,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "2.26.1",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0011",
+   "summary": "Model Pricing & Budget — Per-model pricing table, currency conversion (VND/USD/JPY), budget alerts",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "LLM & Routing",
+   "status": "Release it",
+   "source_row": 169,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0012",
+   "summary": "Model Scoring & Prober — Model health probing, latency scoring, metadata enrichment",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "LLM & Routing",
+   "status": "Release it",
+   "source_row": 170,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0013",
+   "summary": "Context Budget — Context window management, auto-compact, compress before send",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "LLM & Routing",
+   "status": "Release it",
+   "source_row": 171,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0014",
+   "summary": "Dashboard — Token usage stats, cost overview, period filter (today/week/month/all)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Dashboard & Analytics",
+   "status": "Release it",
+   "source_row": 172,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0015",
+   "summary": "Dashboard — Spline chart for usage trends (week/month/year granularity)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Dashboard & Analytics",
+   "status": "Release it",
+   "source_row": 173,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0016",
+   "summary": "Dashboard — Stat cards (total/input/output/cache tokens, cost per bucket)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Dashboard & Analytics",
+   "status": "Release it",
+   "source_row": 174,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0017",
+   "summary": "Dashboard — AI habits analysis (token usage patterns, busiest day/hour)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Dashboard & Analytics",
+   "status": "Release it",
+   "source_row": 175,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0018",
+   "summary": "Dashboard — AI cost-saving strategy recommendation & auto-apply",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Dashboard & Analytics",
+   "status": "Release it",
+   "source_row": 176,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0019",
+   "summary": "Dashboard — Currency picker (VND/USD/JPY) for cost display",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Dashboard & Analytics",
+   "status": "Release it",
+   "source_row": 177,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0020",
+   "summary": "Usage Tracker — Event logging per model turn, JSONL cache, summarize API",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Usage & Telemetry",
+   "status": "Release it",
+   "source_row": 178,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0021",
+   "summary": "Workspace — Project management (create/rename/delete/duplicate projects)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Workspace",
+   "status": "Release it",
+   "source_row": 179,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0022",
+   "summary": "Workspace — Multi-tab Cowork chat panels with independent sessions",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Workspace",
+   "status": "Release it",
+   "source_row": 180,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0023",
+   "summary": "Workspace — GraphRAG knowledge graph (D3 visualization, similarity search)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Workspace",
+   "status": "Release it",
+   "source_row": 181,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0024",
+   "summary": "Workspace — Chat history sidebar with session management",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Workspace",
+   "status": "Release it",
+   "source_row": 182,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0025",
+   "summary": "Workspace — Folder picker for AI-edit target files",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Workspace",
+   "status": "Release it",
+   "source_row": 183,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0026",
+   "summary": "Workspace Access Control — Member management, role-based permissions",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Workspace",
+   "status": "Release it",
+   "source_row": 184,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0027",
+   "summary": "Workspace Trash — Soft delete with restore capability",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Workspace",
+   "status": "Release it",
+   "source_row": 185,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0028",
+   "summary": "Cowork Chat — Chat panel with message history, streaming responses",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 186,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0029",
+   "summary": "Cowork Chat — Composer with attachment support (files, links, images)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 187,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0030",
+   "summary": "Cowork Chat — Agent model picker per tab, skill attachment",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 188,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0031",
+   "summary": "Cowork Chat — File deliverables output with auto-save to workspace",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 189,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0032",
+   "summary": "Cowork Chat — Code agent with file read/write/edit/save operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 190,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0033",
+   "summary": "Cowork Chat — Code runner with sandboxed execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 191,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0034",
+   "summary": "Cowork Chat — Terminal panel for command execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 192,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0035",
+   "summary": "Cowork Chat — Output tree for generated files display",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 193,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0036",
+   "summary": "Cowork Chat — Chat stop/cancel with proper reporting",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 194,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0037",
+   "summary": "Cowork Chat — Revision of earlier files, multi-file save",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "Release it",
+   "source_row": 195,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0038",
+   "summary": "AI Edit — Excel file editing (xlsx_write, AI-driven cell manipulation)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "AI Edit",
+   "status": "Release it",
+   "source_row": 196,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0039",
+   "summary": "AI Edit — PPTX presentation editing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "AI Edit",
+   "status": "Release it",
+   "source_row": 197,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0040",
+   "summary": "AI Edit — Document extraction (text, styles, structure)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "AI Edit",
+   "status": "Release it",
+   "source_row": 198,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0041",
+   "summary": "AI Edit — LibreOffice document viewer",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "AI Edit",
+   "status": "Release it",
+   "source_row": 199,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0042",
+   "summary": "AI Edit — Image generation (DALL-E / model-based)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "AI Edit",
+   "status": "Release it",
+   "source_row": 200,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0043",
+   "summary": "AI Edit — Preview AI for file preview generation",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "AI Edit",
+   "status": "Release it",
+   "source_row": 201,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0044",
+   "summary": "Task Model — Task CRUD, statuses (backlog/scheduled/running/done/failed/paused), types, priorities",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 202,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0045",
+   "summary": "Task Scheduler — Background QTimer (30s tick), concurrent task execution (max 3)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 203,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0046",
+   "summary": "Task Scheduling — One-time, daily, weekly, monthly, cron expression support",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 204,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0047",
+   "summary": "Task Scheduling — Holiday calendar (skip holidays by country), working days only",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 205,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0048",
+   "summary": "Task Dependencies — DAG-based dependencies, fan-in, cycle detection",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 206,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0049",
+   "summary": "Task Chaining — Run-next modes (run_after_success/run_always/run_after_manual_confirm)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 207,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0050",
+   "summary": "Task Input/Output — Modes (empty/manual/file/previous_task_output), artifacts storage",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 208,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0051",
+   "summary": "Task Execution — Agent worker threads, model selection per task, skill application",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 209,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0052",
+   "summary": "Task Approval — requires_approval gate, manual confirm before execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 210,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0053",
+   "summary": "Task Notification — Teams webhook, Outlook email, in-app notification bell",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 211,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0054",
+   "summary": "Task Kanban Board — UI for task management with drag-and-drop",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 212,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0055",
+   "summary": "Task Editor Dialog — Create/edit tasks with full form",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 213,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0056",
+   "summary": "Task Import/Export — Excel import/export for task bulk operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 214,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0057",
+   "summary": "Task Calendar Grid — Visual calendar view of scheduled tasks",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 215,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0058",
+   "summary": "AI Task Planner — AI-generated task planning from natural language",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Task Management",
+   "status": "Release it",
+   "source_row": 216,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0059",
+   "summary": "Co4E Engine — Node-graph workflow engine with topological wave execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 217,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0060",
+   "summary": "Co4E Canvas — Visual node editor with drag-and-drop, zoom, pan",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 218,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0061",
+   "summary": "Co4E Nodes — Step, Parallel, Join, IF/Switch, Start, End node types",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 219,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0062",
+   "summary": "Co4E Parallel — Fan-out to multiple sub-agents with join stage",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 220,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0063",
+   "summary": "Co4E IF/Switch — Conditional branching with typed ports",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 221,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "2.26.1",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0064",
+   "summary": "Co4E Run Modes — Auto, Plan (read-only), Manual (step-by-step)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 222,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0065",
+   "summary": "Co4E Permission Presets — Inherit, read-only, standard, full",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 223,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0066",
+   "summary": "Co4E Runner — Stage execution with output threading between waves",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 224,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0067",
+   "summary": "Co4E Run Manager — Run history, reporting, step results dialog",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 225,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0068",
+   "summary": "Co4E Transfer — Workflow import/export between instances",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 226,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0069",
+   "summary": "Co4E Custom Agents — Define custom agent personas for workflow steps",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 227,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0070",
+   "summary": "Co4E Self-Verify — Automatic verification rounds with configurable max",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 228,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0071",
+   "summary": "Co4E Branch Gating — Skipped nodes when IF branch gates them off",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 229,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0072",
+   "summary": "Agent System — Chat agent with role-based prompts (cowork, code, admin)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 230,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0073",
+   "summary": "Agent Tools — Tool registry with scope classification (read/write/exec)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 231,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0074",
+   "summary": "Agent Security — Permission gates, command risk classification, audit logging",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 232,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0075",
+   "summary": "Agent Security Alert — Real-time security event monitoring",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 233,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0076",
+   "summary": "Agent Command — Command execution with approval workflow",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 234,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0077",
+   "summary": "Custom Agents — User-defined agent personas with custom instructions",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 235,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0078",
+   "summary": "Agent Admin — Agents admin tab for managing agent configurations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 236,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0079",
+   "summary": "Agent Manager — Agent manager tab with CRUD operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 237,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0080",
+   "summary": "Help Agent — In-app AI assistant for user guidance",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "Release it",
+   "source_row": 238,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0081",
+   "summary": "MCP Client — Stdio & HTTP transport for MCP server connections",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "MCP & Connectors",
+   "status": "Release it",
+   "source_row": 239,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0082",
+   "summary": "MS365 MCP Server — Built-in server for OneDrive/SharePoint local sync",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "MCP & Connectors",
+   "status": "Release it",
+   "source_row": 240,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0083",
+   "summary": "MS365 Local Tools — File read/write/list for locally synced files",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "MCP & Connectors",
+   "status": "Release it",
+   "source_row": 241,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0084",
+   "summary": "External Connectors — User-configured MCP servers (CAD/CAE/Other)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "MCP & Connectors",
+   "status": "Release it",
+   "source_row": 242,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0085",
+   "summary": "Connectors Panel — UI for managing external connector configurations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "MCP & Connectors",
+   "status": "Release it",
+   "source_row": 243,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0086",
+   "summary": "CAD/CAE Connectors — CATIA and other CAD tool integrations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "MCP & Connectors",
+   "status": "In Progress",
+   "source_row": 244,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0087",
+   "summary": "AppContainer Sandbox — Windows job object for process containment",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 245,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0088",
+   "summary": "Windows Sandbox VM — Hyper-V sandbox for untrusted code execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 246,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0089",
+   "summary": "Resource Limits — CPU, memory, disk limits for sandboxed processes",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 247,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0090",
+   "summary": "Network Guard — Network access control, URL guard, macro blocking",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 248,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0091",
+   "summary": "TLS Trust — Self-signed certificate auto-trust per host, CA bundle override",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "In Progress",
+   "source_row": 249,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0092",
+   "summary": "Untrusted Content Fence — Prompt injection markers detection & fencing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 250,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0093",
+   "summary": "Integrity Sandbox — File integrity verification in sandbox",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 251,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0094",
+   "summary": "Security Rules — Configurable security policy engine",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 252,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0095",
+   "summary": "Audit Log — Action logging with retention policy",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 253,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0096",
+   "summary": "Permissions System — Role-based access control for workspace & tasks",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "Release it",
+   "source_row": 254,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0097",
+   "summary": "Monitoring Dashboard — Overview page with system health metrics",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 255,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0098",
+   "summary": "Monitoring — Security Events page with real-time alerts",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 256,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0099",
+   "summary": "Monitoring — MCP Call History page",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 257,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0100",
+   "summary": "Monitoring — Action Logs page with filtering",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 258,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0101",
+   "summary": "Monitoring — Agent Status page",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 259,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0102",
+   "summary": "Monitoring — Agents Admin tab",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 260,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0103",
+   "summary": "Monitoring — Sandbox Admin tab with capacity management",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 261,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0104",
+   "summary": "Monitoring — Tools Admin tab",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 262,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0105",
+   "summary": "Monitoring — Icons Admin tab for custom icon management",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 263,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0106",
+   "summary": "Monitoring — Skill Manager tab for CRUD skill operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Monitoring & Admin",
+   "status": "Release it",
+   "source_row": 264,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0107",
+   "summary": "Telemetry — Shared telemetry for usage tracking",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Usage & Telemetry",
+   "status": "Release it",
+   "source_row": 265,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0108",
+   "summary": "Notification Center — In-app notification bell with unread count",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Notifications",
+   "status": "Release it",
+   "source_row": 266,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0109",
+   "summary": "Teams Webhook — Notification cards via Microsoft Teams",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Notifications",
+   "status": "Release it",
+   "source_row": 267,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0110",
+   "summary": "Outlook Notify — Email notifications via Outlook COM",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Notifications",
+   "status": "In Progress",
+   "source_row": 268,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0111",
+   "summary": "Notify Events — Event-driven notification routing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Notifications",
+   "status": "Release it",
+   "source_row": 269,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0112",
+   "summary": "Skill Library — 5 built-in skills (Analyze Requirement, Solution Design, Build, Demo Prep, Security Review)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Skills",
+   "status": "Release it",
+   "source_row": 270,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0113",
+   "summary": "Skill Manager — CRUD operations for user-defined skills",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Skills",
+   "status": "Release it",
+   "source_row": 271,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0114",
+   "summary": "Skill Dialog — Skill picker for attaching to tasks/chat",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Skills",
+   "status": "Release it",
+   "source_row": 272,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0115",
+   "summary": "Structure Graph — Codebase structure graph generation",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "Release it",
+   "source_row": 273,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0116",
+   "summary": "GraphRAG — Knowledge graph from file content with similarity search",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "In Progress",
+   "source_row": 274,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0117",
+   "summary": "D3 Graph Visualization — Interactive graph rendering in browser",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "Release it",
+   "source_row": 275,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0118",
+   "summary": "Graph Similarity — Semantic similarity search across codebase",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "In Progress",
+   "source_row": 276,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0119",
+   "summary": "Codebase Memory — Persistent memory of codebase structure & content",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "Release it",
+   "source_row": 277,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0120",
+   "summary": "JIRA Integration — JIRA tool for issue tracking",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Platform Integrations",
+   "status": "Release it",
+   "source_row": 278,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0121",
+   "summary": "Git Workspace — Git operations integration",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Platform Integrations",
+   "status": "Release it",
+   "source_row": 279,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0122",
+   "summary": "Java Runtime — Java code execution support",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Platform Integrations",
+   "status": "Release it",
+   "source_row": 280,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0123",
+   "summary": "Link Fetch — URL preview with content fencing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Platform Integrations",
+   "status": "Release it",
+   "source_row": 281,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0124",
+   "summary": "Flows Engine — Workflow definition & execution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Platform Integrations",
+   "status": "Release it",
+   "source_row": 282,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0125",
+   "summary": "App Batch — Batch processing for multiple operations",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Platform Integrations",
+   "status": "Release it",
+   "source_row": 283,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0126",
+   "summary": "App COM — Windows COM integration",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Platform Integrations",
+   "status": "To Do",
+   "source_row": 284,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0127",
+   "summary": "Navigation Sidebar — Collapsible/expandable nav rail with sub-tabs",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 285,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0128",
+   "summary": "Toast Notifications — Auto-hiding top-left notifications",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 286,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0129",
+   "summary": "Routing Toggle — UI toggle for model routing on/off",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 287,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0130",
+   "summary": "Spline Chart — Smooth line chart for dashboard metrics",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 288,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0131",
+   "summary": "File Edit Dialog — Generic file editing dialog",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "To Do",
+   "source_row": 289,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0132",
+   "summary": "Permission Dialog — Permission request/confirmation UI",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 290,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0133",
+   "summary": "Workspace Access Dialog — Member management dialog",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "Release it",
+   "source_row": 291,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0134",
+   "summary": "Test Suite — 95+ unit/integration/system tests (pytest)",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "QA & Testing",
+   "status": "Release it",
+   "source_row": 292,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0135",
+   "summary": "QA Report — 60 IPA test cases, 17 bugs found & documented",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "QA & Testing",
+   "status": "Release it",
+   "source_row": 293,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0136",
+   "summary": "Security Hardening Tests — 10 ST tests for security features",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "QA & Testing",
+   "status": "To Do",
+   "source_row": 294,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0137",
+   "summary": "Co4E Tests — 10+ tests for workflow engine, nodes, routing, transfers",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "QA & Testing",
+   "status": "Release it",
+   "source_row": 295,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0138",
+   "summary": "Paths Utility — OneDrive root detection, config path resolution",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "DevOps & Utilities",
+   "status": "Release it",
+   "source_row": 296,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0139",
+   "summary": "Log Retention — Configurable log file rotation & cleanup",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "DevOps & Utilities",
+   "status": "Release it",
+   "source_row": 297,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0140",
+   "summary": "Run Timing — Execution timing & performance tracking",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "DevOps & Utilities",
+   "status": "Release it",
+   "source_row": 298,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0141",
+   "summary": "Console — In-app console output display with hide option",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "DevOps & Utilities",
+   "status": "Release it",
+   "source_row": 299,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0142",
+   "summary": "Dependencies Check — Runtime dependency verification",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "DevOps & Utilities",
+   "status": "Release it",
+   "source_row": 300,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0143",
+   "summary": "Sandbox Prep — Sandbox environment preparation scripts",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "DevOps & Utilities",
+   "status": "Release it",
+   "source_row": 301,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "cowork_local_20260722",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0144",
+   "summary": "Model Auto Routing",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "LLM & Routing",
+   "status": "Release it",
+   "source_row": 302,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "2.26.1",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0145",
+   "summary": "Perfomance update",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Performance",
+   "status": "Release it",
+   "source_row": 303,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "2.26.1",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0146",
+   "summary": "Superpowers_Cowork_Local(like Claude) on Cowork tab",
+   "description": "PO: QuanDh14\nBA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Cowork Chat",
+   "status": "In Progress",
+   "source_row": 304,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "QuanDh14",
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "2.26.1",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0147",
+   "summary": "Update UI/UX",
+   "description": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nNgày nhận: 46244\nGhi chú: NamPDT,HiepHV3,LamHV7",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "In Progress",
+   "source_row": 305,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG/QuanDh14",
+    "Developer": "FSG",
+    "Ngày nhận": "46244",
+    "Ngày nhận (date)": "2026-08-10",
+    "Ghi chú": "NamPDT,HiepHV3,LamHV7"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "release/",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0148",
+   "summary": "Refactor code BE",
+   "description": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nNgày nhận: 46246\nGhi chú: DuyLH19,HuongLTT35,AnhTNM1",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Backend Refactoring",
+   "status": "In Progress",
+   "source_row": 306,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG/QuanDh14",
+    "Developer": "FSG",
+    "Ngày nhận": "46246",
+    "Ngày nhận (date)": "2026-08-12",
+    "Ghi chú": "DuyLH19,HuongLTT35,AnhTNM1"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0149",
+   "summary": "Test UI/UX all feature",
+   "description": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nNgày nhận: 46246\nGhi chú: HoaNH1,VuDT15,ThangNQ53",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "QA & Testing",
+   "status": "In Progress",
+   "source_row": 307,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG/QuanDh14",
+    "Developer": "FSG",
+    "Ngày nhận": "46246",
+    "Ngày nhận (date)": "2026-08-12",
+    "Ghi chú": "HoaNH1,VuDT15,ThangNQ53"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0150",
+   "summary": "Create BD/DD documentation based on existing source code.",
+   "description": "PO: HoachBV\nBA: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Documentation",
+   "status": "In Progress",
+   "source_row": 308,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0151",
+   "summary": "Define Reusable MCP Tool Contract\n----------------------------------------\nDeliverable cuối cùng của member: 1 document thiết kế + 1 JSON schema + 2 sample manifests + validation testcase, đồng thời chứng minh kiến trúc chỉ dùng Cowork Tool Registry làm nguồn quản lý duy nhất (Single Source of Truth).",
+   "description": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nNgày nhận: 46246\nGhi chú: TaiPH9,LocLP3,HieuHV1",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "MCP & Connectors",
+   "status": "In Progress",
+   "source_row": 309,
+   "source_sheet": "general_report",
+   "inline": {
+    "PO": "HoachBV",
+    "BA": "FSG/QuanDh14",
+    "Developer": "FSG",
+    "Ngày nhận": "46246",
+    "Ngày nhận (date)": "2026-08-12",
+    "Ghi chú": "TaiPH9,LocLP3,HieuHV1"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0152",
+   "summary": "Define Portable Knowledge Pack Specification",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "To Do",
+   "source_row": 310,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0153",
+   "summary": "Chuẩn hóa cách Agent thu thập context từ RAG/Search/MCP thay vì mỗi Agent tự viết logic riêng.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "To Do",
+   "source_row": 311,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0154",
+   "summary": "Đánh giá hiện trạng MCP, RAG/Search, Agent/Skill, LLM Routing và integration points của Cowork Local; xác định rõ phần nào Reuse / Improve / Build as Core Asset.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Architecture & Assessment",
+   "status": "To Do",
+   "source_row": 312,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0155",
+   "summary": "Tận dụng MCP Client / Tool Registry / Permission / Audit có sẵn để tạo capability thật cho project, không xây MCP framework mới.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "MCP & Connectors",
+   "status": "To Do",
+   "source_row": 313,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0156",
+   "summary": "Nâng knowledge/RAG hiện có thành gói có source, metadata, project isolation, citation và ground truth; không rebuild GraphRAG engine.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "To Do",
+   "source_row": 314,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0157",
+   "summary": "Đo chất lượng Semantic Search bằng số; đánh giá tiếng Nhật và chỉ thử Hybrid/Rerank khi baseline cho thấy cần cải thiện.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Knowledge & RAG",
+   "status": "To Do",
+   "source_row": 315,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0158",
+   "summary": "Chuẩn hóa Agent/Skill thành reusable assets thay vì prompt riêng lẻ; tạo các skill phục vụ project thực.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Agent Platform",
+   "status": "To Do",
+   "source_row": 316,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0159",
+   "summary": "Flagship product để chứng minh 4 workstream tạo ra một sản phẩm dùng được: review requirement dựa trên project knowledge và evidence.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Requirement Review",
+   "status": "To Do",
+   "source_row": 317,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0160",
+   "summary": "Biến chất lượng/safety thành PASS/WARN/FAIL có evidence thay vì đánh giá cảm tính; map Cowork controls vào CASAN H1–H7.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Quality & Safety",
+   "status": "To Do",
+   "source_row": 318,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0161",
+   "summary": "Upstream các cải tiến generic về Cowork thay vì giữ fork riêng: Co4E branch, model routing, Superpowers và gap MCP/platform thực sự cần.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Core Platform",
+   "status": "To Do",
+   "source_row": 319,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0162",
+   "summary": "Cải thiện trải nghiệm các flow AI mà Core Team dùng thực tế (Agent/Skill/MCP/RAG); tránh nhận redesign toàn bộ Cowork không gắn use case.",
+   "description": "BA: FSG\nDeveloper: FSG",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "UI/UX",
+   "status": "To Do",
+   "source_row": 320,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "FSG",
+    "Developer": "FSG"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0163",
+   "summary": "Thêm chức năng đối ứng bug prodcution (phân tích nguyên nhân bug,phân tích ảnh hưởng, report cho khách, dev, apply fix, tự động retest",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "New function",
+   "status": "In Progress",
+   "source_row": 321,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0164",
+   "summary": "Thêm chức năng đối ứng chức năng mới (đối ứng ticket mới..)",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "New function",
+   "status": "In Progress",
+   "source_row": 322,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0165",
+   "summary": "Tách đồ thị hiện tại ra thành một màn hình mới  là tích hợp của souce và toàn bộ đặc tả của dự án, mỗi node gắn thêm file tài liệu và file soure code liên quan",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "New function",
+   "status": "In Progress",
+   "source_row": 323,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0166",
+   "summary": "Thêm màn hình mô tả business của hệ thống dựa vào source  và tài liệu đặc tả của dự án(mục tiêu là khi fix bug hay thêm chức năng mới thì dễ nhìn chỗ mình sủa/thêm mới ở đâu trong hệ thống business của khách..)",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "New function",
+   "status": "In Progress",
+   "source_row": 324,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0167",
+   "summary": "Thêm màn hình cấu hình report output cho dev và cho khách để dễ tùy chỉnh( ý tưởng)",
+   "description": "BA: Mynt4\nDeveloper: FNS",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "New function",
+   "status": "Release it",
+   "source_row": 325,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "Mynt4",
+    "Developer": "FNS"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0168",
+   "summary": "Thêm phần attachment folder và URL vào Co4E step, mục đích xử lí thu thập thông tin từ nguồn(ngoài file đính kèm và comment)",
+   "description": "BA: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Co4E Workflow",
+   "status": "Release it",
+   "source_row": 326,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0169",
+   "summary": "check lại RULEBASE để tăng giảm các giàng buộc cho app",
+   "description": "BA: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "Security & Sandbox",
+   "status": "In Progress",
+   "source_row": 327,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0170",
+   "summary": "New function Tạo task và thực hiện task, base on plan của team, import form excel, AI create WBS, Export file, View status(kannban, calendar(có dependence task), Gpaph)",
+   "description": "BA: QuanDh14\nDeveloper: QuanDh14",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "WBS",
+   "status": "Release it",
+   "source_row": 328,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "QuanDh14",
+    "Developer": "QuanDh14"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "2.26.1",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0171",
+   "summary": "Tích hợp thêm cài đặt thông báo qua team cho các kênh chat của nhóm, cài đặt lịch check gửi thông báo ..",
+   "description": "BA: Quangld1",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "None",
+   "status": "Release it",
+   "source_row": 329,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "Quangld1"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  },
+  {
+   "uid": "T0172",
+   "summary": "Tích hợp remote qua slack",
+   "description": "BA: Quangld1",
+   "key": null,
+   "parent": "COWORKLOCAL-1",
+   "component": "None",
+   "status": "To Do",
+   "source_row": 330,
+   "source_sheet": "general_report",
+   "inline": {
+    "BA": "Quangld1"
+   },
+   "lang": "en",
+   "summary_en": "",
+   "description_en": "",
+   "extra": {
+    "issue_type": "Task",
+    "fix_version": "",
+    "assignee": ""
+   }
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+{
+ "summary_en": "Improve the experience of the AI flows that the Core Team actually uses (Agent/Skill/MCP/RAG); avoid taking on a full redesign of Cowork not tied to a use case.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: UI/UX",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "AI",
+  "Core Team",
+  "Agent",
+  "Skill",
+  "MCP",
+  "RAG",
+  "Cowork",
+  "BA",
+  "FSG",
+  "UI/UX"
+ ]
+}

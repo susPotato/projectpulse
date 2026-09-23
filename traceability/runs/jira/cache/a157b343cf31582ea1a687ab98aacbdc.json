@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/co4e_run_manager.py models per-run execution modes directly: RunHandle carries plan_mode and manual flags, they are constructor parameters, and they are serialized/restored in to_record/from_record, with the default (neither flag) being the automatic run. That is plausible implementation of the Auto/Plan/Manual run modes, though the step-gating logic itself lies in the omitted portion of the file.",
+ "evidence": [
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "RunHandle.__init__",
+   "why": "Run state explicitly carries plan_mode and manual flags alongside status/progress, encoding the three run modes."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "RunHandle.to_record",
+   "why": "plan_mode and manual are persisted in the run history record, showing the modes are first-class run attributes."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager",
+   "why": "Manager is the single source of truth for concurrent Co4E flow runs, the surface these modes apply to."
+  },
+  {
+   "file": "config.py",
+   "symbol": "routing_mode_for",
+   "why": "Unrelated Off/Auto/Manual toggle for model routing surfaces, not Co4E run modes — keyword overlap only."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8768,
+  "output_tokens": 566,
+  "model": "claude-opus-5"
+ }
+}

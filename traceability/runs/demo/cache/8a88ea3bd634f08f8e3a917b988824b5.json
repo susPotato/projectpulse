@@ -1,0 +1,18 @@
+{
+ "summary_en": "Assess the current state of MCP, RAG/Search, Agent/Skill, LLM Routing and integration points of Cowork Local; clearly determine which parts are Reuse / Improve / Build as Core Asset.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Architecture & Assessment",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "MCP",
+  "RAG/Search",
+  "Agent/Skill",
+  "LLM Routing",
+  "Cowork Local",
+  "Reuse",
+  "Improve",
+  "Build as Core Asset",
+  "BA",
+  "FSG",
+  "Architecture & Assessment"
+ ]
+}

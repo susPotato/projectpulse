@@ -1,0 +1,415 @@
+{
+ "schema_version": 1,
+ "produced_by": "label",
+ "meta": {
+  "synthetic": true
+ },
+ "payload": [
+  {
+   "uid": "T0000",
+   "relevant_paths": [
+    "billing/refund.py"
+   ],
+   "verdict": null,
+   "note": "foreign",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0001",
+   "relevant_paths": [
+    "ui/sidebar.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0002",
+   "relevant_paths": [
+    "core/scheduler.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0003",
+   "relevant_paths": [
+    "auth/session.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0004",
+   "relevant_paths": [
+    "billing/invoice.py"
+   ],
+   "verdict": null,
+   "note": "shared",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0005",
+   "relevant_paths": [
+    "integrations/slack.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0006",
+   "relevant_paths": [],
+   "verdict": null,
+   "note": "decoy",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0007",
+   "relevant_paths": [
+    "integrations/slack.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0008",
+   "relevant_paths": [
+    "auth/password.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0009",
+   "relevant_paths": [
+    "integrations/outlook.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0010",
+   "relevant_paths": [
+    "core/importer.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0011",
+   "relevant_paths": [
+    "billing/refund.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0012",
+   "relevant_paths": [
+    "billing/refund.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0013",
+   "relevant_paths": [
+    "core/exporter.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0014",
+   "relevant_paths": [
+    "ui/dashboard.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0015",
+   "relevant_paths": [
+    "core/exporter.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0016",
+   "relevant_paths": [
+    "core/importer.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0017",
+   "relevant_paths": [
+    "ui/dashboard.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0018",
+   "relevant_paths": [
+    "billing/invoice.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0019",
+   "relevant_paths": [
+    "billing/invoice.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0020",
+   "relevant_paths": [
+    "core/exporter.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0021",
+   "relevant_paths": [
+    "billing/invoice.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0022",
+   "relevant_paths": [],
+   "verdict": null,
+   "note": "decoy",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0023",
+   "relevant_paths": [],
+   "verdict": null,
+   "note": "decoy",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0024",
+   "relevant_paths": [
+    "ui/dashboard.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0025",
+   "relevant_paths": [
+    "ui/toast.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0026",
+   "relevant_paths": [
+    "ui/toast.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0027",
+   "relevant_paths": [
+    "integrations/outlook.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0028",
+   "relevant_paths": [
+    "ui/sidebar.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0029",
+   "relevant_paths": [
+    "billing/invoice.py"
+   ],
+   "verdict": null,
+   "note": "foreign",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0030",
+   "relevant_paths": [
+    "auth/password.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0031",
+   "relevant_paths": [
+    "core/importer.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0032",
+   "relevant_paths": [
+    "core/scheduler.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0033",
+   "relevant_paths": [
+    "billing/refund.py"
+   ],
+   "verdict": null,
+   "note": "shared",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0034",
+   "relevant_paths": [
+    "integrations/slack.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0035",
+   "relevant_paths": [
+    "core/scheduler.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0036",
+   "relevant_paths": [
+    "billing/refund.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0037",
+   "relevant_paths": [],
+   "verdict": null,
+   "note": "decoy",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0038",
+   "relevant_paths": [
+    "ui/sidebar.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0039",
+   "relevant_paths": [
+    "auth/password.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0040",
+   "relevant_paths": [
+    "auth/session.py"
+   ],
+   "verdict": null,
+   "note": "shared",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0041",
+   "relevant_paths": [
+    "integrations/outlook.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0042",
+   "relevant_paths": [
+    "ui/toast.py"
+   ],
+   "verdict": null,
+   "note": "symbol",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0043",
+   "relevant_paths": [
+    "auth/password.py"
+   ],
+   "verdict": null,
+   "note": "shared",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0044",
+   "relevant_paths": [
+    "auth/session.py"
+   ],
+   "verdict": null,
+   "note": "named",
+   "labeller": "synthetic"
+  },
+  {
+   "uid": "T0045",
+   "relevant_paths": [
+    "auth/session.py"
+   ],
+   "verdict": null,
+   "note": "prose",
+   "labeller": "synthetic"
+  }
+ ]
+}

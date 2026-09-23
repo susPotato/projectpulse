@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket is a process/strategy task about upstreaming fork changes to Cowork (Co4E branch, model routing, Superpowers, MCP gaps), which cannot be judged from the shown files. The candidates only show a sandbox policy YAML, a sample routing config, and a structure-graph builder — none of which speak to upstreaming or a fork relationship. No evidence either supports or refutes the ticket's To Do status.",
+ "evidence": [
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Documents the model routing schema but says nothing about upstreaming or fork management."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "",
+   "why": "Static sandbox policy unrelated to the upstreaming effort described in the ticket."
+  },
+  {
+   "file": "core/structure_graph.py",
+   "symbol": "StructureGraph",
+   "why": "Graph-RAG structure builder, unrelated to Co4E branch/Superpowers/MCP upstreaming."
+  }
+ ],
+ "status_conflict": false
+}

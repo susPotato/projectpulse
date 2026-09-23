@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The retrieved files show sandbox-related configuration (resource_limit_cpu_percent/memory_mb/disk_mb, sandbox_pw under agent_security) and a MonitoringTab import in app.py, but the actual Monitoring UI module (ui/monitoring_tab.py) is not in the candidate set, so there is no code showing a 'Sandbox Admin' sub-tab or capacity-management UI. The monitoring_visibility config lists only security_events, mcp_history, action_logs and agent_status, which hints a sandbox tab may not be a gated sub-tab, but that is not positive evidence of absence.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.agent_security",
+   "why": "Defines sandbox resource caps (CPU%, memory MB, disk MB) and a sandbox unlock password, the backing settings a capacity-management UI would edit."
+  },
+  {
+   "file": "config.py",
+   "symbol": "monitoring_visibility",
+   "why": "Enumerates Monitoring sub-tabs (security_events, mcp_history, action_logs, agent_status) with no sandbox admin entry, but this only covers Sub-admin visibility gating."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Monitoring page is built lazily from ui.monitoring_tab.MonitoringTab, whose source is not included, so its sub-tabs cannot be inspected."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,18 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The repository contains a dedicated core/routing/ package whose sample config documents an \"Auto Model Assessment & Routing\" feature with switch modes (off/auto/manual), policies, candidate sets, judge model and per-surface toggles, and it references a live Settings pane \"Auto Model Routing\" plus system-written assessments.json. That is consistent with a delivered routing feature, though the actual router implementation files were not part of the shown subset, so the completeness of the implementation cannot be verified here.",
+ "evidence": [
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Documents the routing config schema (switch_mode, policy, candidates, judge_model, surface_modes) stored under config.json \"routing\" and edited in Settings \"Auto Model Routing\", indicating the feature exists in the app."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "auto_link",
+   "why": "Related model/pricing plumbing that pulls live model lists from providers, but it concerns pricing tables rather than routing decisions."
+  }
+ ],
+ "status_conflict": false
+}

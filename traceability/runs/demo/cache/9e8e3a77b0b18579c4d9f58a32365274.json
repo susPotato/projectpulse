@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/task_import.py implements task import dispatching to task_excel.import_tasks for .xlsx/.xls (plus CSV/JSON), reusing the Excel template column mapping, and ui/schedule_task_tab.py's _AiCreateDialog has a dedicated Import tab with an Excel template export button (_export_template -> core.task_excel.export_template), a file picker using IMPORT_FILTER, a drag-drop zone accepting .xlsx/.csv/.json, and a preview before bulk creation. The only gap is that the visible export path is a blank template rather than exporting existing tasks, but bulk Excel import/export plumbing is clearly built. Status 'Release it' matches the implemented state.",
+ "evidence": [
+  {
+   "file": "core/task_import.py",
+   "symbol": "import_tasks",
+   "why": "Dispatches .xlsx/.xls to task_excel.import_tasks and also handles CSV/JSON, producing bulk task dicts."
+  },
+  {
+   "file": "core/task_import.py",
+   "symbol": "auto_chain_in_order",
+   "why": "Post-processes bulk-imported tasks into a run chain, showing the import is a bulk operation."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "_AiCreateDialog._export_template",
+   "why": "Writes the Excel fill-in template via core.task_excel.export_template from the Import tab button."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "_AiCreateDialog._load_import_file",
+   "why": "Calls core.task_import.import_tasks and previews all parsed tasks before confirming bulk creation."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "_DropZone.dragEnterEvent",
+   "why": "Accepts dropped .xlsx/.xlsm/.xls/.csv/.json files for the import flow."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9210,
+  "output_tokens": 758,
+  "model": "claude-opus-5"
+ }
+}

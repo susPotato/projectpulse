@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain a Monitoring Icons tab or any custom-icon management UI; app.py only imports a helper `icon()` from `ui.icons` to decorate nav rows, which is unrelated to an admin tab for managing icons. The `monitoring_visibility` block in config.py lists only security_events, mcp_history, action_logs and agent_status, which hints an Icons tab is absent but is explicitly a sub-admin visibility map, not the full tab roster, so it cannot settle the question. The actual monitoring tab implementation file was not retrieved.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Monitoring is a lazily built nav page, but its tab contents are not shown in the visible excerpt, so no Icons sub-tab can be confirmed or ruled out."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "The only icon-related usage visible is `from .ui.icons import icon as _icon` for nav row icons, not a custom icon management feature."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "The `monitoring_visibility` dict enumerates security_events, mcp_history, action_logs and agent_status with no icons entry, but it governs sub-admin visibility only."
+  }
+ ],
+ "status_conflict": false
+}

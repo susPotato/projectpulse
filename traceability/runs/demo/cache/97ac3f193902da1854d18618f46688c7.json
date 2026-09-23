@@ -1,0 +1,8 @@
+{
+ "headline": "Requirement Review is a single planned capability — reviewing project requirements against stored project knowledge and supporting evidence — and the code examined did not confirm any part of it.",
+ "what_is_there": "The area is described only as an ambition: a flagship demonstration that reviews requirements using project knowledge and evidence. No working behaviour for this was visible in the code that was looked at.",
+ "what_is_unclear": "Everything about how this would work is unconfirmed. The ticket is written as a broad product goal rather than a specific piece of functionality, so there was no concrete claim to check, and no related code surfaced during the review.",
+ "suggested_action": "Ask the ticket owner to break this goal into specific, checkable behaviours (what a reviewer does, what evidence is shown) so its progress can be tracked and confirmed.",
+ "caveat": "",
+ "confidence": "medium"
+}

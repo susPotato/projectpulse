@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The documentation lookups confirm `ui/connectors_panel.py` actually exists in this repository, and the shown backend `core/ext_connectors.py` is explicitly written for a Settings → \"Connectors (MCP)\" panel with categories, quick-fill PRESETS \"shown in the Add dialog\", `new_connector()` for \"the Add dialog\", redaction of secrets for display, and `test_connection()` — all features that only make sense behind a management UI. `config.py` likewise persists an `ext_connectors` dict with per-category lists and a `_migrate_connectors` migration into the unified Connectors model. The panel file's contents were not shown, so the UI implementation itself is inferred rather than read.",
+ "evidence": [
+  {
+   "file": "ui/connectors_panel.py",
+   "symbol": "",
+   "why": "Symbol lookup confirms this panel file exists in the repository, matching the ticket's claimed UI."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "new_connector",
+   "why": "Creates a fresh unsaved connector entry explicitly 'for the Add dialog', implying a connector-management UI."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector.test_connection",
+   "why": "A test-connection helper typical of a settings panel's 'Test' button."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "_redact",
+   "why": "Masks api_key values for safe display in a UI listing."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Persists and migrates the unified ext_connectors categories (cad/cae/ms365/other) that the panel would edit."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12249,
+  "output_tokens": 731,
+  "model": "claude-opus-5"
+ }
+}

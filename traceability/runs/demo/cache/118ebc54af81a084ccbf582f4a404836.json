@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown source files (app.py excerpt, core/calendar_grid.py, core/ms365_auth.py) contain the dashboard token/cost statistics code; app.py only shows that a DashboardTab is imported and built lazily. The supporting document is explicitly flagged as not describing this repository, and although its lookups confirm that DashboardTab._refresh_chart, DashboardTab._on_gran_changed and MonitoringTab._refresh_usage_cards exist as names, ui/dashboard_tab.py itself was never shown, so the token-usage/cost stats and period filter cannot be confirmed (the doc even describes week/month/year granularity rather than today/week/month/all).",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_dashboard",
+   "why": "Shows only that a Dashboard page exists and is built lazily, with no visibility into token/cost statistics or period filtering."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "shift_period",
+   "why": "Provides week/month/year period math for the Schedule tab's calendar, unrelated to dashboard token usage or cost aggregation."
+  },
+  {
+   "file": "core/ms365_auth.py",
+   "symbol": "get_access_token",
+   "why": "Microsoft 365 OAuth code entirely unrelated to the dashboard analytics ticket."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8711,
+  "output_tokens": 886,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/java_runtime.py is a dedicated module implementing Java runtime discovery (JAVA_HOME → PATH → common JDK install roots, with macOS bundle handling), which is the Java-runtime support the ticket names. It is detection/enablement for a Java CLI dependency rather than a general Java code executor, and no calling integration is visible in the shown subset, so completeness of the story cannot be judged.",
+ "evidence": [
+  {
+   "file": "core/java_runtime.py",
+   "symbol": "find_java",
+   "why": "Implements locating a Java launcher via JAVA_HOME, PATH, and common JDK/JRE install directories, returning None when absent."
+  },
+  {
+   "file": "core/java_runtime.py",
+   "symbol": "_version_key",
+   "why": "Natural-sort key so the newest JDK major version is selected among side-by-side installs, showing a fleshed-out implementation."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "",
+   "why": "Sandbox/limits policy config unrelated to Java runtime detection; retrieved on keyword overlap only."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 3577,
+  "output_tokens": 598,
+  "model": "claude-opus-5"
+ }
+}

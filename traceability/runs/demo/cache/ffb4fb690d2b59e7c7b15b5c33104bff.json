@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket is a vague meta/process task about upstreaming fork-specific improvements (Co4E branch, model routing, Superpowers, MCP/platform gaps) rather than a concrete code change. The shown candidates — a sandbox policy YAML, a sample routing config, and a structure-graph builder — demonstrate that routing and Co4E surfaces exist, but nothing here speaks to whether an upstreaming effort was performed or is outstanding.",
+ "evidence": [
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Documents routing policy and per-surface modes including 'co4e', showing routing/Co4E features exist but says nothing about upstreaming them."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares sandbox backends and limits; unrelated to the ticket's upstreaming claim."
+  },
+  {
+   "file": "core/structure_graph.py",
+   "symbol": "StructureGraph",
+   "why": "Graph-RAG builder retrieved on keyword overlap only; irrelevant to the ticket."
+  }
+ ],
+ "status_conflict": false
+}

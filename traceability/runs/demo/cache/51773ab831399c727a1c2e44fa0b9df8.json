@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No code was retrieved for this ticket, so there is nothing to evaluate. The ticket is also a vague product-level goal about a requirement review flagship product, with no specific implementation claim to check against source.",
+ "evidence": [],
+ "status_conflict": false
+}

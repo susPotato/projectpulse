@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain an MCP tool manifest JSON schema, sample manifests, or a Cowork Tool Registry implementation. RULEBASE.md and security_sandbox.yaml only mention MCP in the context of blocking discovery and capping MCP call counts, and core/groups.py is unrelated org-unit storage. The candidate subset simply does not address the deliverable either way.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Mentions MCP only as call limits (max_mcp_calls) and a block_mcp_discovery policy flag, not a tool contract or registry."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy text referencing MCP calls/discovery as untrusted or blocked; contains no tool manifest schema."
+  },
+  {
+   "file": "core/groups.py",
+   "symbol": "Group",
+   "why": "Group/subadmin JSON storage, entirely unrelated to MCP tool contracts."
+  }
+ ],
+ "status_conflict": false
+}

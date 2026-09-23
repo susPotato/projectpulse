@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/admin_agents.py contains a dedicated 'help' task kind with a full in-app help system prompt, a stable HELP_AGENT_ID for the built-in assistant, and ensure_help_agent() which seeds it so the floating Help widget can resolve provider/model. The documentation lookups also confirm ui/help_agent_widget.py exists in this repository, matching the described floating help agent UI.",
+ "evidence": [
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "HELP_AGENT_ID",
+   "why": "Defines a stable id for the built-in in-app Help assistant tied to the floating icon widget."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "ensure_help_agent",
+   "why": "Seeds and resolves the built-in Help assistant so the floating Help widget can look it up and the admin can pick its model."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "TASK_KINDS",
+   "why": "Includes a 'help' kind whose base prompt restricts the agent to guiding users through this app's screens and features."
+  },
+  {
+   "file": "ui/help_agent_widget.py",
+   "symbol": "",
+   "why": "Documentation lookup confirms the floating help agent widget file exists in this repository."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11640,
+  "output_tokens": 535,
+  "model": "claude-opus-5"
+ }
+}

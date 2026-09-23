@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "core/chat_agent.py shows a Cowork save_file tool whose prompt states existing output-folder files are inlined as '[Workspace files]' input and that re-saving the same filename overwrites in place, which is adjacent to 'revision of earlier files' — but the actual implementation (_do_save_file, _unique_path, _cleanup_cowork_intermediates) is in the 420 omitted lines, and nothing shown demonstrates a multi-file save path. The other candidates (security_sandbox.yaml, models_config.sample.yaml) are unrelated to this ticket. The visible excerpt is too partial to confirm or refute the specific feature.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "COWORK_TOOL_PROMPT",
+   "why": "Instructs the agent that workspace/output files are inlined as input and that re-saving the same filename overwrites in place, and refers to 'final file(s)' plural."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "SAVE_FILE_SPEC",
+   "why": "Declares the single-file save_file(filename, content) tool; no multi-file variant is visible in the shown excerpt."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "_do_save_file",
+   "why": "Named in the module symbol list as the save implementation but its body is inside the omitted 420 lines, so revision/multi-file behaviour cannot be checked."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox policy config unrelated to Cowork file revision or multi-file saving."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "An \"Integrity Sandbox\" component clearly exists and is wired into the risk routing config, but its docstring and implementation show it is a Windows Low Integrity token + Job Object + WFP execution backend, not file integrity (hash/checksum) verification. No code performing file integrity checking appears in the shown candidates, so the specific claim in the summary is neither demonstrated nor positively refuted.",
+ "evidence": [
+  {
+   "file": "core/integrity_sandbox.py",
+   "symbol": "IntegritySandbox",
+   "why": "Implements a sandbox based on Low Integrity token, Job Object CPU/memory limits and WFP network blocking — process isolation, not file integrity verification."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "",
+   "why": "Declares an integrity_job_wfp backend with timeout/memory/CPU and network-blocking settings, confirming 'integrity' refers to the Windows integrity-level backend."
+  },
+  {
+   "file": "core/appcontainer_sandbox.py",
+   "symbol": "AppContainerSandbox",
+   "why": "Sibling sandbox backend that falls back to IntegritySandbox, showing the sandbox family is about execution isolation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4857,
+  "output_tokens": 1199,
+  "model": "claude-opus-5"
+ }
+}

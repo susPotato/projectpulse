@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrieved for this ticket, so there is nothing to evaluate. Absence of candidate code cannot establish whether configurable log rotation and cleanup exists.",
+ "evidence": [],
+ "status_conflict": false
+}

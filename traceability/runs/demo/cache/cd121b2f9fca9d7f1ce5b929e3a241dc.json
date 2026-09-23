@@ -1,0 +1,17 @@
+{
+ "summary_en": "Upstream the generic improvements about Cowork instead of keeping a separate fork: Co4E branch, model routing, Superpowers and the MCP/platform gaps that are actually needed.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Core Platform",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "Cowork",
+  "Co4E",
+  "model routing",
+  "Superpowers",
+  "MCP",
+  "platform",
+  "BA",
+  "FSG",
+  "Core Platform",
+  "fork"
+ ]
+}

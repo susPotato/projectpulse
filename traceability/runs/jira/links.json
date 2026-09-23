@@ -1,0 +1,609 @@
+{
+ "schema_version": 1,
+ "produced_by": "links",
+ "meta": {
+  "tickets_with_cited_code": 74,
+  "hub_files_excluded": 2,
+  "hub_reasons": {
+   "app.py": "implicated in 13 tickets (bar 7)",
+   "config.py": "implicated in 16 tickets (bar 7)"
+  },
+  "links": 58,
+  "depends_on": 0,
+  "shares_code": 58,
+  "high_confidence": 33,
+  "inputs": {
+   "corpus": "0e641b2bc359095d",
+   "tickets": "574bdb7dd0891803",
+   "verdicts": "29e2bb2cd0cb0cc1"
+  }
+ },
+ "payload": [
+  {
+   "src": "T0032",
+   "dst": "T0147",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "ui/spline_chart.py",
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0040",
+   "dst": "T0132",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/d3_graph.py",
+    "assets/graph_template.html"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0040",
+   "dst": "T0134",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/d3_graph.py",
+    "assets/graph_template.html"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0095",
+   "dst": "T0119",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/admin_agents.py",
+    "ui/agents_admin_tab.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0112",
+   "dst": "T0124",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/telemetry_shared.py",
+    "security/audit_logger.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0132",
+   "dst": "T0134",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/d3_graph.py",
+    "assets/graph_template.html"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0029",
+   "dst": "T0059",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/model_pricing.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0032",
+   "dst": "T0074",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/calendar_grid.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0045",
+   "dst": "T0048",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/chat_agent.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0045",
+   "dst": "T0149",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "ui/chat_panel.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0050",
+   "dst": "T0111",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "assets/RULEforCode.md"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0056",
+   "dst": "T0057",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/pptx_edit.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0056",
+   "dst": "T0058",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/pptx_edit.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0057",
+   "dst": "T0058",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/pptx_edit.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0057",
+   "dst": "T0140",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/link_fetch.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0068",
+   "dst": "T0081",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0068",
+   "dst": "T0084",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0068",
+   "dst": "T0149",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/worker.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0071",
+   "dst": "T0073",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0076",
+   "dst": "T0083",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/task_executors.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0079",
+   "dst": "T0086",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/co4e.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0081",
+   "dst": "T0084",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0083",
+   "dst": "T0087",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0091",
+   "dst": "T0092",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/agent_security.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0091",
+   "dst": "T0115",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/agent_security.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0091",
+   "dst": "T0149",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "ui/permission_dialog.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0092",
+   "dst": "T0115",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/agent_security.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0092",
+   "dst": "T0127",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/agent_security_alert.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0099",
+   "dst": "T0134",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/graph_server.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0101",
+   "dst": "T0102",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/ext_connectors.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0101",
+   "dst": "T0103",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/ext_connectors.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0102",
+   "dst": "T0103",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/ext_connectors.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0104",
+   "dst": "T0105",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/appcontainer_sandbox.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0032",
+   "dst": "T0035",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0032",
+   "dst": "T0036",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0035",
+   "dst": "T0036",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0035",
+   "dst": "T0147",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0036",
+   "dst": "T0147",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0050",
+   "dst": "T0104",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0050",
+   "dst": "T0106",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0050",
+   "dst": "T0139",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0086",
+   "dst": "T0094",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0086",
+   "dst": "T0095",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0086",
+   "dst": "T0097",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0086",
+   "dst": "T0119",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0086",
+   "dst": "T0121",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0094",
+   "dst": "T0095",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0094",
+   "dst": "T0097",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0094",
+   "dst": "T0119",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0094",
+   "dst": "T0121",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0095",
+   "dst": "T0097",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0095",
+   "dst": "T0121",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0097",
+   "dst": "T0119",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0097",
+   "dst": "T0121",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0104",
+   "dst": "T0106",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0104",
+   "dst": "T0139",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0106",
+   "dst": "T0139",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0119",
+   "dst": "T0121",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  }
+ ]
+}

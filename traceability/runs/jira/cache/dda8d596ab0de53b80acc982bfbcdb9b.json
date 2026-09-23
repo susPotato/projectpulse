@@ -1,0 +1,12 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No code was retrieved for this ticket, so there is nothing to evaluate. The ticket text is also purely administrative metadata with no verifiable implementation detail.",
+ "evidence": [],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 146,
+  "output_tokens": 97,
+  "model": "claude-opus-5"
+ }
+}

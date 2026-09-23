@@ -1,0 +1,33 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only shown code touching tool scope is core/ms365_tools.py, which defines connector ToolSpec lists and an MS365_WRITE_TOOLS set whose comment says the Code tab's permission gate treats those like write_file/run_command — partial evidence of read-vs-write classification for one connector family, not a general tool registry with read/write/exec scopes. The actual candidate registry (core/tools.py, core/code_agent.py) is referenced but never shown, and the two documentation excerpts are explicitly flagged as not describing this repository (domain/tools/tool_registry.py is confirmed absent). The remaining candidates (co4e_run_manager.py, tasks.py) concern run history and scheduling, not tool scoping.",
+ "evidence": [
+  {
+   "file": "core/ms365_tools.py",
+   "symbol": "MS365_WRITE_TOOLS",
+   "why": "Classifies a subset of MS365 tools as write/send operations that the permission gate must confirm, unlike the read-only list/read tools — partial scope classification, limited to MS365."
+  },
+  {
+   "file": "core/ms365_tools.py",
+   "symbol": "build_ms365_tools",
+   "why": "Builds ToolSpec lists per connector, a tool catalogue for one subsystem rather than a platform-wide registry."
+  },
+  {
+   "file": "core/tasks.py",
+   "symbol": "DEFAULT_TASK",
+   "why": "Task scheduling model with no tool registry or scope fields, so it does not bear on the ticket."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager",
+   "why": "Tracks flow run status/history and is unrelated to tool scope classification."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9863,
+  "output_tokens": 1085,
+  "model": "claude-opus-5"
+ }
+}

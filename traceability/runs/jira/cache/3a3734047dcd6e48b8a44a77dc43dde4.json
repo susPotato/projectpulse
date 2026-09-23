@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/agent_security_alert.py implements notify_admin, which emails the configured admin the blocked layer, reason and detail via the signed-in MS365 account, and core/agent_security.py's enforce_prompt/enforce_command invoke it together with audit_log.record at the moment of a block. That is a working alerting path for security events, consistent with a ticket marked Release.",
+ "evidence": [
+  {
+   "file": "core/agent_security_alert.py",
+   "symbol": "notify_admin",
+   "why": "Sends a best-effort admin email describing the security verdict layer, reason and detail, never raising."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "enforce_prompt",
+   "why": "On a blocked prompt it emits a UI notice, records an audit_log 'security_block' entry and calls notify_admin before raising SecurityBlocked."
+  },
+  {
+   "file": "config.py",
+   "symbol": "agent_security",
+   "why": "Config defaults include admin_email for violation alerts and per-layer validation toggles that drive the alerting path."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11064,
+  "output_tokens": 442,
+  "model": "claude-opus-5"
+ }
+}

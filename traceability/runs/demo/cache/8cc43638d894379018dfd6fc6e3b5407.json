@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the retrieved files are the LibreOffice document viewer; they cover link previewing, pptx editing, and routing config. The architecture doc lists `ui/libreoffice_view.py` as an embedded office-document viewer, but that file was not shown, so the implementation cannot be confirmed or refuted from the evidence here.",
+ "evidence": [
+  {
+   "file": "core/link_fetch.py",
+   "symbol": "fetch_link_preview",
+   "why": "Handles downloading and text-extracting office/PDF documents from URLs, unrelated to an embedded LibreOffice viewer UI."
+  },
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "pptx_to_text",
+   "why": "Edits .pptx files headlessly via python-pptx, explicitly without any Office window, so it does not implement the LibreOffice viewer."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Model routing sample config that only mentions an 'ai_edit' surface mode; it says nothing about document viewing."
+  }
+ ],
+ "status_conflict": false
+}

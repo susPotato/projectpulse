@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The only candidate file is a security rulebase document whose 'Batch' mention is a denied scripting language in a code-generation restriction list, unrelated to batch processing of multiple operations. No application code for batch processing is shown, so the ticket cannot be assessed either way.",
+ "evidence": [
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Mentions 'Batch' only as a denied language/format in the code-generation restriction list, which is an incidental keyword match rather than batch processing functionality."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 2021,
+  "output_tokens": 199,
+  "model": "claude-opus-5"
+ }
+}

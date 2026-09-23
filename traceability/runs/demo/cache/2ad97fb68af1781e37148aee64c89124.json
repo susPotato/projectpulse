@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrieved or readable, so there is nothing to evaluate against the ticket's claim about one-time, daily, weekly, monthly, and cron scheduling support. Absence of candidate files provides no signal either way.",
+ "evidence": [],
+ "status_conflict": false
+}

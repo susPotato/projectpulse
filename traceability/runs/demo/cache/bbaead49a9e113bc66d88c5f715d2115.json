@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain the Cowork tab UI where a per-tab model picker or skill-attachment control would live; the retrieved files are the sandbox policy YAML, the pricing table, and the chat loop. core/chat_agent.py only applies globally active skills via _apply_skills(messages, active_skills_text()), which is neither confirmation nor refutation of a per-tab picker/attachment UI.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Applies skills from a global active_skills_text() rather than any per-tab attached-skill selection, so it neither confirms nor denies the ticket's UI claim."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "turn_cost_usd",
+   "why": "Mentions models switching only for cost calculation; unrelated to a per-tab model picker UI."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox policy configuration with no bearing on the Cowork chat model picker or skill attachment."
+  }
+ ],
+ "status_conflict": false
+}

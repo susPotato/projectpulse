@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/task_executors.py imports and calls a `co4e` module and `co4e_runner.run_workflow(ctx, nodes, edges, ...)`, resolving saved workflows with nodes/edges via `_resolve_co4e_workflow` and describing it as \"the same wave-by-wave runner the Co4E tab uses\". That is direct integration evidence for an existing node-graph Co4E engine, although the engine module itself (co4e.py / co4e_runner.py) and its topological wave scheduling code are not shown here.",
+ "evidence": [
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Runs a saved Co4E node graph via co4e_runner.run_workflow with nodes and edges, described as the wave-by-wave runner used by the Co4E tab."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_resolve_co4e_workflow",
+   "why": "Loads a co4e.Workflow object by flow_id, showing a persisted node-graph workflow model exists in the repo."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7382,
+  "output_tokens": 516,
+  "model": "claude-opus-5"
+ }
+}

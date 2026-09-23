@@ -1,0 +1,13 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket concerns a batch processing feature for multiple operations under Platform Integrations, but the only candidate file shown is the security rulebase markdown, which is unrelated to batch processing. No code implementing or contradicting batch operations is visible.",
+ "evidence": [
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Only candidate shown; it is an agent security policy document with no relation to batch processing of operations."
+  }
+ ],
+ "status_conflict": false
+}

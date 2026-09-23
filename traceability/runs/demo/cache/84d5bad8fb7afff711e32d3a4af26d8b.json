@@ -1,0 +1,6 @@
+{
+ "capability": "Adds cron-expression scheduling for the Schedule Task feature (5-field parser/validator plus next-fire-time calculation), alongside two supporting modules: a Windows Job Object wrapper for reliable process-tree termination and a static registry of agent role names/labels used for audit-log and dashboard grouping.",
+ "user_facing": true,
+ "suggested_ticket": "Support cron expressions for scheduled tasks (parse, validate, compute next run)",
+ "confidence": "medium"
+}

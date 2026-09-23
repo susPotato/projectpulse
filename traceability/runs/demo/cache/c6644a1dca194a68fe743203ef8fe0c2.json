@@ -1,0 +1,18 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py's run() bootstrap already calls into a skills subsystem that treats skills as versioned, reusable bundled assets: prune_seeded_builtins() cleans stale copies and seed_library_skills(ctx.config.seeded_library_skills) seeds a bundled skill library into the user's editable store, surfaced in a Skill Manager, alongside seed_builtin_flows() for the built-in Co4E flow. The architecture excerpt confirms core/skills.py exists as the module defining reusable agent capabilities invocable by flows/orchestrator. The implementation file core/skills.py itself was not shown, so the depth of the asset model (and whether project-specific skills were authored) is not directly verifiable, but the reusable-asset plumbing is clearly present despite the 'To Do' status.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "run",
+   "why": "Bootstrap calls prune_seeded_builtins() and seed_library_skills(ctx.config.seeded_library_skills), showing a content-versioned bundled skill library seeded as reusable assets rather than ad-hoc prompts."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._open_settings",
+   "why": "Shows the shell wiring config/skill-related refresh paths, but the skill asset logic itself lives in core.skills which is not included in the candidate set."
+  }
+ ],
+ "status_conflict": true
+}

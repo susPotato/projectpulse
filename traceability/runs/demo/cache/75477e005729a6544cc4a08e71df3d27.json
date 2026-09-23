@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The candidate files show unrelated concerns: RULEBASE.md is a security policy document, core/context_budget.py compacts conversation history against a token limit, and core/doc_extract.py extracts text from attachments. None of them implements or refutes a shared abstraction for collecting agent context from RAG/Search/MCP, and the cited team guide is explicitly flagged as describing a different build.",
+ "evidence": [
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "Handles token-budget compaction of message history, not a unified RAG/Search/MCP context-gathering interface."
+  },
+  {
+   "file": "core/doc_extract.py",
+   "symbol": "extract_text",
+   "why": "Document text extraction for attachments; unrelated to standardizing agent context retrieval across sources."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "A security rulebase mentioning MCP only as a permission scope, with no context-collection implementation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8127,
+  "output_tokens": 427,
+  "model": "claude-opus-5"
+ }
+}

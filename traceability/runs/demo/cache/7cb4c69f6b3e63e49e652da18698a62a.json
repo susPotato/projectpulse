@@ -1,0 +1,13 @@
+{
+ "headline": "The Knowledge & RAG area covers codebase structure graphs, interactive graph viewing in a browser, and persistent codebase memory — three of nine tickets are backed by code, while the six remaining tickets (mostly around retrieval quality, knowledge packaging and shared agent context) could not be confirmed from the code that was reviewed.",
+ "what_is_there": "The code shows a working codebase structure graph that renders as an interactive, searchable diagram in the browser with an entity-type legend, plus a persistent codebase memory service with indexing, project listing, architecture overviews, call-path tracing and code snippet retrieval, wired into application settings. All three of these are marked 'Release it' in the tracker, which matches what the code shows.",
+ "what_is_unclear": "The analysis could not settle the six remaining tickets: knowledge-graph extraction from file content, semantic similarity search, a portable knowledge pack specification, standardising how agents collect context from RAG/Search/MCP, upgrading knowledge into a packaged form with sources and citations, and numeric measurement of semantic search quality including Japanese. The files reviewed were selected by keyword and covered unrelated concerns, and the one piece of documentation that described a knowledge search capability was flagged as belonging to a different build — so this is an absence of evidence, not evidence of absence.",
+ "suggested_action": "Ask the team to point to where semantic/similarity search and retrieval scoring actually live, so those six tickets can be re-checked against the right part of the codebase.",
+ "caveat": "One documentation source repeatedly surfaced describing project-knowledge search, but it was judged not to describe this repository and the functions it referenced were not found — worth confirming which build that document belongs to.",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 1884,
+  "output_tokens": 589,
+  "model": "claude-opus-5"
+ }
+}

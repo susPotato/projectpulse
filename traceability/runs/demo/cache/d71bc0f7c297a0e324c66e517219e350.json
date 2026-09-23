@@ -1,0 +1,6 @@
+{
+ "capability": "Scores and ranks available LLMs per task type by probing them, then picks the best-fit model under a selectable quality/cost/latency/balanced routing policy.",
+ "user_facing": true,
+ "suggested_ticket": "Policy-driven model routing: probe, score and select best-fit model per task type",
+ "confidence": "high"
+}

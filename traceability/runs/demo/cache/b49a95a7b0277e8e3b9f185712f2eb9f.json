@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/model_pricing.py implements exactly the described per-model price table (COLUMNS mirroring vendor sheet, entries persisted under model_pricing.entries, import/export template, auto_link from providers) plus currency handling via parse_price/convert/_rates with VND/JPY/USD display currencies and usd_rates_for/turn_cost_usd/sync_to_usage for cost computation. The 'budget alerts' sub-claim is not visible in the shown files (context_budget.py is about token-context compaction, not money budgets), so that piece is unconfirmed rather than contradicted. Status 'Release it' is consistent with the implemented code.",
+ "evidence": [
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "COLUMNS / list_entries / add_entry",
+   "why": "Defines the per-model pricing table schema and persistence under model_pricing.entries."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "convert / usd_rates_for",
+   "why": "Converts an entry's own currency to USD using USD/VND/JPY rates, matching the currency-conversion claim."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "sync_to_usage / turn_cost_usd",
+   "why": "Feeds per-model USD rates into the usage tracker so Monitoring cost totals derive from this price table."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "Despite the 'budget' name, this handles token context-window compaction and is unrelated to monetary budget alerts."
+  }
+ ],
+ "status_conflict": false
+}

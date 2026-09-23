@@ -1,0 +1,13 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only relevant candidate file is app.py, which shows a StructureGraphView instantiated and embedded as a sub-tab inside the Workspace screen; it reveals nothing about splitting the graph into a dedicated screen nor about attaching specification documents and source files to each node. The actual graph implementation (StructureGraphView module) is not in the candidate set, so neither the feature nor its absence can be confirmed. The other candidates (RULEBASE.md, RULEforCode.md) are security rulebases unrelated to the ticket.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "Shows StructureGraphView is constructed and embedded as a sub-tab inside the Workspace screen, but gives no detail about a separate graph screen or per-node document/source attachments."
+  }
+ ],
+ "status_conflict": false
+}

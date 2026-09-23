@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket concerns Co4E step configuration gaining attachment-folder and URL input fields, but none of the shown files expose the Co4E step data model (e.g. core/co4e.py Workflow/node data or the Co4E UI step editor). core/task_executors.py only references n.data.instructions and label for Co4E nodes, and core/tools.py shows a generic fetch_url agent tool unrelated to per-step source configuration, so neither confirms nor refutes the claim.",
+ "evidence": [
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Touches Co4E node data but only uses instructions/label, showing no attachment-folder or URL step fields."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "fetch_url",
+   "why": "A general agent tool for reading URLs, not a Co4E step-level URL source configuration."
+  }
+ ],
+ "status_conflict": false
+}

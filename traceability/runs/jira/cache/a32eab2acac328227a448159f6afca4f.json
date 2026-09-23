@@ -1,0 +1,33 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown code confirms a Co4E workflow graph exists (nodes/edges, co4e.get_workflow, co4e_runner.run_workflow used by the scheduler), but nothing in the candidate files exposes node types at all — no Step/Parallel/Join/IF/Switch/Start/End kinds, no branching or join semantics. The core/co4e.py and co4e_runner.py modules that would define them were not shown, and the documentation excerpts are flagged as not describing this repository.",
+ "evidence": [
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Shows a Co4E node graph (wf.nodes/wf.edges, node_status/node_output events) is run wave-by-wave, but references only label/instructions — no node type discrimination."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_resolve_co4e_workflow",
+   "why": "Confirms a core/co4e module with Workflow objects exists, though that module's node-type definitions are not in the shown context."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "Configuration defaults file; unrelated to Co4E node types beyond mentioning a co4e routing surface."
+  },
+  {
+   "file": "core/routing/store.py",
+   "symbol": "AssessmentStore",
+   "why": "Model-assessment persistence, retrieved only because of the 'load' keyword; irrelevant to this ticket."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12627,
+  "output_tokens": 725,
+  "model": "claude-opus-5"
+ }
+}

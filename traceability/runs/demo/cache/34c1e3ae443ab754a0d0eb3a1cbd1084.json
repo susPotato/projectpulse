@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only relevant evidence is app.py, which shows a StructureGraphView already exists and is embedded as a sub-tab inside the Workspace screen with rescan wiring from CoworkTab — but that is the existing graph, not the claimed new standalone screen integrating source plus full specification with per-node document/source attachments. The StructureGraphView implementation file is not in the candidate set, and the documentation excerpts shown are flagged as not describing this repository, so neither the presence nor the absence of the node-attachment feature can be settled here.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "Constructs StructureGraphView and embeds it as a Workspace sub-tab with cowork.output_changed -> structure.schedule_rescan, showing an existing graph view but not a separate new screen with per-node doc/source attachments."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._nav_defs",
+   "why": "Nav rows are Dashboard/Schedule/Workspace/Monitoring only — no dedicated top-level graph screen is registered in the page stack."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase content unrelated to the graph-screen ticket; retrieved by keyword noise."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10463,
+  "output_tokens": 611,
+  "model": "claude-opus-5"
+ }
+}

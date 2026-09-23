@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrieved for this ticket, so there is nothing to inspect regarding a PySide6 MainWindow, navigation, top bar, or system tray implementation. Absence of retrieved candidates says nothing about whether the framework exists in the repository.",
+ "evidence": [],
+ "status_conflict": false
+}

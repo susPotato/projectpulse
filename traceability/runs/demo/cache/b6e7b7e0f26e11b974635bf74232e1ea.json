@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only direct hint of Co4E run modes is the `plan_mode=False` argument passed to `co4e_runner.run_workflow` in task_executors, which suggests a plan mode exists but says nothing about Auto vs Manual step-by-step execution; co4e_runner itself is not shown. The routing config and per-workspace mode tests concern model-routing switch modes (off/auto/manual), a different feature from Co4E workflow run modes.",
+ "evidence": [
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Calls co4e_runner.run_workflow(..., plan_mode=False), implying a plan mode exists in the Co4E runner but not showing its implementation or any Auto/Manual step mode."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "The off/auto/manual modes here are model-routing switch modes, not Co4E workflow run modes."
+  },
+  {
+   "file": "tests/routing/test_per_workspace_modes.py",
+   "symbol": "test_per_workspace_routing_is_isolated",
+   "why": "Tests per-workspace model routing mode resolution, unrelated to Co4E run modes."
+  }
+ ],
+ "status_conflict": false
+}

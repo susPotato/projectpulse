@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/schedule_task_tab.py implements a Kanban board with status lanes built from STATUSES and a _KanbanColumn QListWidget whose dropEvent emits task_dropped, wired to ScheduleTaskTab._on_task_dropped to change task status. This directly matches the ticket's drag-and-drop task management UI, and the 'Release it' status is consistent with the code being present.",
+ "evidence": [
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "_KanbanColumn.dropEvent",
+   "why": "Accepts drops from sibling columns and emits task_dropped(task_id, new_status), implementing drag-and-drop status change."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "ScheduleTaskTab.__init__",
+   "why": "Builds one _KanbanColumn per status and connects col.task_dropped to self._on_task_dropped, forming the Kanban board."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "ScheduleTaskTab._on_task_dropped",
+   "why": "The documented drop handler is confirmed present in this repository."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 3276,
+  "output_tokens": 452,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "contradicted",
+ "confidence": "medium",
+ "reasoning": "The only candidate file, ui/task_editor_dialog.py, describes a form with a simple one-time schedule and explicitly states that Cron/Repeat scheduling was removed; no holiday, working-day or country fields appear. The documentation's own cited widgets (self.skip_holidays_chk, self.working_days_chk, self.holiday_country_edit) were checked and are not in this repository, so the released holiday-calendar capability has no implementation here.",
+ "evidence": [
+  {
+   "file": "ui/task_editor_dialog.py",
+   "symbol": "TaskEditorDialog",
+   "why": "Module docstring says the dialog covers only a simple one-time Schedule and that Cron/Repeat scheduling was removed, with no holiday or working-day options."
+  },
+  {
+   "file": "ui/task_editor_dialog.py",
+   "symbol": "TaskEditorDialog.__init__",
+   "why": "Builds the schedule/basics form fields but contains no skip-holidays, working-days-only, or holiday_country controls."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4394,
+  "output_tokens": 811,
+  "model": "claude-opus-5"
+ }
+}

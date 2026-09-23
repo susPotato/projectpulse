@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/co4e_run_manager.py carries first-class per-run mode state: RunHandle is constructed with `plan_mode` and `manual` flags, persists them in to_record/from_record, and the manager tracks node-level status and progress for step-wise execution. That is direct evidence of the three run modes (default auto, plan, manual step-by-step) being wired into the Co4E run machinery, though the read-only enforcement of plan mode is in the omitted portion of the file. Status 'Release it' is consistent with built code.",
+ "evidence": [
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "RunHandle.__init__",
+   "why": "Takes and stores plan_mode and manual flags as per-run state alongside status/progress."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "RunHandle.to_record",
+   "why": "Serializes plan_mode and manual into the persisted run history, showing the modes are a durable part of the run model."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager",
+   "why": "Single source of truth tracking concurrent runs with live status/progress, the machinery the run modes operate within."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8871,
+  "output_tokens": 536,
+  "model": "claude-opus-5"
+ }
+}

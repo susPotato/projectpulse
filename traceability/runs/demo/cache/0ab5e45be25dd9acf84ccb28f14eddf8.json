@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/chat_agent.py is explicitly documented as the Cowork chat loop where `run_cowork` exposes a `save_file` tool so the agent produces real files into an output folder, with helpers `_do_save_file`, `_safe_filename`, `_titled_filename`, `_unique_path`, and `_cleanup_cowork_intermediates` to keep only final deliverables at the output root. The COWORK_TOOL_PROMPT and SAVE_FILE_SPEC further describe format selection (.md/.xlsx/.docx/.pptx) and overwrite-in-place semantics. Status 'Release it' matches the presence of built code.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Module docstring states run_cowork exposes a save_file tool so the agent produces real files into an output folder that appear in the Output box."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "SAVE_FILE_SPEC",
+   "why": "Declares the save_file tool with filename/content parameters used to write deliverables."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "_do_save_file",
+   "why": "Dedicated helper implementing the actual file write for Cowork deliverables."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "_cleanup_cowork_intermediates",
+   "why": "Removes generator scripts/temp files so only the final deliverable remains in the output workspace folder."
+  }
+ ],
+ "status_conflict": false
+}

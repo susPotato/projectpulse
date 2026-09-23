@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "config.py contains a Sandbox Security Layer block with capacity caps (resource_limit_cpu_percent/memory_mb/disk_mb, sandbox_pw), and app.py imports ui/monitoring_tab.py, so the pieces plausibly exist — but no source for the Monitoring tab itself is shown, and the monitoring_visibility keys listed (security_events, mcp_history, action_logs, agent_status) do not include a Sandbox Admin tab. The documentation excerpts cited concern security policy layers and agent admin prompts, not a Monitoring Sandbox Admin tab with capacity management.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "agent_security",
+   "why": "Defines the Sandbox Security Layer config keys including resource_limit_cpu_percent, resource_limit_memory_mb, resource_limit_disk_mb and sandbox_pw, i.e. capacity-limit settings."
+  },
+  {
+   "file": "config.py",
+   "symbol": "",
+   "why": "monitoring_visibility enumerates Monitoring sub-tabs (security_events, mcp_history, action_logs, agent_status) with no Sandbox Admin tab listed."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow",
+   "why": "Imports and lazily builds MonitoringTab from ui/monitoring_tab.py, but that file's contents (and any Sandbox Admin sub-tab) are not shown."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11512,
+  "output_tokens": 710,
+  "model": "claude-opus-5"
+ }
+}

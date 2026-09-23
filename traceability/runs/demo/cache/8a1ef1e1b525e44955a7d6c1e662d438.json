@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown source files concern model pricing, currency conversion, or budget alerts — agent_security.py and agent_security_alert.py are security guardrails, and context_budget.py is about context-window token compaction, not monetary budgets. The only supporting signal is symbol lookups from documents explicitly flagged as not describing this repository (core/model_pricing.py, DashboardTab._refresh_budget/_apply_budget exist), which shows names exist but reveals nothing about per-model pricing tables, VND/USD/JPY conversion, or alert thresholds. No file contents are visible to settle the claim either way.",
+ "evidence": [
+  {
+   "file": "core/context_budget.py",
+   "symbol": "context_limit",
+   "why": "Despite the 'budget' name, this module governs token context windows and auto-compaction, not cost or currency budgets."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "SecurityVerdict",
+   "why": "Keyword-retrieved but entirely about AI security guardrails, unrelated to pricing or budget alerts."
+  },
+  {
+   "file": "core/agent_security_alert.py",
+   "symbol": "notify_admin",
+   "why": "The only 'alert' code shown emails admins on security blocks, not budget threshold breaches."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8943,
+  "output_tokens": 802,
+  "model": "claude-opus-5"
+ }
+}

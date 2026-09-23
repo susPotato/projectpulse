@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket gives no concrete feature description beyond a title referencing a \"Superpowers\" capability on the Cowork tab, and none of the candidate files mention such a feature. The retrieved files cover a sandbox policy config, locally-synced OneDrive/SharePoint tools, and a model-routing sample YAML — they match only on the incidental keywords \"cowork\" and \"Claude\" and say nothing about a Cowork-tab superpowers/skills capability.",
+ "evidence": [
+  {
+   "file": "core/ms365_local.py",
+   "symbol": "build_ms365_local_tools",
+   "why": "Implements local OneDrive/SharePoint filesystem tools, unrelated to a Cowork-tab superpowers feature."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox backend/risk-routing policy that only incidentally mentions cowork mode via block_code_generation_in_cowork_mode."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Reference routing config listing Claude model ids and a 'cowork' surface mode, which is keyword overlap rather than evidence of the ticket's feature."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4685,
+  "output_tokens": 487,
+  "model": "claude-opus-5"
+ }
+}

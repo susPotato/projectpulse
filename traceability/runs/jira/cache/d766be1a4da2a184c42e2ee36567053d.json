@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/doc_extract.py contains convert_to_pdf(), which explicitly converts office documents (including .pptx/.ppt) to PDF via headless LibreOffice (`soffice --headless --convert-to pdf`) precisely so they can be rendered rather than just text-extracted, with find_soffice() locating the install and _office_com_to_pdf() as a Windows COM fallback. _soffice_to_text() likewise returns \"no extractor available (install LibreOffice)\", matching the ticket's dependency note. The UI viewer widget itself is not in the shown files (and the refactor doc's office_document_renderer.py does not exist here), so the conversion backend is corroborated while the display layer is unconfirmed.",
+ "evidence": [
+  {
+   "file": "core/doc_extract.py",
+   "symbol": "convert_to_pdf",
+   "why": "Converts ppt/pptx/doc/docx/... to PDF via headless LibreOffice specifically so the document can be rendered in-app."
+  },
+  {
+   "file": "core/doc_extract.py",
+   "symbol": "_soffice_to_text",
+   "why": "Falls back to LibreOffice for text extraction and reports 'no extractor available (install LibreOffice)' when it is missing, matching the ticket's install requirement."
+  },
+  {
+   "file": "core/doc_extract.py",
+   "symbol": "_office_com_to_pdf",
+   "why": "Windows COM fallback converting PowerPoint/Word/Excel files to PDF when LibreOffice is absent, confirming the PDF-rendering pipeline for pptx."
+  },
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "pptx_to_text",
+   "why": "Shows the AI Edit side for pptx exists (editable marker document via python-pptx), separate from the LibreOffice view path."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10095,
+  "output_tokens": 795,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,27 @@
+{
+    "token_budget": 200000,
+    "tokens_used": 398,
+    "caps": {
+        "per_file_bytes": 16384,
+        "per_class_files": 40,
+        "per_file_units": 25
+    },
+    "with_prose": false,
+    "classes": {
+        "config": {
+            "files": [
+                {
+                    "path": "config/security_sandbox.yaml",
+                    "bytes": 1569,
+                    "truncated": false,
+                    "loaded": true,
+                    "units": []
+                }
+            ],
+            "omitted_by_class_cap": [],
+            "not_loaded_budget": []
+        }
+    },
+    "nodes": 1,
+    "edges": 0
+}

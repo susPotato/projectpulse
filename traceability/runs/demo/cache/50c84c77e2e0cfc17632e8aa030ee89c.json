@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No code was retrieved for this ticket, so there is nothing to evaluate against the claim of a requirement-review flagship product. Absence of candidates from a keyword retriever says nothing about whether the feature exists in the repository.",
+ "evidence": [],
+ "status_conflict": false
+}

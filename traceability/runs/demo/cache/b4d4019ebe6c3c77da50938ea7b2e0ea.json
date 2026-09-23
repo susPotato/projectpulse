@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the candidate files touch a Workspace folder picker for AI-edit target files: RULEBASE.md is a security policy document, pptx_edit.py is a pure-logic pptx text round-trip module with no file/folder dialog, and models_config.sample.yaml only documents routing config (its 'ai_edit' key is a model-routing surface, not a picker). The only related symbol lookup, _ai_pick_files in ui/schedule_task_tab.py, belongs to the Schedule Task AI Create dialog and that file is not shown here.",
+ "evidence": [
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "pptx_to_text",
+   "why": "Handles editing a pptx into marker-delimited text; contains no folder/file selection UI."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Mentions 'ai_edit' only as a per-surface model-routing mode, unrelated to a folder picker."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase text with no bearing on workspace file selection."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 5955,
+  "output_tokens": 515,
+  "model": "claude-opus-5"
+ }
+}

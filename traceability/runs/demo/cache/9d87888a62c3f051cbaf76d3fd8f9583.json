@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is an architecture assessment/documentation deliverable (classifying MCP, RAG, Agent/Skill, LLM routing as Reuse/Improve/Build), not a code change, so source files cannot directly corroborate it. The shown candidates — a sandbox policy YAML, a Jira read-only connector, and a local MS365 connector — are integration/security artifacts unrelated to producing an assessment document.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares sandbox backends and limits (max_mcp_calls, block_mcp_discovery) but says nothing about an assessment of MCP/RAG/routing reuse decisions."
+  },
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "search",
+   "why": "A read-only Jira integration point that exists, but it does not evidence the ticket's assessment deliverable."
+  },
+  {
+   "file": "core/ms365_local.py",
+   "symbol": "build_ms365_local_tools",
+   "why": "Another external integration point present in the codebase, unrelated to classifying components as Reuse/Improve/Build."
+  }
+ ],
+ "status_conflict": false
+}

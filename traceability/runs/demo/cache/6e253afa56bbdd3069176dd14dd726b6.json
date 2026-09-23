@@ -1,0 +1,18 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/schedule_task_tab.py implements a Kanban board for tasks with one _KanbanColumn per status, drag-and-drop enabled via setDragDropMode/setDefaultDropAction and a dropEvent that emits task_dropped(task_id, new_status) wired to _on_task_dropped. Additional task management features (add, AI create, edit on double-click, context menu, calendar view) are present, matching the ticket's 'Release it' status.",
+ "evidence": [
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "_KanbanColumn.dropEvent",
+   "why": "Implements cross-column drag-and-drop that converts a drop into a task status change."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "ScheduleTaskTab.__init__",
+   "why": "Builds one Kanban lane per STATUS with headers and connects drop, double-click edit, and context-menu handlers."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The verified symbol lookups confirm `ui/agents_admin_tab.py` and `core/admin_agents.py` actually exist in this repository, and app.py wires a Monitoring page (`MainWindow._build_monitoring`) that is registered as a nav parent with expandable sub-tabs, while config.py carries a `monitoring_visibility` block including an `agent_status` tab flag. The file bodies of the admin tab were not shown, so the implementation details are unconfirmed, but the existence of the named module plus the Monitoring container is consistent with a released Agents Admin tab.",
+ "evidence": [
+  {
+   "file": "ui/agents_admin_tab.py",
+   "symbol": "",
+   "why": "Documentation lookup confirms this file exists in the repository, matching the ticket's Agents Admin tab."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Monitoring is a real lazily-built nav page registered in _nav_parents, so it hosts sub-tabs."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "The monitoring_visibility config block enumerates Monitoring sub-tabs including agent_status, showing Monitoring is a multi-tab admin surface."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "",
+   "why": "Confirmed present; provides the admin agent configuration layer the tab would edit."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11501,
+  "output_tokens": 701,
+  "model": "claude-opus-5"
+ }
+}

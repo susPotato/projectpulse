@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/co4e_canvas.py is a QGraphicsView-based node editor whose docstring and code cover draggable node cards, selection, drag-to-connect ports, zoom (Ctrl+wheel), auto-fit, and palette drops via the application/x-co4e-step mime type, with dropEvent present. The palette side (ui/co4e_tab.py::startDrag) also exists per the documentation lookups, so drag-and-drop from the sidebar is wired. Status 'Release' matches built code, so there is no status conflict.",
+ "evidence": [
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "Co4ECanvas",
+   "why": "Module docstring and class describe a node-graph editor with drag-to-move, click-select, drag-to-connect, zoom (Ctrl+wheel/buttons), auto-fit and palette drops."
+  },
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "_NodeItem",
+   "why": "Node cards set ItemIsMovable/ItemIsSelectable and implement mousePress/Move/Release for dragging and port-based edge creation."
+  },
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "dropEvent",
+   "why": "Confirmed present in the repository, implementing drops from the sidebar palette onto the canvas."
+  },
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "startDrag",
+   "why": "Palette list implements startDrag, the drag source feeding the canvas drop handler."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11495,
+  "output_tokens": 567,
+  "model": "claude-opus-5"
+ }
+}

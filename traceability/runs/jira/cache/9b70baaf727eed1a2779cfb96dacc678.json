@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The symbol lookup confirms core/appcontainer_sandbox.py exists in this repository, and config/security_sandbox.yaml defines an enabled 'appcontainer' backend with combine_with_job_object: true plus Windows version gating and memory/CPU/timeout limits, which matches the ticket's AppContainer + job object containment claim. The implementation file's contents were not shown, so this is plausible-implementation evidence rather than a reading of the containment logic itself. Status 'Release' is consistent with code being present.",
+ "evidence": [
+  {
+   "file": "core/appcontainer_sandbox.py",
+   "symbol": "core/appcontainer_sandbox.py",
+   "why": "Confirmed by the documentation symbol lookup as existing in this repository, matching the ticket's AppContainer sandbox subject."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "sandbox.backends.appcontainer",
+   "why": "Declares the appcontainer backend as the enabled default with combine_with_job_object: true and Windows 10 1809 requirement, i.e. AppContainer plus job object containment."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "risk_routing",
+   "why": "Routes high-risk actions to the appcontainer backend, showing it is wired into the sandbox policy rather than being a stub setting."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 2368,
+  "output_tokens": 651,
+  "model": "claude-opus-5"
+ }
+}

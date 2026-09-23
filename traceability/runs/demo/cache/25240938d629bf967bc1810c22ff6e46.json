@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/image_gen.py implements text-to-image generation against an OpenAI-compatible /images/generations endpoint, including DALL-E/model detection markers, model suggestion for the AI-edit picker, and saving b64/url results to disk. This directly matches the ticket's claim of model-based image generation for AI Edit, consistent with its 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/image_gen.py",
+   "symbol": "generate_image",
+   "why": "Posts a prompt to the provider's /images/generations endpoint and writes the returned PNG to disk, returning (ok, path_or_reason)."
+  },
+  {
+   "file": "core/image_gen.py",
+   "symbol": "looks_like_image_model",
+   "why": "Detects DALL-E/dalle/imagen/flux and other image-generation model names."
+  },
+  {
+   "file": "core/image_gen.py",
+   "symbol": "suggest_image_model",
+   "why": "Picks an image-capable model from a provider's list for the AI-edit model picker."
+  },
+  {
+   "file": "core/image_gen.py",
+   "symbol": "is_configured",
+   "why": "Gates the feature on a configured image endpoint, showing UI integration intent."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 6585,
+  "output_tokens": 443,
+  "model": "claude-opus-5"
+ }
+}

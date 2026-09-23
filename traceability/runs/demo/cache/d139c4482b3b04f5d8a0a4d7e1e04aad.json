@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files cover Microsoft Graph REST wrappers (ms365_graph.py), MSAL device-code auth (ms365_auth.py), and an unrelated localhost D3 graph server (graph_server.py). None of them implement or reference an MCP server or OneDrive/SharePoint local sync; the retrieved subset simply does not settle whether such a built-in MCP server exists elsewhere in the repo.",
+ "evidence": [
+  {
+   "file": "core/ms365_graph.py",
+   "symbol": "_request",
+   "why": "Provides a plain Graph REST wrapper for Outlook/Teams calls, not an MCP server or sync engine."
+  },
+  {
+   "file": "core/ms365_auth.py",
+   "symbol": "get_access_token",
+   "why": "Handles MSAL device-code sign-in and token caching only, with no sync or MCP logic."
+  },
+  {
+   "file": "core/graph_server.py",
+   "symbol": "GraphServer",
+   "why": "Despite the 'server' keyword match, this serves the D3 RAG visualization over localhost and is unrelated to MCP or OneDrive sync."
+  }
+ ],
+ "status_conflict": false
+}

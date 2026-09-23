@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrieved, and the ticket itself contains no concrete technical claim beyond a generic 'Update UI/UX' label with personnel metadata. There is nothing to compare against the codebase.",
+ "evidence": [],
+ "status_conflict": false
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py instantiates and opens a SettingsDialog from the top bar (_open_settings) and re-applies theme, language and provider after it is accepted, and the top bar itself carries provider/language/theme controls backed by AppConfig persistence. The dialog's own source (with model selection and attachment limits) is not in the shown subset, so those specific sub-features are unconfirmed, but the settings feature clearly exists.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._open_settings",
+   "why": "Constructs SettingsDialog(self.ctx, self) and on accept re-applies theme, language and provider selections."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_topbar",
+   "why": "Builds provider combo from PROVIDER_LABELS, language combo from LANGUAGES, a theme button, and the Settings button wired to _open_settings."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._set_theme",
+   "why": "Persists the theme choice to ctx.config and applies it, showing theme config is implemented."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._on_provider_changed",
+   "why": "Saves the active provider and refreshes agent/model lists, linking provider config to model selection."
+  }
+ ],
+ "status_conflict": false
+}

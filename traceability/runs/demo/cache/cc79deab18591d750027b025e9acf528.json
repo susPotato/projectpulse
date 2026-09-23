@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ext_connectors.py is explicitly built around CAD/CAE connectors (NX, CATIA, ABAQUS, ANSYS) exposed either as MCP-stdio servers or generic REST-API tools, with build_ext_connector_tools wiring them into the shared tool pipeline. config.py migrates and seeds ext_connectors buckets for 'cad'/'cae', and ui/connectors_panel.py renders those categories (\"CAD (NX / CATIA / SolidWorks / AutoCAD)\") with add/edit/enable controls. The code does not implement vendor-specific native automation, which is consistent with the connector-integration scope being partially delivered.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "build_ext_connector_tools",
+   "why": "Builds tools/executor for enabled CAD/CAE/MS365/Other connectors via MCP-stdio subprocesses or REST API."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Generic HTTP-request tool scoped to a connector base_url, the documented mechanism for NX/CATIA/ANSYS REST endpoints."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Ensures ext_connectors categories 'cad', 'cae', 'ms365', 'other' exist in persisted config."
+  },
+  {
+   "file": "ui/connectors_panel.py",
+   "symbol": "ConnectorsPanel",
+   "why": "Management UI listing the CAD category labelled 'CAD (NX / CATIA / SolidWorks / AutoCAD)' with add/edit/delete/enable actions."
+  }
+ ],
+ "status_conflict": false
+}

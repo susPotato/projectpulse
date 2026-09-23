@@ -1,0 +1,14 @@
+{
+ "summary_en": "Standardize Agent/Skill into reusable assets instead of individual prompts; create skills serving real projects.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Agent Platform",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "Agent",
+  "Skill",
+  "prompt",
+  "BA",
+  "FSG",
+  "Agent Platform",
+  "reusable assets"
+ ]
+}

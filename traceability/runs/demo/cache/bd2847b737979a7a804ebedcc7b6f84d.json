@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "config.py defines a `monitoring_visibility` block whose keys explicitly include `agent_status` alongside security_events, mcp_history and action_logs, and the comment describes them as \"Monitoring tabs\" a Sub-admin may see — direct evidence an Agent Status page exists within Monitoring. app.py contains a Monitoring nav row and `MainWindow._build_monitoring` that builds the Monitoring container page with expandable sub-views. The Agent Status tab widget itself is not in the shown subset, so the implementation detail is inferred rather than read.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "monitoring_visibility",
+   "why": "Default config lists `agent_status: True` as one of the Monitoring tabs subject to Sub-admin visibility control."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Monitoring is a lazily-built top-level nav page treated as a container whose sub-tabs become nav children."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "`_nav_defs` includes an `app.tab.monitoring` row and `_nav_parents` marks Monitoring as a multi-sub-view container."
+  }
+ ],
+ "status_conflict": false
+}

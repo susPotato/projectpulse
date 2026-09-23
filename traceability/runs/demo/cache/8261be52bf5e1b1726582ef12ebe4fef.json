@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The candidate files are a security rulebase markdown and a sandbox policy YAML; neither touches task input/output modes (empty/manual/file/previous_task_output) or artifact storage. No task-management code was shown, so the claim can be neither confirmed nor refuted.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares sandbox backends, risk routing and limits — unrelated to task input/output modes or artifacts."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Agent security policy prose with no reference to task input modes or artifact storage."
+  }
+ ],
+ "status_conflict": false
+}

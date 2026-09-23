@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files cover adjacent pieces only: Excel template/import/export for Accounts (which merely mentions a task_excel.py that is not shown), pure calendar-grid math for a Schedule Task calendar view, and holiday lookup. Nothing here shows WBS task creation/execution, AI-generated WBS, Kanban or Graph views, or task dependencies, and the cited controls.json document is flagged as not describing this repository. The subset is insufficient either to confirm or refute the ticket's feature set.",
+ "evidence": [
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "group_tasks_by_date",
+   "why": "Provides month/week grid and date-grouping math for a Schedule Task calendar view, which touches only the calendar part of the ticket and shows no dependency handling."
+  },
+  {
+   "file": "core/account_excel.py",
+   "symbol": "export_template",
+   "why": "Excel template/import/export exists but for Accounts, referencing a task_excel.py module that is not included in the shown candidates."
+  },
+  {
+   "file": "core/holiday_calendar.py",
+   "symbol": "is_holiday",
+   "why": "Holiday lookup supports scheduling features but says nothing about WBS, Kanban, Graph views, or AI WBS generation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 5439,
+  "output_tokens": 718,
+  "model": "claude-opus-5"
+ }
+}

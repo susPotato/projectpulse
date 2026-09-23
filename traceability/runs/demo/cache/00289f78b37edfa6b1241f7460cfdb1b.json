@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrievable for this ticket, so there is nothing to compare against the claim of a holiday-calendar scheduling feature. Neither the existence nor absence of holiday/working-day logic can be established from an empty candidate set.",
+ "evidence": [],
+ "status_conflict": false
+}

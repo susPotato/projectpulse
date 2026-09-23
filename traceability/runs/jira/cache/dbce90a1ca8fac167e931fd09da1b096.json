@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ext_connectors.py is explicitly the unified Connectors (MCP) module with CAD/CAE/MS365/Other categories, documented for NX/CATIA/ABAQUS/ANSYS, offering mcp_stdio and rest_api modes via RestApiConnector and build_ext_connector_tools. config.py's _migrate_connectors seeds ext_connectors buckets for 'cad' and 'cae', confirming configuration support exists. The capability is implemented in the repository despite the ticket being marked To Do.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "build_ext_connector_tools",
+   "why": "Builds tools/executor for every enabled connector across CAD/CAE/MS365/Other categories, reusing McpServerConnection or REST mode."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Implements the generic scoped HTTP-request tool for vendor CAD/CAE REST APIs named in the module docstring (NX, CATIA, ANSYS)."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Creates and migrates ext_connectors categories including 'cad' and 'cae', showing config-level support for CAD/CAE connectors."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 13723,
+  "output_tokens": 599,
+  "model": "claude-opus-5"
+ }
+}

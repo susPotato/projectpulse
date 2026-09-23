@@ -1,0 +1,23 @@
+{
+ "verdict": "contradicted",
+ "confidence": "medium",
+ "reasoning": "The stdio half of the ticket is clearly implemented, but the shown MCP client supports only stdio: `McpServerConnection.__init__` accepts just command/args/env (no URL/endpoint), and `_connect` unconditionally builds `StdioServerParameters` and `stdio_client` with no transport branch. The module docstring itself states the connection is made 'over stdio', so the HTTP transport claimed in the ticket is positively absent from the implementation rather than merely unretrieved.",
+ "evidence": [
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "McpServerConnection._connect",
+   "why": "Only builds StdioServerParameters/stdio_client with no HTTP or SSE transport branch."
+  },
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "McpServerConnection.__init__",
+   "why": "Constructor takes name/command/args/env only — no URL or endpoint parameter that an HTTP transport would require."
+  },
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "build_mcp_tools",
+   "why": "Merges connected stdio server tools into the extra_tools/extra_executor contract, confirming the stdio client itself is built."
+  }
+ ],
+ "status_conflict": false
+}

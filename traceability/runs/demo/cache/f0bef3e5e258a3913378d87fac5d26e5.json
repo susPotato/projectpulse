@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "low",
+ "reasoning": "Neither candidate file relates to an AppContext, MCP connection caching, or a provider factory; RULEBASE.md is a security policy document and telemetry_shared.py only globs shared telemetry JSONL files. Nothing here confirms or refutes the existence of a thread-safe shared application context.",
+ "evidence": [
+  {
+   "file": "core/telemetry_shared.py",
+   "symbol": "load_shared_usage_events",
+   "why": "Only performs file-based telemetry aggregation, with no state container, locking, or provider/MCP logic."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "A security policy document unrelated to application state management or provider factories."
+  }
+ ],
+ "status_conflict": false
+}

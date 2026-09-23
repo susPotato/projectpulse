@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files contain a background task scheduler with desktop/tray notification on task completion (app.py: TaskScheduler, _on_scheduled_task_done, _notify_task), but nothing about Microsoft Teams channel notification settings or a configurable notification check schedule. agent_security.py only mentions admin email alerts and OneDrive rule fetches, not Teams chat notifications, and the architecture excerpts shown are flagged as not describing this repository. Nothing in the candidate subset settles whether Teams group-channel notification settings exist.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "Wires TaskScheduler and desktop notifications for finished scheduled tasks, but with no Teams channel or notification-schedule settings."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "combined_rules_text",
+   "why": "Only Microsoft 365 integration shown is OneDrive/SharePoint rule fetching and admin email alerts, not Teams chat notifications."
+  },
+  {
+   "file": "README.md",
+   "symbol": "",
+   "why": "Generic GitLab template README, unrelated to notification integration."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12592,
+  "output_tokens": 526,
+  "model": "claude-opus-5"
+ }
+}

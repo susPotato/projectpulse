@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The candidate files cover D3 graph rendering (core/d3_graph.py, assets/graph_template.html) and a security rulebase — none implement embedding or semantic similarity search over code. The team guide's supporting symbols (_score_chunk, top_k) are confirmed absent from the repository, so nothing shown builds the capability, but the retrieved subset cannot positively prove it does not exist elsewhere; the Cancelled status is not challenged by anything here.",
+ "evidence": [
+  {
+   "file": "core/d3_graph.py",
+   "symbol": "build_html",
+   "why": "Only renders StructureGraph nodes/edges into an HTML template; contains no similarity or embedding logic."
+  },
+  {
+   "file": "assets/graph_template.html",
+   "symbol": "",
+   "why": "Front-end graph visualisation with a plain node-name text search box, not semantic similarity search."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy text, unrelated to graph similarity."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 5733,
+  "output_tokens": 536,
+  "model": "claude-opus-5"
+ }
+}

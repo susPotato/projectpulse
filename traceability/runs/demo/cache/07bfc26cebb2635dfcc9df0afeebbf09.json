@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files address a shared context-collection layer for agents: context_budget.py only compacts conversation history against a token limit, jira_tool.py is a standalone read-only Jira connector, and RULEBASE.md is a security policy document. There is no visible retrieval/RAG/MCP context-assembly abstraction to confirm or refute the ticket, and the absence within this keyword-selected subset proves nothing.",
+ "evidence": [
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "Handles token-budget compaction of message history, not gathering context from RAG/Search/MCP sources."
+  },
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "search",
+   "why": "A single-purpose Jira connector returning text, with no shared context-provider interface visible."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy prose mentioning MCP permissions, but no implementation of context standardization."
+  }
+ ],
+ "status_conflict": false
+}

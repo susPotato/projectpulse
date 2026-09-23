@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/routing_toggle.py contains a fully implemented RoutingToggle widget exposing Off/Auto/Manual routing modes with persistence via AppContext.project_routing_mode/set_project_routing_mode, plus i18n labels and a mode_changed signal. The ticket is marked Cancelled, yet the UI routing toggle clearly exists in the codebase.",
+ "evidence": [
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "RoutingToggle",
+   "why": "Implements the 'Routing: [Off/Auto/Manual]' combo control bound to a chat surface with injectable get/set mode storage."
+  },
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "RoutingToggle._on_changed",
+   "why": "Persists the newly chosen routing mode and emits mode_changed, showing the toggle is wired to real state."
+  },
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "AutoRunToggle",
+   "why": "Companion toggle in the same module confirming the routing composer controls were built."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 2527,
+  "output_tokens": 449,
+  "model": "claude-opus-5"
+ }
+}

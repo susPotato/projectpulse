@@ -1,0 +1,14 @@
+{
+ "summary_en": "Standardize the way Agent collects context from RAG/Search/MCP instead of each Agent writing its own logic.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Knowledge & RAG",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "Agent",
+  "RAG",
+  "Search",
+  "MCP",
+  "BA",
+  "FSG",
+  "Knowledge & RAG"
+ ]
+}

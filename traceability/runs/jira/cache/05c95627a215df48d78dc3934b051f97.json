@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The UI files that would hold a per-tab model picker and skill attachment (ui/chat_panel.py, ui/composer.py) are named by the docs as existing but are not shown here. The only related code visible is core/chat_agent.py applying globally active skills via _apply_skills(active_skills_text()), which is not a per-tab picker or attachment mechanism; the other candidates (security_sandbox.yaml, model_pricing.py) are unrelated to the ticket.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Applies globally active skills text into the Cowork message stream, which is adjacent to but not evidence of a per-tab skill attachment or model picker."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "usd_rates_for",
+   "why": "Handles per-model pricing lookup, unrelated to a chat-tab model picker UI."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "",
+   "why": "Sandbox/risk-routing configuration, unrelated to the chat model picker or skill attachment."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10445,
+  "output_tokens": 548,
+  "model": "claude-opus-5"
+ }
+}

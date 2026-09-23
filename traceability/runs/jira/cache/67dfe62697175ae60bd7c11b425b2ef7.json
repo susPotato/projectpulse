@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain a skill picker dialog or any UI for attaching skills to tasks/chat; config.py only references `seeded_library_skills`, which implies a Skill Manager exists somewhere but says nothing about a picker dialog. The documentation excerpts are flagged as not describing this repository and concern task repository/config refactors, not skills.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "seeded_library_skills",
+   "why": "Only skill-related code visible — tracks bundled library skills seeded into a Skill Manager, but shows no picker dialog for attaching skills to tasks/chat."
+  },
+  {
+   "file": "__init__.py",
+   "symbol": "",
+   "why": "App-level docstring lists sidebar pages (Dashboard, Schedule Task, Workspace, Monitoring) with no mention of a skill dialog, so it neither confirms nor refutes the feature."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4934,
+  "output_tokens": 392,
+  "model": "claude-opus-5"
+ }
+}

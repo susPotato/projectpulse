@@ -1,0 +1,12 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrieved for this ticket, so there is nothing to evaluate. The claim about an in-app console output display with a hide option can be neither supported nor refuted from an empty candidate set.",
+ "evidence": [],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 128,
+  "output_tokens": 116,
+  "model": "claude-opus-5"
+ }
+}

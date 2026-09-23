@@ -1,0 +1,33 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "No source for ui/dashboard_tab.py is shown; the only confirmed symbol lookups are ui/dashboard_tab.py::_refresh_chart (a chart, not stat cards) and ui/monitoring_tab.py::_refresh_usage_cards, which the documentation ties to the Monitoring Overview page rather than the Dashboard. core/model_pricing.py shows a cost engine whose rates feed \"Overview cards AND the Dashboard chart\", which is consistent with the ticket but does not show any total/input/output/cache card widgets on the Dashboard. The candidate files (app.py wiring, a sandbox YAML) do not settle whether these specific cards exist.",
+ "evidence": [
+  {
+   "file": "ui/monitoring_tab.py",
+   "symbol": "_refresh_usage_cards",
+   "why": "Symbol lookup confirms usage cards (Total/Input/Output/Cache) exist, but on the Monitoring tab rather than the Dashboard named in the ticket."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "_refresh_chart",
+   "why": "The only confirmed Dashboard-side symbol relates to the spline chart, not stat cards."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "sync_to_usage",
+   "why": "Pushes per-model USD rates into the usage tracker so cost totals feed Overview cards and the Dashboard chart, showing a cost engine but not the card UI."
+  },
+  {
+   "file": "app.py",
+   "symbol": "_build_dashboard",
+   "why": "Only constructs DashboardTab and wires status messages; reveals nothing about its internal stat cards."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8246,
+  "output_tokens": 1135,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the candidate files touch Git operations: they cover a security rulebase, per-workspace routing mode tests, and the Co4E node-graph tab. The retrieval matched on the word \"workspace\" only, so there is nothing that either confirms or refutes a Git integration, and the ticket is Cancelled with no expectation of code.",
+ "evidence": [
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab.set_project",
+   "why": "Workspace binding here is about flow output folders, not Git operations."
+  },
+  {
+   "file": "tests/routing/test_per_workspace_modes.py",
+   "symbol": "test_per_workspace_routing_is_isolated",
+   "why": "Per-workspace tests concern routing/auto-run modes, unrelated to Git."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase document with no bearing on Git integration."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8364,
+  "output_tokens": 366,
+  "model": "claude-opus-5"
+ }
+}

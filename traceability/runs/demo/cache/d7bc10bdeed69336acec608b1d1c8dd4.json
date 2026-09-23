@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the candidate files contain any PASS/WARN/FAIL evaluation logic or a CASAN H1\"H7 control mapping; they only show a static sandbox policy YAML, a routing config sample, and a prose security rulebase. The rulebase and security_sandbox.yaml describe the Cowork controls that would be mapped, but no code performing the scoring/evidence assessment is visible, so the ticket's 'To Do' status is neither confirmed nor refuted.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares sandbox backends, risk_routing and policy flags \" the Cowork controls a mapping would draw from \" but contains no PASS/WARN/FAIL grading or CASAN references."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Prose security/governance rulebase for Cowork Business Assistant mode with no scoring model or CASAN H1\"H7 control identifiers."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Model routing/assessment sample config unrelated to quality & safety PASS/WARN/FAIL evaluation."
+  }
+ ],
+ "status_conflict": false
+}

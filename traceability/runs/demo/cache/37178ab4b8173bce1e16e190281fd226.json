@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only candidate file with any relevance is core/chat_agent.py, whose run_cowork applies enabled skills via _apply_skills(messages, active_skills_text()) — that touches skill usage in the Cowork loop but says nothing about a per-tab agent model picker or a UI skill-attachment control. The UI files that would settle it (ui/composer.py, ui/chat_panel.py) exist in the repository per the doc lookups but their contents were not shown, and the other candidates (config/security_sandbox.yaml, core/model_pricing.py) are unrelated to picking a model per chat tab.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Applies active skills into the Cowork message stream, which is adjacent to 'skill attachment' but is the backend loop, not a per-tab picker UI."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "turn_cost_usd",
+   "why": "Mentions models switching for cost purposes but concerns pricing tables, not a per-tab agent model selector."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox/risk-routing configuration unrelated to the chat model picker or skill attachment."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10467,
+  "output_tokens": 633,
+  "model": "claude-opus-5"
+ }
+}

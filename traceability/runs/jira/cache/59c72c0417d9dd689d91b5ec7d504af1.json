@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ext_connectors.py already implements user-configured external connectors across CAD/CAE/MS365/Other categories, supporting both mcp_stdio (reusing core/mcp_client.py's McpServerConnection) and rest_api modes with presets for NX, CATIA, ABAQUS, ANSYS, etc. config.py additionally contains a _migrate_connectors routine that folds legacy top-level mcp_servers into ext_connectors['other'] as mcp_stdio entries, and a ui/connectors_panel.py exists for the Settings UI. The work described by the ticket is therefore present despite the 'To Do' status.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "CATEGORIES / PRESETS",
+   "why": "Defines cad/cae/ms365/other connector categories with vendor presets exactly as the ticket describes."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Implements the rest_api connector mode exposing a generic scoped HTTP tool per connector."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "new_connector",
+   "why": "Creates user-configurable connector entries with mode mcp_stdio, command, args, env fields."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Migrates legacy mcp_servers config into ext_connectors['other'] as mcp_stdio connectors, showing the unified connectors model is live in config."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 9870,
+  "output_tokens": 641,
+  "model": "claude-opus-5"
+ }
+}

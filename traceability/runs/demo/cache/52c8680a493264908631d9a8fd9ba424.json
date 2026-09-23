@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/history.py implements the full session-management backend the sidebar needs: per-conversation JSON persistence, listing with pinned-first ordering, title/content search explicitly described as coming from \"the sidebar's search box\", plus rename, delete and pin operations. The architecture excerpt also names a \"History sidebar\" refreshed by MainWindow._open_settings(). The sidebar widget file itself is not in the candidate set, so the UI layer is inferred rather than directly seen.",
+ "evidence": [
+  {
+   "file": "core/history.py",
+   "symbol": "list_conversations",
+   "why": "Lists saved conversations pinned-first/most-recent with a query filter documented as coming from the sidebar's search box."
+  },
+  {
+   "file": "core/history.py",
+   "symbol": "rename_conversation",
+   "why": "Provides per-session rename, one of the session-management actions."
+  },
+  {
+   "file": "core/history.py",
+   "symbol": "set_pinned",
+   "why": "Supports pinning a conversation so the sidebar can keep it on top."
+  },
+  {
+   "file": "core/history.py",
+   "symbol": "delete_conversation",
+   "why": "Provides session deletion."
+  },
+  {
+   "file": "core/history.py",
+   "symbol": "save_conversation",
+   "why": "Persists each session as <kind>__<session_id>.json with title, project_id and messages for sidebar grouping."
+  }
+ ],
+ "status_conflict": false
+}

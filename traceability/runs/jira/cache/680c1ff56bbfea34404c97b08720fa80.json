@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/mcp_client.py contains a working MCP client: McpServerConnection spawns an external MCP server subprocess over stdio (StdioServerParameters/stdio_client), completes the handshake on a dedicated asyncio loop, and exposes tools via list_tool_specs/call_tool and build_mcp_tools. Only the stdio transport is visible — nothing in the shown code implements an HTTP/SSE transport — which is consistent with the ticket's 'In Progress' status, so there is no status conflict. The routing/clients.py and routing/service.py candidates are about model-routing probes and are unrelated to MCP transport.",
+ "evidence": [
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "McpServerConnection._connect",
+   "why": "Uses mcp.client.stdio.stdio_client and StdioServerParameters to establish a stdio transport connection and initialize the session."
+  },
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "McpServerConnection.call_tool",
+   "why": "Dispatches MCP tool calls across threads and returns the extra_executor-shaped result, showing the connection is functional beyond handshake."
+  },
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "build_mcp_tools",
+   "why": "Merges tools from multiple MCP server connections into a single extra_tools/extra_executor pair, but shows no HTTP transport construction."
+  },
+  {
+   "file": "core/routing/clients.py",
+   "symbol": "AppProbeClient",
+   "why": "Unrelated to MCP — it is a provider-completion wrapper for model assessment probes."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7839,
+  "output_tokens": 984,
+  "model": "claude-opus-5"
+ }
+}

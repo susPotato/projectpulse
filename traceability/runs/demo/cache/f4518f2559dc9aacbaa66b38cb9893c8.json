@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/agent_manager_tab.py implements a dedicated Agent Manager tab with a list, editor form, and New/Save/Delete actions wired to core.custom_agents (save_agent, delete_agent, list_agents), which is exactly the CRUD behaviour described. Status 'Release it' matches the implemented code; the other candidate files (run manager, sandbox manager) are unrelated to this ticket.",
+ "evidence": [
+  {
+   "file": "ui/agent_manager_tab.py",
+   "symbol": "AgentManagerTab",
+   "why": "Docstring and constructor define a full tab for create/edit/delete of reusable custom Agent presets."
+  },
+  {
+   "file": "ui/agent_manager_tab.py",
+   "symbol": "AgentManagerTab._delete",
+   "why": "Delete action exists alongside _new_agent and _save, covering the CRUD operations."
+  },
+  {
+   "file": "ui/agent_manager_tab.py",
+   "symbol": "CustomAgent",
+   "why": "Imports save_agent, delete_agent, list_agents from core.custom_agents, the persistence layer backing the CRUD."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7949,
+  "output_tokens": 442,
+  "model": "claude-opus-5"
+ }
+}

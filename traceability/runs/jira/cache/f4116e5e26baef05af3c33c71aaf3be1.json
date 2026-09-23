@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a PM planning task about updating information on a project-configuration tab in \"FI2.0\", with no concrete code claim. The candidate files shown (application JSON config loader, a sandbox policy YAML, a routing sample YAML) concern app/provider/sandbox settings, not any FI2.0 project-config tab, and the architecture excerpts are Co4E file-split plans explicitly flagged as not describing this repository.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "Implements loading/saving of app provider, TLS, ms365 and auth settings — unrelated to a 'project configuration' tab in FI2.0."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "",
+   "why": "Sandbox backend/risk-routing policy file with no connection to the ticket's project-config planning work."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Reference sample for model routing config, not project configuration documentation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7146,
+  "output_tokens": 417,
+  "model": "claude-opus-5"
+ }
+}

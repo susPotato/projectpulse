@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No code was retrieved for this ticket, and the claim concerns QA artifacts (test case counts and bug reports) that live in a tracker rather than source files. Nothing in the provided context can confirm or refute the 60 test cases or 17 documented bugs.",
+ "evidence": [],
+ "status_conflict": false
+}

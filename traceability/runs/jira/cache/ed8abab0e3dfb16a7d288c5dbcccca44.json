@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files provide partial support for one part of the ticket: core/deps.py's network_blocked_env implements policy-level network blocking via black-hole proxy env vars, and config/security_sandbox.yaml sets block_network_by_default plus per-backend network disabling. Nothing in the candidate subset addresses a URL guard or macro blocking, and ui/co4e_tab.py is an unrelated node-graph workflow UI (the documented Co4ETab._narrow_guard does not exist here and is about layout, not network guarding anyway). The evidence is too partial to settle the ticket either way.",
+ "evidence": [
+  {
+   "file": "core/deps.py",
+   "symbol": "network_blocked_env",
+   "why": "Implements policy-level network blocking by pointing all proxy env vars at a black-hole loopback address, covering the 'network access control' portion."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "",
+   "why": "Sandbox policy config sets block_network_by_default, block_network_with_wfp and per-backend disable_network, but names no URL guard or macro blocking policy."
+  },
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab",
+   "why": "The file exists but is a node-graph workflow studio UI with no network/URL/macro guarding, and the documented _narrow_guard symbol is absent."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 6651,
+  "output_tokens": 700,
+  "model": "claude-opus-5"
+ }
+}

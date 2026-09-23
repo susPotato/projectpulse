@@ -1,0 +1,8 @@
+{
+ "headline": "Notifications covers four capabilities — in-app alerts, Microsoft Teams cards, Outlook email, and event-driven routing — and the code clearly backs up two of them, with the other two left unconfirmed by this analysis.",
+ "what_is_there": "There is working code for sending notification cards to a Microsoft Teams webhook, including formatted card layouts and a plain-text fallback, and for sending email notifications through a locally installed Outlook, with error handling so failures don't break the caller.",
+ "what_is_unclear": "The analysis did not find code for the in-app notification bell with unread count, or for the layer that decides which events trigger which notifications and over which channel — the files examined covered other parts of the product, so this is not evidence those features are absent.",
+ "suggested_action": "Ask the team to point to where the in-app notification centre and the event routing logic live, and confirm whether the Outlook email work is in fact finished so its tracker status can be updated.",
+ "caveat": "The Outlook email ticket is marked In Progress but the code looks complete, so the tracker status appears out of date.",
+ "confidence": "medium"
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket concerns Windows COM integration, but the only candidate code shown is an AppContainer sandbox using subprocess and Job Objects — no COM/pywin32/IDispatch usage appears anywhere in the excerpts. The documentation excerpts are explicitly flagged as not describing this repository and discuss scheduler clocks and test markers, not COM.",
+ "evidence": [
+  {
+   "file": "core/appcontainer_sandbox.py",
+   "symbol": "AppContainerSandbox.run_command",
+   "why": "Windows-specific code shown is token/Job-Object sandboxing via subprocess, unrelated to COM automation."
+  },
+  {
+   "file": "__init__.py",
+   "symbol": "",
+   "why": "Package docstring lists app capabilities (connectors, sandbox, MCP) with no mention of COM integration, but this is not sufficient to disprove it."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 3547,
+  "output_tokens": 363,
+  "model": "claude-opus-5"
+ }
+}

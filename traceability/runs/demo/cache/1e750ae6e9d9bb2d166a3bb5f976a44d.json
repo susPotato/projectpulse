@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only dashboard-related evidence is the `from .ui.dashboard_tab import DashboardTab` import and lazy `MainWindow._build_dashboard` in app.py; the dashboard_tab source itself was not shown, so nothing here demonstrates a spline chart or week/month/year usage-trend rendering. core/calendar_grid.py does define GRANULARITIES = (\"week\", \"month\", \"year\"), but it is explicitly scoped to the Schedule Task tab's calendar view, not the Dashboard chart.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_dashboard",
+   "why": "Shows a Dashboard page exists and is built lazily, but reveals nothing about its chart contents."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "GRANULARITIES",
+   "why": "Defines week/month/year granularity but for the Schedule tab's calendar math, not a dashboard usage-trend spline chart."
+  }
+ ],
+ "status_conflict": false
+}

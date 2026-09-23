@@ -1,0 +1,8 @@
+{
+ "headline": "Quality and safety scoring — the plan to replace subjective judgement with evidence-backed PASS/WARN/FAIL ratings mapped to an external control framework — is represented by a single ticket still marked To Do, and the code reviewed did not settle whether any of it has been built.",
+ "what_is_there": "The code that was examined contains written security rules and a fixed sandbox policy describing the safety controls that would eventually be scored and mapped. No mechanism that assigns PASS, WARN or FAIL ratings, gathers supporting evidence, or aligns those controls to the target framework was visible.",
+ "what_is_unclear": "Whether the scoring and mapping work exists elsewhere in the codebase is unknown — the analysis only looked at a keyword-selected subset, so absence here is not evidence the feature is missing.",
+ "suggested_action": "Ask the owning team whether any evidence-based scoring or control mapping work has started, and point the analysis at those areas if so.",
+ "caveat": "",
+ "confidence": "medium"
+}

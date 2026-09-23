@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the candidate files touch knowledge/RAG, GraphRAG, citations, or project isolation; RULEBASE.md and security_sandbox.yaml are security policy artifacts and holiday_calendar.py is scheduling support. There is no evidence either for or against the ticket's scope or status.",
+ "evidence": [
+  {
+   "file": "core/holiday_calendar.py",
+   "symbol": "is_holiday",
+   "why": "Public-holiday lookup for scheduled tasks, unrelated to knowledge/RAG packaging."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox backend and risk-routing config with no RAG, citation, or metadata concepts."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase text; mentions project-scoped resource access only as a policy statement, not RAG implementation."
+  }
+ ],
+ "status_conflict": false
+}

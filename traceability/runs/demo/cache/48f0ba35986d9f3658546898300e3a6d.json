@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/co4e_run_manager.py implements exactly the run-tracking and history persistence the ticket describes: RunHandle with per-run status/progress/node_status, JSON run history with atomic write and a 500-run cap, and restore-on-startup logic. The step-results dialog is a UI component not present in the candidate set, so only the manager/history half is directly visible; the sandbox and routing-config files shown are unrelated to Co4E.",
+ "evidence": [
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager",
+   "why": "Central manager tracking concurrent Co4E flow runs with changed/event signals and per-run status."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager._load_history",
+   "why": "Restores past runs from run_history.json so the Flow Status tab keeps history across restarts."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "RunHandle.to_record",
+   "why": "Serializes run id, progress, status, node_status and a workflow snapshot for on-disk run history/reporting."
+  },
+  {
+   "file": "core/sandbox_manager.py",
+   "symbol": "SandboxManager",
+   "why": "Unrelated security sandbox routing code pulled in by keyword matching, not evidence for this ticket."
+  }
+ ],
+ "status_conflict": false
+}

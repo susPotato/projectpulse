@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "Action logging is clearly implemented twice over: `core/audit_log.py::record` appends day-sharded JSONL events (tool_call, permission, security_block, mcp_call) with identity, and `security/audit_logger.py::record` persists sandbox execution attempts to `sandbox_audit.jsonl`. However, nothing in the shown files implements a retention policy — no rotation, pruning, max-age or max-size cleanup exists in either module (only a per-field 2000-char truncation of `detail`), and `load_events` merely filters by date on read. The retention half of the ticket cannot be settled from this candidate subset.",
+ "evidence": [
+  {
+   "file": "core/audit_log.py",
+   "symbol": "record",
+   "why": "Appends one JSON line per action event to a day-sharded file, implementing the action-logging half of the ticket."
+  },
+  {
+   "file": "core/audit_log.py",
+   "symbol": "load_events",
+   "why": "Reads and date/kind-filters stored events but performs no deletion or expiry of old log files."
+  },
+  {
+   "file": "security/audit_logger.py",
+   "symbol": "record",
+   "why": "Second audit path writing sandbox allow/deny/execute entries to sandbox_audit.jsonl with no rotation or size/age cap."
+  },
+  {
+   "file": "core/telemetry_shared.py",
+   "symbol": "load_shared_audit_events",
+   "why": "Aggregates mirrored per-machine audit files for reading only; contains no retention or cleanup logic."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ext_connectors.py implements exactly the described capability: CAD/CAE/MS365/Other connector categories, per-category presets, an `mcp_stdio` mode reusing core.mcp_client.McpServerConnection, and a `rest_api` mode with a generic scoped HTTP tool. config.py further shows a `_migrate_connectors` routine folding the legacy top-level `mcp_servers` list into `ext_connectors[\"other\"]` as mcp_stdio entries, consistent with a shipped, user-configured connector feature. Status 'Release it' matches the built state, so no status conflict.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "CATEGORIES",
+   "why": "Defines the cad/cae/ms365/other connector categories named in the ticket."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "new_connector",
+   "why": "Creates user-configurable connector entries with mode 'mcp_stdio', command, args and env — i.e. a user-configured MCP server."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Implements the alternative rest_api connector mode with base-URL-scoped generic HTTP tool and auth headers."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "build_ext_connector_tools",
+   "why": "Exposes connectors as tools in the same (tools, executor) shape used by core/tools.py and core/mcp_client.py."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Migrates legacy top-level mcp_servers config into ext_connectors['other'] as mcp_stdio connectors, showing the unified connector model is live in config."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9938,
+  "output_tokens": 700,
+  "model": "claude-opus-5"
+ }
+}

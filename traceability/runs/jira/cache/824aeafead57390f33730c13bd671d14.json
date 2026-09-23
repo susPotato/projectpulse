@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only routing artifact shown is core/routing/models_config.sample.yaml, which explicitly labels itself REFERENCE/DOCUMENTATION describing the schema (policy, per_provider_concurrency, judge model, candidates) rather than implementing it; no router, gate, queue, or concurrency-control code is visible. core/model_pricing.py handles a price table and USD cost computation, which touches cost data but is not a cost-based router. The candidate subset is insufficient to confirm or refute that the routing engine is built.",
+ "evidence": [
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "routing.per_provider_concurrency",
+   "why": "Documents routing options including switch_mode auto/manual, cost policy and per-provider concurrency, but is a sample/reference file, not implementation."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "turn_cost_usd",
+   "why": "Computes per-turn USD cost from a price table — cost accounting, not routing or model gating."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "auto_link",
+   "why": "Pulls live model lists from providers into the price table; related to model inventory but not to routing/queueing logic."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4524,
+  "output_tokens": 615,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is about a test suite (10+ tests for the workflow engine, nodes, routing, transfers), but no test files appear in the candidate set — only Co4E production code (core/task_executors.py, ui/co4e_canvas.py, ui/co4e_tab.py). The attached documentation excerpt is explicitly flagged as not describing this repository and only mentions a canvas refactor, so it says nothing about tests. Nothing here either confirms or refutes the existence of the tests.",
+ "evidence": [
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "Co4ECanvas",
+   "why": "Production canvas/graph editor code, not a test module, so it cannot confirm test coverage."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Shows the Co4E workflow runner exists but provides no evidence about tests for it."
+  },
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab._apply_workflow",
+   "why": "UI workflow load/save code; unrelated to the QA/testing claim."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10903,
+  "output_tokens": 450,
+  "model": "claude-opus-5"
+ }
+}

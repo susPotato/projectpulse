@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown files touch task chaining or run-next modes; state.py covers per-workspace routing/auto-run, chat_panel.py covers chat turn streaming and permission prompts, and dashboard_tab.py covers token usage charts. The documentation excerpts concern the security ASK/ALLOW/DENY policy and dashboard/schedule functions, not run_after_success/run_always/run_after_manual_confirm chaining.",
+ "evidence": [
+  {
+   "file": "state.py",
+   "symbol": "project_confirm_commands",
+   "why": "Implements per-workspace confirm/auto-run for commands, which is unrelated to chaining a next task after success/always/manual confirm."
+  },
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "_on_permission",
+   "why": "Handles per-turn command approval in chat, not scheduled task run-next modes."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "_chart_prev",
+   "why": "Dashboard chart paging, entirely unrelated to the ticket."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12924,
+  "output_tokens": 428,
+  "model": "claude-opus-5"
+ }
+}

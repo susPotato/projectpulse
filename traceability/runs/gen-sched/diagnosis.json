@@ -1,0 +1,112 @@
+{
+ "schema_version": 1,
+ "produced_by": "diagnosis",
+ "meta": {
+  "source": "../hackathon/projectpulse/data/upload_demo/mig_schedule.xlsx",
+  "rows_scope": "all",
+  "project": null
+ },
+ "payload": {
+  "rows": 6,
+  "columns": 12,
+  "populated": [
+   [
+    "Task ID",
+    6,
+    6
+   ],
+   [
+    "Activity",
+    6,
+    6
+   ],
+   [
+    "Phase",
+    6,
+    4
+   ],
+   [
+    "Milestone",
+    6,
+    3
+   ],
+   [
+    "Status",
+    6,
+    3
+   ],
+   [
+    "Owner",
+    6,
+    2
+   ],
+   [
+    "Start",
+    6,
+    6
+   ],
+   [
+    "Baseline Finish",
+    6,
+    6
+   ],
+   [
+    "Planned Finish",
+    6,
+    6
+   ],
+   [
+    "Progress",
+    6,
+    3
+   ],
+   [
+    "Last Updated",
+    6,
+    1
+   ],
+   [
+    "Predecessor",
+    5,
+    5
+   ]
+  ],
+  "constant": [
+   [
+    "Last Updated",
+    "2026-09-10 00:00:00"
+   ]
+  ],
+  "relationships": {
+   "Predecessor": 5
+  },
+  "schedule": {
+   "Progress": 6
+  },
+  "automatic": {
+   "Last Updated": 6
+  },
+  "partitions": [
+   [
+    "Owner",
+    2,
+    1.0
+   ]
+  ],
+  "order_runs": {
+   "Owner": [
+    6,
+    2
+   ]
+  },
+  "text_structure": {},
+  "title_convention": {},
+  "findings": [
+   {
+    "level": "note",
+    "topic": "recorded dependencies",
+    "detail": "Populated: Predecessor (5)"
+   }
+  ]
+ }
+}

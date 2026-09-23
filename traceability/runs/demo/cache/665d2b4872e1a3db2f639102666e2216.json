@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/tls_trust.py implements exactly the described behaviour: per-host trust-on-first-use capture and pinning of self-signed certificates, plus an explicit CA bundle override that takes precedence over pinning. The module is complete with error classification, retry logic, and a diagnostic helper, indicating the work is finished rather than in progress.",
+ "evidence": [
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "capture_and_trust",
+   "why": "Captures the server's presented certificate and writes it as a per-host PEM under CONFIG_DIR/trusted_certs, i.e. auto-trust on first use."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "verify_for",
+   "why": "Returns the configured CA bundle when present, otherwise the pinned per-host cert, otherwise certifi default — the CA bundle override precedence."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "request",
+   "why": "Wraps requests calls, retrying once with a freshly pinned certificate on a trust-chain SSLError, and skipping recovery when an explicit CA bundle is set."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "looks_like_cert_trust_error",
+   "why": "Distinguishes recoverable trust-chain failures from other TLS errors such as expiry or hostname mismatch."
+  }
+ ],
+ "status_conflict": true
+}

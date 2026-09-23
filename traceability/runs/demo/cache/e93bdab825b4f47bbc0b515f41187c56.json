@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/teams.py implements a full TeamsNotifier that posts notification cards to a configured Teams webhook, building both Adaptive Card and MessageCard payloads with a plain-text fallback, plus redirect-preserving POST and error explanation. The architecture doc also lists AppContext.teams_notifier as constructing this class, matching the ticket's 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/teams.py",
+   "symbol": "TeamsNotifier.send",
+   "why": "Posts the notification to the configured webhook, trying Adaptive Card, MessageCard, and plain-text payloads in order."
+  },
+  {
+   "file": "core/teams.py",
+   "symbol": "TeamsNotifier._adaptive_card",
+   "why": "Builds the Microsoft Teams Adaptive Card notification card body with optional FactSet."
+  },
+  {
+   "file": "core/teams.py",
+   "symbol": "TeamsNotifier._message_card",
+   "why": "Builds the classic MessageCard payload for Incoming Webhook connectors."
+  }
+ ],
+ "status_conflict": false
+}

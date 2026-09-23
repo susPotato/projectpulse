@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No code was retrieved for this ticket, so there is nothing to evaluate against the claim of a Slack remote integration. Absence of candidate files does not demonstrate the feature is missing or present.",
+ "evidence": [],
+ "status_conflict": false
+}

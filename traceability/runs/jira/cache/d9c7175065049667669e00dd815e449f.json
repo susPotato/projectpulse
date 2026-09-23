@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The Co4E code shown covers workflow CRUD (new/save/duplicate/rename/delete via co4e.save_workflow, duplicate_workflow, get_workflow) and flow execution, but nothing about serialising a workflow to a file for transfer to another instance or importing one. The documentation excerpt concerns a pricing-export button in monitoring and is explicitly flagged as not describing this repository, so it supports nothing here. No positive evidence either way on import/export between instances.",
+ "evidence": [
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab._duplicate_selected_workflow",
+   "why": "Shows workflow management is limited to in-app duplicate/save/rename/delete, with no import or export action in the visible context menu."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_resolve_co4e_workflow",
+   "why": "Loads saved Co4E workflows by id for scheduled execution, unrelated to cross-instance transfer."
+  },
+  {
+   "file": "ui/monitoring_tab.py",
+   "symbol": "MonitoringTab",
+   "why": "Retrieved via the doc's pricing-export mention; contains audit/monitoring views unrelated to workflow import/export."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9969,
+  "output_tokens": 488,
+  "model": "claude-opus-5"
+ }
+}

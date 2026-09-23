@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/file_edit_dialog.py implements a complete generic file editing dialog with browse/reload, editable text vs read-only extracted binary content, AI-assisted rewrite, and save with backup. The ticket is marked 'To Do' yet the feature is fully built.",
+ "evidence": [
+  {
+   "file": "ui/file_edit_dialog.py",
+   "symbol": "FileEditDialog",
+   "why": "Defines the generic file view/edit dialog with path row, editor, AI edit row and save/close actions."
+  },
+  {
+   "file": "ui/file_edit_dialog.py",
+   "symbol": "FileEditDialog.load_file",
+   "why": "Loads any file, editable for text and read-only extracted text for binary documents."
+  },
+  {
+   "file": "ui/file_edit_dialog.py",
+   "symbol": "FileEditDialog._ai_edit",
+   "why": "Sends content plus instruction to the active provider and replaces editor content with the rewrite."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 6817,
+  "output_tokens": 334,
+  "model": "claude-opus-5"
+ }
+}

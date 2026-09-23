@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The connector configuration model is clearly built: config.py persists an `ext_connectors` structure with cad/cae/ms365/other categories plus a `_migrate_connectors` migration into the unified Connectors (MCP) model, and core/ext_connectors.py implements per-connector mcp_stdio and rest_api modes with `new_connector` explicitly described as producing an unsaved entry 'for the Add dialog' under Settings → 'Connectors (MCP)'. The actual panel widget file is not in the candidate set, so the UI layer itself is inferred from these backend hooks rather than directly observed. Nothing contradicts the 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "new_connector",
+   "why": "Creates a fresh connector entry explicitly intended for the Settings 'Add' dialog, implying a managing UI exists."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Implements per-connector REST mode with base_url/auth fields that a configuration panel would edit, plus test_connection for a UI 'Test' action."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "build_ext_connector_tools",
+   "why": "Consumes the saved connector list and honours the per-entry 'enabled' flag that the panel would toggle."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Shows ext_connectors persisted in app config across cad/cae/ms365/other categories, merging the old standalone 'MCP Servers' settings section."
+  },
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "ChatPanel",
+   "why": "Unrelated to connectors management; retrieved on generic UI keywords only."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket asks for a new screen that splits out the existing graph, integrating source plus full project specification with per-node doc/source-code file attachments. None of the candidate files touch graph/UI work — they are the sandbox policy YAML, an empty code-agent rules markdown, and the code agent's ReAct loop. The architecture excerpt merely mentions an existing StructureGraphView built by MainWindow, which neither confirms nor refutes the new screen.",
+ "evidence": [
+  {
+   "file": "core/code_agent.py",
+   "symbol": "code_system_prompt",
+   "why": "Concerns the Code tab agent loop and tool prompting, not a graph screen or node-to-document mapping."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Static sandbox policy unrelated to the structure graph UI."
+  },
+  {
+   "file": "assets/RULEforCode.md",
+   "symbol": "",
+   "why": "Placeholder rules file with no implementation content relevant to the ticket."
+  }
+ ],
+ "status_conflict": false
+}

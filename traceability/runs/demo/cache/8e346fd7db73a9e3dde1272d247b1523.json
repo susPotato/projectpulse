@@ -1,0 +1,8 @@
+{
+ "headline": "The model provider and routing area — connecting to multiple AI model vendors, pricing and budgeting, model health scoring, and context management — is marked ready for release across all eight tickets, and the code supports seven of them, with the detailed routing engine not confirmed from what was examined.",
+ "what_is_there": "The code shows working connections to five different AI model providers (including OpenAI-compatible services, Claude and local Ollama), with streaming responses and model listing; a per-model price table with VND/USD/JPY conversion; automated health and quality probing of models with latency scoring; and automatic trimming or summarising of long conversations so they fit within a model's limits. Configuration and settings for automatic model routing are visible and described in detail, indicating the feature is wired into the product.",
+ "what_is_unclear": "The actual decision-making logic behind model routing — choosing models automatically, applying cost rules, gating models and queuing requests per provider — was not among the files examined, so its completeness could not be confirmed either way. The budget-alert part of the pricing ticket was also not visible in what was reviewed.",
+ "suggested_action": "Ask the team to point to where the routing decision logic and budget alerts live, and confirm they have been exercised end to end.",
+ "caveat": "",
+ "confidence": "medium"
+}

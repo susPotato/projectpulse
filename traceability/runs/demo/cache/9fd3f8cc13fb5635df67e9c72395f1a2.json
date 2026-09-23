@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only direct evidence is indirect: app.py imports and lazily builds a MonitoringTab, and config.py defines a monitoring_visibility block with an \"agent_status\" key gated for Sub-admins. The actual monitoring_tab.py source that would show an Agents admin tab is not in the candidate set, so the existence and content of that specific sub-tab cannot be confirmed or refuted here.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Shows a Monitoring page exists and is lazily built with expandable nav sub-tabs, but does not reveal which sub-tabs it contains."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "The monitoring_visibility dict lists per-sub-tab flags including \"agent_status\", suggesting an agent-related Monitoring tab exists, though the tab's implementation is not shown."
+  }
+ ],
+ "status_conflict": false
+}

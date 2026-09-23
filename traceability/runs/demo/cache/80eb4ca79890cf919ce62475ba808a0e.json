@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/routing_toggle.py contains a fully implemented RoutingToggle QWidget offering Off/Auto/Manual modes, persistence via get_mode/set_mode callables, refresh/retranslate, and a mode_changed signal. This directly matches the ticket's UI toggle for model routing, consistent with the 'Release it' status.",
+ "evidence": [
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "RoutingToggle",
+   "why": "Implements the composer-level 'Routing: [Off/Auto/Manual]' combo control with injectable persistence."
+  },
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "RoutingToggle._on_changed",
+   "why": "Persists the chosen routing mode and emits mode_changed, showing the toggle is wired to storage."
+  },
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "AutoRunToggle",
+   "why": "Additional related per-workspace toggle in the same UI module, confirming the component is built out."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 2576,
+  "output_tokens": 363,
+  "model": "claude-opus-5"
+ }
+}

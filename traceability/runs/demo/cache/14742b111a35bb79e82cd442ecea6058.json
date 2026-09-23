@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "DashboardTab's module docstring explicitly describes a display-currency picker beside refresh, and the code has currency_lbl/currency_combo plus _on_currency_changed persisting usage.currency to config and refreshing, with mp.convert used for display conversion. The specific VND/USD/JPY option list isn't visible in the shown excerpt, but the picker feature itself is clearly implemented.",
+ "evidence": [
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._on_currency_changed",
+   "why": "Reads the currency combo's selection and saves it to config['usage']['currency'], then refreshes the dashboard."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._refresh_budget",
+   "why": "Uses model_pricing.convert to render amounts in the chosen display currency."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._retranslate",
+   "why": "References currency_lbl and currency_combo tooltip, confirming the picker widgets exist in the dashboard header."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10689,
+  "output_tokens": 461,
+  "model": "claude-opus-5"
+ }
+}

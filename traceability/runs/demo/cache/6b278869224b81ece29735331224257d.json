@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrievable for this ticket, so there is no code evidence to evaluate the run-next chaining modes. Nothing can be confirmed or refuted about the implementation or its release status.",
+ "evidence": [],
+ "status_conflict": false
+}

@@ -1,0 +1,736 @@
+{
+    "Application_Shell_&_Global_State": {
+        "path": "",
+        "components": [
+            "app.py::MainWindow",
+            "app.py::_Toast",
+            "config.py::AppConfig",
+            "config/security_sandbox.yaml::security_sandbox.yaml",
+            "state.py::AppContext"
+        ],
+        "children": {
+            "app": {
+                "path": "app.py",
+                "components": [
+                    "app.py::MainWindow",
+                    "app.py::_Toast"
+                ],
+                "children": {}
+            },
+            "config": {
+                "path": "config.py",
+                "components": [
+                    "config.py::AppConfig",
+                    "config/security_sandbox.yaml::security_sandbox.yaml"
+                ],
+                "children": {}
+            },
+            "state": {
+                "path": "state.py",
+                "components": [
+                    "state.py::AppContext"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "Identity,_Accounts_&_Permissions": {
+        "path": "",
+        "components": [
+            "core\\accounts.py::Account",
+            "core\\admin_agents.py::AdminAgent",
+            "core\\agent_roles.py::AgentRole",
+            "core\\custom_agents.py::CustomAgent",
+            "core\\groups.py::Group",
+            "core\\projects.py::Project",
+            "core\\permissions.py::PermissionGate"
+        ],
+        "children": {
+            "core.agents_accounts": {
+                "path": "core",
+                "components": [
+                    "core\\accounts.py::Account",
+                    "core\\admin_agents.py::AdminAgent",
+                    "core\\agent_roles.py::AgentRole",
+                    "core\\custom_agents.py::CustomAgent",
+                    "core\\groups.py::Group",
+                    "core\\projects.py::Project"
+                ],
+                "children": {
+                    "core.agents_accounts_rbac": {
+                        "components": [
+                            "core/accounts.py::Account",
+                            "core/groups.py::Group"
+                        ],
+                        "children": {}
+                    },
+                    "core.agents_accounts_catalogs": {
+                        "components": [
+                            "core/admin_agents.py::AdminAgent",
+                            "core/custom_agents.py::CustomAgent",
+                            "core/agent_roles.py::AgentRole"
+                        ],
+                        "children": {}
+                    },
+                    "core.agents_accounts_projects": {
+                        "components": [
+                            "core/projects.py::Project"
+                        ],
+                        "children": {}
+                    }
+                }
+            },
+            "core.permissions": {
+                "path": "core\\permissions.py",
+                "components": [
+                    "core\\permissions.py::PermissionGate"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "Security_&_Sandbox_Enforcement": {
+        "path": "",
+        "components": [
+            "core\\agent_security.py::SecurityBlocked",
+            "core\\agent_security.py::SecurityVerdict",
+            "core\\appcontainer_sandbox.py::AppContainerSandbox",
+            "core\\integrity_sandbox.py::IntegritySandbox",
+            "core\\sandbox_manager.py::ExecutionConfig",
+            "core\\sandbox_manager.py::SandboxManager",
+            "core\\windows_sandbox_vm.py::WindowsSandboxVM",
+            "core\\win_job.py::_IO_COUNTERS",
+            "core\\win_job.py::_JOBOBJECT_BASIC_LIMIT_INFORMATION",
+            "core\\win_job.py::_JOBOBJECT_EXTENDED_LIMIT_INFORMATION",
+            "security\\audit_logger.py::AuditEntry",
+            "security\\command_risk_classifier.py::RiskLevel",
+            "security\\command_risk_classifier.py::RiskResult"
+        ],
+        "children": {
+            "core.security_sandbox": {
+                "path": "core",
+                "components": [
+                    "core\\agent_security.py::SecurityBlocked",
+                    "core\\agent_security.py::SecurityVerdict",
+                    "core\\appcontainer_sandbox.py::AppContainerSandbox",
+                    "core\\integrity_sandbox.py::IntegritySandbox",
+                    "core\\sandbox_manager.py::ExecutionConfig",
+                    "core\\sandbox_manager.py::SandboxManager",
+                    "core\\windows_sandbox_vm.py::WindowsSandboxVM",
+                    "core\\win_job.py::_IO_COUNTERS",
+                    "core\\win_job.py::_JOBOBJECT_BASIC_LIMIT_INFORMATION",
+                    "core\\win_job.py::_JOBOBJECT_EXTENDED_LIMIT_INFORMATION"
+                ],
+                "children": {}
+            },
+            "security": {
+                "path": "security",
+                "components": [
+                    "security\\audit_logger.py::AuditEntry",
+                    "security\\command_risk_classifier.py::RiskLevel",
+                    "security\\command_risk_classifier.py::RiskResult"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "Agent_Orchestration_&_Execution_Engine": {
+        "path": "",
+        "components": [
+            "core\\co4e.py::CustomAgent",
+            "core\\co4e.py::Edge",
+            "core\\co4e.py::Node",
+            "core\\co4e.py::RunStage",
+            "core\\co4e.py::Step",
+            "core\\co4e.py::SubAgent",
+            "core\\co4e.py::Workflow",
+            "core\\co4e_builtins.py::BuiltinAgent",
+            "core\\co4e_run_manager.py::Co4ERunManager",
+            "core\\co4e_run_manager.py::RunHandle",
+            "core\\flows.py::Flow",
+            "core\\flows.py::FlowAction",
+            "core\\flows.py::FlowRunStatus",
+            "core\\flows.py::FlowRunner",
+            "core\\flows.py::FlowStep",
+            "core\\flows.py::SubAgent",
+            "core\\worker.py::AgentWorker",
+            "core\\skills.py::Skill",
+            "core\\tools.py::ToolContext",
+            "core\\tools.py::ToolError"
+        ],
+        "children": {
+            "core.co4e": {
+                "path": "core\\co4e.py",
+                "components": [
+                    "core\\co4e.py::CustomAgent",
+                    "core\\co4e.py::Edge",
+                    "core\\co4e.py::Node",
+                    "core\\co4e.py::RunStage",
+                    "core\\co4e.py::Step",
+                    "core\\co4e.py::SubAgent",
+                    "core\\co4e.py::Workflow",
+                    "core\\co4e_builtins.py::BuiltinAgent",
+                    "core\\co4e_run_manager.py::Co4ERunManager",
+                    "core\\co4e_run_manager.py::RunHandle"
+                ],
+                "children": {}
+            },
+            "core.flows": {
+                "path": "core\\flows.py",
+                "components": [
+                    "core\\flows.py::Flow",
+                    "core\\flows.py::FlowAction",
+                    "core\\flows.py::FlowRunStatus",
+                    "core\\flows.py::FlowRunner",
+                    "core\\flows.py::FlowStep",
+                    "core\\flows.py::SubAgent"
+                ],
+                "children": {}
+            },
+            "core.worker": {
+                "path": "core\\worker.py",
+                "components": [
+                    "core\\worker.py::AgentWorker"
+                ],
+                "children": {}
+            },
+            "core.skills": {
+                "path": "core\\skills.py",
+                "components": [
+                    "core\\skills.py::Skill"
+                ],
+                "children": {}
+            },
+            "core.tools": {
+                "path": "core\\tools.py",
+                "components": [
+                    "core\\tools.py::ToolContext",
+                    "core\\tools.py::ToolError"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "LLM_Provider_Abstraction_&_Model_Routing": {
+        "path": "",
+        "components": [
+            "providers\\anthropic.py::AnthropicProvider",
+            "providers\\base.py::CancelWatchdog",
+            "providers\\base.py::Provider",
+            "providers\\base.py::ProviderError",
+            "providers\\base.py::ThinkStreamSplitter",
+            "providers\\base.py::ToolSpec",
+            "providers\\openai_compat.py::OpenAICompatProvider",
+            "core\\routing\\clients.py::AppProbeClient",
+            "core\\routing\\clients.py::CompletionResult",
+            "core\\routing\\clients.py::ProbeClient",
+            "core\\routing\\models.py::ModelAssessment",
+            "core\\routing\\models.py::ModelMetadata",
+            "core\\routing\\models.py::PendingSwitch",
+            "core\\routing\\models.py::Policy",
+            "core\\routing\\models.py::ProbeResult",
+            "core\\routing\\models.py::SwitchDecision",
+            "core\\routing\\models.py::SwitchMode",
+            "core\\routing\\models.py::SwitchStatus",
+            "core\\routing\\models.py::TaskType",
+            "core\\routing\\prober.py::_PerProviderSemaphores",
+            "core\\routing\\scheduler.py::RoutingScheduler",
+            "core\\routing\\selector.py::RankedCandidate",
+            "core\\routing\\selector.py::Ranking",
+            "core\\routing\\service.py::RouteResult",
+            "core\\routing\\service.py::RoutingService",
+            "core\\routing\\store.py::AssessmentStore",
+            "core\\routing\\switch_controller.py::PendingSwitchRegistry"
+        ],
+        "children": {
+            "providers": {
+                "path": "providers",
+                "components": [
+                    "providers\\anthropic.py::AnthropicProvider",
+                    "providers\\base.py::CancelWatchdog",
+                    "providers\\base.py::Provider",
+                    "providers\\base.py::ProviderError",
+                    "providers\\base.py::ThinkStreamSplitter",
+                    "providers\\base.py::ToolSpec",
+                    "providers\\openai_compat.py::OpenAICompatProvider"
+                ],
+                "children": {}
+            },
+            "core.routing": {
+                "path": "core\\routing",
+                "components": [
+                    "core\\routing\\clients.py::AppProbeClient",
+                    "core\\routing\\clients.py::CompletionResult",
+                    "core\\routing\\clients.py::ProbeClient",
+                    "core\\routing\\models.py::ModelAssessment",
+                    "core\\routing\\models.py::ModelMetadata",
+                    "core\\routing\\models.py::PendingSwitch",
+                    "core\\routing\\models.py::Policy",
+                    "core\\routing\\models.py::ProbeResult",
+                    "core\\routing\\models.py::SwitchDecision",
+                    "core\\routing\\models.py::SwitchMode",
+                    "core\\routing\\models.py::SwitchStatus",
+                    "core\\routing\\models.py::TaskType",
+                    "core\\routing\\prober.py::_PerProviderSemaphores",
+                    "core\\routing\\scheduler.py::RoutingScheduler",
+                    "core\\routing\\selector.py::RankedCandidate",
+                    "core\\routing\\selector.py::Ranking",
+                    "core\\routing\\service.py::RouteResult",
+                    "core\\routing\\service.py::RoutingService",
+                    "core\\routing\\store.py::AssessmentStore",
+                    "core\\routing\\switch_controller.py::PendingSwitchRegistry"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "Scheduling_&_External_Integrations": {
+        "path": "core",
+        "components": [
+            "core\\cron.py::Cron",
+            "core\\cron.py::CronError",
+            "core\\task_scheduler.py::TaskScheduler",
+            "core\\ext_connectors.py::RestApiConnector",
+            "core\\mcp_client.py::McpServerConnection",
+            "core\\mcp_client.py::McpServerError",
+            "core\\ms365_auth.py::Ms365AuthError",
+            "core\\ms365_graph.py::Ms365GraphError",
+            "core\\ms365_graph.py::TeamsLinkError",
+            "core\\teams.py::TeamsNotifier"
+        ],
+        "children": {
+            "core.scheduling": {
+                "path": "core",
+                "components": [
+                    "core\\cron.py::Cron",
+                    "core\\cron.py::CronError",
+                    "core\\task_scheduler.py::TaskScheduler"
+                ],
+                "children": {}
+            },
+            "core.connectors": {
+                "path": "core",
+                "components": [
+                    "core\\ext_connectors.py::RestApiConnector",
+                    "core\\mcp_client.py::McpServerConnection",
+                    "core\\mcp_client.py::McpServerError"
+                ],
+                "children": {}
+            },
+            "core.ms365": {
+                "path": "core",
+                "components": [
+                    "core\\ms365_auth.py::Ms365AuthError",
+                    "core\\ms365_graph.py::Ms365GraphError",
+                    "core\\ms365_graph.py::TeamsLinkError",
+                    "core\\teams.py::TeamsNotifier"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "Codebase_Intelligence_&_Structure_Graph": {
+        "path": "core",
+        "components": [
+            "core\\codebase_memory.py::CodebaseMemory",
+            "core\\codebase_memory.py::CodebaseMemoryError",
+            "core\\codebase_memory_ui.py::CmemUiError",
+            "core\\codebase_memory_ui.py::CodebaseMemoryUiServer",
+            "core\\graph_server.py::GraphServer",
+            "core\\structure_graph.py::GEdge",
+            "core\\structure_graph.py::GNode",
+            "core\\structure_graph.py::StructureGraph"
+        ],
+        "children": {
+            "core.codebase_memory": {
+                "path": "core",
+                "components": [
+                    "core\\codebase_memory.py::CodebaseMemory",
+                    "core\\codebase_memory.py::CodebaseMemoryError",
+                    "core\\codebase_memory_ui.py::CmemUiError",
+                    "core\\codebase_memory_ui.py::CodebaseMemoryUiServer"
+                ],
+                "children": {}
+            },
+            "core.graph": {
+                "path": "core",
+                "components": [
+                    "core\\graph_server.py::GraphServer",
+                    "core\\structure_graph.py::GEdge",
+                    "core\\structure_graph.py::GNode",
+                    "core\\structure_graph.py::StructureGraph"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "UI_Workspace_&_Conversational_Interface": {
+        "path": "",
+        "components": [
+            "ui\\workspace_tab.py::WorkspaceTab",
+            "ui\\sidebar.py::HistorySidebar",
+            "ui\\sidebar.py::_SessionDelegate",
+            "ui\\dashboard_tab.py::DashboardTab",
+            "ui\\chat_panel.py::ChatPanel",
+            "ui\\chat_view.py::ChatView",
+            "ui\\chat_view.py::MessageBubble",
+            "ui\\chat_view.py::ThinkingIndicator",
+            "ui\\chat_view.py::_TimelineGutter",
+            "ui\\composer.py::Composer",
+            "ui\\composer.py::_Input",
+            "ui\\composer.py::_SkillPopup",
+            "ui\\cowork_tab.py::CoworkTab"
+        ],
+        "children": {
+            "ui.workspace": {
+                "path": "ui\\workspace_tab.py",
+                "components": [
+                    "ui\\workspace_tab.py::WorkspaceTab"
+                ],
+                "children": {}
+            },
+            "ui.sidebar": {
+                "path": "ui\\sidebar.py",
+                "components": [
+                    "ui\\sidebar.py::HistorySidebar",
+                    "ui\\sidebar.py::_SessionDelegate"
+                ],
+                "children": {}
+            },
+            "ui.dashboard": {
+                "path": "ui\\dashboard_tab.py",
+                "components": [
+                    "ui\\dashboard_tab.py::DashboardTab"
+                ],
+                "children": {}
+            },
+            "ui.chat": {
+                "path": "ui",
+                "components": [
+                    "ui\\chat_panel.py::ChatPanel",
+                    "ui\\chat_view.py::ChatView",
+                    "ui\\chat_view.py::MessageBubble",
+                    "ui\\chat_view.py::ThinkingIndicator",
+                    "ui\\chat_view.py::_TimelineGutter"
+                ],
+                "children": {}
+            },
+            "ui.composer": {
+                "path": "ui\\composer.py",
+                "components": [
+                    "ui\\composer.py::Composer",
+                    "ui\\composer.py::_Input",
+                    "ui\\composer.py::_SkillPopup"
+                ],
+                "children": {}
+            },
+            "ui.cowork": {
+                "path": "ui\\cowork_tab.py",
+                "components": [
+                    "ui\\cowork_tab.py::CoworkTab"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "UI_Administration_&_Management_Panels": {
+        "path": "",
+        "components": [
+            "ui\\accounts_tab.py::AccountEditDialog",
+            "ui\\accounts_tab.py::AccountsTab",
+            "ui\\accounts_tab.py::_OrgTree",
+            "ui\\agent_manager_tab.py::AgentManagerTab",
+            "ui\\agents_admin_tab.py::AgentEditDialog",
+            "ui\\agents_admin_tab.py::AgentsAdminTab",
+            "ui\\skill_manager_tab.py::SkillManagerTab",
+            "ui\\skills_dialog.py::SkillEditDialog",
+            "ui\\skills_dialog.py::SkillsDialog",
+            "ui\\tools_admin_tab.py::ToolsAdminTab",
+            "ui\\icons.py::IconLabel",
+            "ui\\icons_admin_tab.py::IconsAdminTab",
+            "ui\\connectors_panel.py::ConnectorsPanel",
+            "ui\\connectors_panel.py::JiraConnectDialog",
+            "ui\\ext_connector_dialog.py::ExtConnectorEditDialog",
+            "ui\\mcp_servers_dialog.py::McpServerEditDialog",
+            "ui\\schedule_task_tab.py::ScheduleTaskTab",
+            "ui\\schedule_task_tab.py::_AiCreateDialog",
+            "ui\\schedule_task_tab.py::_DropZone",
+            "ui\\schedule_task_tab.py::_KanbanColumn",
+            "ui\\schedule_task_tab.py::_RunHistoryDialog",
+            "ui\\settings_dialog.py::SettingsDialog",
+            "ui\\monitoring_tab.py::MonitoringTab",
+            "ui\\monitoring_tab.py::_EventTable"
+        ],
+        "children": {
+            "ui.accounts": {
+                "path": "ui\\accounts_tab.py",
+                "components": [
+                    "ui\\accounts_tab.py::AccountEditDialog",
+                    "ui\\accounts_tab.py::AccountsTab",
+                    "ui\\accounts_tab.py::_OrgTree"
+                ],
+                "children": {}
+            },
+            "ui.agents_admin": {
+                "path": "ui",
+                "components": [
+                    "ui\\agent_manager_tab.py::AgentManagerTab",
+                    "ui\\agents_admin_tab.py::AgentEditDialog",
+                    "ui\\agents_admin_tab.py::AgentsAdminTab"
+                ],
+                "children": {}
+            },
+            "ui.skills": {
+                "path": "ui",
+                "components": [
+                    "ui\\skill_manager_tab.py::SkillManagerTab",
+                    "ui\\skills_dialog.py::SkillEditDialog",
+                    "ui\\skills_dialog.py::SkillsDialog"
+                ],
+                "children": {}
+            },
+            "ui.tools_admin": {
+                "path": "ui\\tools_admin_tab.py",
+                "components": [
+                    "ui\\tools_admin_tab.py::ToolsAdminTab"
+                ],
+                "children": {}
+            },
+            "ui.icons": {
+                "path": "ui",
+                "components": [
+                    "ui\\icons.py::IconLabel",
+                    "ui\\icons_admin_tab.py::IconsAdminTab"
+                ],
+                "children": {}
+            },
+            "ui.connectors": {
+                "path": "ui",
+                "components": [
+                    "ui\\connectors_panel.py::ConnectorsPanel",
+                    "ui\\connectors_panel.py::JiraConnectDialog",
+                    "ui\\ext_connector_dialog.py::ExtConnectorEditDialog",
+                    "ui\\mcp_servers_dialog.py::McpServerEditDialog"
+                ],
+                "children": {}
+            },
+            "ui.schedule_task": {
+                "path": "ui\\schedule_task_tab.py",
+                "components": [
+                    "ui\\schedule_task_tab.py::ScheduleTaskTab",
+                    "ui\\schedule_task_tab.py::_AiCreateDialog",
+                    "ui\\schedule_task_tab.py::_DropZone",
+                    "ui\\schedule_task_tab.py::_KanbanColumn",
+                    "ui\\schedule_task_tab.py::_RunHistoryDialog"
+                ],
+                "children": {}
+            },
+            "ui.settings": {
+                "path": "ui\\settings_dialog.py",
+                "components": [
+                    "ui\\settings_dialog.py::SettingsDialog"
+                ],
+                "children": {}
+            },
+            "ui.monitoring": {
+                "path": "ui\\monitoring_tab.py",
+                "components": [
+                    "ui\\monitoring_tab.py::MonitoringTab",
+                    "ui\\monitoring_tab.py::_EventTable"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "UI_Workflow_&_Task_Builder": {
+        "path": "",
+        "components": [
+            "ui\\co4e_agent_dialog.py::Co4EAgentDialog",
+            "ui\\co4e_canvas.py::Co4ECanvas",
+            "ui\\co4e_canvas.py::_EdgeItem",
+            "ui\\co4e_canvas.py::_NodeItem",
+            "ui\\co4e_config_panel.py::StepConfigPanel",
+            "ui\\co4e_tab.py::Co4ETab",
+            "ui\\co4e_tab.py::_ChatInput",
+            "ui\\co4e_tab.py::_EqualTabBar",
+            "ui\\co4e_tab.py::_PaletteList",
+            "ui\\flow_dialog.py::FlowBuilderDialog",
+            "ui\\task_editor_dialog.py::TaskEditorDialog"
+        ],
+        "children": {
+            "ui.co4e": {
+                "path": "ui",
+                "components": [
+                    "ui\\co4e_agent_dialog.py::Co4EAgentDialog",
+                    "ui\\co4e_canvas.py::Co4ECanvas",
+                    "ui\\co4e_canvas.py::_EdgeItem",
+                    "ui\\co4e_canvas.py::_NodeItem",
+                    "ui\\co4e_config_panel.py::StepConfigPanel",
+                    "ui\\co4e_tab.py::Co4ETab",
+                    "ui\\co4e_tab.py::_ChatInput",
+                    "ui\\co4e_tab.py::_EqualTabBar",
+                    "ui\\co4e_tab.py::_PaletteList"
+                ],
+                "children": {}
+            },
+            "ui.flow": {
+                "path": "ui\\flow_dialog.py",
+                "components": [
+                    "ui\\flow_dialog.py::FlowBuilderDialog"
+                ],
+                "children": {}
+            },
+            "ui.task_editor": {
+                "path": "ui\\task_editor_dialog.py",
+                "components": [
+                    "ui\\task_editor_dialog.py::TaskEditorDialog"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "UI_Content_Editors_&_Viewers": {
+        "path": "",
+        "components": [
+            "ui\\folder_tab.py::CodeEditor",
+            "ui\\folder_tab.py::FolderTab",
+            "ui\\folder_tab.py::PygmentsHighlighter",
+            "ui\\folder_tab.py::_LineNumbers",
+            "ui\\file_edit_dialog.py::FileEditDialog",
+            "ui\\libreoffice_view.py::LibreOfficeView",
+            "ui\\terminal_panel.py::TerminalPanel",
+            "ui\\terminal_panel.py::_TermInput",
+            "ui\\structure_graph_view.py::StructureGraphView",
+            "ui\\structure_graph_view.py::_Bridge",
+            "ui\\structure_graph_view.py::_Edge",
+            "ui\\structure_graph_view.py::_GraphView",
+            "ui\\structure_graph_view.py::_Node",
+            "ui\\calendar_view.py::CalendarView",
+            "ui\\calendar_view.py::_DayCell",
+            "ui\\spline_chart.py::SplineChart"
+        ],
+        "children": {
+            "ui.folder": {
+                "path": "ui\\folder_tab.py",
+                "components": [
+                    "ui\\folder_tab.py::CodeEditor",
+                    "ui\\folder_tab.py::FolderTab",
+                    "ui\\folder_tab.py::PygmentsHighlighter",
+                    "ui\\folder_tab.py::_LineNumbers"
+                ],
+                "children": {}
+            },
+            "ui.file_edit": {
+                "path": "ui\\file_edit_dialog.py",
+                "components": [
+                    "ui\\file_edit_dialog.py::FileEditDialog"
+                ],
+                "children": {}
+            },
+            "ui.libreoffice": {
+                "path": "ui\\libreoffice_view.py",
+                "components": [
+                    "ui\\libreoffice_view.py::LibreOfficeView"
+                ],
+                "children": {}
+            },
+            "ui.terminal": {
+                "path": "ui\\terminal_panel.py",
+                "components": [
+                    "ui\\terminal_panel.py::TerminalPanel",
+                    "ui\\terminal_panel.py::_TermInput"
+                ],
+                "children": {}
+            },
+            "ui.structure_graph_view": {
+                "path": "ui\\structure_graph_view.py",
+                "components": [
+                    "ui\\structure_graph_view.py::StructureGraphView",
+                    "ui\\structure_graph_view.py::_Bridge",
+                    "ui\\structure_graph_view.py::_Edge",
+                    "ui\\structure_graph_view.py::_GraphView",
+                    "ui\\structure_graph_view.py::_Node"
+                ],
+                "children": {}
+            },
+            "ui.calendar": {
+                "path": "ui\\calendar_view.py",
+                "components": [
+                    "ui\\calendar_view.py::CalendarView",
+                    "ui\\calendar_view.py::_DayCell"
+                ],
+                "children": {}
+            },
+            "ui.spline_chart": {
+                "path": "ui\\spline_chart.py",
+                "components": [
+                    "ui\\spline_chart.py::SplineChart"
+                ],
+                "children": {}
+            }
+        }
+    },
+    "UI_Shared_Dialogs_&_Widgets": {
+        "path": "",
+        "components": [
+            "ui\\login_dialog.py::LoginDialog",
+            "ui\\login_dialog.py::_AccountEdit",
+            "ui\\permission_dialog.py::PermissionDialog",
+            "ui\\help_agent_widget.py::HelpAgentWidget",
+            "ui\\help_agent_widget.py::_IconTap",
+            "ui\\routing_toggle.py::AutoRunToggle",
+            "ui\\routing_toggle.py::RoutingToggle",
+            "ui\\widgets.py::BudgetCard",
+            "ui\\widgets.py::CollapseStrip",
+            "ui\\widgets.py::CollapsibleSection",
+            "ui\\widgets.py::PlanSection",
+            "ui\\widgets.py::StatCard",
+            "ui\\widgets.py::_WheelGuard"
+        ],
+        "children": {
+            "ui.login": {
+                "path": "ui\\login_dialog.py",
+                "components": [
+                    "ui\\login_dialog.py::LoginDialog",
+                    "ui\\login_dialog.py::_AccountEdit"
+                ],
+                "children": {}
+            },
+            "ui.permission": {
+                "path": "ui\\permission_dialog.py",
+                "components": [
+                    "ui\\permission_dialog.py::PermissionDialog"
+                ],
+                "children": {}
+            },
+            "ui.help_agent": {
+                "path": "ui\\help_agent_widget.py",
+                "components": [
+                    "ui\\help_agent_widget.py::HelpAgentWidget",
+                    "ui\\help_agent_widget.py::_IconTap"
+                ],
+                "children": {}
+            },
+            "ui.routing_toggle": {
+                "path": "ui\\routing_toggle.py",
+                "components": [
+                    "ui\\routing_toggle.py::AutoRunToggle",
+                    "ui\\routing_toggle.py::RoutingToggle"
+                ],
+                "children": {}
+            },
+            "ui.widgets": {
+                "path": "ui\\widgets.py",
+                "components": [
+                    "ui\\widgets.py::BudgetCard",
+                    "ui\\widgets.py::CollapseStrip",
+                    "ui\\widgets.py::CollapsibleSection",
+                    "ui\\widgets.py::PlanSection",
+                    "ui\\widgets.py::StatCard",
+                    "ui\\widgets.py::_WheelGuard"
+                ],
+                "children": {}
+            }
+        }
+    }
+}

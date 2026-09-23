@@ -1,0 +1,8 @@
+{
+ "headline": "Usage and telemetry tracking — both tickets in this area are backed by code that matches what was described.",
+ "what_is_there": "The product records one usage event per model interaction to dated local log files, can read those logs back, and can roll them up into summary figures for reporting. There is also a shared layer that pulls usage and audit logs together across multiple machines, with filtering by date.",
+ "what_is_unclear": "Nothing was left open on these two tickets, though the analysis read the code rather than running it, so accuracy of the reported numbers in live use has not been demonstrated.",
+ "suggested_action": "If the usage figures feed anything customer-facing or billing-related, spot-check a real summary against raw logs to confirm the numbers add up in practice.",
+ "caveat": "",
+ "confidence": "high"
+}

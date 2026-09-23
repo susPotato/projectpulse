@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a QA/testing task with no concrete feature claim, and the retrieved files (external connectors module, provider base classes, connectors panel UI) are unrelated to UI/UX test activity. Nothing shown evidences or refutes testing work.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Implements REST/MCP connector plumbing, unrelated to any UI/UX test effort."
+  },
+  {
+   "file": "ui/connectors_panel.py",
+   "symbol": "ConnectorsPanel",
+   "why": "A settings UI panel for connectors; it is not test code and does not speak to the QA ticket."
+  },
+  {
+   "file": "providers/base.py",
+   "symbol": "Provider",
+   "why": "Provider abstraction for chat calls, irrelevant to the testing ticket."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8868,
+  "output_tokens": 305,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown source files (app.py, assets/RULEBASE.md, config/security_sandbox.yaml) concern app shell wiring and security policy, not role-based agent prompt construction; none of them show cowork/code/admin prompt selection. The only positive signals are symbol lookups confirming ui/chat_panel.py::admin_agent_prompt and core/admin_agents.py exist, but their contents were not shown, and the documents citing them are flagged as not describing this repository. That is not enough to confirm or refute a three-role prompt system.",
+ "evidence": [
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "admin_agent_prompt",
+   "why": "Lookup confirms an admin-agent prompt accessor exists, but its implementation and any cowork/code counterparts were not shown."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "",
+   "why": "Confirmed to exist in the repository, suggesting an admin agent module, but no contents were provided to verify role-based prompts."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "A security rulebase for 'Cowork Business Assistant Mode' — relates to agent policy text, not to role-based prompt construction in code."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow",
+   "why": "Shows UI page wiring (cowork tab, help_agent) but nothing about assembling role-specific agent prompts."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8050,
+  "output_tokens": 977,
+  "model": "claude-opus-5"
+ }
+}

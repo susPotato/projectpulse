@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files implement permission presets named inherit / read-only / standard / full. core/permissions.py is the Code agent's blocking gate with only 'auto' and 'confirm' modes, and core/co4e_run_manager.py tracks run status/history with no permission fields; the security-policy doc discusses an ALLOW/DENY/ASK gate that is explicitly proposed (domain/security/tool_policy.py is absent). The candidate subset simply does not settle whether Co4E permission presets exist elsewhere.",
+ "evidence": [
+  {
+   "file": "core/permissions.py",
+   "symbol": "PermissionGate.set_mode",
+   "why": "The only permission mode mechanism shown supports 'auto' and 'confirm', not a four-level preset scheme."
+  },
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "RunHandle.to_record",
+   "why": "Co4E run state persists status, progress and workflow snapshot but carries no permission or preset field."
+  },
+  {
+   "file": "architecture/security-policy.md",
+   "symbol": "domain/security/tool_policy.py",
+   "why": "The consolidated policy gate is described as a proposal awaiting confirmation and the file is confirmed absent from the repository."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8438,
+  "output_tokens": 585,
+  "model": "claude-opus-5"
+ }
+}

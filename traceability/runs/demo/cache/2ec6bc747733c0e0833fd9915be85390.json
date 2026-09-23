@@ -1,0 +1,18 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "providers/factory.py contains a _REGISTRY mapping exactly the five provider names in the ticket (openai_compat, anthropic, ollama, github_copilot, codex) and build_provider() dynamically instantiates the mapped class, raising ProviderError for unknown names. This matches the ticket's 'Release it' status.",
+ "evidence": [
+  {
+   "file": "providers/factory.py",
+   "symbol": "build_provider",
+   "why": "Dynamically instantiates a provider class from a name-to-class registry and errors on unsupported names."
+  },
+  {
+   "file": "providers/factory.py",
+   "symbol": "_REGISTRY",
+   "why": "Maps openai_compat, anthropic, ollama, github_copilot and codex to AnthropicProvider/OpenAICompatProvider."
+  }
+ ],
+ "status_conflict": false
+}

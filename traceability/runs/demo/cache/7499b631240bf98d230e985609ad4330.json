@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain an MCP tool manifest JSON schema, sample manifests, validation tests, or a \"Cowork Tool Registry\" abstraction; config.py only defines an ext_connectors config section and a tools.disabled list, and the other candidates (RULEBASE.md, security_sandbox.yaml) are security policy content unrelated to a tool contract. The referenced checklist document is explicitly not describing this repository and its `domain/tools/tool_registry.py` lookup came back as absent, so it cannot corroborate anything. Absence within this keyword-selected subset is not proof the deliverable is missing, so the claim remains unsettled.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "Defines ext_connectors (mcp_stdio/rest_api entries) and a tools.disabled list, but no tool manifest schema or registry contract."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox/risk-routing limits including max_mcp_calls, but nothing defining a reusable MCP tool contract."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase prose mentioning MCP calls; unrelated to a tool manifest schema or registry design."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11542,
+  "output_tokens": 618,
+  "model": "claude-opus-5"
+ }
+}

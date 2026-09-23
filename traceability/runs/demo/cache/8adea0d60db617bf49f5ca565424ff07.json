@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files concern a portable knowledge pack format or specification: core/admin_agents.py is an admin agent catalog, ui/chat_panel.py and ui/cowork_tab.py handle chat transcript and output-folder/knowledge-folder scanning. The retriever matched on generic 'knowledge' wording, and the app_guide excerpt is flagged as not describing this repository, so nothing settles whether a knowledge pack spec exists.",
+ "evidence": [
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent",
+   "why": "Defines admin-managed agent presets stored as JSON, unrelated to a portable knowledge pack specification."
+  },
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "ChatPanel._augment",
+   "why": "Embeds attachment and workspace/project folder file contents into prompts, but defines no packaged/portable knowledge format."
+  },
+  {
+   "file": "ui/cowork_tab.py",
+   "symbol": "CoworkTab.project_knowledge_dir",
+   "why": "Returns a project's shared-knowledge folder path only; there is no pack manifest or spec here."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11376,
+  "output_tokens": 446,
+  "model": "claude-opus-5"
+ }
+}

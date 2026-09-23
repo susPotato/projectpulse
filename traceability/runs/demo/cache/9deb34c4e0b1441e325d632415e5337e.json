@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/context_budget.py directly implements the ticket: per-model context window limits with config override, an auto_compact toggle and threshold, token estimation over the message list, and maybe_compact which summarizes older turns in place before the turn continues. The docstring explicitly frames it as compressing when nearing the model's context budget for chat/Co4E/Schedule agent loops, matching the ticket's 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "Compacts the message list in place when usage exceeds the configured threshold, i.e. compress before send."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "model_context_limit",
+   "why": "Maps model names to context windows, the window-management half of the ticket."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "auto_compact_enabled",
+   "why": "Reads the context.auto_compact config flag, the auto-compact switch named in the ticket."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "compact_messages",
+   "why": "Summarizes the middle of the conversation into one system note while keeping head and recent tail verbatim."
+  },
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "estimate_tokens",
+   "why": "Token estimator reused by context_budget to measure message size against the limit."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10159,
+  "output_tokens": 551,
+  "model": "claude-opus-5"
+ }
+}

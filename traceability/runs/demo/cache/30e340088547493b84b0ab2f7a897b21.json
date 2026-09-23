@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/task_scheduler.py implements exactly the described engine: a QTimer with TICK_MS = 30_000 driving tick(), which dispatches due tasks onto separate AgentWorker threads tracked in a _workers dict so several run concurrently. The specific cap of 3 concurrent tasks is not visible in the shown excerpt (121 lines are omitted and tick() only skips tasks already running), so that detail is unconfirmed, but the core mechanism matches and the ticket's 'Release it' status is consistent with the built code.",
+ "evidence": [
+  {
+   "file": "core/task_scheduler.py",
+   "symbol": "TICK_MS",
+   "why": "Constant TICK_MS = 30_000 sets the scheduler's 30-second tick interval."
+  },
+  {
+   "file": "core/task_scheduler.py",
+   "symbol": "TaskScheduler.tick",
+   "why": "Iterates due tasks each tick and starts each on its own worker, skipping ones already running — concurrent execution."
+  },
+  {
+   "file": "core/task_scheduler.py",
+   "symbol": "TaskScheduler.running_count",
+   "why": "Tracks the number of simultaneously executing task workers, showing concurrency is managed centrally."
+  },
+  {
+   "file": "core/routing/scheduler.py",
+   "symbol": "RoutingScheduler",
+   "why": "Its docstring explicitly says it mirrors the app's existing TaskScheduler QTimer pattern, confirming TaskScheduler exists and is in use."
+  }
+ ],
+ "status_conflict": false
+}

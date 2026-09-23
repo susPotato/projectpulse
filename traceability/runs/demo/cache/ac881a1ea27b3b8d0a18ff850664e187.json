@@ -1,0 +1,6 @@
+{
+ "capability": "A shared application context object that holds live config plus the resolution rules for per-workspace overrides — each workspace's Off/Auto/Manual model-routing mode and its auto-run vs. confirm-before-running-commands policy — along with cached MCP/connector connections and the rule for which model a tab's Agent selector defaults to.",
+ "user_facing": true,
+ "suggested_ticket": "Per-workspace overrides for model routing mode and command auto-run (fall back to global settings)",
+ "confidence": "medium"
+}

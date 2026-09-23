@@ -1,0 +1,8 @@
+{
+ "headline": "This area covers planned new capabilities — handling production bugs end to end, a project-wide graph/specification screen, a business-overview screen, and a configurable report output screen — and the code review could not confirm any of the five tickets either way.",
+ "what_is_there": "The tickets describe intended additions: a workflow for analysing, reporting and fixing production bugs with automatic retesting; a new screen combining source code and project specifications with documents attached per node; a business-level view of the system to show where changes land; and a screen for configuring report output for developers and customers. The only code that surfaced during the review related to sandbox policy settings and an agent processing loop, none of which touches these screens or workflows.",
+ "what_is_unclear": "For four of the five tickets no relevant code could be retrieved at all, and for the graph-splitting ticket only an unrelated mention of an existing structure view appeared — so nothing confirms or rules out that any of this work has been built. One ticket is also phrased as a generic placeholder with no specific feature described, which makes it unverifiable as written.",
+ "suggested_action": "Ask the team to point to where each of these screens or workflows lives (or confirm they are still at idea stage), and note that the report-output ticket is marked ready for release despite nothing being confirmed in code.",
+ "caveat": "",
+ "confidence": "high"
+}

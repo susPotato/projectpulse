@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only routing-related artifact shown is core/routing/models_config.sample.yaml, which is explicitly labelled REFERENCE / DOCUMENTATION and describes the intended schema rather than implementing it; no router, assessor, or model-switching code is visible. core/model_pricing.py handles price tables and cost calculation, not auto routing (its auto_link only adds pricing rows for discovered models). The presence of a core/routing/ package hints implementation may exist, but nothing shown settles it.",
+ "evidence": [
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Documents a routing config schema (switch_mode, policy, candidates, judge_model) but states it is reference-only and mirrors JSON config, so it is not itself implementation."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "auto_link",
+   "why": "Fetches live provider model lists to add pricing rows — pricing bookkeeping, not model auto routing."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "turn_cost_usd",
+   "why": "Computes per-turn cost for whichever model is used; does not select or switch models."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4505,
+  "output_tokens": 692,
+  "model": "claude-opus-5"
+ }
+}

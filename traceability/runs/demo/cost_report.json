@@ -1,0 +1,60 @@
+{
+ "schema_version": 1,
+ "produced_by": "cost-report",
+ "meta": {
+  "inputs": {
+   "translations": "7bb06be3ff3f2a2d",
+   "verdicts": "3029506211b50451",
+   "explain": "b6321a5267fbd0a1",
+   "grounding": "20dbcc4b06e87c36"
+  }
+ },
+ "payload": {
+  "stages": [
+   {
+    "stage": "translations",
+    "usd": 0.112985,
+    "units": 24,
+    "unit_name": "ticket",
+    "external": false,
+    "note": ""
+   },
+   {
+    "stage": "verdicts",
+    "usd": 9.2584,
+    "units": 173,
+    "unit_name": "ticket",
+    "external": false,
+    "note": ""
+   },
+   {
+    "stage": "explain",
+    "usd": 0.303695,
+    "units": 29,
+    "unit_name": "feature area",
+    "external": false,
+    "note": ""
+   },
+   {
+    "stage": "architecture docs",
+    "usd": 12.0,
+    "units": 23,
+    "unit_name": "document",
+    "external": true,
+    "note": "23 of ~60 CodeWiki docs at ~$0.52 each; run stopped deliberately"
+   }
+  ],
+  "total_usd": 21.8913,
+  "pipeline_usd": 9.8913,
+  "discarded_usd": {
+   "explain": 0.2162
+  },
+  "findings": {
+   "verdicts": 173,
+   "corroborated": 76,
+   "contradicted": 2,
+   "status_conflicts": 4,
+   "grounded": 159
+  }
+ }
+}

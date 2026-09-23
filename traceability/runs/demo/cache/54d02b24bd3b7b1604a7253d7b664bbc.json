@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The symbol lookups attached to the documentation confirm that `ui/spline_chart.py` exists in this repository and that `DashboardTab._refresh_chart` and `DashboardTab._on_gran_changed` are real symbols in `ui/dashboard_tab.py`, which matches the ticket's spline chart with week/month/year granularity. The retrieved candidate files (app.py, core/calendar_grid.py, core/tasks.py) do not contain the chart code itself — app.py only wires up DashboardTab lazily, and the calendar_grid GRANULARITIES tuple belongs to the Schedule tab — so no chart implementation body was actually shown. Confidence is medium because corroboration rests on the verified symbol lookups rather than inspected source.",
+ "evidence": [
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._refresh_chart",
+   "why": "Verified lookup shows the chart-redraw method for cycle/metric exists in the dashboard tab."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._on_gran_changed",
+   "why": "Verified lookup shows a granularity-change handler (week/month/year) exists on the dashboard."
+  },
+  {
+   "file": "ui/spline_chart.py",
+   "symbol": "",
+   "why": "Verified lookup confirms a dedicated spline chart module exists in this repository."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_dashboard",
+   "why": "Shows the Dashboard page is a real nav page built from DashboardTab, which hosts the chart."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "GRANULARITIES",
+   "why": "Defines week/month/year granularities but for the Schedule calendar view, so it is not evidence for the dashboard chart."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8800,
+  "output_tokens": 870,
+  "model": "claude-opus-5"
+ }
+}

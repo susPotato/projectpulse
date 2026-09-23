@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files concern model routing switch decisions (core/routing/switch_controller.py) and scheduled task execution, not Co4E workflow IF/Switch nodes or typed ports. core/task_executors.py confirms a Co4E node-graph runner exists (co4e.Workflow, co4e_runner.run_workflow), but nothing in the excerpts shows conditional branch nodes or port typing. The documentation excerpts cited are flagged as not describing this repository and concern agent-switch chat functions, which are unrelated.",
+ "evidence": [
+  {
+   "file": "core/routing/switch_controller.py",
+   "symbol": "decide",
+   "why": "The 'switch' code here is model-routing switch decisions, unrelated to workflow IF/Switch branching nodes."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Shows a Co4E node/edge workflow runner exists but contains no conditional-branch or typed-port logic."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10364,
+  "output_tokens": 432,
+  "model": "claude-opus-5"
+ }
+}

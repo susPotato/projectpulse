@@ -1,0 +1,13 @@
+{
+ "headline": "Core Platform covers the desktop application shell, configuration, shared application state and multi-language support; of the five tickets here, only the language-switching work was matched to code, while the other four could not be confirmed from what the analysis read.",
+ "what_is_there": "The analysis found working evidence of in-app language selection: a language picker in the top bar, a translation function, and a saved language preference that takes effect immediately without restarting. Everything else in this area — the desktop window shell with navigation and system tray, the JSON settings file with upgrade-on-load and environment overrides, and the shared application state with connection caching — was not matched to code that was examined.",
+ "what_is_unclear": "The analysis only looked at a keyword-selected slice of the codebase, so the four unconfirmed tickets are unsettled rather than shown to be missing; it did pick up a partial signal that the shared-state provider setup exists. For the language feature, the exact three locales claimed (English, Vietnamese, Japanese) were not visible, and the final ticket is a strategy task about merging fork changes upstream, which code cannot answer either way.",
+ "suggested_action": "Ask the owning engineer to point to where the application shell, settings file handling and shared state live so those three tickets can be checked directly, and confirm the upstreaming ticket separately as a process item rather than through code.",
+ "caveat": "",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 1188,
+  "output_tokens": 457,
+  "model": "claude-opus-5"
+ }
+}

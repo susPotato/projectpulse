@@ -1,0 +1,8 @@
+{
+ "headline": "The AI Edit area covers AI-assisted editing of documents and presentations plus image generation; three of its six items are backed by code we could read, and three could not be confirmed either way from the code that was examined.",
+ "what_is_there": "The code shows a working PowerPoint editing capability that opens a deck as an editable text document (covering text, position, size, images and fonts) and writes changes back, a general layer for pulling text, styling and structure out of documents including PDF and Office formats, and text-to-image generation against an image model service with DALL-E-style model selection.",
+ "what_is_unclear": "Excel file editing, the embedded office-document viewer and the AI file-preview feature were not settled — the code reviewed included Excel reading and template export and a link-preview helper, but not the specific editing, viewing or preview-generation components; the viewer is named in the project's own architecture notes but its implementation was never in view. This reflects the limits of the subset of code examined, not evidence the features are absent.",
+ "suggested_action": "Ask the team to point to where Excel editing, the document viewer and the AI preview generator live, or to demo them, so those three can be closed out.",
+ "caveat": "",
+ "confidence": "medium"
+}

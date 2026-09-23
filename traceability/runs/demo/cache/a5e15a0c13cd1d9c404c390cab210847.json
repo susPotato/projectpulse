@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/admin_agents.py implements exactly a role-based agent prompt catalog: a _KIND_PROMPTS map keyed by task kind (cowork, search, monitor, graphrag, schedule, security, help) with AdminAgent.effective_prompt() composing the kind base prompt plus the admin's extra instructions, plus persistence/listing helpers. The documentation lookup confirms ChatPanel.admin_agent_prompt exists in ui/chat_panel.py, tying these presets into the chat surface. The exact role set differs slightly from the ticket's 'cowork, code, admin' wording, but the capability described is clearly present; status 'Release it' matches built code.",
+ "evidence": [
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "_KIND_PROMPTS",
+   "why": "Defines per-role base system prompts (cowork, search, monitor, graphrag, schedule, security, help) injected for each agent."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent.effective_prompt",
+   "why": "Combines the role's base prompt with the admin-authored extra instructions, implementing role-based prompting."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "ensure_help_agent",
+   "why": "Seeds the built-in help agent preset, showing the catalog is wired into the running app rather than being a plan."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "agents_admin_dir",
+   "why": "Persists admin-owned agent presets to a shared or local folder so the catalog is selectable from the Cowork tab's agent picker."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7845,
+  "output_tokens": 729,
+  "model": "claude-opus-5"
+ }
+}

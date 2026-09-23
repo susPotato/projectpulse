@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ai_task_planner.py is a dedicated module that converts a natural-language description into scheduled task dicts via the active provider, with a JSON system prompt, JSON extraction, and normalization into real task objects. The presence of plan_tasks, normalize_planned_tasks, and the ✨ helper generators matches the ticket's AI task planning feature and its 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "plan_tasks",
+   "why": "Module docstring and symbol list show the planner turns a natural-language description into a preview list of tasks via the provider."
+  },
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "normalize_planned_tasks",
+   "why": "Converts the model's JSON reply into fully-defaulted task dicts, resolving TASK_n references into real ids and dependency chains."
+  },
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "_SYSTEM",
+   "why": "System prompt instructs the model to emit a strict JSON task schema with schedule, priority, input mode, and dependency fields."
+  }
+ ],
+ "status_conflict": false
+}

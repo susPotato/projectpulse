@@ -1,0 +1,8 @@
+{
+ "headline": "Platform Integrations covers seven connector and runtime features — Jira issue tracking, link previews, Java runtime detection, and the workflow/flows engine are backed by code we can see, while Git workspace operations, batch processing and Windows COM integration could not be confirmed from the code reviewed.",
+ "what_is_there": "The code shows a working read-only Jira connector (search, fetch an issue, plus a setup-and-test dialog), a URL preview feature with size limits and document handling, detection of an installed Java runtime so Java-based tooling can run, and a workflow layer that defines, seeds and saves multi-step flows.",
+ "what_is_unclear": "Three items — Git operations in the workspace, batch processing across multiple operations, and Windows COM integration — had no relevant code surface in the material examined, so the analysis could neither confirm nor rule them out. Two of the confirmed items are also narrower than their ticket wording suggests: the Java work is runtime detection rather than executing Java code, and only the definition side of the flows engine was visible, not the part that runs them.",
+ "suggested_action": "Ask the owning engineer to point to where Git workspace operations, batch processing and Windows COM live so those three can be checked, and confirm whether the Java ticket was always scoped to runtime detection.",
+ "caveat": "",
+ "confidence": "medium"
+}

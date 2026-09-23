@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/spline_chart.py implements a dependency-free Catmull-Rom smooth spline chart widget with area fill, grid labels, and reference lines, and dashboard_tab.py instantiates SplineChart for the token/cost-over-time metrics view. This matches the ticket's described feature and its 'Release it' status.",
+ "evidence": [
+  {
+   "file": "ui/spline_chart.py",
+   "symbol": "SplineChart",
+   "why": "QWidget that paints a smooth Catmull-Rom spline with area fill, y-grid, and endpoint value label."
+  },
+  {
+   "file": "ui/spline_chart.py",
+   "symbol": "_catmull_rom",
+   "why": "Converts points into a smooth cubic Bézier spline path, providing the 'smooth line' behavior."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab.__init__",
+   "why": "Creates `self.chart = SplineChart()` and adds it to the dashboard layout for token/cost metrics."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,11 @@
+{
+ "schema_version": 1,
+ "produced_by": "run",
+ "meta": {},
+ "payload": {
+  "project_id": "demo:mig",
+  "project_name": "mig",
+  "source": "../hackathon/projectpulse/data/upload_demo/mig_schedule.xlsx",
+  "tickets": 6
+ }
+}

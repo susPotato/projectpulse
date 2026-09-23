@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is an untyped project-management entry (\"Refactor code BE\") with no concrete technical claim — just PO/BA/developer names and a date. The retrieved files (a security rulebase markdown, an empty code-agent rules stub, and a sandbox YAML policy) have no bearing on any backend refactoring work and appear to have matched only on the word \"code\".",
+ "evidence": [
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "Section 22. Development Activity Blocking",
+   "why": "Matched on the keyword 'refactoring' in a security policy prohibition list, unrelated to any actual backend refactor task."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declarative sandbox policy with no connection to backend code refactoring."
+  },
+  {
+   "file": "assets/RULEforCode.md",
+   "symbol": "",
+   "why": "An intentionally empty placeholder rules file that says nothing about backend refactoring."
+  }
+ ],
+ "status_conflict": false
+}

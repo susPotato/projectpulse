@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/tls_trust.py implements exactly the described behaviour: per-host trust-on-first-use capture of self-signed certificates (capture_and_trust, trusted_cert_path) and an explicit CA bundle override that takes precedence and disables auto-pinning (verify_for, request's ca_bundle handling). The module is complete with error classification and a diagnostics helper, which is inconsistent with an \"In Progress\" status.",
+ "evidence": [
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "capture_and_trust",
+   "why": "Captures the server's presented certificate and writes it as a per-host PEM under a trusted_certs directory (TOFU auto-trust)."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "verify_for",
+   "why": "Configured CA bundle always wins over the pinned per-host certificate, implementing the CA bundle override."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "request",
+   "why": "Retries an HTTPS call once after pinning the certificate when a trust-chain SSLError occurs, and skips auto-trust when a CA bundle is set."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "looks_like_cert_trust_error",
+   "why": "Distinguishes recoverable trust-chain failures from other TLS errors, showing the feature is fully fleshed out."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 4791,
+  "output_tokens": 520,
+  "model": "claude-opus-5"
+ }
+}

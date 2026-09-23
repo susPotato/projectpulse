@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py defines a `_Toast` symbol and MainWindow calls `self.toast.show_message(...)` for finished/failed tasks, with an inline comment describing it as \"In-app popup at the top-left\". The auto-hide timing isn't visible in the shown excerpt, though QTimer is imported; the top-left in-app notification feature itself is clearly present, consistent with the Release status.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "_Toast",
+   "why": "A dedicated toast widget class exists in the module symbol list."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._notify_task",
+   "why": "Calls self.toast.show_message with a comment stating it is an in-app popup at the top-left, shown whether or not the window is focused."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._on_scheduled_task_done",
+   "why": "Uses self.toast.show_message for task-done/failed notifications alongside tray balloons."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 3416,
+  "output_tokens": 460,
+  "model": "claude-opus-5"
+ }
+}

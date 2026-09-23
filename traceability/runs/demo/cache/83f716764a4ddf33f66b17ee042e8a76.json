@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/code_agent.py imports `from . import agent_roles` and defines a `code_system_prompt` plus system-prompt injection helpers (`_apply_skills`, `_apply_security_rules`, `_apply_project_context`), and its docstring explicitly references `chat_agent.run_cowork` as the sibling cowork-mode agent loop — consistent with a role-based chat agent system. The cowork/admin role prompt files themselves are not in the shown subset, so the specific three-role breakdown is inferred rather than directly read. Status 'Release it' matches an implemented feature, so there is no status conflict.",
+ "evidence": [
+  {
+   "file": "core/code_agent.py",
+   "symbol": "run_code",
+   "why": "Implements the agent loop for the code role, driving a provider with tools and guardrails."
+  },
+  {
+   "file": "core/code_agent.py",
+   "symbol": "code_system_prompt",
+   "why": "A role-specific system prompt builder, showing prompts are specialised per agent role."
+  },
+  {
+   "file": "core/code_agent.py",
+   "symbol": "_apply_security_rules",
+   "why": "Injects mandatory guardrail system messages into the agent's message list, and references the parallel `chat_agent.run_cowork` cowork-mode entry point."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Policy flag `block_code_generation_in_cowork_mode` confirms distinct cowork vs code agent modes exist in the system."
+  }
+ ],
+ "status_conflict": false
+}

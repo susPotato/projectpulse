@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrievable, so there is nothing to compare against the ticket. The ticket itself is also a vague administrative entry ('Update UI/UX') with no verifiable technical claim.",
+ "evidence": [],
+ "status_conflict": false
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only notification-related file shown is core/outlook_notify.py, a low-level helper that sends a single email through the local Outlook COM app; it contains no event model, no routing/dispatch logic, and no channel selection. The other candidate (skill_library/03-build-implementation.skill) is a generic process document unrelated to notifications. Nothing here confirms or refutes the existence of an event-driven notification routing layer.",
+ "evidence": [
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "send_via_outlook",
+   "why": "Implements a single outbound email transport with no event or routing abstraction, so it is at most one channel of the claimed feature."
+  },
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "available",
+   "why": "Only checks pywin32 availability; no dispatcher or event subscription mechanism is present."
+  },
+  {
+   "file": "skill_library/03-build-implementation.skill",
+   "symbol": "",
+   "why": "Generic tech-lead process skill document with no bearing on notification routing."
+  }
+ ],
+ "status_conflict": false
+}

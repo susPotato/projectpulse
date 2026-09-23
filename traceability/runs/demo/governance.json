@@ -1,0 +1,2067 @@
+{
+ "schema_version": 1,
+ "produced_by": "governance",
+ "meta": {
+  "source": "../Jira Cowork Local_0913.xlsx",
+  "sheet": "general_report",
+  "done_status": [
+   "Closed",
+   "Done",
+   "Release it"
+  ]
+ },
+ "payload": {
+  "tasks": [
+   {
+    "key": "COWORKLOCAL-14",
+    "summary": "[Planning Task] Conduct Start up baseline",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [
+     {
+      "n": 1,
+      "text": "Perform the baseline according to the CI Baseline procedure defined in the CM Plan.",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 2,
+      "text": "All information describing the current status of CIs and CI revisions will be recorded in Sheet Baseline Report of CM report.",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 3,
+      "text": "Start-up baseline must be conducted within 10 working days after WO 1.0 is approved.",
+      "owner": "",
+      "involves": [],
+      "sla": "10 working days",
+      "contacts": []
+     },
+     {
+      "n": 4,
+      "text": "An information CI is considered to be baselined when it is in any state in which others can use it. - Document CIs are baselined after the first version is reviewed and approved for release. - Source CIs are baselined after the first version reviewed and unit tested - Customer supplied CIs are baselined at the first time they are received by the project.",
+      "owner": "",
+      "involves": [
+       "Customer"
+      ],
+      "sla": "",
+      "contacts": []
+     }
+    ],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [
+     "CI Baseline",
+     "CM Plan",
+     "CM report",
+     "Perform the baseline",
+     "Sheet Baseline",
+     "Start-up baseline"
+    ],
+    "systems": [],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-15",
+    "summary": "[Planning Task] Develop Project Plan (PP) (*)",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [
+     {
+      "n": 2,
+      "text": "Review the PP with project team and relevant stakeholder to obtain commitments on the PP. Resolve conflict, if any",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 3,
+      "text": "Obtain final review and approvals required for the PP from the people as defined in FSOFT RADIO",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 4,
+      "text": "Record Project Planning data & information on FI2.0 PM inform criteria for determining project contribution rate.",
+      "owner": "",
+      "involves": [
+       "PM"
+      ],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 5,
+      "text": "PM confirms implementation of the obligations.",
+      "owner": "PM",
+      "involves": [
+       "PM"
+      ],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 6,
+      "text": "All review and approval activities will be recorded directly in FI2.0 where user can see historical change.",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     }
+    ],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [
+     "Project plan"
+    ],
+    "systems": [
+     "FI2.0"
+    ],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-13",
+    "summary": "[Planning Task] Develop Detail Schedule",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [
+     {
+      "n": 1,
+      "text": "Convert the project's requirement into work items (Epic => Story/Task/Enabler => Sub-task)",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 2,
+      "text": "Assign work items to members, with corresponding timeline & effort You can input work items one by one, or you can import the list of work items as guided HERE",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     }
+    ],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-16",
+    "summary": "[Planning Task] Define Project Productivity",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [
+     {
+      "n": 1,
+      "text": "Define Project Productivity/ Scopes productivity objective in FI2.0.",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 2,
+      "text": "Get approval by FSU delivery head within 10 WDs (7 WDs- Very short project) from the Project Planned Start Date",
+      "owner": "",
+      "involves": [],
+      "sla": "10 wds",
+      "contacts": []
+     },
+     {
+      "n": 3,
+      "text": "Define frequency to measure productivity in Project Plan. Frequency is weekly (recommended) or not longer than milestone periods (mandatory).",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     }
+    ],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [
+     "Project Plan"
+    ],
+    "systems": [
+     "FI2.0"
+    ],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-12",
+    "summary": "[Planning Task] Hold Project KickOff Meeting",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [
+     {
+      "n": 1,
+      "text": "Prepare kick-off meeting agenda and presentation.",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 2,
+      "text": "PM share critical obligations of contract, NDA:+ Have contract, NDA before kick-off meeting: PM share in the kick-off meeting or within 25wds from the project started date.+ Haven't enough contract, NDA before kick-off meeting: conduct the sharing contract meeting within 10wds from receiving contract's obligations+ Sharing content: All obligations PM are transferred on FCMS, especially critical obligations",
+      "owner": "PM",
+      "involves": [
+       "PM"
+      ],
+      "sla": "25 wds",
+      "contacts": []
+     },
+     {
+      "n": 3,
+      "text": "Schedule kick-off meeting.",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 4,
+      "text": "Conduct kick-off meeting. Required participants are : - Senior Manager/Operation Manager, PM, PTL, QA - Attendance of higher managment ( HO representative, FSU OM, BU OM) : For fixed price project, base on the scale, higher managment joins meeting as bellow: a. TCV >= 500.000$: HO Prepresentative b. TCV in range of 200,000 USD ~ 500,000 USD : FSU OM c. TCV < 200,000 USD: BU OM In case higher management has already attended BeGreen meeting, attending Kick off meeting is a nice to have activity",
+      "owner": "",
+      "involves": [
+       "Senior Manager",
+       "Operation Manager",
+       "PM",
+       "PTL",
+       "QA",
+       "FSU OM",
+       "BU OM"
+      ],
+      "sla": "",
+      "contacts": []
+     }
+    ],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [
+     "a meeting"
+    ],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-17",
+    "summary": "[Planning Task] Develop Project Charter (*)",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [
+     {
+      "n": 1,
+      "text": "Complete the information required in Project Charter on FI2.0, include Project Productivity target approved by FSU delivery head",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 2,
+      "text": "Obtain final review and approvals required for the Project Charter & its associates (Project Estimation, Project Schedule, Project Resource, Project Risk & opportunity) from the people as defined in FSOFT RADIO",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 3,
+      "text": "All review and approval activities will be recorded directly in FI2.0 where user can see historical change.",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     }
+    ],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [
+     "Project Charter",
+     "Project Schedule"
+    ],
+    "systems": [
+     "FI2.0"
+    ],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-11",
+    "summary": "[Planning Task] Hold PrePlanning Meeting",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [
+     "a meeting"
+    ],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-4",
+    "summary": "[Planning Task] Equip Facilities",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-5",
+    "summary": "[Planning Task] Define OSS",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-8",
+    "summary": "[Planning Task] Define Project Config",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [
+     "FI2.0"
+    ],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-7",
+    "summary": "[Planning Task] Request CI/CD",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [
+     "Akawork"
+    ],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-3",
+    "summary": "[Planning Task] Develop CM Plan",
+    "status": "To Do",
+    "assignee": "Hoach Bach Van",
+    "steps": [
+     {
+      "n": 1,
+      "text": "PM assigns a member to play the role of CC for the project. If the project needs specific IT skill (such as installation, config setting, project server management,...), CC needs to be verified by IT.",
+      "owner": "PM",
+      "involves": [
+       "PM",
+       "CC",
+       "IT"
+      ],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 2,
+      "text": "CC completes CM Plan and sends for review and approval following Fsoft RADIO for Project. Send requests to IT/ISM for CM Plan review: - Review Email: CMP.Review@fpt.com - Email subject: [Project code] – Request review CM Plan - Attach the latest version of the CM Plan - Resolved time follows the IT/ISM SLA: 3 working days",
+      "owner": "CC",
+      "involves": [
+       "CC",
+       "IT",
+       "ISM"
+      ],
+      "sla": "3 working days",
+      "contacts": [
+       "CMP.Review@fpt.com"
+      ]
+     },
+     {
+      "n": 3,
+      "text": "If the project has any requests for equipment, connection, environment,… assigned member (maybe CC, PTL or PM) sends call-log to related units for support (such as to IT for connection, to Admin for equipment, ISM for security, ...).",
+      "owner": "",
+      "involves": [
+       "CC",
+       "PTL",
+       "PM",
+       "IT",
+       "Admin",
+       "ISM"
+      ],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 4,
+      "text": "CM Plan include customer requirements related to security, environment, compliance, and other relevant aspects of the project.",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     }
+    ],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [
+     "CM Plan"
+    ],
+    "systems": [],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'To Do' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-9",
+    "summary": "[Planning Task] Request Infra",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-10",
+    "summary": "[Planning Task] Study Input Document",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [
+     {
+      "n": 1,
+      "text": "Collect project documents (NDA, proposal, customer requirement specification...) from AM, SM",
+      "owner": "",
+      "involves": [
+       "AM",
+       "SM"
+      ],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 2,
+      "text": "Upload documents to project repository",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 3,
+      "text": "PM studies obligations on FCMS tool and related documents. plan",
+      "owner": "PM",
+      "involves": [
+       "PM"
+      ],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 4,
+      "text": "PM and team review the contract and related documents to ensure all requirements are understood and reflected in Project. With security requirements in the contract and NDA, PM needs reflect in the project plan, ISM Department needs to review",
+      "owner": "PM",
+      "involves": [
+       "PM",
+       "ISM"
+      ],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 5,
+      "text": "Validate Project & Deliverable Acceptance Criteria defined in the Contract",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     },
+     {
+      "n": 6,
+      "text": "Confirm the acceptance criteria with the customer",
+      "owner": "",
+      "involves": [],
+      "sla": "",
+      "contacts": []
+     }
+    ],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-6",
+    "summary": "[Planning Task] Define ISMS Keyword",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [
+     "ISMS keyword tool"
+    ],
+    "urls": [
+     "https://insight.fsoft.com.vn/jira3/secure/ismsKeywordManagement.jspa"
+    ],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-2",
+    "summary": "[Planning Task] Resource Allocation",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [
+     "Allocation list"
+    ],
+    "systems": [
+     "FI2.0"
+    ],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   },
+   {
+    "key": "COWORKLOCAL-1",
+    "summary": "Management",
+    "status": "In Progress",
+    "assignee": "Hoach Bach Van",
+    "steps": [],
+    "acceptance": [
+     {
+      "n": 1,
+      "label": "Trừ điểm (logwork và defect và size)",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 2,
+      "label": "PCV data 0/ 50",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 3,
+      "label": ">=3 Round",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 4,
+      "label": "KPI Input",
+      "options": [
+       "yes",
+       "no",
+       "na"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 5,
+      "label": "Estimation",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 6,
+      "label": "Case study project",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 7,
+      "label": "Cắt quyền server dự án",
+      "options": [
+       "yes",
+       "no"
+      ],
+      "answer": "",
+      "answered": false
+     },
+     {
+      "n": 8,
+      "label": "CSS excel",
+      "options": [
+       "Yes_Compliant",
+       "Yes_Non-Compliant"
+      ],
+      "answer": "",
+      "answered": false
+     }
+    ],
+    "deliverables": [],
+    "systems": [],
+    "urls": [],
+    "verdict": "not-claimed-done",
+    "resolved": [],
+    "why": "status 'In Progress' is not a finished state"
+   }
+  ],
+  "counts": {
+   "not-claimed-done": 17
+  },
+  "checkable": 0,
+  "n_steps": 31,
+  "by_owner": {
+   "PM": 5,
+   "CC": 1
+  },
+  "delegation": {
+   "assignees": {
+    "Hoach Bach Van": 17
+   },
+   "roles_named": [
+    "AM",
+    "Admin",
+    "BU OM",
+    "CC",
+    "Customer",
+    "FSU OM",
+    "ISM",
+    "IT",
+    "Operation Manager",
+    "PM",
+    "PTL",
+    "QA",
+    "SM",
+    "Senior Manager"
+   ],
+   "single_assignee": true
+  },
+  "acceptance_open": {
+   "asked": 136,
+   "unanswered": 136,
+   "tickets": 17,
+   "questions": [
+    "Trừ điểm (logwork và defect và size)",
+    "PCV data 0/ 50",
+    ">=3 Round",
+    "KPI Input",
+    "Estimation",
+    "Case study project",
+    "Cắt quyền server dự án",
+    "CSS excel"
+   ]
+  },
+  "commitments": [
+   {
+    "key": "COWORKLOCAL-14",
+    "n": 3,
+    "owner": "",
+    "sla": "10 working days",
+    "text": "Start-up baseline must be conducted within 10 working days after WO 1.0 is approved.",
+    "contacts": []
+   },
+   {
+    "key": "COWORKLOCAL-16",
+    "n": 2,
+    "owner": "",
+    "sla": "10 wds",
+    "text": "Get approval by FSU delivery head within 10 WDs (7 WDs- Very short project) from the Project Planned Start Date",
+    "contacts": []
+   },
+   {
+    "key": "COWORKLOCAL-12",
+    "n": 2,
+    "owner": "PM",
+    "sla": "25 wds",
+    "text": "PM share critical obligations of contract, NDA:+ Have contract, NDA before kick-off meeting: PM share in the kick-off meeting or within 25wds from the project started date.+ Haven't enough contract, NDA before kick-off meeting: conduct the sharing contract meeting within 10wds from receiving contract's obligations+ Sharing content: All obligations PM are transferred on FCMS, especially critical obligations",
+    "contacts": []
+   },
+   {
+    "key": "COWORKLOCAL-3",
+    "n": 2,
+    "owner": "CC",
+    "sla": "3 working days",
+    "text": "CC completes CM Plan and sends for review and approval following Fsoft RADIO for Project. Send requests to IT/ISM for CM Plan review: - Review Email: CMP.Review@fpt.com - Email subject: [Project code] – Request review CM Plan - Attach the latest version of the CM Plan - Resolved time follows the IT/ISM SLA: 3 working days",
+    "contacts": [
+     "CMP.Review@fpt.com"
+    ]
+   }
+  ],
+  "docs_seen": 107
+ }
+}

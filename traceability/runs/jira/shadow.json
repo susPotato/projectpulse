@@ -1,0 +1,48 @@
+{
+ "schema_version": 1,
+ "produced_by": "shadow",
+ "meta": {
+  "inputs": {
+   "candidates": "e386427eeb0719bf",
+   "corpus": "0e641b2bc359095d",
+   "verdicts": "29e2bb2cd0cb0cc1"
+  }
+ },
+ "payload": {
+  "counts": {
+   "eligible_files": 156,
+   "cited": 81,
+   "retrieved_only": 66,
+   "unclaimed": 9
+  },
+  "groups": [
+   {
+    "directory": "core",
+    "n_symbols": 18,
+    "files": [
+     "core/groups.py",
+     "core/win_job.py",
+     "core/agent_roles.py"
+    ]
+   },
+   {
+    "directory": "core/routing",
+    "n_symbols": 18,
+    "files": [
+     "core/routing/selector.py",
+     "core/routing/orchestrator.py",
+     "core/routing/scorer.py",
+     "core/routing/classifier.py"
+    ]
+   },
+   {
+    "directory": "ui",
+    "n_symbols": 4,
+    "files": [
+     "ui/osutil.py"
+    ]
+   }
+  ],
+  "described": null
+ }
+}

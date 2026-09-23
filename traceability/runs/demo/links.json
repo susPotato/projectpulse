@@ -1,0 +1,1942 @@
+{
+ "schema_version": 1,
+ "produced_by": "links",
+ "meta": {
+  "tickets_with_cited_code": 78,
+  "hub_files_excluded": 5,
+  "hub_reasons": {
+   "app.py": "implicated in 14 tickets (bar 7)",
+   "config.py": "implicated in 14 tickets (bar 7)",
+   "i18n.py": "imported by 37 files (bar 25)",
+   "ui/icons.py": "imported by 35 files (bar 25)",
+   "ui/widgets.py": "imported by 29 files (bar 25)"
+  },
+  "links": 188,
+  "depends_on": 141,
+  "shares_code": 47,
+  "high_confidence": 115,
+  "inputs": {
+   "corpus": "e6efcfbae0cbd378",
+   "tickets": "99f10489902c8ed2",
+   "verdicts": "3029506211b50451"
+  }
+ },
+ "payload": [
+  {
+   "src": "T0060",
+   "dst": "T0062",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_canvas.py -> core/co4e.py",
+    "ui/co4e_tab.py -> core/co4e.py"
+   ],
+   "weight": 39
+  },
+  {
+   "src": "T0060",
+   "dst": "T0069",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_canvas.py -> core/co4e.py",
+    "ui/co4e_tab.py -> core/co4e.py"
+   ],
+   "weight": 39
+  },
+  {
+   "src": "T0090",
+   "dst": "T0060",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_tab.py -> ui/co4e_canvas.py"
+   ],
+   "weight": 23
+  },
+  {
+   "src": "T0045",
+   "dst": "T0048",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/task_scheduler.py -> core/tasks.py"
+   ],
+   "weight": 21
+  },
+  {
+   "src": "T0056",
+   "dst": "T0048",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/task_import.py -> core/tasks.py",
+    "ui/schedule_task_tab.py -> core/tasks.py"
+   ],
+   "weight": 20
+  },
+  {
+   "src": "T0054",
+   "dst": "T0048",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py -> core/tasks.py"
+   ],
+   "weight": 17
+  },
+  {
+   "src": "T0028",
+   "dst": "T0074",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/chat_agent.py -> core/agent_security.py",
+    "ui/chat_panel.py -> core/agent_security.py",
+    "ui/chat_panel.py -> state.py",
+    "ui/chat_panel.py -> ui/permission_dialog.py"
+   ],
+   "weight": 13
+  },
+  {
+   "src": "T0047",
+   "dst": "T0048",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/task_editor_dialog.py -> core/tasks.py"
+   ],
+   "weight": 9
+  },
+  {
+   "src": "T0132",
+   "dst": "T0074",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/chat_panel.py -> core/agent_security.py",
+    "ui/chat_panel.py -> state.py",
+    "ui/chat_panel.py -> ui/permission_dialog.py"
+   ],
+   "weight": 9
+  },
+  {
+   "src": "T0028",
+   "dst": "T0075",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/chat_agent.py -> core/agent_security.py",
+    "ui/chat_panel.py -> core/agent_security.py",
+    "ui/chat_panel.py -> core/agent_security_alert.py"
+   ],
+   "weight": 7
+  },
+  {
+   "src": "T0028",
+   "dst": "T0132",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/chat_agent.py -> core/permissions.py",
+    "ui/chat_panel.py -> core/worker.py",
+    "ui/chat_panel.py -> ui/permission_dialog.py"
+   ],
+   "weight": 7
+  },
+  {
+   "src": "T0066",
+   "dst": "T0013",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/usage_tracker.py",
+    "core/task_executors.py -> core/usage_tracker.py"
+   ],
+   "weight": 6
+  },
+  {
+   "src": "T0066",
+   "dst": "T0017",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/usage_tracker.py",
+    "core/task_executors.py -> core/usage_tracker.py"
+   ],
+   "weight": 6
+  },
+  {
+   "src": "T0066",
+   "dst": "T0041",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/doc_extract.py",
+    "core/task_executors.py -> core/doc_extract.py"
+   ],
+   "weight": 6
+  },
+  {
+   "src": "T0066",
+   "dst": "T0074",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> state.py",
+    "core/task_executors.py -> core/agent_security.py",
+    "core/task_executors.py -> state.py"
+   ],
+   "weight": 6
+  },
+  {
+   "src": "T0066",
+   "dst": "T0132",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/permissions.py",
+    "core/task_executors.py -> core/permissions.py"
+   ],
+   "weight": 6
+  },
+  {
+   "src": "T0060",
+   "dst": "T0112",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_tab.py -> core/skills.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0090",
+   "dst": "T0112",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_tab.py -> core/skills.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0124",
+   "dst": "T0062",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_builtins.py -> core/co4e.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0124",
+   "dst": "T0069",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_builtins.py -> core/co4e.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0028",
+   "dst": "T0013",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/chat_agent.py -> core/context_budget.py",
+    "ui/chat_panel.py -> core/usage_tracker.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0028",
+   "dst": "T0024",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/chat_panel.py -> core/history.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0028",
+   "dst": "T0041",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/chat_panel.py -> core/doc_extract.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0051",
+   "dst": "T0074",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/sandbox_manager.py -> core/appcontainer_sandbox.py",
+    "core/sandbox_manager.py -> core/integrity_sandbox.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0051",
+   "dst": "T0093",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/sandbox_manager.py -> core/appcontainer_sandbox.py",
+    "core/sandbox_manager.py -> core/integrity_sandbox.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0059",
+   "dst": "T0074",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/task_executors.py -> core/agent_security.py",
+    "core/task_executors.py -> state.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0062",
+   "dst": "T0074",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/task_executors.py -> core/agent_security.py",
+    "core/task_executors.py -> state.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0070",
+   "dst": "T0041",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/doc_extract.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0090",
+   "dst": "T0132",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/deps.py -> core/permissions.py",
+    "ui/co4e_tab.py -> core/worker.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0129",
+   "dst": "T0074",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/routing_toggle.py -> state.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0132",
+   "dst": "T0024",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/chat_panel.py -> core/history.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0132",
+   "dst": "T0041",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/chat_panel.py -> core/doc_extract.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0021",
+   "dst": "T0132",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_run_manager.py -> core/worker.py",
+    "ui/workspace_tab.py -> ui/chat_panel.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0028",
+   "dst": "T0012",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/chat_panel.py -> core/model_pricing.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0040",
+   "dst": "T0120",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/link_fetch.py -> core/jira_tool.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0048",
+   "dst": "T0041",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/tasks.py -> core/doc_extract.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0054",
+   "dst": "T0047",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py -> ui/task_editor_dialog.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0056",
+   "dst": "T0047",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py -> ui/task_editor_dialog.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0066",
+   "dst": "T0028",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/chat_agent.py",
+    "core/task_executors.py -> core/chat_agent.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0066",
+   "dst": "T0031",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/chat_agent.py",
+    "core/task_executors.py -> core/chat_agent.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0066",
+   "dst": "T0037",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/chat_agent.py",
+    "core/task_executors.py -> core/chat_agent.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0085",
+   "dst": "T0120",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/ext_connectors.py -> core/tools.py",
+    "ui/connectors_panel.py -> core/jira_tool.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0109",
+   "dst": "T0091",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/teams.py -> core/tls_trust.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0115",
+   "dst": "T0132",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/structure_graph_view.py -> core/worker.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0120",
+   "dst": "T0051",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/tools.py -> core/sandbox_manager.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0123",
+   "dst": "T0120",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/link_fetch.py -> core/jira_tool.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0015",
+   "dst": "T0130",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "ui/dashboard_tab.py",
+    "ui/spline_chart.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0023",
+   "dst": "T0115",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/d3_graph.py",
+    "assets/graph_template.html"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0023",
+   "dst": "T0117",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/d3_graph.py",
+    "assets/graph_template.html"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0039",
+   "dst": "T0090",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/doc_style_extract.py -> core/deps.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0041",
+   "dst": "T0120",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/doc_extract.py -> core/jira_tool.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0047",
+   "dst": "T0074",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/task_editor_dialog.py -> state.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0047",
+   "dst": "T0112",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/task_editor_dialog.py -> core/skills.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0051",
+   "dst": "T0090",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/sandbox_manager.py -> core/deps.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0060",
+   "dst": "T0120",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_tab.py -> core/jira_tool.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0060",
+   "dst": "T0129",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_tab.py -> ui/routing_toggle.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0075",
+   "dst": "T0094",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/agent_security.py -> core/security_rules.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0075",
+   "dst": "T0095",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/agent_security.py -> core/audit_log.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0078",
+   "dst": "T0102",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/admin_agents.py",
+    "ui/agents_admin_tab.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0087",
+   "dst": "T0093",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/appcontainer_sandbox.py",
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0090",
+   "dst": "T0089",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/deps.py -> core/resource_limits.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0090",
+   "dst": "T0120",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_tab.py -> core/jira_tool.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0090",
+   "dst": "T0129",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_tab.py -> ui/routing_toggle.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0095",
+   "dst": "T0107",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/telemetry_shared.py",
+    "security/audit_logger.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0115",
+   "dst": "T0117",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/d3_graph.py",
+    "assets/graph_template.html"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0009",
+   "dst": "T0013",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "providers/anthropic.py -> core/usage_tracker.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0009",
+   "dst": "T0017",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "providers/anthropic.py -> core/usage_tracker.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0012",
+   "dst": "T0120",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/routing/prober.py -> core/jira_tool.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0013",
+   "dst": "T0012",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/usage_tracker.py -> core/model_pricing.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0013",
+   "dst": "T0017",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/usage_tracker.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0013",
+   "dst": "T0017",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/context_budget.py -> core/usage_tracker.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0013",
+   "dst": "T0095",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/usage_tracker.py -> core/audit_log.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0015",
+   "dst": "T0048",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/calendar_grid.py -> core/tasks.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0015",
+   "dst": "T0057",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/calendar_grid.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0017",
+   "dst": "T0012",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/usage_tracker.py -> core/model_pricing.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0017",
+   "dst": "T0095",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/usage_tracker.py -> core/audit_log.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0021",
+   "dst": "T0024",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/workspace_tab.py -> core/history.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0021",
+   "dst": "T0060",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/workspace_tab.py -> ui/co4e_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0021",
+   "dst": "T0115",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/workspace_tab.py -> ui/structure_graph_view.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0031",
+   "dst": "T0037",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/chat_agent.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0039",
+   "dst": "T0040",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/pptx_edit.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0040",
+   "dst": "T0041",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/link_fetch.py -> core/doc_extract.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0040",
+   "dst": "T0091",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/link_fetch.py -> core/tls_trust.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0040",
+   "dst": "T0123",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/link_fetch.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0042",
+   "dst": "T0091",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/image_gen.py -> core/tls_trust.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0045",
+   "dst": "T0109",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/task_scheduler.py -> core/teams.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0045",
+   "dst": "T0110",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/task_scheduler.py -> core/outlook_notify.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0047",
+   "dst": "T0058",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/task_editor_dialog.py -> core/ai_task_planner.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0047",
+   "dst": "T0062",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/task_editor_dialog.py -> core/co4e.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0047",
+   "dst": "T0069",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/task_editor_dialog.py -> core/co4e.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0048",
+   "dst": "T0040",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/tasks.py -> core/link_fetch.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0048",
+   "dst": "T0123",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/tasks.py -> core/link_fetch.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0054",
+   "dst": "T0045",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py -> core/task_scheduler.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0054",
+   "dst": "T0056",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0054",
+   "dst": "T0058",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py -> core/ai_task_planner.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0056",
+   "dst": "T0045",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py -> core/task_scheduler.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0056",
+   "dst": "T0058",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/schedule_task_tab.py -> core/ai_task_planner.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0059",
+   "dst": "T0062",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/task_executors.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0060",
+   "dst": "T0012",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_tab.py -> core/model_pricing.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0062",
+   "dst": "T0069",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/co4e.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0070",
+   "dst": "T0012",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/co4e_runner.py -> core/model_pricing.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0075",
+   "dst": "T0110",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/agent_security_alert.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0080",
+   "dst": "T0004",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/help_agent_widget.py -> theme.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0084",
+   "dst": "T0085",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/ext_connectors.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0084",
+   "dst": "T0086",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/ext_connectors.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0085",
+   "dst": "T0086",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "core/ext_connectors.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0085",
+   "dst": "T0138",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/connectors_panel.py -> paths.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0098",
+   "dst": "T0101",
+   "kind": "shares-code",
+   "confidence": "high",
+   "via": [
+    "ui/co4e_config_panel.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0112",
+   "dst": "T0039",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/skills.py -> core/doc_style_extract.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0112",
+   "dst": "T0041",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/skills.py -> core/doc_extract.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0115",
+   "dst": "T0012",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/structure_graph_view.py -> core/model_pricing.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0115",
+   "dst": "T0024",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/structure_graph_view.py -> core/history.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0115",
+   "dst": "T0112",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/structure_graph_view.py -> core/skills.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0115",
+   "dst": "T0119",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "ui/structure_graph_view.py -> core/codebase_memory.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0123",
+   "dst": "T0091",
+   "kind": "depends-on",
+   "confidence": "high",
+   "via": [
+    "core/link_fetch.py -> core/tls_trust.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0070",
+   "dst": "T0013",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_runner.py -> core/usage_tracker.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0070",
+   "dst": "T0017",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_runner.py -> core/usage_tracker.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0031",
+   "dst": "T0075",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/agent_security.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0037",
+   "dst": "T0075",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/agent_security.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0080",
+   "dst": "T0072",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "ui/help_agent_widget.py -> core/admin_agents.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0080",
+   "dst": "T0077",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "ui/help_agent_widget.py -> core/admin_agents.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0080",
+   "dst": "T0078",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "ui/help_agent_widget.py -> core/admin_agents.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0080",
+   "dst": "T0102",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "ui/help_agent_widget.py -> core/admin_agents.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0080",
+   "dst": "T0104",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "ui/help_agent_widget.py -> core/admin_agents.py"
+   ],
+   "weight": 4
+  },
+  {
+   "src": "T0045",
+   "dst": "T0059",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/task_scheduler.py -> core/task_executors.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0045",
+   "dst": "T0062",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/task_scheduler.py -> core/task_executors.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0015",
+   "dst": "T0012",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py -> core/model_pricing.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0031",
+   "dst": "T0094",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/security_rules.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0037",
+   "dst": "T0094",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/security_rules.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0051",
+   "dst": "T0087",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/sandbox_manager.py -> core/appcontainer_sandbox.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0059",
+   "dst": "T0024",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/task_executors.py -> core/history.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0059",
+   "dst": "T0075",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/task_executors.py -> core/agent_security.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0062",
+   "dst": "T0024",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/task_executors.py -> core/history.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0070",
+   "dst": "T0031",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_runner.py -> core/chat_agent.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0070",
+   "dst": "T0037",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_runner.py -> core/chat_agent.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0075",
+   "dst": "T0110",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/agent_security.py -> core/agent_security_alert.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0084",
+   "dst": "T0091",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/ext_connectors.py -> core/tls_trust.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0085",
+   "dst": "T0091",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/ext_connectors.py -> core/tls_trust.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0086",
+   "dst": "T0091",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/ext_connectors.py -> core/tls_trust.py"
+   ],
+   "weight": 2
+  },
+  {
+   "src": "T0015",
+   "dst": "T0018",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0015",
+   "dst": "T0019",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0018",
+   "dst": "T0019",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0018",
+   "dst": "T0130",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0019",
+   "dst": "T0130",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "ui/dashboard_tab.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0021",
+   "dst": "T0051",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0021",
+   "dst": "T0064",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0021",
+   "dst": "T0067",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0023",
+   "dst": "T0094",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "assets/RULEBASE.md"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0023",
+   "dst": "T0158",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "assets/RULEBASE.md"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0031",
+   "dst": "T0095",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/audit_log.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0031",
+   "dst": "T0112",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/skills.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0031",
+   "dst": "T0122",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/java_runtime.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0037",
+   "dst": "T0095",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/audit_log.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0037",
+   "dst": "T0112",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/skills.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0037",
+   "dst": "T0122",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/chat_agent.py -> core/java_runtime.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0051",
+   "dst": "T0064",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0051",
+   "dst": "T0067",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0059",
+   "dst": "T0017",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/task_executors.py -> core/usage_tracker.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0059",
+   "dst": "T0069",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/task_executors.py -> core/co4e.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0059",
+   "dst": "T0070",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/task_executors.py -> core/co4e_runner.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0064",
+   "dst": "T0067",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/co4e_run_manager.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0069",
+   "dst": "T0072",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/custom_agents.py -> core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0069",
+   "dst": "T0077",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/custom_agents.py -> core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0069",
+   "dst": "T0078",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/custom_agents.py -> core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0072",
+   "dst": "T0077",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0072",
+   "dst": "T0078",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0072",
+   "dst": "T0080",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0072",
+   "dst": "T0102",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0072",
+   "dst": "T0104",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0077",
+   "dst": "T0078",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0077",
+   "dst": "T0080",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0077",
+   "dst": "T0102",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0077",
+   "dst": "T0104",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0078",
+   "dst": "T0104",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0084",
+   "dst": "T0095",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/ext_connectors.py -> core/audit_log.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0085",
+   "dst": "T0095",
+   "kind": "depends-on",
+   "confidence": "medium",
+   "via": [
+    "core/ext_connectors.py -> core/audit_log.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0087",
+   "dst": "T0089",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0089",
+   "dst": "T0093",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "config/security_sandbox.yaml"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0094",
+   "dst": "T0158",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "assets/RULEBASE.md"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0102",
+   "dst": "T0104",
+   "kind": "shares-code",
+   "confidence": "medium",
+   "via": [
+    "core/admin_agents.py"
+   ],
+   "weight": 1
+  },
+  {
+   "src": "T0078",
+   "dst": "T0072",
+   "kind": "depends-on",
+   "confidence": "low",
+   "via": [
+    "ui/agents_admin_tab.py -> core/admin_agents.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0078",
+   "dst": "T0077",
+   "kind": "depends-on",
+   "confidence": "low",
+   "via": [
+    "ui/agents_admin_tab.py -> core/admin_agents.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0102",
+   "dst": "T0104",
+   "kind": "depends-on",
+   "confidence": "low",
+   "via": [
+    "ui/agents_admin_tab.py -> core/admin_agents.py"
+   ],
+   "weight": 5
+  },
+  {
+   "src": "T0015",
+   "dst": "T0130",
+   "kind": "depends-on",
+   "confidence": "low",
+   "via": [
+    "ui/dashboard_tab.py -> ui/spline_chart.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0018",
+   "dst": "T0015",
+   "kind": "depends-on",
+   "confidence": "low",
+   "via": [
+    "ui/dashboard_tab.py -> ui/spline_chart.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0018",
+   "dst": "T0130",
+   "kind": "depends-on",
+   "confidence": "low",
+   "via": [
+    "ui/dashboard_tab.py -> ui/spline_chart.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0019",
+   "dst": "T0130",
+   "kind": "depends-on",
+   "confidence": "low",
+   "via": [
+    "ui/dashboard_tab.py -> ui/spline_chart.py"
+   ],
+   "weight": 3
+  },
+  {
+   "src": "T0021",
+   "dst": "T0070",
+   "kind": "depends-on",
+   "confidence": "low",
+   "via": [
+    "core/co4e_run_manager.py -> core/co4e_runner.py"
+   ],
+   "weight": 1
+  }
+ ]
+}

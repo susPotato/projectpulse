@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The retrieved files only show that a DashboardTab exists and is lazily constructed (app.py::_build_dashboard) and that a pricing/cost engine feeds \"the Dashboard chart\" (core/model_pricing.py::sync_to_usage). None of the shown code contains the stat-card widgets or the total/input/output/cache token and per-bucket cost aggregation the ticket describes; ui/dashboard_tab.py was not provided.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_dashboard",
+   "why": "Shows a DashboardTab is constructed and wired into the shell, but reveals nothing about stat cards or token/cost metrics."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "sync_to_usage",
+   "why": "Comments state per-model USD rates feed the Dashboard chart's token-cost totals, implying cost display exists but not showing the stat cards themselves."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox policy configuration, unrelated to the dashboard ticket."
+  }
+ ],
+ "status_conflict": false
+}

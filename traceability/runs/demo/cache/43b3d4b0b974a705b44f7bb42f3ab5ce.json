@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/admin_agents.py implements a full agent-preset catalog: an AdminAgent dataclass with a name, task_kind, free-text `prompt` of extra instructions, provider/model pinning, plus new/save/load/list/delete helpers and effective_prompt() that merges the kind's base persona with the user-supplied instructions. Its docstring also references a sibling custom_agents.py holding per-user local agent presets, and says these agents are selectable from the Cowork Agent picker and Schedule Task editor. That is a concrete implementation of user-defined agent personas with custom instructions; the referenced refactor/screen docs are flagged as not describing this repo and carry no weight.",
+ "evidence": [
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent",
+   "why": "Dataclass storing an agent persona's name, task kind, custom prompt instructions, and provider/model."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent.effective_prompt",
+   "why": "Combines the built-in kind persona with the user's custom extra instructions."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "new_agent",
+   "why": "Creates a user-defined agent preset with custom name, kind, prompt and model."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "list_agents",
+   "why": "Persisted per-JSON catalog of agent presets loaded for selection in the UI."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 13231,
+  "output_tokens": 701,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrievable, so there is nothing to evaluate against the ticket's claim about a production-bug handling workflow. Absence of candidate files does not indicate the feature is missing or present.",
+ "evidence": [],
+ "status_conflict": false
+}

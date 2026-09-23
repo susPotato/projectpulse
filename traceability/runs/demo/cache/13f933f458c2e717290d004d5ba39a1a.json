@@ -1,0 +1,13 @@
+{
+ "headline": "This area covers connecting the product to external tools — user-configured connector plumbing for CAD/CAE and Microsoft 365, plus the underlying tool-connection client — and the code confirms the connector framework and its management settings, while five of the eight items could not be settled from the code reviewed.",
+ "what_is_there": "The code shows a working, user-configurable connector system with categories for CAD, CAE, Microsoft 365 and other tools, ready-made presets, two connection modes (launching a local tool process or calling a REST service), secret masking, a connection test, and migration of older configuration into the new model — all built to sit behind a Settings panel for managing connectors, which is present in the repository. Generic plumbing for CAD/CAE tools such as CATIA, NX and ANSYS exists, though no vendor-specific integration was seen, which fits the item still being in progress.",
+ "what_is_unclear": "The analysis could not confirm the HTTP connection option for tool servers (only the local-process option was visible), the built-in Microsoft 365 server and its local file read/write/list tools, the reusable tool-contract deliverable (schema, sample manifests, validation tests and a single tool registry), or the item about building a real project capability on top of the existing tooling. In each case the relevant files were either not included in the subset of code examined or the supporting documents turned out to describe a different codebase, so nothing was proven missing.",
+ "suggested_action": "Ask the owning engineer to point to where the HTTP transport, the Microsoft 365 server and its local file tools, and the tool-contract documents and schema live, so those five items can be checked directly rather than inferred.",
+ "caveat": "Several reference documents cited for these tickets were found to describe a different repository, so any expectations set by those documents should be re-confirmed with the team.",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 2290,
+  "output_tokens": 604,
+  "model": "claude-opus-5"
+ }
+}

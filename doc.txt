@@ -1,0 +1,23 @@
+. Hierarchy, not a mesh — Program → Project → everything else
+
+programs → projects (via program_id) → milestones / tasks / risks / qa_items / resources / dependencies (each with a project_id FK). Projects don't reference each other directly. Currently: one program ("Digital Transformation 2026") holds HRMS, SAIN, and Example Project; a second empty program exists to prove the list isn't hardcoded.
+
+2. Each project's intelligence is computed independently, then folded, not shared
+
+pipeline.portfolio() runs analyze_project() separately per project and folds the results for the Program rollup — it never aggregates a shortcut across projects. This is deliberate (per the architecture doc's invariant): the program view can never disagree with what you'd see drilling into one project, because it's the same computation, just looped.
+
+Dependencies, critical-path math, and causal chains are all scoped to one project's task graph — there are no cross-project dependency edges in the schema today (§5.4 notes this gap even within projects; across projects it's not attempted at all).
+
+3. The one real cross-project interaction: Resources
+
+A person (e.g., "Tran Quoc B") can have Resource rows in more than one project. The Program-level Resource Conflict tile sums a person's allocation_percent across all their projects to catch over-allocation (130% across two projects in the demo data) — this is the only place data actually crosses a project boundary for a computed finding.
+
+4. Multi-source, same-project reconciliation (not multi-project)
+
+app/scope.py handles a related but different problem: Jira and Excel each create their own projects row for what's really the same delivery project. scope.resolve() / source_ids_for() map these paired ids back to one canonical id, so a risk filed under the Excel-side id is recognized as belonging to the same project as the Jira-side id. This was the subject of a bug fixed this session — risks could previously be filed against an id no project claimed at all, invisible everywhere per-project data is read.
+
+5. Risks are now strictly per-project (no leakage)
+
+As of the latest session, risks/service.py refuses a risk pointed at an unrecognized project id and stores the canonical id for a paired one, so a risk logged from either source-side of one project lands in one place. The Program's "Cross-Project Risk" tile is a display-time aggregation across a program's projects — reading, not sharing, data.
+
+Bottom line: projects are siloed for computation (schedule, causal chains, findings) and only interact at the Program aggregation layer for display, plus the one deliberate exception — resource allocation, which is genuinely compared across a person's projects to detect conflicts.

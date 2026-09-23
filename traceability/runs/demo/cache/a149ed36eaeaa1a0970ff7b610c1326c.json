@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files cover a D3 knowledge-graph renderer (core/d3_graph.py plus assets/graph_template.html) fed from a StructureGraph, but nothing in the candidate set shows entity/relationship extraction from file content or any similarity/embedding search. core/structure_graph.py is referenced by the importer but not shown, so the GraphRAG retrieval claim cannot be settled either way; the team guide excerpt explicitly does not describe this repository and its cited helpers (_score_chunk, top_k) are absent.",
+ "evidence": [
+  {
+   "file": "core/d3_graph.py",
+   "symbol": "build_html",
+   "why": "Injects nodes/edges from a StructureGraph into the HTML template — graph visualisation only, no similarity search."
+  },
+  {
+   "file": "assets/graph_template.html",
+   "symbol": "",
+   "why": "Static D3 template with a client-side node name search box, not a semantic similarity retriever."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase text matched by keywords; unrelated to GraphRAG."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 5741,
+  "output_tokens": 522,
+  "model": "claude-opus-5"
+ }
+}

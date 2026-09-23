@@ -1,0 +1,18 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/outlook_notify.py implements the full Outlook COM send path, including availability detection via pywin32, per-thread COM initialization, and a best-effort (ok, message) send that never raises. The module appears complete rather than partially built, so the 'In Progress' status looks stale.",
+ "evidence": [
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "send_via_outlook",
+   "why": "Creates an Outlook.Application mail item via win32com and sends it, returning (ok, message) without raising."
+  },
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "available",
+   "why": "Detects whether pywin32/COM is importable so callers can fall back to another channel."
+  }
+ ],
+ "status_conflict": true
+}

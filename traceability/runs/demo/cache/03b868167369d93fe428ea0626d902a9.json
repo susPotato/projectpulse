@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files establish MS365 plumbing exists — MSAL device-code auth with Files.Read.All/Files.ReadWrite.All/Sites.Read.All scopes and a Graph REST wrapper with OneDrive/SharePoint path addressing helpers — and the documentation lookup confirms mcp_servers/ms365_server.py is present in the repository. However, that server module's contents were never shown, and nothing in the candidate files implements or references a local sync of OneDrive/SharePoint content. core/graph_server.py is the D3 knowledge-graph HTTP server and is unrelated to MCP or MS365.",
+ "evidence": [
+  {
+   "file": "core/ms365_auth.py",
+   "symbol": "SCOPES",
+   "why": "Requests Files.Read.All, Files.ReadWrite.All and Sites.Read.All, the delegated scopes a OneDrive/SharePoint connector would need."
+  },
+  {
+   "file": "core/ms365_graph.py",
+   "symbol": "_path_segment",
+   "why": "Encodes OneDrive/SharePoint relative paths for Graph's root:/{path}: addressing, showing drive-file support in the Graph wrapper."
+  },
+  {
+   "file": "core/graph_server.py",
+   "symbol": "GraphServer",
+   "why": "A localhost server for the D3 RAG graph page, unrelated to MCP or MS365 despite the 'server' keyword match."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8316,
+  "output_tokens": 922,
+  "model": "claude-opus-5"
+ }
+}

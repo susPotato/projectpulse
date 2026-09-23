@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown files relate to semantic search evaluation, retrieval benchmarking, Japanese-language quality measurement, or hybrid/rerank experiments. core/jira_tool.py is a read-only Jira REST connector, core/tools.py is the sandboxed file/command tool dispatcher, and assets/RULEBASE.md is a security policy document. The candidate subset simply does not touch the Knowledge & RAG evaluation area, so nothing settles the claim either way.",
+ "evidence": [
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "search",
+   "why": "Implements JQL issue search against Jira's REST API, unrelated to semantic/vector search quality measurement."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "execute_tool",
+   "why": "Dispatches file, command, URL and Jira tools only — no retrieval evaluation, embedding, or rerank tooling appears."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security/governance rulebase text; mentions 'knowledge base search' only as an allowed business function, not any evaluation harness."
+  }
+ ],
+ "status_conflict": false
+}

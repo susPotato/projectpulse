@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the candidate files touch notifications: co4e_run_manager.py tracks flow runs, prober.py does LLM benchmark probing, and switch_controller.py handles model-switch decisions — no Teams webhook, SMTP/Outlook email, or notification-bell UI appears anywhere in the shown code. The supporting document is explicitly flagged as not describing this repository, and its cited symbols (self.email, self.notify_email_edit) were looked up and are absent, so it only states intent. With no positive evidence either way, the notification feature can be neither confirmed nor refuted from this subset.",
+ "evidence": [
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager._on_event",
+   "why": "Emits in-process Qt signals for run status only; no email, Teams, or notification-bell delivery path."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "probe_candidates",
+   "why": "Model benchmarking/judging code with no relation to task notifications."
+  },
+  {
+   "file": "core/routing/switch_controller.py",
+   "symbol": "PendingSwitchRegistry",
+   "why": "Stores manual model-switch proposals for UI confirmation, not a notification subsystem."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9615,
+  "output_tokens": 507,
+  "model": "claude-opus-5"
+ }
+}

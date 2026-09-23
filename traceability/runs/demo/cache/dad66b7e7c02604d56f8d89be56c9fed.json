@@ -1,0 +1,12 @@
+{
+ "summary_en": "re-check RULEBASE to increase/decrease the constraints for the app",
+ "description_en": "BA: QuanDh14\nComponent: Security & Sandbox",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "RULEBASE",
+  "app",
+  "BA",
+  "QuanDh14",
+  "Security & Sandbox"
+ ]
+}

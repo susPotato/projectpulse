@@ -1,0 +1,130 @@
+{
+ "schema_version": 1,
+ "produced_by": "cohorts",
+ "meta": {
+  "inputs": {
+   "tickets": "574bdb7dd0891803",
+   "verdicts": "29e2bb2cd0cb0cc1"
+  }
+ },
+ "payload": {
+  "seam": {
+   "field": "component",
+   "groups": 3,
+   "runs": 3,
+   "contiguity": 1.0
+  },
+  "cohorts": [
+   {
+    "value": "Story",
+    "label": "Story",
+    "n": 173,
+    "span": [
+     19,
+     191
+    ],
+    "status": {
+     "Release": 118,
+     "Re-Open": 1,
+     "Cancelled": 22,
+     "In Progress": 13,
+     "To Do": 19
+    },
+    "lang": {
+     "en": 173
+    },
+    "verdicts": {
+     "unverified": 60,
+     "corroborated": 74
+    },
+    "corroboration": 0.428,
+    "owners": {
+     "roles": [
+      "BA",
+      "Developer",
+      "PO"
+     ],
+     "holders": {
+      "QuanDh14": 445,
+      "FSG": 26,
+      "Mynt4": 5,
+      "FNS": 5,
+      "HoachBV": 4,
+      "FSG/QuanDh14": 3,
+      "Quangld1": 2
+     },
+     "solo": 147,
+     "n": 173,
+     "top": "QuanDh14",
+     "share": 0.908,
+     "assignments": 490
+    }
+   },
+   {
+    "value": "PM Task",
+    "label": "PM Task",
+    "n": 16,
+    "span": [
+     3,
+     18
+    ],
+    "status": {
+     "Release": 11,
+     "In Progress": 5
+    },
+    "lang": {
+     "en": 16
+    },
+    "verdicts": {
+     "unverified": 16
+    },
+    "corroboration": 0.0,
+    "owners": {
+     "roles": [
+      "BA",
+      "Developer",
+      "PO"
+     ],
+     "holders": {},
+     "solo": 0,
+     "n": 16,
+     "top": null,
+     "share": null,
+     "assignments": 0
+    }
+   },
+   {
+    "value": "Product",
+    "label": "Product",
+    "n": 1,
+    "span": [
+     2,
+     2
+    ],
+    "status": {
+     "In Progress": 1
+    },
+    "lang": {
+     "en": 1
+    },
+    "verdicts": {
+     "unverified": 1
+    },
+    "corroboration": 0.0,
+    "owners": {
+     "roles": [
+      "BA",
+      "Developer",
+      "PO"
+     ],
+     "holders": {},
+     "solo": 0,
+     "n": 1,
+     "top": null,
+     "share": null,
+     "assignments": 0
+    }
+   }
+  ]
+ }
+}

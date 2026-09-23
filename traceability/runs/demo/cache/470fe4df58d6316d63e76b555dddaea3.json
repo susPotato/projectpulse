@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a vague process/UX directive about prioritizing AI flow experience work, with no concrete implementable claim to check. The retrieved candidates — a sandbox policy YAML, a routing config sample, and a BA skill prompt — have no bearing on UI/UX improvements to Agent/Skill/MCP/RAG flows, so nothing here confirms or refutes the ticket or its 'To Do' status.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declarative sandbox backend/risk-routing policy, unrelated to any UI/UX flow redesign."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Documentation-only sample of the model routing schema; contains no UI code."
+  },
+  {
+   "file": "skill_library/01-analyze-requirement.skill",
+   "symbol": "",
+   "why": "A BA prompt skill definition, not evidence of UX work on AI flows."
+  }
+ ],
+ "status_conflict": false
+}

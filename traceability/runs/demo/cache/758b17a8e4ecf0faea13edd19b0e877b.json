@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "An `IntegritySandbox` backend is fully implemented in core/integrity_sandbox.py (Low Integrity token + Job Object limits + WFP network blocking, with timeout and cancel handling) and is declared as the `integrity_job_wfp` backend and default route for safe/moderate risk in config/security_sandbox.yaml, consistent with a shipped ('Release it') feature. Note the semantic mismatch: 'integrity' here refers to Windows integrity-level token isolation, not file hash/integrity verification — no file-checksum verification code appears in the shown files.",
+ "evidence": [
+  {
+   "file": "core/integrity_sandbox.py",
+   "symbol": "IntegritySandbox.run_command",
+   "why": "Implements the sandboxed execution path with Job Object limits, network blocking and cancellation, tagging results as 'integrity_job_wfp'."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares the integrity_job_wfp backend as enabled and routes safe/moderate risk commands to it, showing the backend is wired into policy."
+  },
+  {
+   "file": "core/appcontainer_sandbox.py",
+   "symbol": "AppContainerSandbox.run_command",
+   "why": "Docstring states it falls back to IntegritySandbox, confirming the integrity backend is part of the sandbox backend set."
+  }
+ ],
+ "status_conflict": false
+}

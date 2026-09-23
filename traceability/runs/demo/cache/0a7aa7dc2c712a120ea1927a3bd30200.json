@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only routing artefact shown is a documentation-only sample YAML that describes the schema (switch_mode auto/manual, policy cost, per_provider_concurrency, judge model), which suggests a routing subsystem exists under core/routing/ but shows no implementation of auto-routing, a cost router, a model gate, or a per-provider queue. model_pricing.py provides per-model USD rates that a cost router could consume, but it contains no routing logic itself. Nothing in the shown files contradicts the ticket either.",
+ "evidence": [
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "routing",
+   "why": "Documents the routing config keys (switch_mode auto, policy cost/balanced, per_provider_concurrency, candidates) but explicitly states it is reference/documentation, not running code."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "turn_cost_usd",
+   "why": "Provides per-model USD cost computation that a cost-aware router could use, but performs no model selection or routing."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "auto_link",
+   "why": "Fetches live provider model lists into the price table — adjacent to model discovery but not a routing gate or queue."
+  }
+ ],
+ "status_conflict": false
+}

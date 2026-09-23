@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the candidate files contain any PASS/WARN/FAIL evidence-based scoring mechanism or a CASAN H1–H7 control mapping. The retrieved files cover a static sandbox policy YAML, a security rulebase document, and the model routing README (which scores models on quality/cost/latency, an unrelated concern). This subset neither implements nor rules out the ticket's feature.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares sandbox backends, risk routing and limits, but no PASS/WARN/FAIL grading or CASAN control identifiers."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "A prose security policy rulebase with blocked-request categories; contains no H1–H7 control mapping or machine-evaluated verdicts."
+  },
+  {
+   "file": "core/routing/README.md",
+   "symbol": "",
+   "why": "Describes model fit scoring for routing (quality/cost/latency weights), which is unrelated to quality/safety PASS/WARN/FAIL control assessment."
+  }
+ ],
+ "status_conflict": false
+}

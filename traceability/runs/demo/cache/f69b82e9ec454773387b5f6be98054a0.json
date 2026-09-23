@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The codebase contains a rules-driven security policy layer: `core/agent_security.py::combined_rules_text` loads local admin rules from `core/security_rules.py`, selects a separate rulebase for the code agent, and optionally merges an admin-configured OneDrive/SharePoint rules document via `config.data['agent_security']['rules_onedrive_url']` — i.e. configurable policy. Those rules are injected into prompt/attachment/command validators (`validate_prompt`, `validate_attachment`, `_COMMAND_SYSTEM`) and into the agent loop via `code_agent._apply_security_rules`, with `assets/RULEBASE.md` supplying the actual policy text. Status 'Release it' matches an implemented feature.",
+ "evidence": [
+  {
+   "file": "core/agent_security.py",
+   "symbol": "combined_rules_text",
+   "why": "Loads local rulebase plus an admin-configurable OneDrive rules URL from config, and switches rulebase per agent kind."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "validate_prompt",
+   "why": "Feeds the configured rules text into an AI verdict call enforcing policy on prompts."
+  },
+  {
+   "file": "core/code_agent.py",
+   "symbol": "_apply_security_rules",
+   "why": "Injects the mandatory security/restriction rules as a refreshed system message into the agent loop."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "The configurable policy document defining prompt validation, default-deny and priority rules."
+  }
+ ],
+ "status_conflict": false
+}

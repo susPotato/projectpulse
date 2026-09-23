@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/tls_trust.py implements exactly the described behaviour: trust-on-first-use capture and per-host pinning of self-signed certificates, plus an explicit CA bundle override that takes precedence in verify_for/request. The ticket is marked Cancelled, yet the feature is fully present in the code.",
+ "evidence": [
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "capture_and_trust",
+   "why": "Captures the certificate a host presents and saves it as a per-host PEM under trusted_certs (trust on first use)."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "verify_for",
+   "why": "Explicitly configured CA bundle overrides the pinned per-host certificate, which in turn overrides default certifi verification."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "request",
+   "why": "Wraps requests calls to auto-pin and retry on trust-chain SSL errors, skipping recovery when a CA bundle is configured."
+  },
+  {
+   "file": "core/tls_trust.py",
+   "symbol": "looks_like_cert_trust_error",
+   "why": "Restricts auto-trust to self-signed/missing-issuer trust-chain failures rather than all TLS errors."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 4786,
+  "output_tokens": 464,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files cover model-routing switch decisions (core/routing/switch_controller.py) and task execution of Co4E flows (core/task_executors.py), neither of which involves conditional IF/Switch nodes or typed ports in a Co4E graph. The retriever matched on the word \"switch\" in an unrelated model-routing sense, and the documentation excerpts are explicitly flagged as not describing this repository, so nothing settles whether conditional branching exists.",
+ "evidence": [
+  {
+   "file": "core/routing/switch_controller.py",
+   "symbol": "decide",
+   "why": "The 'switch' here is model routing (choosing a better LLM), not conditional branching in a Co4E workflow graph."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Runs Co4E node graphs wave-by-wave via co4e_runner with plain nodes/edges, with no visible IF/Switch node type or typed port handling."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10244,
+  "output_tokens": 442,
+  "model": "claude-opus-5"
+ }
+}

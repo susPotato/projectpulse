@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown files concern workspace soft-delete or a trash/restore mechanism: core/ext_connectors.py and core/mcp_client.py are tool/connector plumbing, and assets/RULEBASE.md is a security policy text. The attached documentation excerpts describe an unrelated tool-policy refactor epic and are flagged as not describing this repository, so there is no evidence either way about a trash feature.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Implements REST/MCP connector tooling, with no relation to workspace deletion or restore."
+  },
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "McpServerConnection",
+   "why": "An MCP stdio client bridge, unrelated to soft-delete/trash functionality."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase prose matched on keywords like 'workspace' but says nothing about trash or restore."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8541,
+  "output_tokens": 401,
+  "model": "claude-opus-5"
+ }
+}

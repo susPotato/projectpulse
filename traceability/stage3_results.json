@@ -1,0 +1,224 @@
+[
+ {
+  "bucket": "shipped+evidence",
+  "ticket": "Shared AppContext — thread-safe state, MCP connections cache, provider factory",
+  "status": "Release it",
+  "component": "Core Platform",
+  "verdict": "unverified",
+  "confidence": "high",
+  "evidence": [
+   {
+    "file": "core/telemetry_shared.py",
+    "why": "Only shows telemetry aggregation code unrelated to AppContext, MCP connections cache, or provider factory."
+   }
+  ],
+  "reasoning": "The ticket describes a 'Shared AppContext' with thread-safe state, an MCP connections cache, and a provider factory — none of which appear in the provided architecture excerpt (which covers accounts/groups/RBAC) or the candidate source file (telemetry_shared.py, which handles cross-machine telemetry aggregation, unrelated to AppContext/MCP/provider factory). There is no evidence shown that confirms or denies the existence or implementation of this AppContext feature.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "shipped+evidence",
+  "ticket": "i18n Internationalization — 3 languages (EN/VI/JA), runtime language switch, tr() translation function",
+  "status": "Release it",
+  "component": "Core Platform",
+  "verdict": "corroborated",
+  "confidence": "high",
+  "evidence": [
+   {
+    "file": "i18n.py",
+    "symbol": "LANGUAGES, tr(), on_language_changed, STRINGS",
+    "why": "LANGUAGES dict defines exactly 3 languages: en (English), ja (日本語), vi (Tiếng Việt); module docstring describes tr(key, **kwargs) runtime translation function and on_language_changed callback for live UI language switching; STRINGS dict contains thousands of keys each with en/ja/vi translations used throughout the app (login, accounts, app tabs, workspace, folder, etc.)."
+   },
+   {
+    "file": "config.md",
+    "symbol": "AppConfig.language",
+    "why": "Architecture doc confirms AppConfig.language property toggles UI display language restricted to the set defined in i18n.py::LANGUAGES, corroborating runtime language switch capability."
+   }
+  ],
+  "reasoning": "The i18n.py file directly implements all three claimed capabilities: 3 supported languages (EN/VI/JA) via LANGUAGES dict, a tr() translation function with fallback behavior, and runtime language switching via on_language_changed listener registration plus AppConfig.language property referenced in the architecture doc. This is a fully built, extensively used feature (2939 lines of translation strings across many UI modules), consistent with the 'Release it' status.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "shipped+evidence",
+  "ticket": "Theme System — Dark/Light themes, accent colors, CSS stylesheet generation",
+  "status": "Release it",
+  "component": "UI/UX",
+  "verdict": "corroborated",
+  "confidence": "high",
+  "evidence": [
+   {
+    "file": "theme.py",
+    "symbol": "_DARK, _LIGHT, ACCENT, ACCENT_HOVER, ACCENT2, GRADIENT",
+    "why": "Defines both a dark (_DARK) and light (_LIGHT) Qt stylesheet with configurable accent colors (ACCENT, ACCENT_HOVER, ACCENT2) and gradients, confirming dark/light theme support with accent color customization and CSS-style stylesheet generation."
+   }
+  ],
+  "reasoning": "The file theme.py clearly implements both a dark theme (_DARK) and light theme (_LIGHT) as Qt stylesheets, with accent color constants (ACCENT, ACCENT_HOVER, ACCENT2) used to build gradients applied throughout the stylesheet strings. This directly matches the ticket's claim of a theme system with dark/light themes, accent colors, and stylesheet generation.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "todo+evidence",
+  "ticket": "File Edit Dialog — Generic file editing dialog",
+  "status": "To Do",
+  "component": "UI/UX",
+  "verdict": "corroborated",
+  "confidence": "high",
+  "evidence": [
+   {
+    "file": "ui/file_edit_dialog.py",
+    "symbol": "FileEditDialog",
+    "why": "Implements a fully-featured generic file editing dialog: loads text/binary files, allows editing, AI-assisted editing via _ai_edit, and saving with backup, exactly matching the ticket's 'generic file editing dialog' description."
+   },
+   {
+    "file": "UI_Content_Editors_&_Viewers.md",
+    "symbol": "ui.file_edit",
+    "why": "Architecture doc explicitly lists ui/file_edit_dialog.py as the component responsible for 'opening, editing, and saving individual files'."
+   }
+  ],
+  "reasoning": "The file_edit_dialog.py fully implements a generic file editing dialog (FileEditDialog class) with load, edit, AI-edit, save, and backup functionality, matching both the ticket summary and the architecture documentation. However, the ticket status is 'To Do' despite the feature being completely implemented with polished docstrings and UI wiring, indicating a status conflict.",
+  "status_conflict": true
+ },
+ {
+  "bucket": "todo+evidence",
+  "ticket": "Define Portable Knowledge Pack Specification",
+  "status": "To Do",
+  "component": "Knowledge & RAG",
+  "verdict": "unverified",
+  "confidence": "high",
+  "evidence": [
+   {
+    "file": "ui/chat_panel.py",
+    "why": "Shows chat/turn/session logic but no reference to a 'Knowledge Pack' spec, portable export format, or packaging feature."
+   },
+   {
+    "file": "ui/cowork_tab.py",
+    "why": "Contains project/workspace-dir and shared-knowledge folder logic, but nothing about a portable, spec'd 'Knowledge Pack' file format for export/import."
+   }
+  ],
+  "reasoning": "The ticket asks for defining a 'Portable Knowledge Pack Specification', a design/spec task under Knowledge & RAG. The provided candidate files (chat_panel.py, cowork_tab.py) and architecture excerpts only cover project/workspace directories, permissions, and chat UI—none reference a knowledge pack spec, export/import format, or RAG packaging. There is no positive evidence confirming or denying this spec was defined elsewhere in the repo.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "todo+evidence",
+  "ticket": "Chuẩn hóa cách Agent thu thập context từ RAG/Search/MCP thay vì mỗi Agent tự viết logic riêng.",
+  "status": "To Do",
+  "component": "Knowledge & RAG",
+  "verdict": "unverified",
+  "confidence": "low",
+  "evidence": [
+   {
+    "file": "core/tools.py",
+    "symbol": "combine_tool_sources",
+    "why": "Shows tool sources (codebase-memory tools, MCP tools) being merged into a single extra_tools/extra_executor pair, which is tangential to but not clear evidence of a standardized context-collection abstraction for RAG/Search/MCP across agents."
+   },
+   {
+    "file": "core/jira_tool.py",
+    "why": "Shows one specific external connector tool (Jira) implemented ad hoc, not a generalized/standardized context-gathering layer."
+   }
+  ],
+  "reasoning": "The ticket asks for standardizing how agents collect context from RAG/Search/MCP instead of each agent writing its own logic. The candidate files show tool infrastructure (tools.py, jira_tool.py, context_budget.py) but no clear evidence of a unified RAG/Search/MCP context-collection abstraction being built or refactored; combine_tool_sources merges tool sources but doesn't clearly address standardizing context retrieval logic. This is insufficient to confirm or deny the specific standardization claim, and the ticket status is 'To Do' suggesting it may not be implemented yet, consistent with the lack of clear evidence.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "inprogress+evidence",
+  "ticket": "CAD/CAE Connectors — CATIA and other CAD tool integrations",
+  "status": "In Progress",
+  "component": "MCP & Connectors",
+  "verdict": "corroborated",
+  "confidence": "high",
+  "evidence": [
+   {
+    "file": "core/ext_connectors.py",
+    "symbol": "PRESETS, RestApiConnector, build_ext_connector_tools",
+    "why": "Defines CAD/CAE connector categories with CATIA V5/V6, NX, SolidWorks, AutoCAD presets and ABAQUS/ANSA/ANSYS for CAE, plus mcp_stdio and rest_api integration modes for connecting to real CAD/CAE tool servers."
+   },
+   {
+    "file": "ui/connectors_panel.py",
+    "symbol": "ConnectorsPanel._EXT_CATEGORY_LABELS",
+    "why": "UI panel explicitly lists CAD (NX / CATIA / SolidWorks / AutoCAD) and CAE (ANSA / ABAQUS / HyperWorks / ANSYS) as connector categories, with add/edit/delete and enable functionality."
+   },
+   {
+    "file": "config.py",
+    "symbol": "ext_connectors",
+    "why": "Config schema stores ext_connectors with cad/cae/ms365/other categories, confirming this is a built and wired feature, not just planned."
+   }
+  ],
+  "reasoning": "The codebase shows a fully implemented unified 'Connectors (MCP)' system explicitly supporting CAD (including CATIA V5/V6, NX, SolidWorks, AutoCAD) and CAE (ANSA, ABAQUS, HyperWorks, ANSYS) categories, with both mcp_stdio and rest_api connection modes, a settings UI panel, and config persistence. This directly matches and corroborates the ticket's claim of CAD/CAE connectors including CATIA integration, consistent with the 'In Progress' status since it's functional but framed as an extensible framework (no bundled vendor SDKs) rather than deep native automation.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "inprogress+evidence",
+  "ticket": "TLS Trust — Self-signed certificate auto-trust per host, CA bundle override",
+  "status": "In Progress",
+  "component": "Security & Sandbox",
+  "verdict": "corroborated",
+  "confidence": "high",
+  "evidence": [
+   {
+    "file": "core/tls_trust.py",
+    "symbol": "capture_and_trust / verify_for / request",
+    "why": "Implements TOFU pinning of a self-signed cert per host (trusted_cert_path keyed by host slug) and gives priority to an explicitly configured CA bundle over the pinned cert, matching 'auto-trust per host, CA bundle override'."
+   },
+   {
+    "file": "core/tls_trust.py",
+    "symbol": "looks_like_cert_trust_error",
+    "why": "Detects self-signed/trust-chain errors specifically to trigger the auto-trust flow, confirming the self-signed certificate handling described in the ticket."
+   }
+  ],
+  "reasoning": "The tls_trust.py module fully implements TOFU-based per-host certificate pinning for self-signed certs (capture_and_trust, trusted_cert_path keyed by host), and verify_for() explicitly gives precedence to an externally configured CA bundle over the pinned certificate, matching both halves of the ticket title ('auto-trust per host' and 'CA bundle override'). The architecture doc also cross-references this exact file and AppConfig.ca_bundle property, reinforcing the implementation is real and matches the ticket description.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "inprogress+evidence",
+  "ticket": "Outlook Notify — Email notifications via Outlook COM",
+  "status": "In Progress",
+  "component": "Notifications",
+  "verdict": "corroborated",
+  "confidence": "high",
+  "evidence": [
+   {
+    "file": "core/outlook_notify.py",
+    "symbol": "send_via_outlook",
+    "why": "Implements sending an email via local Outlook COM automation (win32com.client Dispatch('Outlook.Application')), matching the ticket's 'Email notifications via Outlook COM' feature."
+   },
+   {
+    "file": "core/outlook_notify.py",
+    "symbol": "available",
+    "why": "Checks whether the pywin32/Outlook COM path can be used, supporting the notification feature described in the ticket."
+   }
+  ],
+  "reasoning": "The file core/outlook_notify.py directly implements sending emails through the local Outlook desktop app via COM automation (pywin32/win32com), matching the ticket's summary and Notifications component. The implementation is complete and functional (not a stub), which aligns with 'In Progress' status—feature exists and is being integrated, not fully verified via docs but code clearly supports the claim.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "shipped+NO evidence",
+  "ticket": "Application Framework — PySide6 Desktop App (MainWindow, Navigation, Top Bar, System Tray)",
+  "status": "Release it",
+  "component": "Core Platform",
+  "verdict": "unverified",
+  "confidence": "low",
+  "evidence": [],
+  "reasoning": "No candidate source files or documentation were provided to verify the existence of a PySide6 MainWindow, navigation, top bar, or system tray implementation. Absence of evidence is not evidence of absence, so the claim cannot be confirmed or refuted.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "shipped+NO evidence",
+  "ticket": "Configuration System — JSON config (~/.cowork_local/config.json), schema migration v0→v2, env var overrides",
+  "status": "Release it",
+  "component": "Core Platform",
+  "verdict": "unverified",
+  "confidence": "low",
+  "evidence": [],
+  "reasoning": "No documentation excerpt or candidate source files were provided, so there is no code evidence available to confirm or refute the existence of the described configuration system, schema migration, or env var overrides.",
+  "status_conflict": false
+ },
+ {
+  "bucket": "shipped+NO evidence",
+  "ticket": "Welcome Dialog — First-run setup, nickname/email configuration",
+  "status": "Release it",
+  "component": "UI/UX",
+  "verdict": "unverified",
+  "confidence": "low",
+  "evidence": [],
+  "reasoning": "No candidate source files or documentation were provided that relate to a Welcome Dialog or first-run setup feature. Without any code evidence, it is impossible to confirm or deny the implementation of nickname/email configuration UI.",
+  "status_conflict": false
+ }
+]

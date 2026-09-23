@@ -1,0 +1,13 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The only candidate file shown is `config/security_sandbox.yaml`, a static sandbox policy declaring backends, risk routing and limits — it has nothing to do with a business-overview screen. No UI code for such a screen is present in the context, so neither its existence nor its absence can be established.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares sandbox backends, risk_routing and limits only; contains no UI or business-description screen content."
+  }
+ ],
+ "status_conflict": false
+}

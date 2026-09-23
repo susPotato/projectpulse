@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/co4e_runner.py contains a dedicated _run_self_verify routine that loops the agent's self-review after each step, bounded by the step's max_verify_rounds setting and exiting early on a 'VERIFIED' reply. That is exactly the automatic verification rounds with a configurable maximum the ticket describes; only the UI checkbox/spinbox controls named in the design doc are not visible here.",
+ "evidence": [
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "_run_self_verify",
+   "why": "Implements post-step self-verification loop that repeats until the agent replies VERIFIED or the round limit is reached."
+  },
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "_VERIFY_PROMPT",
+   "why": "The prompt template used for each self-verification round, asking the agent to reply VERIFIED or fix its work."
+  },
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "_run_self_verify",
+   "why": "Round count comes from the step's configurable max_verify_rounds attribute (rounds = max(1, int(getattr(step, 'max_verify_rounds', 1) or 1)))."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8484,
+  "output_tokens": 485,
+  "model": "claude-opus-5"
+ }
+}

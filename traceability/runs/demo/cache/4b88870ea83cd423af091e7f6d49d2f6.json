@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py imports LANGUAGES, LANGUAGE_SHORT, get_language, set_language, on_language_changed and tr from the local i18n module, builds a language QComboBox in the top bar, and _on_language_changed persists the choice and calls set_language(lang) which the comment says 'notifies every registered persistent widget' — i.e. runtime switching. config.py validates AppConfig.language against i18n.LANGUAGES with DEFAULT_LANGUAGE fallback, and the symbol lookups confirm set_language/get_language/on_language_changed exist in i18n.py. The specific set of three locales (EN/VI/JA) is not visible since i18n.py's LANGUAGES contents are not shown, so that detail is unconfirmed.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_topbar",
+   "why": "Builds a language combo box populated from LANGUAGES/LANGUAGE_SHORT and preselects get_language()."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._on_language_changed",
+   "why": "Persists the selected language to config and calls set_language(lang), which notifies registered widgets for a runtime switch."
+  },
+  {
+   "file": "app.py",
+   "symbol": "",
+   "why": "Imports tr, set_language, get_language, on_language_changed from .i18n and uses tr() for top-bar labels."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.language",
+   "why": "Validates the stored language against i18n.LANGUAGES and falls back to DEFAULT_LANGUAGE, showing language persistence."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9498,
+  "output_tokens": 691,
+  "model": "claude-opus-5"
+ }
+}

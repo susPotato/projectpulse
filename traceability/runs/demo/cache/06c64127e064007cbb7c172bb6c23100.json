@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ext_connectors.py implements exactly the described feature: a unified Connectors (MCP) layer with CAD/CAE/MS365/Other categories, per-category presets, user-configured mcp_stdio servers reusing McpServerConnection, and a rest_api fallback mode. config.py backs it with an ext_connectors config section and a _migrate_connectors routine that folds legacy top-level mcp_servers into ext_connectors['other'] as mcp_stdio entries, consistent with a shipped (\"Release it\") feature.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "CATEGORIES / PRESETS",
+   "why": "Defines the cad/cae/ms365/other connector categories and per-category vendor presets (NX, CATIA, ABAQUS, ANSYS...) described by the ticket."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "new_connector",
+   "why": "Creates a user-configurable connector entry with mode 'mcp_stdio', command/args/env — i.e. a user-configured MCP server."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Implements the alternative rest_api connector mode exposing one scoped HTTP tool per connector."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Migrates legacy top-level mcp_servers into ext_connectors['other'] as mcp_stdio connectors, showing the merged connectors model is persisted in config."
+  }
+ ],
+ "status_conflict": false
+}

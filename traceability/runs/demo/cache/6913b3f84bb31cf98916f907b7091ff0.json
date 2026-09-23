@@ -1,0 +1,33 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "core/mcp_client.py clearly implements the stdio half of the ticket: McpServerConnection spawns a subprocess via StdioServerParameters/stdio_client, completes the handshake on a dedicated event loop, and build_mcp_tools merges each server's ToolSpecs into an extra_tools/extra_executor pair. Nothing in the shown code implements an HTTP/SSE transport — the constructor only accepts command/args/env and the docstrings describe stdio exclusively — but a separate HTTP transport module could simply not be in this retrieved subset, so the HTTP claim is unsettled. The routing/clients.py and routing/service.py files are about model probing/routing and are unrelated to MCP transports.",
+ "evidence": [
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "McpServerConnection._connect",
+   "why": "Uses StdioServerParameters and stdio_client to spawn and handshake with an MCP server over stdio, implementing the stdio transport."
+  },
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "McpServerConnection.__init__",
+   "why": "Connection parameters are command/args/env only — no URL or endpoint field, so no HTTP transport is configurable here."
+  },
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "build_mcp_tools",
+   "why": "Merges connected servers' tools into the extra_tools/extra_executor contract, showing MCP tools are surfaced to agents."
+  },
+  {
+   "file": "core/routing/clients.py",
+   "symbol": "AppProbeClient",
+   "why": "Concerns provider probing for model routing, unrelated to MCP transports."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7954,
+  "output_tokens": 1016,
+  "model": "claude-opus-5"
+ }
+}

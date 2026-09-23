@@ -1,0 +1,13 @@
+{
+ "headline": "The Story backlog spans the whole desktop AI assistant product — chat and workspace, scheduled tasks, the Co4E workflow builder, connectors, sandboxing and security, monitoring and dashboards — and of the 173 tickets, 74 have supporting code identified, 60 could not be confirmed from the code that was examined, and 39 were not looked at.",
+ "what_is_there": "Confirmed by code: the desktop app shell with themes, translations and a collapsible sidebar; provider integrations including Anthropic; the Co4E node-graph workflow builder with parallel fan-out, run modes, run history and self-verification; scheduled tasks with a Kanban board, calendar view, Excel import/export and AI-generated planning; usage dashboards with charts and currency selection; agent security gates with audit logging and admin alerts; sandboxing with resource limits; and connectors for Microsoft 365, Jira, Teams and Outlook. Notably, eleven features the tracker records as Cancelled, To Do or In Progress — including CAD/CAE connectors, Jira, image generation, the task scheduler, D3 graph visualisation, codebase memory, the routing toggle, permission and file-edit dialogs, Outlook notifications and TLS trust — appear to be built.",
+ "what_is_unclear": "Around 60 tickets could not be settled because the analysis only read a keyword-selected slice of the codebase and the relevant files were not among them — this covers much of the configuration and shared-state plumbing, the chat composer and model picker, task data model and notifications, several Monitoring sub-pages, skill management, and GraphRAG similarity search. A further 39 tickets, mostly testing, documentation and the Vietnamese-language strategy items, were not examined at all.",
+ "suggested_action": "Review the eleven tickets whose tracker status disagrees with the code — several marked Cancelled or To Do look shipped — and decide whether to close them or correct the status before the next reporting cycle.",
+ "caveat": "",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 30556,
+  "output_tokens": 684,
+  "model": "claude-opus-5"
+ }
+}

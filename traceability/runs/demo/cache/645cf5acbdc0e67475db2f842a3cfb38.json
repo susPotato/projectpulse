@@ -1,0 +1,13 @@
+{
+ "headline": "This area covers five proposed new capabilities — production bug handling, new-ticket handling, an expanded project graph screen, a business-overview screen, and a configurable report-output screen — and the code reviewed did not confirm any of them.",
+ "what_is_there": "The only thing the reviewed code clearly shows is an existing application shell with dashboard, schedule, workspace, cowork and structure sections, including a project structure graph already embedded inside the workspace area. None of the five proposed new screens or workflows could be matched to working code.",
+ "what_is_unclear": "All five tickets are unconfirmed: two are written as broad placeholders with no concrete requirement to check against, and for the others the files examined did not include the relevant screens, so the analysis could neither confirm nor rule them out. Some supporting documents referenced during the review appear to describe a different project, so they carry no weight here.",
+ "suggested_action": "Ask the team to point to the specific screens or workflows for each of these five items so they can be re-checked, and tighten the two placeholder tickets into concrete requirements before the next review.",
+ "caveat": "Several documents cited as evidence were flagged as not describing this codebase, so they should not be treated as support for any of these tickets.",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 1193,
+  "output_tokens": 408,
+  "model": "claude-opus-5"
+ }
+}

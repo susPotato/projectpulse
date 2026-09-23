@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/outlook_notify.py directly implements the ticket: it dispatches Outlook.Application via win32com COM, creates a mail item, sets To/Subject/Body and sends, with an available() capability probe and best-effort error returns. The other candidates (agent_security_alert.notify_admin uses MS Graph, co4e_tab popups) are unrelated notification paths. Integration with the scheduler/task editor is not visible here, so only the core send path is confirmed.",
+ "evidence": [
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "send_via_outlook",
+   "why": "Sends email through the local Outlook desktop app via win32com COM Dispatch, returning (ok, message) without raising."
+  },
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "available",
+   "why": "Capability check for whether pywin32/Outlook COM can be used at all."
+  },
+  {
+   "file": "core/agent_security_alert.py",
+   "symbol": "notify_admin",
+   "why": "A different email path (MS365 Graph send_mail), not Outlook COM, so it does not bear on this ticket."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 6866,
+  "output_tokens": 673,
+  "model": "claude-opus-5"
+ }
+}

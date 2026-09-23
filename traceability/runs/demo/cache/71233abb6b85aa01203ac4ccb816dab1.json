@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket states no concrete, checkable change \ronly a title \"Perfomance update\" and role metadata, so there is nothing specific to match against code. The candidate files (ui/co4e_canvas.py, ui/co4e_tab.py) are node-graph canvas and workflow tab UI; they contain routing/obstacle-avoidance and per-flow run tracking but nothing identifiable as the ticket's performance work. The architecture documents are explicitly flagged as not describing this repository and only discuss a file-split plan.",
+ "evidence": [
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "_route",
+   "why": "Edge-routing helper with fallback candidate paths exists but has no stated link to any performance change described in the ticket."
+  },
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab._update_run_btn",
+   "why": "The symbol cited by the split-map documents exists here, but it concerns run-button labeling, not performance."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8933,
+  "output_tokens": 401,
+  "model": "claude-opus-5"
+ }
+}

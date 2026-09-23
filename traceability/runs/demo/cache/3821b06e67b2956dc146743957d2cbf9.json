@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The candidate files confirm the ticket's premise that audit and MCP infrastructure already exist (core/audit_log.py records \"mcp_call\"/\"permission\" kinds, config.py exposes connector/tool switches, and the doc lookups confirm core/mcp_client.py, core/tools.py, core/ext_connectors.py are present), but none of this shows the ticket's actual deliverable — a new project-level capability built on top of those pieces. The refactor documents that describe ToolRegistry/ToolPolicyGateway are explicitly flagged as not describing this repository, and their key symbols (ToolCapability, ToolPolicyGateway, is_allowed, domain/tools/tool_registry.py) are absent. Nothing shown settles whether the work is done or not.",
+ "evidence": [
+  {
+   "file": "core/audit_log.py",
+   "symbol": "record",
+   "why": "An existing centralized audit log already handles tool_call, permission, and mcp_call event kinds, supporting the ticket's premise that audit infrastructure exists."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.connect_external",
+   "why": "Existing master switch and tools_disabled list show connector/tool gating already lives in config, not in a new framework."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Policy/limits config includes max_mcp_calls and block_mcp_discovery, indicating MCP is already a governed surface, but shows no new capability implementation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10190,
+  "output_tokens": 782,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "config.py's DEFAULT_CONFIG contains a full `agent_security` block with a master `enabled` switch plus independently toggleable layers (validate_prompt, validate_attachments, validate_commands, command_ai_check), an admin rules source (rules_onedrive_url, rulebase_path) and sandbox limits, and AppConfig.agent_security exposes it. The rule content exists as assets/RULEBASE.md and the Code-agent-specific assets/RULEforCode.md, and core/security_rules.py is confirmed present, matching the documented design of a configurable policy engine.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "DEFAULT_CONFIG['agent_security']",
+   "why": "Defines the configurable policy switches: master enabled flag, per-layer validation toggles, OneDrive rules URL, custom rulebase path and sandbox limits."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.agent_security",
+   "why": "Config object exposes the security policy settings to the application."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "The Cowork agent's rulebase document defining mandatory security/governance policies loaded before each session."
+  },
+  {
+   "file": "assets/RULEforCode.md",
+   "symbol": "",
+   "why": "Separate (currently placeholder) rulebase for the Code agent, confirming the documented split between RULEBASE.md and RULEforCode.md."
+  },
+  {
+   "file": "core/security_rules.py",
+   "symbol": "",
+   "why": "Local rules module named by the documentation and confirmed present in the repository."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 6813,
+  "output_tokens": 687,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/chat_agent.py implements a streaming chat loop (run_chat / run_cowork) that emits incremental text and reasoning deltas over a persisted messages list, which is exactly streaming responses plus conversation history. The symbol lookups confirm ui/chat_panel.py exists with a submit handler, so a chat panel front-end is present; status Release is consistent. The panel's own message-history widgets are not shown in the excerpt, hence medium confidence.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_chat",
+   "why": "Streams assistant text and reasoning via emit deltas and appends the assistant turn to the messages list, i.e. streaming responses over chat history."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "on_reasoning",
+   "why": "Emits reasoning deltas explicitly so the UI can show a live streaming 'Thinking' box."
+  },
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "submit",
+   "why": "Confirmed by lookup to exist in this repository, indicating a real chat panel UI with a composer submit action."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8654,
+  "output_tokens": 526,
+  "model": "claude-opus-5"
+ }
+}

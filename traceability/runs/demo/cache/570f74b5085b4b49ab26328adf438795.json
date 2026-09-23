@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only dashboard-related evidence is app.py importing and lazily building `DashboardTab`; the actual `ui/dashboard_tab.py` source is not shown, so nothing here reveals token usage stats, cost overview, or a today/week/month/all period filter. The other candidates (calendar_grid.py period math for the Schedule tab, ms365_auth.py) are unrelated to dashboard analytics.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_dashboard",
+   "why": "Shows a Dashboard page exists and is built lazily from ui.dashboard_tab.DashboardTab, but reveals nothing about token/cost stats or period filtering."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "shift_period",
+   "why": "Period navigation here is week/month/year grid math for the Schedule Task calendar, not a dashboard today/week/month/all filter."
+  },
+  {
+   "file": "core/ms365_auth.py",
+   "symbol": "get_access_token",
+   "why": "Microsoft 365 OAuth code is unrelated to dashboard usage/cost analytics."
+  }
+ ],
+ "status_conflict": false
+}

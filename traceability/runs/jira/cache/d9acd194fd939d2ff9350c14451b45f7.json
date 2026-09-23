@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/routing/prober.py implements exactly the described model health probing (success/error capture), latency measurement (perf_counter timing per probe), and quality scoring via a fixed judge model, with per-provider concurrency limits. The sample routing config documents latency/quality policies, and core/model_pricing.py provides per-model metadata (context length, max output tokens, prices) with auto_link enrichment from live provider model lists. Status 'Release' is consistent with built code.",
+ "evidence": [
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "probe_model",
+   "why": "Measures wall-clock latency and marks success=False on provider errors — model health probing plus latency scoring."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "probe_candidates",
+   "why": "Runs probes concurrently across providers with per-provider semaphores, returning per-candidate probe results."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "make_judge",
+   "why": "Builds a fixed cheap judge model to score answer quality from probe responses."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "auto_link",
+   "why": "Fetches live model lists from providers and adds rows of model metadata (context length, max output tokens, prices) — metadata enrichment."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Documents the routing/assessment config including latency policy and per_provider_concurrency used by the prober."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7069,
+  "output_tokens": 504,
+  "model": "claude-opus-5"
+ }
+}

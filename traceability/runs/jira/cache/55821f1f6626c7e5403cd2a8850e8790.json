@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket describes an organizational project-planning process performed in the FI2.0 PM tool (filling tabs, obtaining approvals, recording data), not a software change in this repository. The retrieved files — a boilerplate README, a security rulebase, and core/plan.py (LLM task-checklist decomposition for the Code tab) — match only on the word \"plan\" and have no bearing on FI2.0 project-plan workflows.",
+ "evidence": [
+  {
+   "file": "core/plan.py",
+   "symbol": "decompose_request",
+   "why": "Implements LLM-driven step checklists for the Code tab, unrelated to FI2.0 project plan approval workflows."
+  },
+  {
+   "file": "README.md",
+   "symbol": "",
+   "why": "Generic GitLab template README containing no project-planning process implementation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 6600,
+  "output_tokens": 309,
+  "model": "claude-opus-5"
+ }
+}

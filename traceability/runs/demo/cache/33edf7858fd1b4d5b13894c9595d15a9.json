@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ms365_local.py implements exactly the described feature: list, read, and write tools over locally-synced OneDrive/SharePoint folders with path-escape protection and audit logging. The tool specs are registered per connector toggle via build_ms365_local_tools with a matching executor.",
+ "evidence": [
+  {
+   "file": "core/ms365_local.py",
+   "symbol": "build_ms365_local_tools",
+   "why": "Registers ms365_local__onedrive_list/read/write and sharepoint_list/read ToolSpecs plus an executor dispatching to the filesystem helpers."
+  },
+  {
+   "file": "core/ms365_local.py",
+   "symbol": "_read_file",
+   "why": "Reads text from a locally synced file resolved under the OneDrive root with a max-char cap."
+  },
+  {
+   "file": "core/ms365_local.py",
+   "symbol": "_write_file",
+   "why": "Writes/overwrites a text file inside the synced folder, creating parent dirs."
+  },
+  {
+   "file": "core/ms365_local.py",
+   "symbol": "_list_dir",
+   "why": "Enumerates folder entries relative to the sync root, returning name/path/type/size."
+  }
+ ],
+ "status_conflict": false
+}

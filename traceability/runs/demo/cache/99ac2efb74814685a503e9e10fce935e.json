@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown files touch task chaining or run-next modes; state.py covers per-workspace routing/auto-run overrides, chat_panel.py covers chat turn streaming and permission prompts, and dashboard_tab.py is token/cost reporting. No symbol resembling run_after_success, run_always, or run_after_manual_confirm appears anywhere in the candidate subset, so the claim can neither be confirmed nor refuted.",
+ "evidence": [
+  {
+   "file": "state.py",
+   "symbol": "AppContext.project_confirm_commands",
+   "why": "Deals with per-workspace command confirmation/auto-run, not chaining a follow-up task after a run."
+  },
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "ChatPanel._on_permission",
+   "why": "Handles per-turn approval of tool commands in chat, unrelated to scheduled task run-next modes."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._chart_prev",
+   "why": "Dashboard chart paging, wholly unrelated to the ticket."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 13071,
+  "output_tokens": 444,
+  "model": "claude-opus-5"
+ }
+}

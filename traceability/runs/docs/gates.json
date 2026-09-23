@@ -1,0 +1,104 @@
+{
+ "schema_version": 1,
+ "produced_by": "gates",
+ "meta": {},
+ "payload": [
+  {
+   "name": "Checkpoint 1: Contracts & Fakes",
+   "criterion": "Checkpoint 1: Contracts & Fakes / DTO và Fake Services tạo xong test pass / Cả 3 Team",
+   "command": "pytest tests/contracts tests/fakes",
+   "check": "",
+   "status": "unchecked",
+   "detail": "no implemented check matches this criterion",
+   "offenders": [],
+   "signed_off": false,
+   "doc": "refactor/Refactoring_Checklist.md",
+   "line": 457
+  },
+  {
+   "name": "Checkpoint 2: Services & Sub-widgets",
+   "criterion": "Checkpoint 2: Services & Sub-widgets / Tách xong 100 God Files 0 circular import / Cả 3 Team",
+   "command": "pytest tests/",
+   "check": "",
+   "status": "unchecked",
+   "detail": "no implemented check matches this criterion",
+   "offenders": [],
+   "signed_off": false,
+   "doc": "refactor/Refactoring_Checklist.md",
+   "line": 458
+  },
+  {
+   "name": "CASAN Check 1: Security Audit",
+   "criterion": "CASAN Check 1: Security Audit / plaintext secret trong file cấu hình / Team Nam",
+   "command": "python scripts/audit_security.py",
+   "check": "secrets",
+   "status": "fail",
+   "detail": "3 literal credential(s) in tracked files",
+   "offenders": [
+    "config.py:50  api_key = 'ollama'",
+    "config.py:108  sandbox_pw = 'quandh14'",
+    "config.py:176  unlock_code = 'quandh14'"
+   ],
+   "signed_off": false,
+   "doc": "refactor/Refactoring_Checklist.md",
+   "line": 459
+  },
+  {
+   "name": "CASAN Check 2: Modularity (LOC)",
+   "criterion": "CASAN Check 2: Modularity (LOC) / file production nào 400 dòng code / Team Hoa",
+   "command": "python scripts/check_loc.py --max-lines 400",
+   "check": "file_size",
+   "status": "fail",
+   "detail": "27 of 154 files exceed 400 lines",
+   "offenders": [
+    "1828 lines  ui/co4e_tab.py",
+    "1738 lines  ui/chat_panel.py",
+    "1578 lines  ui/folder_tab.py",
+    "993 lines  ui/structure_graph_view.py",
+    "891 lines  ui/monitoring_tab.py",
+    "869 lines  app.py",
+    "777 lines  ui/co4e_canvas.py",
+    "775 lines  ui/task_editor_dialog.py",
+    "716 lines  ui/schedule_task_tab.py",
+    "700 lines  ui/accounts_tab.py",
+    "649 lines  ui/settings_dialog.py",
+    "647 lines  ui/composer.py",
+    "630 lines  core/skills.py",
+    "620 lines  ui/workspace_tab.py",
+    "612 lines  config.py",
+    "596 lines  ui/flow_dialog.py",
+    "593 lines  core/tasks.py",
+    "580 lines  core/chat_agent.py",
+    "565 lines  core/tools.py",
+    "524 lines  core/usage_tracker.py"
+   ],
+   "signed_off": false,
+   "doc": "refactor/Refactoring_Checklist.md",
+   "line": 460
+  },
+  {
+   "name": "CASAN Check 3: Clean Architecture",
+   "criterion": "CASAN Check 3: Clean Architecture / import PySide6 trong domain & application / Team Duy",
+   "command": "python scripts/check_imports.py",
+   "check": "layer_purity",
+   "status": "unchecked",
+   "detail": "names PySide6 but no directory in the criterion exists in this repository",
+   "offenders": [],
+   "signed_off": false,
+   "doc": "refactor/Refactoring_Checklist.md",
+   "line": 461
+  },
+  {
+   "name": "Final Release E2E Smoke Test",
+   "criterion": "Final Release E2E Smoke Test / kịch bản end-to-end pass 100 trên main / Team Duy & 3 Team",
+   "command": "pytest tests/e2e/test_smoke.py",
+   "check": "",
+   "status": "unchecked",
+   "detail": "no implemented check matches this criterion",
+   "offenders": [],
+   "signed_off": false,
+   "doc": "refactor/Refactoring_Checklist.md",
+   "line": 462
+  }
+ ]
+}

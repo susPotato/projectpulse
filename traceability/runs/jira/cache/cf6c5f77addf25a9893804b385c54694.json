@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only positive signals are the doc's symbol lookups showing `_refresh_chart`/`_on_gran_changed` in ui/dashboard_tab.py and `_refresh_usage_cards` in ui/monitoring_tab.py, but neither file's source is in the shown context, so token/cost aggregation and the period filter cannot be inspected. app.py merely imports and lazily builds DashboardTab, and the only granularity code visible (core/calendar_grid.py GRANULARITIES = week/month/year) belongs to the Schedule calendar, not a today/week/month/all dashboard filter. The documentation excerpt is explicitly flagged as not describing this repository, so its prose is intent only.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_dashboard",
+   "why": "Shows a DashboardTab page exists and is built lazily, but reveals nothing about token usage, cost, or period filtering."
+  },
+  {
+   "file": "core/calendar_grid.py",
+   "symbol": "shift_period",
+   "why": "The only visible period/granularity logic is week/month/year calendar math for the Schedule tab, not a dashboard today/week/month/all filter."
+  },
+  {
+   "file": "core/ms365_auth.py",
+   "symbol": "get_access_token",
+   "why": "Unrelated Microsoft 365 OAuth code pulled in by keyword retrieval; no bearing on dashboard token/cost stats."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8641,
+  "output_tokens": 868,
+  "model": "claude-opus-5"
+ }
+}

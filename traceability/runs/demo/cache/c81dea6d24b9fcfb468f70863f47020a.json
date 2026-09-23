@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/task_executors.py imports and calls `co4e_runner.run_workflow(ctx, nodes, edges, gen_dir, _emit, cancel, plan_mode=False)` and `co4e.get_workflow(flow_id)` returning a `co4e.Workflow` with `.nodes`/`.edges`, and its docstring explicitly describes 'the same wave-by-wave runner the Co4E tab uses'. It also computes root steps by excluding edge targets and consumes `node_status`/`node_output` events, which is consistent with a graph engine executing nodes in dependency order. The engine module itself (`core/co4e_runner.py`) is not shown, so the topological-wave implementation is inferred from its call site rather than read directly.",
+ "evidence": [
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Calls co4e_runner.run_workflow with nodes/edges and documents it as the wave-by-wave Co4E runner, emitting node_status/node_output events."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_resolve_co4e_workflow",
+   "why": "Resolves a saved Co4E flow id to a `co4e.Workflow` object, showing a persisted node-graph workflow model exists."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_flow",
+   "why": "Dispatches flow tasks to the Co4E node-graph runner when a flow_id resolves, falling back to legacy sequential steps otherwise."
+  }
+ ],
+ "status_conflict": false
+}

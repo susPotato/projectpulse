@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown code (core/d3_graph.py plus assets/graph_template.html) only renders an existing StructureGraph of nodes/edges into a D3 visualisation; nothing here builds a knowledge graph from file content or performs similarity/vector search. The team guide that mentions retrieval is explicitly flagged as not describing this repository, and its cited scoring helpers (_score_chunk, top_k) are absent. No positive evidence either way for the GraphRAG + similarity search capability.",
+ "evidence": [
+  {
+   "file": "core/d3_graph.py",
+   "symbol": "build_html",
+   "why": "Only injects pre-built graph nodes/edges into an HTML template; contains no extraction or similarity search logic."
+  },
+  {
+   "file": "assets/graph_template.html",
+   "symbol": "",
+   "why": "A D3 front-end for displaying a knowledge graph with text search over node names, not embedding-based similarity retrieval."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase unrelated to the GraphRAG ticket; matched only by keyword noise."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 5732,
+  "output_tokens": 548,
+  "model": "claude-opus-5"
+ }
+}

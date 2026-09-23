@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/routing/prober.py implements exactly the described probing: per-candidate benchmark calls with wall-clock latency measurement, success/error capture for dead models, and LLM-as-judge quality scoring with bounded per-provider concurrency. Metadata enrichment is partially visible via core/model_pricing.py (context length, max output tokens, prices, auto_link from live provider model lists). Status 'Release it' is consistent with the code being present.",
+ "evidence": [
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "probe_model",
+   "why": "Measures wall-clock latency around the completion call and marks failures as success=False with the error captured."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "probe_candidates",
+   "why": "Probes every (provider, model) across task types with per-provider semaphores and a thread pool."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "make_judge",
+   "why": "Builds a fixed cheap judge model used to score answer quality for every candidate."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "auto_link",
+   "why": "Fetches live model lists from providers and enriches the table with rows carrying context length/price metadata."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7103,
+  "output_tokens": 476,
+  "model": "claude-opus-5"
+ }
+}

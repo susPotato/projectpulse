@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files confirm a Co4E node-graph exists (co4e.Step, canvas nodes/edges, a palette that mentions agent/skill/parallel/whole-flow drops), but none of the candidate files expose the node-type model itself — core/co4e.py is only referenced, never shown. There is no visible code for Join, IF/Switch, Start or End node types, and their absence in this keyword-selected subset is not evidence either way.",
+ "evidence": [
+  {
+   "file": "ui/co4e_canvas.py",
+   "symbol": "Co4ECanvas",
+   "why": "Implements the node-graph editor and mentions palette drops of agent/skill/parallel/whole-flow, showing a 'parallel' concept exists but not the full node-type set."
+  },
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab._add_blank_step",
+   "why": "Uses co4e.Step, confirming a Step node type but giving no information about Join, IF/Switch, Start or End."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Runs a saved Co4E node graph wave-by-wave, implying parallelism in execution, but does not reference typed nodes such as IF/Switch or Join."
+  }
+ ],
+ "status_conflict": false
+}

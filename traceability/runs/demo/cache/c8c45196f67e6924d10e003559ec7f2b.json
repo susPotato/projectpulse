@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket contains no concrete technical claim \\u2014 only a title \"Refactor code BE\" with PO/BA/developer names and a date serial \\u2014 so there is nothing in it that source code could confirm or refute. The retrieved candidates (a sandbox policy YAML, an empty code-agent rules markdown, and the code agent loop) appear to have matched only on the word \"code\" and say nothing about a backend refactoring effort or its progress.",
+ "evidence": [
+  {
+   "file": "core/code_agent.py",
+   "symbol": "run_code",
+   "why": "Matched on the keyword \"code\" but implements the Code agent's tool-calling loop, unrelated to any backend refactoring task."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Static sandbox policy declaration with no bearing on a refactoring ticket."
+  },
+  {
+   "file": "assets/RULEforCode.md",
+   "symbol": "",
+   "why": "An intentionally empty rules file for the Code agent, irrelevant to the ticket's claim."
+  }
+ ],
+ "status_conflict": false
+}

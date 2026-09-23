@@ -1,0 +1,22 @@
+{
+ "summary_en": "Define Reusable MCP Tool Contract\n----------------------------------------\nThe member's final deliverable: 1 design document + 1 JSON schema + 2 sample manifests + validation testcase, and at the same time prove that the architecture only uses Cowork Tool Registry as the single management source (Single Source of Truth).",
+ "description_en": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nDate received: 46246\nNote: TaiPH9,LocLP3,HieuHV1\nComponent: MCP & Connectors",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "MCP",
+  "JSON schema",
+  "Cowork Tool Registry",
+  "Single Source of Truth",
+  "PO",
+  "BA",
+  "FSG",
+  "HoachBV",
+  "QuanDh14",
+  "TaiPH9",
+  "LocLP3",
+  "HieuHV1",
+  "MCP & Connectors",
+  "manifests",
+  "testcase"
+ ]
+}

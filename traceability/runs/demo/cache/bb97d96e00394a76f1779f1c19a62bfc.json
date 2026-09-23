@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket's deliverable is an assessment document classifying subsystems as Reuse/Improve/Build, which is not a code artifact and cannot be confirmed or denied by the shown source. The candidate files do confirm the subsystems under assessment exist (routing config, MCP servers, external connectors, the Cowork agent loop), but nothing here indicates an evaluation was performed or written up, so the 'To Do' status is not contradicted.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.routing",
+   "why": "Shows LLM routing configuration (switch_mode, per-surface Off/Auto/Manual) exists as a subsystem that would be in scope for the assessment, not that the assessment was done."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.mcp_servers",
+   "why": "Confirms MCP server and ext_connectors configuration surfaces exist in the codebase."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Shows the agent/tool runtime with extra_tools/extra_executor plug-in points, one of the integration points named in the ticket."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12159,
+  "output_tokens": 546,
+  "model": "claude-opus-5"
+ }
+}

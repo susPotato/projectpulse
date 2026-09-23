@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/co4e_runner.py implements exactly the described behavior: it computes topological waves via compile_run_stages, runs each wave's stages, and threads each node's predecessors' outputs into the next node's prompt via extra_context_for/_predecessors. task_executors._run_co4e_flow consumes this runner, confirming it is wired into the product, consistent with the 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "run_workflow",
+   "why": "Executes stages wave-by-wave and rebuilds each node's prompt with upstream outputs before running."
+  },
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "_predecessors",
+   "why": "Provides predecessor mapping used to concatenate prior wave outputs into a node's context."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Calls co4e_runner.run_workflow as the wave-by-wave runner used by the Co4E tab and scheduled tasks."
+  }
+ ],
+ "status_conflict": false
+}

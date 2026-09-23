@@ -1,0 +1,18 @@
+{
+ "verdict": "corroborated",
+ "confidence": "low",
+ "reasoning": "core/chat_agent.py threads an optional `cancel` callback through both `run_chat` and `run_cowork`, passing it to `provider.chat`, to `context_budget.maybe_compact`, and checking `if cancel(): break` at the top of the tool-call loop — that is real cancellation plumbing for Cowork chat. The 'proper reporting' half (UI stop button, cancelled-turn messaging) is not visible in any shown file, so only the cancel mechanism itself is confirmed. Status 'Release it' is consistent with code being present.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_chat",
+   "why": "Accepts an optional `cancel: CancelFn` and forwards it into `provider.chat(...)` so a streaming chat turn can be aborted."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Defaults `cancel` to a no-op, and the tool loop breaks out on `if cancel():` before each step, implementing stop during multi-step Cowork runs."
+  }
+ ],
+ "status_conflict": false
+}

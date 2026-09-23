@@ -1,0 +1,4503 @@
+{
+ "schema_version": 1,
+ "produced_by": "progress",
+ "meta": {
+  "docs_dir": "../hackathon/docs",
+  "inputs": {
+   "corpus": "0e641b2bc359095d"
+  }
+ },
+ "payload": {
+  "root": "..\\hackathon\\docs",
+  "items": [
+   {
+    "wid": "R01-T01",
+    "title": "Viết Architecture ADR định rõ ranh giới các tầng docs/architecture/ADR-001-layered-architecture.md",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "done": true,
+    "started": "2026-08-21 18:23",
+    "ended": "2026-08-21 18:24",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "docs/architecture/ADR-001-layered-architecture.md",
+      "name": "docs/architecture/ADR-001-layered-architecture.md",
+      "kind": "docref",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 134
+   },
+   {
+    "wid": "R01-T02",
+    "title": "Xây dựng FakeProvider và FakeToolExecutor chạy offline từ providers/base.py tests/fakes/fake_provider.py & tests/fakes/fake_tool_executor.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "done": true,
+    "started": "2026-08-21 18:24",
+    "ended": "2026-08-21 18:26",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "tests/fakes/fake_provider.py",
+      "name": "tests/fakes/fake_provider.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "tests/fakes/fake_tool_executor.py",
+      "name": "tests/fakes/fake_tool_executor.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "FakeProvider",
+      "name": "FakeProvider",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "FakeToolExecutor",
+      "name": "FakeToolExecutor",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "providers/base.py",
+      "name": "providers/base.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 136
+   },
+   {
+    "wid": "R01-T03",
+    "title": "Viết script quét tĩnh chặn code mới trong domain/ và application/ import PySide6 scripts/check_imports.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "done": true,
+    "started": "2026-08-21 18:26",
+    "ended": "2026-08-21 18:28",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "scripts/check_imports.py",
+      "name": "scripts/check_imports.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "PySide6",
+      "name": "PySide6",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 138
+   },
+   {
+    "wid": "R01-T04",
+    "title": "Viết Characterization Tests cho core/chat_agent.py::run_cowork tests/characterization/test_run_cowork.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "done": true,
+    "started": "2026-08-21 18:28",
+    "ended": "2026-08-21 18:32",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "tests/characterization/test_run_cowork.py",
+      "name": "tests/characterization/test_run_cowork.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 140
+   },
+   {
+    "wid": "R01-T05",
+    "title": "Lập danh mục và phân loại mã nguồn dormant/dead code docs/architecture/dormant-code.md",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "done": true,
+    "started": "2026-08-21 18:32",
+    "ended": "2026-08-21 18:35",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "docs/architecture/dormant-code.md",
+      "name": "docs/architecture/dormant-code.md",
+      "kind": "docref",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 142
+   },
+   {
+    "wid": "R02-T01",
+    "title": "Xây dựng module AtomicJsonFile ghi tệp an toàn (tmp file fsync atomic replace) infrastructure/persistence/json/atomic_json_file.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R02: Configuration, Secrets & Persistence (Cấu Hình Atomic & Bảo Mật Keyring)",
+    "done": false,
+    "started": "",
+    "ended": "",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "infrastructure/persistence/json/atomic_json_file.py",
+      "name": "infrastructure/persistence/json/atomic_json_file.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "AtomicJsonFile",
+      "name": "AtomicJsonFile",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 151
+   },
+   {
+    "wid": "R02-T02",
+    "title": "Refactor config.py::AppConfig sử dụng AtomicJsonFile infrastructure/config/config_repository.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R02: Configuration, Secrets & Persistence (Cấu Hình Atomic & Bảo Mật Keyring)",
+    "done": false,
+    "started": "",
+    "ended": "",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "infrastructure/config/config_repository.py",
+      "name": "infrastructure/config/config_repository.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "AtomicJsonFile",
+      "name": "AtomicJsonFile",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 153
+   },
+   {
+    "wid": "R02-T03",
+    "title": "Xây dựng Typed Settings Facade (ProviderSettings, RoutingSettings) infrastructure/config/settings_facade.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R02: Configuration, Secrets & Persistence (Cấu Hình Atomic & Bảo Mật Keyring)",
+    "done": false,
+    "started": "",
+    "ended": "",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "infrastructure/config/settings_facade.py",
+      "name": "infrastructure/config/settings_facade.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ProviderSettings",
+      "name": "ProviderSettings",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "RoutingSettings",
+      "name": "RoutingSettings",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 155
+   },
+   {
+    "wid": "R02-T04",
+    "title": "Định nghĩa interface SecretStore và cài đặt KeyringAdapter infrastructure/secrets/keyring_adapter.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R02: Configuration, Secrets & Persistence (Cấu Hình Atomic & Bảo Mật Keyring)",
+    "done": false,
+    "started": "",
+    "ended": "",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "infrastructure/secrets/keyring_adapter.py",
+      "name": "infrastructure/secrets/keyring_adapter.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "SecretStore",
+      "name": "SecretStore",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "KeyringAdapter",
+      "name": "KeyringAdapter",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 157
+   },
+   {
+    "wid": "R02-T05",
+    "title": "Di chuyển cấu hình API Key của OpenAI/Anthropic/FPT Gateway sang lưu trữ qua SecretStore",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R02: Configuration, Secrets & Persistence (Cấu Hình Atomic & Bảo Mật Keyring)",
+    "done": false,
+    "started": "",
+    "ended": "",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "SecretStore",
+      "name": "SecretStore",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 159
+   },
+   {
+    "wid": "R02-T06",
+    "title": "Chuẩn hóa JSON schema versioning và recovery policy cho các file data",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R02: Configuration, Secrets & Persistence (Cấu Hình Atomic & Bảo Mật Keyring)",
+    "done": false,
+    "started": "",
+    "ended": "",
+    "owner": "Team Nam",
+    "deliverables": [],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 161
+   },
+   {
+    "wid": "R03-T01",
+    "title": "Xây dựng bộ Contract Tests chuẩn hóa cho các Provider từ providers/base.py tests/contracts/test_providers.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "done": true,
+    "started": "2026-08-22 18:59",
+    "ended": "2026-08-22 19:01",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "tests/contracts/test_providers.py",
+      "name": "tests/contracts/test_providers.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "providers/base.py",
+      "name": "providers/base.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 170
+   },
+   {
+    "wid": "R03-T02",
+    "title": "Xây dựng ProviderDescriptor và ProviderRegistry tập trung từ providers/factory.py domain/models/provider_descriptor.py & infrastructure/providers/provider_registry.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "done": true,
+    "started": "2026-08-22 18:45",
+    "ended": "2026-08-22 18:50",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "domain/models/provider_descriptor.py",
+      "name": "domain/models/provider_descriptor.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "infrastructure/providers/provider_registry.py",
+      "name": "infrastructure/providers/provider_registry.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ProviderDescriptor",
+      "name": "ProviderDescriptor",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ProviderRegistry",
+      "name": "ProviderRegistry",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "providers/factory.py",
+      "name": "providers/factory.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 172
+   },
+   {
+    "wid": "R03-T03",
+    "title": "Xây dựng RoutingApplicationService độc lập với Qt từ core/routing/ application/model_routing/routing_application_service.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "done": true,
+    "started": "2026-08-22 18:53",
+    "ended": "2026-08-22 18:57",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "application/model_routing/routing_application_service.py",
+      "name": "application/model_routing/routing_application_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "RoutingApplicationService",
+      "name": "RoutingApplicationService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 174
+   },
+   {
+    "wid": "R03-T04",
+    "title": "Di chuyển luồng gọi routing từ ui/chat_panel.py L638 sang RoutingApplicationService",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "done": true,
+    "started": "2026-08-22 18:57",
+    "ended": "2026-08-22 18:58",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "ui/chat_panel.py#L638",
+      "name": "ui/chat_panel.py",
+      "kind": "path",
+      "paths": [
+       "ui/chat_panel.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "RoutingApplicationService",
+      "name": "RoutingApplicationService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 176
+   },
+   {
+    "wid": "R03-T05",
+    "title": "Di chuyển luồng gọi routing từ ui/co4e_tab.py và ui/folder_tab.py sang RoutingApplicationService",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "done": true,
+    "started": "2026-08-22 18:58",
+    "ended": "2026-08-22 18:59",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "ui/co4e_tab.py",
+      "name": "ui/co4e_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/co4e_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ui/folder_tab.py",
+      "name": "ui/folder_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/folder_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "RoutingApplicationService",
+      "name": "RoutingApplicationService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 178
+   },
+   {
+    "wid": "R03-T06",
+    "title": "Tách logic ghi nhận token usage ra khỏi Provider, chuyển thành UsageEventSink infrastructure/telemetry/usage_sink.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "done": true,
+    "started": "2026-08-22 18:50",
+    "ended": "2026-08-22 18:53",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "infrastructure/telemetry/usage_sink.py",
+      "name": "infrastructure/telemetry/usage_sink.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "UsageEventSink",
+      "name": "UsageEventSink",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 180
+   },
+   {
+    "wid": "R04-T01",
+    "title": "Định nghĩa immutable dataclass ConversationExecutionRequest domain/agents/conversation_execution_request.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "done": true,
+    "started": "2026-08-23 00:56",
+    "ended": "2026-08-23 01:00",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "domain/agents/conversation_execution_request.py",
+      "name": "domain/agents/conversation_execution_request.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ConversationExecutionRequest",
+      "name": "ConversationExecutionRequest",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 243
+   },
+   {
+    "wid": "R04-T02",
+    "title": "Chuẩn hóa các sự kiện AgentEvent (TextChunk, ToolCallStarted, ToolCallResult, Error) domain/agents/agent_event.py ( domain/agents/agent_event_codec.py — shim dịch legacy dict, tách riêng để giữ LOC 40",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "done": true,
+    "started": "2026-08-23 01:00",
+    "ended": "2026-08-23 01:08",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "domain/agents/agent_event.py",
+      "name": "domain/agents/agent_event.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "domain/agents/agent_event_codec.py",
+      "name": "domain/agents/agent_event_codec.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "AgentEvent",
+      "name": "AgentEvent",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 245
+   },
+   {
+    "wid": "R04-T03",
+    "title": "Xây dựng ConversationApplicationService điều phối thực thi từ core/chat_agent.py application/conversations/conversation_application_service.py ( turn_runtime.py định nghĩa 2 port/6 callable, core_runt",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "done": true,
+    "started": "2026-08-23 01:08",
+    "ended": "2026-08-23 07:10",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "application/conversations/conversation_application_service.py",
+      "name": "application/conversations/conversation_application_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "turn_runtime.py",
+      "name": "turn_runtime.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core_runtime_adapter.py",
+      "name": "core_runtime_adapter.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "domain/agents/agent_result.py",
+      "name": "domain/agents/agent_result.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ConversationApplicationService",
+      "name": "ConversationApplicationService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/chat_agent.py",
+      "name": "core/chat_agent.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 247
+   },
+   {
+    "wid": "R04-T04",
+    "title": "Di chuyển ui/cowork_tab.py::build_job sang sử dụng ConversationExecutionRequest",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "done": true,
+    "started": "2026-08-23 07:10",
+    "ended": "2026-08-23 07:23",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "ConversationExecutionRequest",
+      "name": "ConversationExecutionRequest",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 250
+   },
+   {
+    "wid": "R04-T05",
+    "title": "Di chuyển core/task_executors.py sang dùng chung ConversationApplicationService",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "done": true,
+    "started": "2026-08-23 07:23",
+    "ended": "2026-08-23 07:31",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "core/task_executors.py",
+      "name": "core/task_executors.py",
+      "kind": "path",
+      "paths": [
+       "core/task_executors.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ConversationApplicationService",
+      "name": "ConversationApplicationService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 254
+   },
+   {
+    "wid": "R05-T01",
+    "title": "Định nghĩa ToolDescriptor, ToolCapability (read/write/execute/network) domain/tools/tool_descriptor.py & domain/tools/tool_registry.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "done": true,
+    "started": "2026-08-21 21:40",
+    "ended": "2026-08-21 21:47",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "domain/tools/tool_descriptor.py",
+      "name": "domain/tools/tool_descriptor.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "domain/tools/tool_registry.py",
+      "name": "domain/tools/tool_registry.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ToolDescriptor",
+      "name": "ToolDescriptor",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ToolCapability",
+      "name": "ToolCapability",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 266
+   },
+   {
+    "wid": "R05-T02",
+    "title": "Tách nhỏ các built-in handlers từ core/tools.py infrastructure/filesystem/file_tools.py, command_tools.py, fetch_tools.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "done": true,
+    "started": "2026-08-21 21:47",
+    "ended": "2026-08-21 21:56",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "infrastructure/filesystem/file_tools.py",
+      "name": "infrastructure/filesystem/file_tools.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "command_tools.py",
+      "name": "command_tools.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "fetch_tools.py",
+      "name": "fetch_tools.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "core/tools.py",
+      "name": "core/tools.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 268
+   },
+   {
+    "wid": "R05-T03",
+    "title": "Xây dựng ToolPolicyGateway (kiểm tra phân quyền allow/confirm/deny) application/conversations/tool_policy_gateway.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "done": true,
+    "started": "2026-08-21 21:56",
+    "ended": "2026-08-21 22:04",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "application/conversations/tool_policy_gateway.py",
+      "name": "application/conversations/tool_policy_gateway.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ToolPolicyGateway",
+      "name": "ToolPolicyGateway",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 270
+   },
+   {
+    "wid": "R05-T04",
+    "title": "Chuẩn hóa MCP tools từ core/mcp_client.py đi qua ToolPolicyGateway",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "done": true,
+    "started": "2026-08-21 22:04",
+    "ended": "2026-08-21 22:12",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "core/mcp_client.py",
+      "name": "core/mcp_client.py",
+      "kind": "path",
+      "paths": [
+       "core/mcp_client.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ToolPolicyGateway",
+      "name": "ToolPolicyGateway",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 272
+   },
+   {
+    "wid": "R05-T05",
+    "title": "Xây dựng McpToolSourceManager quản lý vòng đời tiến trình MCP infrastructure/mcp/mcp_source_manager.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "done": true,
+    "started": "2026-08-21 22:12",
+    "ended": "2026-08-21 22:19",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "infrastructure/mcp/mcp_source_manager.py",
+      "name": "infrastructure/mcp/mcp_source_manager.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "McpToolSourceManager",
+      "name": "McpToolSourceManager",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 274
+   },
+   {
+    "wid": "R06-T01",
+    "title": "Định nghĩa WorkspaceSession chứa snapshot project id, workspace root domain/workspaces/workspace_session.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "done": true,
+    "started": "2026-08-21 22:19",
+    "ended": "2026-08-21 22:24",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "domain/workspaces/workspace_session.py",
+      "name": "domain/workspaces/workspace_session.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "WorkspaceSession",
+      "name": "WorkspaceSession",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 283
+   },
+   {
+    "wid": "R06-T02",
+    "title": "Xây dựng WorkspaceRepository từ core/projects.py & ConversationRepository từ core/history.py infrastructure/persistence/json/workspace_repository_impl.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "done": true,
+    "started": "2026-08-21 22:24",
+    "ended": "2026-08-21 22:35",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "infrastructure/persistence/json/workspace_repository_impl.py",
+      "name": "infrastructure/persistence/json/workspace_repository_impl.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "WorkspaceRepository",
+      "name": "WorkspaceRepository",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/projects.py",
+      "name": "core/projects.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ConversationRepository",
+      "name": "ConversationRepository",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/history.py",
+      "name": "core/history.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 285
+   },
+   {
+    "wid": "R06-T03",
+    "title": "Xây dựng ExecutionWorkspace quản lý output/scratch files infrastructure/filesystem/execution_workspace.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "done": true,
+    "started": "2026-08-21 22:35",
+    "ended": "2026-08-21 22:40",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "infrastructure/filesystem/execution_workspace.py",
+      "name": "infrastructure/filesystem/execution_workspace.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ExecutionWorkspace",
+      "name": "ExecutionWorkspace",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 287
+   },
+   {
+    "wid": "R06-T04",
+    "title": "Khắc phục race condition trong ui/workspace_tab.py::_load_current",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "done": true,
+    "started": "2026-08-21 22:40",
+    "ended": "2026-08-21 22:50",
+    "owner": "Team Hoa",
+    "deliverables": [],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 289
+   },
+   {
+    "wid": "R06-T05",
+    "title": "Xây dựng FileWorkspaceService xử lý thao tác file cho File Explorer và AI File Editor application/workspaces/file_workspace_service.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "done": true,
+    "started": "2026-08-21 22:50",
+    "ended": "2026-08-21 22:57",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "application/workspaces/file_workspace_service.py",
+      "name": "application/workspaces/file_workspace_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "FileWorkspaceService",
+      "name": "FileWorkspaceService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 291
+   },
+   {
+    "wid": "R07-T01",
+    "title": "Tách TaskRepository lưu trữ JSON độc lập khỏi core/tasks.py infrastructure/persistence/json/task_repository_impl.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "done": true,
+    "started": "2026-08-27 16:05",
+    "ended": "2026-08-27 16:14",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "infrastructure/persistence/json/task_repository_impl.py",
+      "name": "infrastructure/persistence/json/task_repository_impl.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "TaskRepository",
+      "name": "TaskRepository",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/tasks.py",
+      "name": "core/tasks.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 300
+   },
+   {
+    "wid": "R07-T02",
+    "title": "Xây dựng ScheduleCalculator tính due-time / cron độc lập domain/tasks/schedule_calculator.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "done": true,
+    "started": "2026-08-27 16:14",
+    "ended": "2026-08-27 16:26",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "domain/tasks/schedule_calculator.py",
+      "name": "domain/tasks/schedule_calculator.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ScheduleCalculator",
+      "name": "ScheduleCalculator",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 302
+   },
+   {
+    "wid": "R07-T03",
+    "title": "Xây dựng QtSchedulerClock adapter (tách TaskScheduler khỏi QTimer) infrastructure/qt/qt_scheduler_clock.py (đổi so với plan gốc platform/qt/... — xem báo cáo)",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "done": true,
+    "started": "2026-08-27 16:26",
+    "ended": "2026-08-27 16:47",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "infrastructure/qt/qt_scheduler_clock.py",
+      "name": "infrastructure/qt/qt_scheduler_clock.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "QtSchedulerClock",
+      "name": "QtSchedulerClock",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "TaskScheduler",
+      "name": "TaskScheduler",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 304
+   },
+   {
+    "wid": "R07-T04",
+    "title": "Xây dựng TaskApplicationService (Pure Python) điều phối chạy, sao chép, dừng, xóa task application/scheduling/task_application_service.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "done": true,
+    "started": "2026-08-27 16:47",
+    "ended": "2026-08-27 17:02",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "application/scheduling/task_application_service.py",
+      "name": "application/scheduling/task_application_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "TaskApplicationService",
+      "name": "TaskApplicationService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 306
+   },
+   {
+    "wid": "R07-T05",
+    "title": "Xây dựng AiTaskPlannerService hỗ trợ tạo / import task bằng AI application/scheduling/ai_task_planner_service.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "done": true,
+    "started": "2026-08-27 17:02",
+    "ended": "2026-08-27 17:14",
+    "owner": "Team Hoa",
+    "deliverables": [
+     {
+      "text": "application/scheduling/ai_task_planner_service.py",
+      "name": "application/scheduling/ai_task_planner_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "AiTaskPlannerService",
+      "name": "AiTaskPlannerService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 308
+   },
+   {
+    "wid": "R07-T06",
+    "title": "Xây dựng Co4EWorkflowService (Pure Python) quản lý định nghĩa và thực thi Co4E từ core/co4e_run_manager.py application/workflows/co4e_workflow_service.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "done": false,
+    "started": "",
+    "ended": "",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "application/workflows/co4e_workflow_service.py",
+      "name": "application/workflows/co4e_workflow_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "Co4EWorkflowService",
+      "name": "Co4EWorkflowService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/co4e_run_manager.py",
+      "name": "core/co4e_run_manager.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 310
+   },
+   {
+    "wid": "R08-T01",
+    "title": "Tách ui/chat_panel.py thành presentation/chat/chat_history_widget.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Duy (Chat UI Hub)",
+    "done": true,
+    "started": "2026-08-25 09:00",
+    "ended": "2026-08-25 11:30",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "ui/chat_panel.py",
+      "name": "ui/chat_panel.py",
+      "kind": "path",
+      "paths": [
+       "ui/chat_panel.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "presentation/chat/chat_history_widget.py",
+      "name": "presentation/chat/chat_history_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 320
+   },
+   {
+    "wid": "R08-T02",
+    "title": "Tách Composer & input box presentation/chat/composer_widget.py ( chat_input_box.py)",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Duy (Chat UI Hub)",
+    "done": true,
+    "started": "2026-08-25 11:30",
+    "ended": "2026-08-25 14:15",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "presentation/chat/composer_widget.py",
+      "name": "presentation/chat/composer_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "chat_input_box.py",
+      "name": "chat_input_box.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 322
+   },
+   {
+    "wid": "R08-T03",
+    "title": "Tách Picker file đính kèm presentation/chat/attachment_picker.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Duy (Chat UI Hub)",
+    "done": true,
+    "started": "2026-08-25 14:15",
+    "ended": "2026-08-25 15:45",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "presentation/chat/attachment_picker.py",
+      "name": "presentation/chat/attachment_picker.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 324
+   },
+   {
+    "wid": "R08-T04",
+    "title": "Tách Voice/Audio recording presentation/chat/audio_recorder_widget.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Duy (Chat UI Hub)",
+    "done": true,
+    "started": "2026-08-25 15:45",
+    "ended": "2026-08-25 17:00",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "presentation/chat/audio_recorder_widget.py",
+      "name": "presentation/chat/audio_recorder_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 326
+   },
+   {
+    "wid": "R08-T05",
+    "title": "Tách Output panel & file watcher presentation/chat/chat_output_panel.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Duy (Chat UI Hub)",
+    "done": true,
+    "started": "2026-08-26 09:00",
+    "ended": "2026-08-26 11:00",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "presentation/chat/chat_output_panel.py",
+      "name": "presentation/chat/chat_output_panel.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 328
+   },
+   {
+    "wid": "R08-T06",
+    "title": "Lắp ráp container presentation/chat/chat_panel.py và tối ưu Floating HelpAgent",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Duy (Chat UI Hub)",
+    "done": true,
+    "started": "2026-08-26 11:00",
+    "ended": "2026-08-26 17:30",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "presentation/chat/chat_panel.py",
+      "name": "presentation/chat/chat_panel.py",
+      "kind": "path",
+      "paths": [
+       "ui/chat_panel.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 330
+   },
+   {
+    "wid": "R08-T07",
+    "title": "Tách ui/settings_dialog.py thành 4 section widgets provider_settings_widget.py, connector_settings_widget.py, routing_settings_widget.py, general_settings_widget.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Nam (Settings, Monitoring, Co4E & Shell)",
+    "done": true,
+    "started": "2026-08-25 08:30",
+    "ended": "2026-08-25 12:00",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "provider_settings_widget.py",
+      "name": "provider_settings_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "connector_settings_widget.py",
+      "name": "connector_settings_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "routing_settings_widget.py",
+      "name": "routing_settings_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "general_settings_widget.py",
+      "name": "general_settings_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ui/settings_dialog.py",
+      "name": "ui/settings_dialog.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 334
+   },
+   {
+    "wid": "R08-T08",
+    "title": "Tách ui/monitoring_tab.py thành 7 tab độc lập (overview_tab.py, sandbox_status_tab.py, security_events_tab.py, mcp_history_tab.py, action_logs_tab.py, agent_status_tab.py, security_settings_tab.py)",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Nam (Settings, Monitoring, Co4E & Shell)",
+    "done": true,
+    "started": "2026-08-25 13:00",
+    "ended": "2026-08-26 12:00",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "ui/monitoring_tab.py",
+      "name": "ui/monitoring_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/monitoring_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "overview_tab.py",
+      "name": "overview_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "sandbox_status_tab.py",
+      "name": "sandbox_status_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "security_events_tab.py",
+      "name": "security_events_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "mcp_history_tab.py",
+      "name": "mcp_history_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "action_logs_tab.py",
+      "name": "action_logs_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "agent_status_tab.py",
+      "name": "agent_status_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "security_settings_tab.py",
+      "name": "security_settings_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 336
+   },
+   {
+    "wid": "R08-T09",
+    "title": "Tách ui/co4e_tab.py thành các sub-components co4e_canvas_widget.py, node_property_panel.py, co4e_run_control_widget.py, co4e_chat_view.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Nam (Settings, Monitoring, Co4E & Shell)",
+    "done": true,
+    "started": "2026-08-26 13:00",
+    "ended": "2026-08-27 15:00",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "co4e_canvas_widget.py",
+      "name": "co4e_canvas_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "node_property_panel.py",
+      "name": "node_property_panel.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "co4e_run_control_widget.py",
+      "name": "co4e_run_control_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "co4e_chat_view.py",
+      "name": "co4e_chat_view.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ui/co4e_tab.py",
+      "name": "ui/co4e_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 338
+   },
+   {
+    "wid": "R08-T10",
+    "title": "Xây dựng bootstrap.py (Composition Root) và tách app.py::MainWindow (dòng 122) presentation/shell/main_window.py, tray_manager.py, lifecycle_coordinator.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Nam (Settings, Monitoring, Co4E & Shell)",
+    "done": true,
+    "started": "2026-08-27 15:00",
+    "ended": "2026-08-28 09:30",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "presentation/shell/main_window.py",
+      "name": "presentation/shell/main_window.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "tray_manager.py",
+      "name": "tray_manager.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "lifecycle_coordinator.py",
+      "name": "lifecycle_coordinator.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "bootstrap.py",
+      "name": "bootstrap.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 340
+   },
+   {
+    "wid": "R08-T11",
+    "title": "Tách ui/schedule_task_tab.py kanban_board_widget.py, calendar_view_widget.py, ai_task_creator_dialog.py, ai_task_import_dialog.py ( run_history_dialog.py, schedule_task_tab.py shell — xem báo cáo)",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Hoa (Workspace, Folder, Scheduling, Dashboard & Graph)",
+    "done": true,
+    "started": "2026-08-27 17:14",
+    "ended": "2026-08-27 17:39",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "kanban_board_widget.py",
+      "name": "kanban_board_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "calendar_view_widget.py",
+      "name": "calendar_view_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ai_task_creator_dialog.py",
+      "name": "ai_task_creator_dialog.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ai_task_import_dialog.py",
+      "name": "ai_task_import_dialog.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "run_history_dialog.py",
+      "name": "run_history_dialog.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "schedule_task_tab.py",
+      "name": "schedule_task_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/schedule_task_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ui/schedule_task_tab.py",
+      "name": "ui/schedule_task_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 344
+   },
+   {
+    "wid": "R08-T12",
+    "title": "Tách ui/folder_tab.py L350 workspace_file_tree.py, document_preview_manager.py, ai_file_editor_dialog.py ( code_editor.py, office_document_renderer.py, ai_edit_model_resolver.py, ai_edit_pipeline.py, ",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Hoa (Workspace, Folder, Scheduling, Dashboard & Graph)",
+    "done": true,
+    "started": "2026-08-27 17:39",
+    "ended": "2026-08-27 18:09",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "workspace_file_tree.py",
+      "name": "workspace_file_tree.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "document_preview_manager.py",
+      "name": "document_preview_manager.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ai_file_editor_dialog.py",
+      "name": "ai_file_editor_dialog.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "code_editor.py",
+      "name": "code_editor.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "office_document_renderer.py",
+      "name": "office_document_renderer.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ai_edit_model_resolver.py",
+      "name": "ai_edit_model_resolver.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ai_edit_pipeline.py",
+      "name": "ai_edit_pipeline.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "folder_tab.py",
+      "name": "folder_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/folder_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "FileWorkspaceService",
+      "name": "FileWorkspaceService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ui/folder_tab.py#L350",
+      "name": "ui/folder_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R08-T13",
+    "title": "Tách ui/dashboard_tab.py token_usage_card_widget.py, usage_chart_widget.py, habits_widget.py ( dashboard_tab.py shell, application/monitoring/dashboard_query_service.py — xem báo cáo về ghi chú xung đ",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Hoa (Workspace, Folder, Scheduling, Dashboard & Graph)",
+    "done": true,
+    "started": "2026-08-27 18:09",
+    "ended": "2026-08-27 18:16",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "token_usage_card_widget.py",
+      "name": "token_usage_card_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "usage_chart_widget.py",
+      "name": "usage_chart_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "habits_widget.py",
+      "name": "habits_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "dashboard_tab.py",
+      "name": "dashboard_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/dashboard_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "application/monitoring/dashboard_query_service.py",
+      "name": "application/monitoring/dashboard_query_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ui/dashboard_tab.py",
+      "name": "ui/dashboard_tab.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 348
+   },
+   {
+    "wid": "R08-T14",
+    "title": "Tách ui/structure_graph_view.py presentation/graph/structure_graph_view.py (shell) & graph_qa_widget.py ( graph_renderer.py, graph_scene_items.py, graph_messages_view.py, application/workspaces/graph_",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R08: UI/Application Separation (Phân Rã Toàn Diện Các God Widgets) / Team Hoa (Workspace, Folder, Scheduling, Dashboard & Graph)",
+    "done": true,
+    "started": "2026-08-27 18:16",
+    "ended": "2026-08-27 20:52",
+    "owner": "",
+    "deliverables": [
+     {
+      "text": "presentation/graph/structure_graph_view.py",
+      "name": "presentation/graph/structure_graph_view.py",
+      "kind": "path",
+      "paths": [
+       "ui/structure_graph_view.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "graph_qa_widget.py",
+      "name": "graph_qa_widget.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "graph_renderer.py",
+      "name": "graph_renderer.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "graph_scene_items.py",
+      "name": "graph_scene_items.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "graph_messages_view.py",
+      "name": "graph_messages_view.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "application/workspaces/graph_index_service.py",
+      "name": "application/workspaces/graph_index_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "ui/structure_graph_view.py",
+      "name": "ui/structure_graph_view.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 350
+   },
+   {
+    "wid": "R09-T01",
+    "title": "Viết tài liệu chuẩn hóa Security Policy Model docs/architecture/security-policy.md",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "done": true,
+    "started": "2026-08-25 09:00",
+    "ended": "2026-08-25 17:00",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "docs/architecture/security-policy.md",
+      "name": "docs/architecture/security-policy.md",
+      "kind": "docref",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 359
+   },
+   {
+    "wid": "R09-T02",
+    "title": "Xử lý triệt để Circular Import giữa core/model_pricing.py và core/usage_tracker.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "done": true,
+    "started": "2026-08-26 09:00",
+    "ended": "2026-08-26 12:00",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "core/model_pricing.py",
+      "name": "core/model_pricing.py",
+      "kind": "path",
+      "paths": [
+       "core/model_pricing.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/usage_tracker.py",
+      "name": "core/usage_tracker.py",
+      "kind": "path",
+      "paths": [
+       "core/usage_tracker.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 361
+   },
+   {
+    "wid": "R09-T03",
+    "title": "Xử lý triệt để Circular Import giữa core/agent_security.py và core/agent_security_alert.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "done": true,
+    "started": "2026-08-26 13:00",
+    "ended": "2026-08-26 17:00",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "core/agent_security.py",
+      "name": "core/agent_security.py",
+      "kind": "path",
+      "paths": [
+       "core/agent_security.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/agent_security_alert.py",
+      "name": "core/agent_security_alert.py",
+      "kind": "path",
+      "paths": [
+       "core/agent_security_alert.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 363
+   },
+   {
+    "wid": "R09-T04",
+    "title": "Xây dựng CanonicalAuditLogger thống nhất định dạng log từ core/audit_log.py infrastructure/telemetry/audit_logger.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "done": true,
+    "started": "2026-08-27 09:00",
+    "ended": "2026-08-27 12:00",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "infrastructure/telemetry/audit_logger.py",
+      "name": "infrastructure/telemetry/audit_logger.py",
+      "kind": "path",
+      "paths": [
+       "security/audit_logger.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "CanonicalAuditLogger",
+      "name": "CanonicalAuditLogger",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/audit_log.py",
+      "name": "core/audit_log.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 365
+   },
+   {
+    "wid": "R09-T05",
+    "title": "Xây dựng MonitoringQueryService (truy vấn read-only có phân trang) application/monitoring/monitoring_query_service.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "done": true,
+    "started": "2026-08-27 13:00",
+    "ended": "2026-08-27 17:00",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "application/monitoring/monitoring_query_service.py",
+      "name": "application/monitoring/monitoring_query_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "MonitoringQueryService",
+      "name": "MonitoringQueryService",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 367
+   },
+   {
+    "wid": "R09-T06",
+    "title": "Chuẩn hóa ma trận năng lực Sandbox trên từng hệ điều hành từ core/sandbox_manager.py infrastructure/sandbox/sandbox_capabilities.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "done": true,
+    "started": "2026-08-28 08:30",
+    "ended": "2026-08-28 10:20",
+    "owner": "Team Nam",
+    "deliverables": [
+     {
+      "text": "infrastructure/sandbox/sandbox_capabilities.py",
+      "name": "infrastructure/sandbox/sandbox_capabilities.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [
+     {
+      "text": "core/sandbox_manager.py",
+      "name": "core/sandbox_manager.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 369
+   },
+   {
+    "wid": "R10-T01",
+    "title": "Thiết lập Tháp kiểm thử phân tầng (Unit tests không I/O 0.05s, Contract tests cho Providers/Tools, Integration tests, Fakes library) tests/",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "done": true,
+    "started": "2026-08-28 10:30",
+    "ended": "2026-08-28 10:45",
+    "owner": "Team Duy",
+    "deliverables": [],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 378
+   },
+   {
+    "wid": "R10-T02",
+    "title": "Xây dựng Bộ script CI Quality Gate tự động (scripts/check_imports.py, scripts/check_loc.py, scripts/audit_security.py, scripts/run_quality_gate.py)",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "done": true,
+    "started": "2026-08-28 10:50",
+    "ended": "2026-08-28 10:58",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "scripts/check_imports.py",
+      "name": "scripts/check_imports.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "scripts/check_loc.py",
+      "name": "scripts/check_loc.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "scripts/audit_security.py",
+      "name": "scripts/audit_security.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "scripts/run_quality_gate.py",
+      "name": "scripts/run_quality_gate.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 380
+   },
+   {
+    "wid": "R10-T03",
+    "title": "Cập nhật tài liệu kiến trúc 4 tầng, hướng dẫn setup môi trường & pre-commit hook README.md & START_CONTRIBUTING.md",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "done": true,
+    "started": "2026-08-28 11:00",
+    "ended": "2026-08-28 11:06",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "README.md",
+      "name": "README.md",
+      "kind": "path",
+      "paths": [
+       "README.md",
+       "core/routing/README.md"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "START_CONTRIBUTING.md",
+      "name": "START_CONTRIBUTING.md",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 382
+   },
+   {
+    "wid": "R10-T04",
+    "title": "Soạn thảo bộ Contributor Recipes (3 công thức: Thêm Model Provider, Thêm Built-in/MCP Tool, Thêm Màn hình/Widget) docs/governance/contributor-recipes.md",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "done": true,
+    "started": "2026-08-28 10:55",
+    "ended": "2026-08-28 11:00",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "docs/governance/contributor-recipes.md",
+      "name": "docs/governance/contributor-recipes.md",
+      "kind": "docref",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 384
+   },
+   {
+    "wid": "R10-T05",
+    "title": "Xây dựng bộ kiểm thử khói phát hành (E2E Release Smoke Test qua headless Qt với 5 kịch bản chính) tests/e2e/test_smoke.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 1: CHECKLIST CHI TIẾT THEO 10 EPIC (R01 R10) / EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "done": true,
+    "started": "2026-08-28 10:56",
+    "ended": "2026-08-28 11:04",
+    "owner": "Team Duy",
+    "deliverables": [
+     {
+      "text": "tests/e2e/test_smoke.py",
+      "name": "tests/e2e/test_smoke.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "mentions": [],
+    "fields": {},
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 386
+   }
+  ],
+  "schedule": [
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Khóa DTO ConversationExecutionRequest, AgentEvent Xây dựng FakeProvider, FakeToolExecutor",
+    "planned": "21/08 (T6)",
+    "started": "2026-08-21 18:23",
+    "ended": "2026-08-21 18:35",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 397
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Chuẩn hóa ProviderDescriptor, ProviderRegistry Wrap OpenAI, Anthropic, Ollama, FPT Gateway Viết Contract Tests",
+    "planned": "22-23/08 (T7-CN)",
+    "started": "2026-08-22 18:45",
+    "ended": "2026-08-22 19:01",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 398
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Xây dựng RoutingApplicationService độc lập Qt Tách ComposerWidget & AttachmentPicker",
+    "planned": "24/08 (T2)",
+    "started": "2026-08-22 18:53",
+    "ended": "2026-08-25 15:45",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 399
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Xây dựng ConversationApplicationService Tách ChatHistoryWidget và bubble renderer",
+    "planned": "25/08 (T3)",
+    "started": "2026-08-23 01:08",
+    "ended": "2026-08-25 11:30",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 400
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Nối stream AgentEvent sang Chat History Tách AudioRecorderWidget",
+    "planned": "26/08 (T4)",
+    "started": "2026-08-25 15:45",
+    "ended": "2026-08-25 17:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 401
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Tách ChatOutputPanel & File Watcher Lắp ráp container ChatPanel và Floating HelpAgent",
+    "planned": "27/08 (T5)",
+    "started": "2026-08-26 09:00",
+    "ended": "2026-08-26 17:30",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 402
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Xóa copy routing cũ trong ui/chat_panel.py Fix circular import model_pricing usage_tracker",
+    "planned": "28/08 (T6)",
+    "started": "2026-08-22 18:57",
+    "ended": "2026-08-28 09:30",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 403
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Viết suite integration test cho toàn bộ luồng Chat (tests/integration/test_chat_flow.py)",
+    "planned": "29/08 (T7)",
+    "started": "2026-08-28 10:35",
+    "ended": "2026-08-28 10:40",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 404
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Chủ trì CASAN Check 3: Chạy python scripts/check_imports.py đảm bảo 0 import PySide6 trong domain & application",
+    "planned": "30/08 (CN)",
+    "started": "2026-08-28 10:30",
+    "ended": "2026-08-28 10:33",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 405
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Chủ trì EPIC R10: Viết Contributor Recipes, chạy E2E Smoke Test (tests/e2e/test_smoke.py) và merge PR cuối cùng",
+    "planned": "31/08 (T2)",
+    "started": "2026-08-28 10:50",
+    "ended": "2026-08-28 11:06",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 406
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Khóa DTO Co4E Xây dựng AtomicJsonFile và KeyringAdapter (SecretStore)",
+    "planned": "21/08 (T6)",
+    "started": "2026-08-21 19:00",
+    "ended": "2026-08-21 21:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 414
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Refactor config.py sang ConfigRepository Tách ProviderSettingsWidget & ConnectorSettingsWidget",
+    "planned": "22-23/08 (T7-CN)",
+    "started": "2026-08-22 09:00",
+    "ended": "2026-08-23 17:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 415
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Tách 3 tab đầu của Monitoring (overview_tab.py, sandbox_status_tab.py) Xây dựng MonitoringQueryService",
+    "planned": "24/08 (T2)",
+    "started": "2026-08-24 09:00",
+    "ended": "2026-08-24 17:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 416
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Tách 4 tab còn lại của Monitoring (security_events_tab.py, mcp_history_tab.py,...) Lắp ráp container MonitoringTab",
+    "planned": "25/08 (T3)",
+    "started": "2026-08-25 09:00",
+    "ended": "2026-08-25 17:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 417
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Bóc tách Co4EWorkflowService Tách NodePropertyPanel & AgentListPanel",
+    "planned": "26/08 (T4)",
+    "started": "2026-08-26 09:00",
+    "ended": "2026-08-26 17:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 418
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Tách Co4ECanvasWidget, Co4ERunControlWidget & Co4EChatView",
+    "planned": "27/08 (T5)",
+    "started": "2026-08-27 09:00",
+    "ended": "2026-08-27 17:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 419
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Lắp ráp container Co4ETab Xây dựng bootstrap.py (Composition Root) và tách MainWindow shell",
+    "planned": "28/08 (T6)",
+    "started": "2026-08-28 09:00",
+    "ended": "2026-08-28 10:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 420
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Fix circular import agent_security agent_security_alert Integration test luồng Co4E & Settings",
+    "planned": "29/08 (T7)",
+    "started": "2026-08-28 10:00",
+    "ended": "2026-08-28 10:20",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 421
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Chủ trì CASAN Check 1: Chạy python scripts/audit_security.py đảm bảo 0 API Key/Token plaintext",
+    "planned": "30/08 (CN)",
+    "started": "2026-08-28 10:46",
+    "ended": "2026-08-28 10:47",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 422
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Fix tồn đọng Check 1, cập nhật tài liệu kiến trúc, merge PR cuối",
+    "planned": "31/08 (T2)",
+    "started": "2026-08-28 11:00",
+    "ended": "2026-08-28 11:06",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 423
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Khóa DTO ToolDescriptor, ToolCapability Tách FileTools từ core/tools.py",
+    "planned": "21/08 (T6)",
+    "started": "2026-08-21 21:40",
+    "ended": "2026-08-21 21:47",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 431
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Tách CommandTools, FetchTools Tách TokenUsageCardWidget & UsageChartWidget (Dashboard)",
+    "planned": "22-23/08 (T7-CN)",
+    "started": "2026-08-22 09:00",
+    "ended": "2026-08-23 17:00",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 432
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Tách TaskRepository & ScheduleCalculator Tách KanbanBoardWidget (7 cột trạng thái)",
+    "planned": "24/08 (T2)",
+    "started": "2026-08-27 16:05",
+    "ended": "2026-08-27 16:26",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 433
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Xây dựng QtSchedulerClock adapter (tách khỏi QTimer) Tách CalendarViewWidget",
+    "planned": "25/08 (T3)",
+    "started": "2026-08-27 16:26",
+    "ended": "2026-08-27 17:39",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 434
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Xây dựng TaskApplicationService Tách AiTaskCreatorDialog & AiTaskImportDialog",
+    "planned": "26/08 (T4)",
+    "started": "2026-08-27 16:47",
+    "ended": "2026-08-27 17:39",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 435
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Tách WorkspaceFileTree, DocumentPreviewManager & AiFileEditorDialog từ FolderTab",
+    "planned": "27/08 (T5)",
+    "started": "2026-08-27 17:39",
+    "ended": "2026-08-27 18:09",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 436
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Tách StructureGraphView (GraphRAG) Lắp ráp shell FolderTab & ScheduleTaskTab",
+    "planned": "28/08 (T6)",
+    "started": "2026-08-27 18:16",
+    "ended": "2026-08-27 20:52",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 437
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Nối ToolPolicyGateway qua MCP Client & Built-in Tools Integration test Task Scheduler & File Explorer",
+    "planned": "29/08 (T7)",
+    "started": "2026-08-27 20:52",
+    "ended": "2026-08-27 21:30",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 438
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Chủ trì CASAN Check 2: Chạy python scripts/check_loc.py --max-lines 400 đảm bảo 0 file 400 dòng",
+    "planned": "30/08 (CN)",
+    "started": "2026-08-28 10:46",
+    "ended": "2026-08-28 10:47",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 439
+   },
+   {
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 2: CHECKLIST TIẾN ĐỘ THEO NGÀY CỦA TỪNG TEAM (21/08 31/08) / TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Fix tồn đọng Check 2, cập nhật README, merge PR cuối",
+    "planned": "31/08 (T2)",
+    "started": "2026-08-28 11:00",
+    "ended": "2026-08-28 11:06",
+    "done": true,
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 440
+   }
+  ],
+  "gates": [
+   {
+    "name": "Checkpoint 1: Contracts & Fakes",
+    "command": "pytest tests/contracts tests/fakes",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 3: CHECKLIST CHECKPOINT REVIEW & CƠ CHẾ KIỂM DUYỆT CASAN / Bảng Theo Dõi Các Checkpoints & Cổng Kiểm Duyệt CASAN",
+    "signed_off": false,
+    "started": "",
+    "ended": "",
+    "fields": {
+     "Checkpoint / Cổng Duyệt": "Checkpoint 1: Contracts & Fakes",
+     "Tiêu Chí Bắt Buộc": "DTO và Fake Services tạo xong test pass",
+     "Phụ Trách": "Cả 3 Team",
+     "Start Time": "",
+     "End Time": ""
+    },
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 457
+   },
+   {
+    "name": "Checkpoint 2: Services & Sub-widgets",
+    "command": "pytest tests/",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 3: CHECKLIST CHECKPOINT REVIEW & CƠ CHẾ KIỂM DUYỆT CASAN / Bảng Theo Dõi Các Checkpoints & Cổng Kiểm Duyệt CASAN",
+    "signed_off": false,
+    "started": "",
+    "ended": "",
+    "fields": {
+     "Checkpoint / Cổng Duyệt": "Checkpoint 2: Services & Sub-widgets",
+     "Tiêu Chí Bắt Buộc": "Tách xong 100 God Files 0 circular import",
+     "Phụ Trách": "Cả 3 Team",
+     "Start Time": "",
+     "End Time": ""
+    },
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 458
+   },
+   {
+    "name": "CASAN Check 1: Security Audit",
+    "command": "python scripts/audit_security.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 3: CHECKLIST CHECKPOINT REVIEW & CƠ CHẾ KIỂM DUYỆT CASAN / Bảng Theo Dõi Các Checkpoints & Cổng Kiểm Duyệt CASAN",
+    "signed_off": false,
+    "started": "",
+    "ended": "",
+    "fields": {
+     "Checkpoint / Cổng Duyệt": "CASAN Check 1: Security Audit",
+     "Tiêu Chí Bắt Buộc": "plaintext secret trong file cấu hình",
+     "Phụ Trách": "Team Nam",
+     "Start Time": "",
+     "End Time": ""
+    },
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 459
+   },
+   {
+    "name": "CASAN Check 2: Modularity (LOC)",
+    "command": "python scripts/check_loc.py --max-lines 400",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 3: CHECKLIST CHECKPOINT REVIEW & CƠ CHẾ KIỂM DUYỆT CASAN / Bảng Theo Dõi Các Checkpoints & Cổng Kiểm Duyệt CASAN",
+    "signed_off": false,
+    "started": "",
+    "ended": "",
+    "fields": {
+     "Checkpoint / Cổng Duyệt": "CASAN Check 2: Modularity (LOC)",
+     "Tiêu Chí Bắt Buộc": "file production nào 400 dòng code",
+     "Phụ Trách": "Team Hoa",
+     "Start Time": "",
+     "End Time": ""
+    },
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 460
+   },
+   {
+    "name": "CASAN Check 3: Clean Architecture",
+    "command": "python scripts/check_imports.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 3: CHECKLIST CHECKPOINT REVIEW & CƠ CHẾ KIỂM DUYỆT CASAN / Bảng Theo Dõi Các Checkpoints & Cổng Kiểm Duyệt CASAN",
+    "signed_off": false,
+    "started": "",
+    "ended": "",
+    "fields": {
+     "Checkpoint / Cổng Duyệt": "CASAN Check 3: Clean Architecture",
+     "Tiêu Chí Bắt Buộc": "import PySide6 trong domain & application",
+     "Phụ Trách": "Team Duy",
+     "Start Time": "",
+     "End Time": ""
+    },
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 461
+   },
+   {
+    "name": "Final Release E2E Smoke Test",
+    "command": "pytest tests/e2e/test_smoke.py",
+    "group": "COWORK LOCAL - BẢNG CHECKLIST TIẾN ĐỘ TÁI CẤU TRÚC (2026) / PHẦN 3: CHECKLIST CHECKPOINT REVIEW & CƠ CHẾ KIỂM DUYỆT CASAN / Bảng Theo Dõi Các Checkpoints & Cổng Kiểm Duyệt CASAN",
+    "signed_off": false,
+    "started": "",
+    "ended": "",
+    "fields": {
+     "Checkpoint / Cổng Duyệt": "Final Release E2E Smoke Test",
+     "Tiêu Chí Bắt Buộc": "kịch bản end-to-end pass 100 trên main",
+     "Phụ Trách": "Team Duy & 3 Team",
+     "Start Time": "",
+     "End Time": ""
+    },
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 462
+   }
+  ],
+  "register": [
+   {
+    "rid": "I-01",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input bắt buộc",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Yêu cầu sửa",
+     "Mô tả": "Mô tả hành vi sai hiện tại và hành vi mong đợi",
+     "Dùng để": "Xác định chế độ, xác định đúng nghĩa là gì"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 12
+   },
+   {
+    "rid": "I-02",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input bắt buộc",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Vị trí biểu hiện",
+     "Mô tả": "Màn hình / tab / widget / chức năng nơi thấy vấn đề (với LAYOUT_FIX)",
+     "Dùng để": "Khoanh vùng file cần đọc"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 13
+   },
+   {
+    "rid": "I-03",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input optional (dùng nếu có)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Stack trace / traceback",
+     "Nếu có thì": "Khoanh vùng trực tiếp tới file:line, đi thẳng vào Step 2",
+     "Nếu không có thì": "Phải tự tái hiện hoặc lần theo luồng gọi từ UI vào"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 22
+   },
+   {
+    "rid": "I-04",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input optional (dùng nếu có)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Log ứng dụng",
+     "Nếu có thì": "Xác định thứ tự sự kiện và giá trị dữ liệu thực tế",
+     "Nếu không có thì": "Chỉ suy luận từ code, và phải ghi rõ đó là suy luận"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 23
+   },
+   {
+    "rid": "I-05",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input optional (dùng nếu có)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Ảnh chụp UI (before)",
+     "Nếu có thì": "Đối chiếu chính xác chỗ lệch, dùng làm bằng chứng before",
+     "Nếu không có thì": "Mô tả chỗ lệch bằng lời, ghi Assumption về cách hiểu"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 24
+   },
+   {
+    "rid": "I-06",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input optional (dùng nếu có)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Số đo mong muốn (px, khoảng cách, tỉ lệ)",
+     "Nếu có thì": "Dùng đúng số đó, đặt vào token trong theme/",
+     "Nếu không có thì": "Không tự đặt số dùng token sẵn có gần nhất, ghi Open Question"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 25
+   },
+   {
+    "rid": "I-07",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input optional (dùng nếu có)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Bước tái hiện (repro steps)",
+     "Nếu có thì": "Tái hiện đúng theo bước, xác nhận lại trước và sau khi sửa",
+     "Nếu không có thì": "Tự dựng repro, ghi rõ repro đã dùng"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 26
+   },
+   {
+    "rid": "I-08",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input optional (dùng nếu có)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Môi trường (OS, độ phân giải, scale DPI, theme sáng/tối)",
+     "Nếu có thì": "Kiểm đúng môi trường đó",
+     "Nếu không có thì": "Kiểm mặc định: 2 kích thước cửa sổ 2 theme"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 27
+   },
+   {
+    "rid": "I-09",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input optional (dùng nếu có)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "task.md",
+      "name": "task.md",
+      "kind": "docref",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Input": "Ràng buộc (không được đổi file X, phải giữ API Y)",
+     "Nếu có thì": "Tuân thủ tuyệt đối",
+     "Nếu không có thì": "Áp dụng phần Out of scope trong task.md"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 28
+   },
+   {
+    "rid": "I-10",
+    "group": "input_contract.md — Hợp đồng dữ liệu đầu vào / Input optional (dùng nếu có)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Input": "Commit / PR liên quan, task ID",
+     "Nếu có thì": "Dùng cho commit message và branch theo convention repo",
+     "Nếu không có thì": "Đề xuất commit message, không tự tạo branch"
+    },
+    "detail": {},
+    "doc": "instruction/agent/input_contract.md",
+    "line": 29
+   },
+   {
+    "rid": "R01-T01",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R01 — Architecture Foundation & Characterization (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "docs/architecture/ADR-001-layered-architecture.md",
+      "name": "docs/architecture/ADR-001-layered-architecture.md",
+      "kind": "docref",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "docs/architecture/ADR-001-layered-architecture.md",
+     "Ghi chú": "Định nghĩa 4 tầng, chiều phụ thuộc, 6 quy tắc bất biến I1–I6, chiến lược di trú Strangler Fig"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 37
+   },
+   {
+    "rid": "R01-T02",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R01 — Architecture Foundation & Characterization (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "tests/fakes/fake_provider.py",
+      "name": "tests/fakes/fake_provider.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "fake_tool_executor.py",
+      "name": "fake_tool_executor.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "tests/fakes/fake_provider.py, fake_tool_executor.py",
+     "Ghi chú": "Test double chạy offline, kịch bản hoá, ghi lại mọi lời gọi"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 38
+   },
+   {
+    "rid": "R01-T03",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R01 — Architecture Foundation & Characterization (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "scripts/check_imports.py",
+      "name": "scripts/check_imports.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "scripts/check_imports.py (239 dòng)",
+     "Ghi chú": "Quét AST, bắt cả import tương đối (from ...ui import x) và import trong thân hàm"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 39
+   },
+   {
+    "rid": "R01-T04",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R01 — Architecture Foundation & Characterization (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "tests/characterization/test_run_cowork.py",
+      "name": "tests/characterization/test_run_cowork.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "run_cowork",
+      "name": "run_cowork",
+      "kind": "symbol",
+      "paths": [
+       "core/chat_agent.py"
+      ],
+      "sids": [
+       "core/chat_agent.py::run_cowork"
+      ],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "tests/characterization/test_run_cowork.py",
+     "Ghi chú": "test chụp snapshot hành vi hiện tại của run_cowork trước khi R04 đụng vào"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 40
+   },
+   {
+    "rid": "R01-T05",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R01 — Architecture Foundation & Characterization (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "docs/architecture/dormant-code.md",
+      "name": "docs/architecture/dormant-code.md",
+      "kind": "docref",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "docs/architecture/dormant-code.md",
+     "Ghi chú": "Quét đồ thị import: 43 module không ai import xác minh còn 6 hạng mục chết thật ( 1.887 dòng)"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 41
+   },
+   {
+    "rid": "R03-T01",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R03 — Model Providers & Routing (6/6)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "tests/contracts/test_providers.py",
+      "name": "tests/contracts/test_providers.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "Provider._request",
+      "name": "Provider._request",
+      "kind": "symbol",
+      "paths": [
+       "core/ms365_graph.py",
+       "providers/base.py"
+      ],
+      "sids": [
+       "core/ms365_graph.py::_request",
+       "providers/base.py::_request"
+      ],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "tests/contracts/test_providers.py",
+     "Ghi chú": "contract test chạy được cả 2 adapter thật mà không cần mạng nhờ thay Provider._request bằng SSE đóng hộp"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 51
+   },
+   {
+    "rid": "R03-T02",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R03 — Model Providers & Routing (6/6)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "domain/models/provider_descriptor.py",
+      "name": "domain/models/provider_descriptor.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "infrastructure/providers/provider_registry.py",
+      "name": "infrastructure/providers/provider_registry.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "domain/models/provider_descriptor.py, infrastructure/providers/provider_registry.py",
+     "Ghi chú": "Gom 3 nơi khai báo provider về 1 chỗ"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 52
+   },
+   {
+    "rid": "R03-T03",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R03 — Model Providers & Routing (6/6)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "application/model_routing/routing_application_service.py",
+      "name": "application/model_routing/routing_application_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "application/model_routing/routing_application_service.py",
+     "Ghi chú": "Pure Python, 4 chế độ: Off / Auto / Manual / Fallback (mới)"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 53
+   },
+   {
+    "rid": "R03-T04",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R03 — Model Providers & Routing (6/6)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "ui/chat_panel.py",
+      "name": "ui/chat_panel.py",
+      "kind": "path",
+      "paths": [
+       "ui/chat_panel.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ui/co4e_tab.py",
+      "name": "ui/co4e_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/co4e_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ui/folder_tab.py",
+      "name": "ui/folder_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/folder_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "ui/chat_panel.py, ui/co4e_tab.py, ui/folder_tab.py",
+     "Ghi chú": "Gỡ 3 bản sao logic routing"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 54
+   },
+   {
+    "rid": "R03-T06",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R03 — Model Providers & Routing (6/6)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "infrastructure/telemetry/usage_sink.py",
+      "name": "infrastructure/telemetry/usage_sink.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "infrastructure/telemetry/usage_sink.py",
+     "Ghi chú": "Tách ghi nhận token usage khỏi provider"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 55
+   },
+   {
+    "rid": "R04-T01",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R04 — Agent Runtime & Conversation Service (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "domain/agents/conversation_execution_request.py",
+      "name": "domain/agents/conversation_execution_request.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "domain/agents/conversation_execution_request.py",
+     "Ghi chú": "Frozen dataclass, chụp toàn bộ input của 1 turn tại thời điểm submit"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 75
+   },
+   {
+    "rid": "R04-T02",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R04 — Agent Runtime & Conversation Service (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "domain/agents/agent_event.py",
+      "name": "domain/agents/agent_event.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "domain/agents/agent_event.py (370 dòng)",
+     "Ghi chú": "event có kiểu thay cho dict không kiểu, kèm cầu nối 2 chiều"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 76
+   },
+   {
+    "rid": "R04-T03",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R04 — Agent Runtime & Conversation Service (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "application/conversations/conversation_application_service.py",
+      "name": "application/conversations/conversation_application_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "application/conversations/conversation_application_service.py",
+     "Ghi chú": "Điều phối vòng đời turn, không import Qt"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 77
+   },
+   {
+    "rid": "R04-T04",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R04 — Agent Runtime & Conversation Service (5/5)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Sản phẩm": "ui/cowork_tab.py::build_job",
+     "Ghi chú": "Chuyển sang snapshot service"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 78
+   },
+   {
+    "rid": "R04-T05",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM DUY: EPIC R01, R03, R04 / Kết quả theo từng EPIC / EPIC R04 — Agent Runtime & Conversation Service (5/5)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Sản phẩm": "core/task_executors.py::_run_agent",
+     "Ghi chú": "Chuyển sang cùng service (trước đây là bản lắp ráp thứ hai, hơi khác)"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamDuy_R01_R03_R04.md",
+    "line": 79
+   },
+   {
+    "rid": "R05-T01",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R05 — Tool, MCP & Connector Policy (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "core/tools.py",
+      "name": "core/tools.py",
+      "kind": "path",
+      "paths": [
+       "core/tools.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ToolContext",
+      "name": "ToolContext",
+      "kind": "symbol",
+      "paths": [
+       "core/tools.py"
+      ],
+      "sids": [
+       "core/tools.py::ToolContext"
+      ],
+      "near": ""
+     },
+     {
+      "text": "ToolError",
+      "name": "ToolError",
+      "kind": "symbol",
+      "paths": [
+       "core/tools.py"
+      ],
+      "sids": [
+       "core/tools.py::ToolError"
+      ],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "domain/tools/ tool_descriptor,tool_registry .py, infrastructure/filesystem/ file_tools,command_tools,fetch_tools .py",
+     "Ghi chú": "Tách if/elif dispatcher của core/tools.py core/tools.py còn lại là shim strangler-fig (re-export ToolContext/ToolError, dispatch qua dict), 566 291 dòng."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 35
+   },
+   {
+    "rid": "R05-T03",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R05 — Tool, MCP & Connector Policy (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "chat_agent.py",
+      "name": "chat_agent.py",
+      "kind": "path",
+      "paths": [
+       "core/chat_agent.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "code_agent.py",
+      "name": "code_agent.py",
+      "kind": "path",
+      "paths": [
+       "core/code_agent.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "application/conversations/tool_policy_gateway.py::ToolPolicyGateway",
+     "Ghi chú": "Thay 2 chỗ check hardcode riêng biệt (chat_agent.py, code_agent.py) bằng 1 lookup capability chung."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 36
+   },
+   {
+    "rid": "R05-T04",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R05 — Tool, MCP & Connector Policy (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "core/chat_agent.py",
+      "name": "core/chat_agent.py",
+      "kind": "path",
+      "paths": [
+       "core/chat_agent.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/mcp_client.py",
+      "name": "core/mcp_client.py",
+      "kind": "path",
+      "paths": [
+       "core/mcp_client.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "Sửa core/chat_agent.py, core/mcp_client.py",
+     "Ghi chú": "Thay đổi hành vi có chủ đích — xem mục 5, Lỗi 1."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 37
+   },
+   {
+    "rid": "R05-T05",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R05 — Tool, MCP & Connector Policy (5/5)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Sản phẩm": "infrastructure/mcp/mcp_source_manager.py::McpToolSourceManager",
+     "Ghi chú": "Tách lifecycle connection MCP khỏi state.py::AppContext."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 38
+   },
+   {
+    "rid": "R06-T01",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R06 — Workspace, Filesystem & History Isolation (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "is_allowed(path)",
+      "name": "is_allowed",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "domain/workspaces/workspace_session.py::WorkspaceSession",
+     "Ghi chú": "Snapshot bất biến (project_id/workspace_root/sandbox_dir/allowed_paths) is_allowed(path)."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 44
+   },
+   {
+    "rid": "R06-T02",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R06 — Workspace, Filesystem & History Isolation (5/5)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Sản phẩm": "infrastructure/persistence/json/ atomic_write,workspace_repository_impl,conversation_repository_impl .py",
+     "Ghi chú": "Sửa bug thật — xem mục 5, Lỗi 2."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 45
+   },
+   {
+    "rid": "R06-T03",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R06 — Workspace, Filesystem & History Isolation (5/5)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Sản phẩm": "infrastructure/filesystem/execution_workspace.py::ExecutionWorkspace",
+     "Ghi chú": "Đặt tên cho quy ước .scratch đã có sẵn."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 46
+   },
+   {
+    "rid": "R06-T04",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R06 — Workspace, Filesystem & History Isolation (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "ui/chat_panel.py",
+      "name": "ui/chat_panel.py",
+      "kind": "path",
+      "paths": [
+       "ui/chat_panel.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "Sửa ui/chat_panel.py",
+     "Ghi chú": "Sửa race condition thật — xem mục 5, Lỗi 3."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 47
+   },
+   {
+    "rid": "R06-T05",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R06 — Workspace, Filesystem & History Isolation (5/5)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "execute_tool",
+      "name": "execute_tool",
+      "kind": "symbol",
+      "paths": [
+       "core/tools.py"
+      ],
+      "sids": [
+       "core/tools.py::execute_tool"
+      ],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "application/workspaces/file_workspace_service.py::FileWorkspaceService",
+     "Ghi chú": "Seam cho File Explorer/AI Editor gọi execute_tool giống agent — chưa có call site thật lúc R06 xong đã nối dây ở R08-T12 (xem mục 5)."
+    },
+    "detail": {
+     "Tác dụng phụ có lợi": "infrastructure/filesystem/file_tools.py::write_file đã có sẵn cảnh báo cú pháp Python và tự build .xlsx thật từ text — 2 hành vi này trước đây không tồn tại trên đường ghi cũ của folder_tab.py, giờ được hưởng miễn phí."
+    },
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 48
+   },
+   {
+    "rid": "R07-T01",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R07 — Scheduling & Workflow Runtime (5/5, phạm vi Team Hoa)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "core/tasks.py",
+      "name": "core/tasks.py",
+      "kind": "path",
+      "paths": [
+       "core/tasks.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "save_task",
+      "name": "save_task",
+      "kind": "symbol",
+      "paths": [
+       "core/tasks.py"
+      ],
+      "sids": [
+       "core/tasks.py::save_task"
+      ],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "infrastructure/persistence/json/task_repository_impl.py::TaskRepository",
+     "Ghi chú": "Bọc CRUD của core/tasks.py. Sửa bug thật: save_task trước đây ghi không atomic — cùng lớp bug đã sửa ở R06-T02."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 54
+   },
+   {
+    "rid": "R07-T02",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R07 — Scheduling & Workflow Runtime (5/5, phạm vi Team Hoa)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Sản phẩm": "domain/tasks/schedule_calculator.py::ScheduleCalculator",
+     "Ghi chú": "Tách schedule math (cron/interval/daily/weekly/monthly holiday exclusion) thành pure Python, trước đây 0 test, giờ có 14 test."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 55
+   },
+   {
+    "rid": "R07-T03",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R07 — Scheduling & Workflow Runtime (5/5, phạm vi Team Hoa)",
+    "found": "",
+    "anchors": [],
+    "fields": {
+     "Sản phẩm": "infrastructure/qt/qt_scheduler_clock.py::QtSchedulerClock",
+     "Ghi chú": "Bọc QTimer sau 1 interface nhỏ, inject qua clock . Đổi vị trí so với plan gốc — xem mục 5."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 56
+   },
+   {
+    "rid": "R07-T04",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R07 — Scheduling & Workflow Runtime (5/5, phạm vi Team Hoa)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "move_to_status",
+      "name": "move_to_status",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "application/scheduling/task_application_service.py::TaskApplicationService",
+     "Ghi chú": "Gom CRUD luật kéo-thả Kanban (move_to_status)."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 57
+   },
+   {
+    "rid": "R07-T05",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R07 — Scheduling & Workflow Runtime (5/5, phạm vi Team Hoa)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "plan_tasks",
+      "name": "plan_tasks",
+      "kind": "symbol",
+      "paths": [
+       "core/ai_task_planner.py"
+      ],
+      "sids": [
+       "core/ai_task_planner.py::plan_tasks"
+      ],
+      "near": ""
+     },
+     {
+      "text": "import_tasks",
+      "name": "import_tasks",
+      "kind": "symbol",
+      "paths": [
+       "core/task_excel.py",
+       "core/task_import.py"
+      ],
+      "sids": [
+       "core/task_excel.py::import_tasks",
+       "core/task_import.py::import_tasks"
+      ],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Sản phẩm": "application/scheduling/ai_task_planner_service.py::AiTaskPlannerService",
+     "Ghi chú": "Seam cho plan_tasks/import_tasks."
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 58
+   },
+   {
+    "rid": "R08-T11",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R08 — UI/Application Separation (4/4, phạm vi Team Hoa: T11 T14)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "ui/schedule_task_tab.py",
+      "name": "ui/schedule_task_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/schedule_task_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "God file gốc": "ui/schedule_task_tab.py (795 dòng)",
+     "Tách thành": "presentation/scheduling/ kanban_board_widget,calendar_view_widget,ai_task_creator_dialog,ai_task_import_dialog,run_history_dialog .py shell"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 68
+   },
+   {
+    "rid": "R08-T12",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R08 — UI/Application Separation (4/4, phạm vi Team Hoa: T11 T14)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "ui/folder_tab.py",
+      "name": "ui/folder_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/folder_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "God file gốc": "ui/folder_tab.py (1587 dòng — lớn nhất)",
+     "Tách thành": "presentation/folder/ workspace_file_tree,document_preview_manager,code_editor,office_document_renderer,ai_file_editor_dialog,ai_edit_model_resolver,ai_edit_pipeline .py shell"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 69
+   },
+   {
+    "rid": "R08-T13",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R08 — UI/Application Separation (4/4, phạm vi Team Hoa: T11 T14)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "ui/dashboard_tab.py",
+      "name": "ui/dashboard_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/dashboard_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "application/monitoring/dashboard_query_service.py",
+      "name": "application/monitoring/dashboard_query_service.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "God file gốc": "ui/dashboard_tab.py (437 dòng)",
+     "Tách thành": "presentation/dashboard/ token_usage_card_widget,usage_chart_widget,habits_widget .py shell, application/monitoring/dashboard_query_service.py"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 70
+   },
+   {
+    "rid": "R08-T14",
+    "group": "BÁO CÁO KẾT QUẢ — TEAM HOA: EPIC R05, R06, R07, R08 (phần Team Hoa) / Kết quả theo từng EPIC / EPIC R08 — UI/Application Separation (4/4, phạm vi Team Hoa: T11 T14)",
+    "found": "",
+    "anchors": [
+     {
+      "text": "ui/structure_graph_view.py",
+      "name": "ui/structure_graph_view.py",
+      "kind": "path",
+      "paths": [
+       "ui/structure_graph_view.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "God file gốc": "ui/structure_graph_view.py (1035 dòng)",
+     "Tách thành": "presentation/graph/ graph_scene_items,graph_renderer,graph_messages_view,graph_qa_widget .py shell"
+    },
+    "detail": {},
+    "doc": "refactor/BaoCao_TeamHoa_R05_R08.md",
+    "line": 71
+   },
+   {
+    "rid": "BUG-001",
+    "group": "NHẬT KÝ THEO DÕI VÀ PHÒNG NGỪA LỖI TÁI CẤU TRÚC (BUG & LESSONS LEARNED LOG) / BẢNG TỔNG HỢP CÁC LỖI ĐÃ PHÁT HIỆN & KHẮC PHỤC",
+    "found": "2026-08-20",
+    "anchors": [
+     {
+      "text": "core/model_pricing.py",
+      "name": "core/model_pricing.py",
+      "kind": "path",
+      "paths": [
+       "core/model_pricing.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/usage_tracker.py",
+      "name": "core/usage_tracker.py",
+      "kind": "path",
+      "paths": [
+       "core/usage_tracker.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Phân Hệ / File Bị Ảnh Hưởng": "core/model_pricing.py core/usage_tracker.py",
+     "Loại Lỗi": "Circular Dependency",
+     "Trạng Thái": "Đã có giải pháp (R09)",
+     "Team Phụ Trách": "Team Duy & Team Nam"
+    },
+    "detail": {
+     "Phân hệ": "core/model_pricing.py & core/usage_tracker.py",
+     "Triệu chứng (Symptom)": "Lỗi ImportError: cannot import name 'ModelPricing' from partially initialized module khi khởi động ứng dụng hoặc chạy test độc lập."
+    },
+    "doc": "refactor/bug.md",
+    "line": 19
+   },
+   {
+    "rid": "BUG-002",
+    "group": "NHẬT KÝ THEO DÕI VÀ PHÒNG NGỪA LỖI TÁI CẤU TRÚC (BUG & LESSONS LEARNED LOG) / BẢNG TỔNG HỢP CÁC LỖI ĐÃ PHÁT HIỆN & KHẮC PHỤC",
+    "found": "2026-08-20",
+    "anchors": [
+     {
+      "text": "core/agent_security.py",
+      "name": "core/agent_security.py",
+      "kind": "path",
+      "paths": [
+       "core/agent_security.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "core/agent_security_alert.py",
+      "name": "core/agent_security_alert.py",
+      "kind": "path",
+      "paths": [
+       "core/agent_security_alert.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Phân Hệ / File Bị Ảnh Hưởng": "core/agent_security.py core/agent_security_alert.py",
+     "Loại Lỗi": "Circular Dependency",
+     "Trạng Thái": "Đã có giải pháp (R09)",
+     "Team Phụ Trách": "Team Nam"
+    },
+    "detail": {
+     "Phân hệ": "core/agent_security.py & core/agent_security_alert.py",
+     "Triệu chứng (Symptom)": "Lỗi khởi tạo vòng tròn khi runtime bắn ra alert sự kiện bảo mật."
+    },
+    "doc": "refactor/bug.md",
+    "line": 20
+   },
+   {
+    "rid": "BUG-003",
+    "group": "NHẬT KÝ THEO DÕI VÀ PHÒNG NGỪA LỖI TÁI CẤU TRÚC (BUG & LESSONS LEARNED LOG) / BẢNG TỔNG HỢP CÁC LỖI ĐÃ PHÁT HIỆN & KHẮC PHỤC",
+    "found": "2026-08-20",
+    "anchors": [
+     {
+      "text": "ui/workspace_tab.py",
+      "name": "ui/workspace_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/workspace_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Phân Hệ / File Bị Ảnh Hưởng": "state.py::active_project_id & ui/workspace_tab.py",
+     "Loại Lỗi": "Race Condition / Global State Leak",
+     "Trạng Thái": "Đã có giải pháp (R06)",
+     "Team Phụ Trách": "Team Hoa"
+    },
+    "detail": {
+     "Phân hệ": "state.py, ui/workspace_tab.py, Scheduled Task Runners",
+     "Triệu chứng (Symptom)": "Khi task scheduler chạy ngầm hoặc người dùng chuyển tab nhanh, file bị ghi nhầm vào thư mục dự án khác với dự án đang hiển thị trên màn hình."
+    },
+    "doc": "refactor/bug.md",
+    "line": 21
+   },
+   {
+    "rid": "BUG-004",
+    "group": "NHẬT KÝ THEO DÕI VÀ PHÒNG NGỪA LỖI TÁI CẤU TRÚC (BUG & LESSONS LEARNED LOG) / BẢNG TỔNG HỢP CÁC LỖI ĐÃ PHÁT HIỆN & KHẮC PHỤC",
+    "found": "2026-08-20",
+    "anchors": [
+     {
+      "text": "core/task_scheduler.py",
+      "name": "core/task_scheduler.py",
+      "kind": "path",
+      "paths": [
+       "core/task_scheduler.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "PySide6.QtCore.QTimer",
+      "name": "PySide6.QtCore.QTimer",
+      "kind": "symbol",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Phân Hệ / File Bị Ảnh Hưởng": "core/task_scheduler.py PySide6.QtCore.QTimer",
+     "Loại Lỗi": "Architecture Violation (Qt in Domain/App)",
+     "Trạng Thái": "Đã có giải pháp (R07)",
+     "Team Phụ Trách": "Team Hoa"
+    },
+    "detail": {
+     "Phân hệ": "core/task_scheduler.py L20",
+     "Triệu chứng (Symptom)": "Không thể viết Unit Test cho thuật toán tính toán lịch chạy (cron/interval) trên môi trường CI/CD (GitHub Actions / Linux Server headless) nếu thiếu driver màn hình X11/Wayland hoặc chưa cài PySide6."
+    },
+    "doc": "refactor/bug.md",
+    "line": 22
+   },
+   {
+    "rid": "BUG-005",
+    "group": "NHẬT KÝ THEO DÕI VÀ PHÒNG NGỪA LỖI TÁI CẤU TRÚC (BUG & LESSONS LEARNED LOG) / BẢNG TỔNG HỢP CÁC LỖI ĐÃ PHÁT HIỆN & KHẮC PHỤC",
+    "found": "2026-08-20",
+    "anchors": [
+     {
+      "text": "ui/chat_panel.py#L638",
+      "name": "ui/chat_panel.py",
+      "kind": "path",
+      "paths": [
+       "ui/chat_panel.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ui/co4e_tab.py",
+      "name": "ui/co4e_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/co4e_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     },
+     {
+      "text": "ui/folder_tab.py",
+      "name": "ui/folder_tab.py",
+      "kind": "path",
+      "paths": [
+       "ui/folder_tab.py"
+      ],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Phân Hệ / File Bị Ảnh Hưởng": "ui/chat_panel.py L638, ui/co4e_tab.py, ui/folder_tab.py",
+     "Loại Lỗi": "Code Duplication (Copy Routing Logic)",
+     "Trạng Thái": "Đã có giải pháp (R03)",
+     "Team Phụ Trách": "Team Duy"
+    },
+    "detail": {
+     "Phân hệ": "ui/chat_panel.py L638, ui/co4e_tab.py, ui/folder_tab.py",
+     "Triệu chứng (Symptom)": "Khi cập nhật thêm model provider mới (như FPT Gateway hay Claude 3.7), phải sửa code thủ công ở 3 file UI khác nhau phát sinh sai lệch quy tắc fallback giữa các màn hình."
+    },
+    "doc": "refactor/bug.md",
+    "line": 23
+   },
+   {
+    "rid": "BUG-006",
+    "group": "NHẬT KÝ THEO DÕI VÀ PHÒNG NGỪA LỖI TÁI CẤU TRÚC (BUG & LESSONS LEARNED LOG) / BẢNG TỔNG HỢP CÁC LỖI ĐÃ PHÁT HIỆN & KHẮC PHỤC",
+    "found": "2026-08-21",
+    "anchors": [
+     {
+      "text": "scripts/check_imports.py",
+      "name": "scripts/check_imports.py",
+      "kind": "path",
+      "paths": [],
+      "sids": [],
+      "near": ""
+     }
+    ],
+    "fields": {
+     "Phân Hệ / File Bị Ảnh Hưởng": "scripts/check_imports.py",
+     "Loại Lỗi": "UnicodeEncodeError (Windows CP932 console emoji)",
+     "Trạng Thái": "Đã khắc phục (R01)",
+     "Team Phụ Trách": "Team Duy"
+    },
+    "detail": {
+     "Phân hệ / File": "scripts/check_imports.py"
+    },
+    "doc": "refactor/bug.md",
+    "line": 24
+   },
+   {
+    "rid": "BUG-007",
+    "group": "NHẬT KÝ THEO DÕI VÀ PHÒNG NGỪA LỖI TÁI CẤU TRÚC (BUG & LESSONS LEARNED LOG) / BẢNG TỔNG HỢP CÁC LỖI ĐÃ PHÁT HIỆN & KHẮC PHỤC",
+    "found": "2026-08-21",
+    "anchors": [],
+    "fields": {
+     "Phân Hệ / File Bị Ảnh Hưởng": "platform/ infrastructure/platform/",
+     "Loại Lỗi": "Standard Library Shadowing (import platform)",
+     "Trạng Thái": "Đã khắc phục (R01)",
+     "Team Phụ Trách": "Team Duy"
+    },
+    "detail": {
+     "Phân hệ / File": "platform/ Chuyển thành infrastructure/platform/"
+    },
+    "doc": "refactor/bug.md",
+    "line": 25
+   }
+  ],
+  "unparsed": [
+   {
+    "doc": "architecture/co4e-split-map.md",
+    "line": 149,
+    "kind": "row",
+    "reason": "ragged-row",
+    "text": "| Co4ECanvas.dropEvent | 683-701 | presentation/co4e/co4e_canvas_widget.py | [GỘP 2 lượt quét trùng ký hiệu] (dòng 683-7"
+   },
+   {
+    "doc": "architecture/co4e-split-map.md",
+    "line": 180,
+    "kind": "row",
+    "reason": "ragged-row",
+    "text": "| Co4ETab._co4e_routed_provider | 1114; 1853 | presentation/co4e/co4e_chat_view.py | [GỘP 2 lượt quét trùng ký hiệu] (dò"
+   },
+   {
+    "doc": "architecture/co4e-split-map.md",
+    "line": 270,
+    "kind": "row",
+    "reason": "ragged-row",
+    "text": "| Co4ETab._config_expanded_w | 275; 995 | presentation/co4e/co4e_tab.py | [GỘP 2 lượt quét trùng ký hiệu] (dòng 275-275,"
+   },
+   {
+    "doc": "architecture/co4e-split-map.md",
+    "line": 301,
+    "kind": "row",
+    "reason": "ragged-row",
+    "text": "| Co4ETab._reload_sidebar | 689-722 | presentation/co4e/co4e_tab.py | [GỘP 2 lượt quét trùng ký hiệu] (dòng 689-700, tar"
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 24,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Nguyên nhân gốc được nêu cụ thể tới `file:line`, không phải phỏng đoán (\"có lẽ do...\")."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 25,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Nguyên nhân gốc giải thích được **toàn bộ** triệu chứng đã quan sát, không sót phần nào."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 26,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không có `try/except` nuốt lỗi hay kiểm tra null được thêm vào chỉ để hết crash."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 27,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không sửa nhiều chỗ cùng lúc theo kiểu thử-xem-cái-nào-ăn."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 31,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Mỗi file trong diff đều có lý do rõ ràng trong section Changes."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 32,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không có drive-by cleanup: đổi tên biến, sắp xếp lại import, format lại file ngoài vùng sửa."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 33,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không có refactor kiến trúc kèm theo trong cùng lần fix."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 34,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không thêm dependency mới."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 35,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không đổi public API / signature mà nơi khác đang gọi (trừ khi yêu cầu nói rõ)."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 36,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không xoá code chưa hiểu rõ mục đích."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 40,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Style của đoạn sửa khớp với file xung quanh (đặt tên, type hint, comment, thứ tự import)."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 41,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Ngôn ngữ comment / docstring giữ đúng như file gốc."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 42,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không có mã màu rời rạc trong widget; màu đi qua `theme/palettes.py`."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 43,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không có `setStyleSheet` cục bộ chồng lên thứ `theme/qss.py` đã định nghĩa."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 44,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Sửa đúng tầng theo bảng ở `process.md` Step 3.4 (layout code / qss / palette)."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 45,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không còn code debug tạm: lệnh in tạm, log tạm, comment kiểu \"sẽ sửa sau\"."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 49,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Hành vi mong đợi đã được kiểm chứng thật, không phải suy đoán."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 50,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Sửa logic → có test hồi quy **fail trước khi sửa** và **pass sau khi sửa**"
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 52,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Đã chạy test liên quan; kết quả được ghi **nguyên văn**, kể cả khi fail."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 53,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Đã rà mọi nơi khác đang dùng thứ vừa sửa (hàm, widget, selector, token) và kết luận."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 54,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không có test nào bị nới lỏng assert để pass."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 55,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Edge case liên quan đã được xét: giá trị rỗng, null, danh sách trống, dữ liệu rất dài."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 59,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Đã kiểm ở tối thiểu 2 kích thước cửa sổ, gồm cả kích thước nhỏ nhất còn dùng được."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 60,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Đã kiểm cả theme **sáng** và **tối**."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 61,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Đã kiểm với nội dung text dài bất thường: không tràn, không chồng, không cắt chữ."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 62,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Đã kiểm trạng thái rỗng, nếu widget hiển thị danh sách."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 63,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không dùng kích thước cứng để ép cho vừa; nếu buộc phải dùng, đã nêu lý do."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 64,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Widget vẫn co giãn đúng khi cửa sổ đổi kích thước (layout và size policy,"
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 66,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Thay đổi trên selector dùng chung đã được kiểm ở các widget khác cùng dùng selector đó."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 70,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không có credential, token, API key, connection string trong code, log, test hay report."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 71,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không có dữ liệu cá nhân thật trong test fixture hay ví dụ."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 72,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không thêm log ghi ra dữ liệu nhạy cảm."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 73,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Vùng critical trong `SECURITY.md` không bị chạm; nếu buộc phải chạm,"
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 75,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không tự `git commit`, `git push` hay tạo pull request khi người dùng chưa yêu cầu."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 79,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Fix Report đủ section theo `output_contract.md`, không section nào bị bỏ trắng."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 80,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Reviewer không cần hỏi lại: nguyên nhân gốc là gì, sửa ở đâu, đã kiểm thế nào,"
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 82,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Mỗi thay đổi (`CH-xx`) nối được về nguyên nhân gốc hoặc về một `AS-xx`."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 83,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Mọi Open Question đều cụ thể, có người cần trả lời và có `Blocking`."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 84,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Mọi Assumption đều nêu tác động nếu giả định sai."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 85,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Điểm không giải quyết được đã ghi thành Limitation (`LM-xx`) — không bị bỏ qua im lặng,"
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 87,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Không còn placeholder kiểu `TBD`, `???`, `sẽ bổ sung sau`."
+   },
+   {
+    "doc": "instruction/agent/quality_gate.md",
+    "line": 88,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Có đề xuất commit message theo Conventional Commit."
+   },
+   {
+    "doc": "instruction/agent/task.md",
+    "line": 59,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Nguyên nhân gốc đã được nêu rõ, không phải phỏng đoán \"có lẽ do...\"."
+   },
+   {
+    "doc": "instruction/agent/task.md",
+    "line": 60,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Thay đổi đã được áp dụng thật vào file, không còn ở dạng đề xuất."
+   },
+   {
+    "doc": "instruction/agent/task.md",
+    "line": 61,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Diff chỉ chạm những file thực sự cần; mỗi file bị chạm đều giải thích được lý do."
+   },
+   {
+    "doc": "instruction/agent/task.md",
+    "line": 62,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Đã chạy test liên quan; kết quả (pass/fail) được ghi lại nguyên văn."
+   },
+   {
+    "doc": "instruction/agent/task.md",
+    "line": 63,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Sửa logic → có test hồi quy fail trước khi sửa và pass sau khi sửa"
+   },
+   {
+    "doc": "instruction/agent/task.md",
+    "line": 65,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] LAYOUT_FIX → đã kiểm ở tối thiểu 2 kích thước cửa sổ và cả theme sáng lẫn tối."
+   },
+   {
+    "doc": "instruction/agent/task.md",
+    "line": 66,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Đã chạy toàn bộ `quality_gate.md` và đạt ngưỡng pass."
+   },
+   {
+    "doc": "instruction/agent/task.md",
+    "line": 67,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] Fix Report đủ section theo `output_contract.md`."
+   },
+   {
+    "doc": "refactor/DeltaTeam_prompt.md",
+    "line": 109,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] 1. **Kích thước file (LOC)**: Mọi file sửa đổi hoặc tạo mới đều **< 400 dòng code**."
+   },
+   {
+    "doc": "refactor/DeltaTeam_prompt.md",
+    "line": 110,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] 2. **Kiến trúc sạch (Clean Arch)**: 0 import `PySide6`/Qt trong `domain/` và `application/` (`python scripts/check_i"
+   },
+   {
+    "doc": "refactor/DeltaTeam_prompt.md",
+    "line": 111,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] 3. **Comment tiếng Anh**: 100% các khối code sửa đổi/tạo mới đều có comment tiếng Anh giải thích logic và lý do kỹ t"
+   },
+   {
+    "doc": "refactor/DeltaTeam_prompt.md",
+    "line": 112,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] 4. **Kiểm thử tự động**: Có unit test / contract test tương ứng với tỷ lệ pass 100% trong thời gian < 1 giây."
+   },
+   {
+    "doc": "refactor/DeltaTeam_prompt.md",
+    "line": 113,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] 5. **Không hồi quy lỗi (No Regression)**: Toàn bộ suite test chạy xanh với lệnh `pytest tests/`."
+   },
+   {
+    "doc": "refactor/DeltaTeam_prompt.md",
+    "line": 114,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] 6. **Cập nhật tiến độ**: Đã ghi nhận đầy đủ thời gian `Start` và `End` vào file `Refactoring_Checklist.md`."
+   },
+   {
+    "doc": "refactor/DeltaTeam_prompt.md",
+    "line": 115,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] 7. **Cổng CASAN**: Lệnh `python scripts/run_quality_gate.py` chạy thành công không có bất kỳ cảnh báo vi phạm nào."
+   },
+   {
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 470,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] **1. Kích thước file (LOC)**: File mới hoặc file sau khi refactor không vượt quá **400 dòng code**."
+   },
+   {
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 471,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] **2. Phụ thuộc kiến trúc (Clean Architecture)**: Không import `PySide6` / Qt trong các module thuộc `domain/` và `ap"
+   },
+   {
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 472,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] **3. An toàn thông tin (Security)**: API Key / Credential được lưu trữ qua `SecretStore` (Keyring), không lưu cứng h"
+   },
+   {
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 473,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] **4. Bắt buộc Comment Code bằng Tiếng Anh (English In-Code Comments)**: 100% các dòng hoặc khối code sửa đổi/bóc tác"
+   },
+   {
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 474,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] **5. Ghi nhận thời gian thực hiện (Timestamps)**: Đã điền đầy đủ mốc thời gian `Start: YYYY-MM-DD HH:mm` và `End: YY"
+   },
+   {
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 475,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] **6. Kiểm thử tự động (Automated Tests)**: Có unit test hoặc contract test đi kèm với tỷ lệ pass 100%. Chạy `pytest`"
+   },
+   {
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 476,
+    "kind": "item",
+    "reason": "no-id",
+    "text": "[ ] **7. Không gây lỗi chéo (No Regression)**: Chạy kiểm thử toàn bộ hệ thống không làm hỏng các tính năng hiện hữu."
+   }
+  ]
+ }
+}

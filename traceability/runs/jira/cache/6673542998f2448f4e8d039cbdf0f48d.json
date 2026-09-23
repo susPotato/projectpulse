@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/resource_limits.py directly implements CPU, memory and disk-I/O caps for agent-spawned process trees via psutil, returning a violation reason for the caller to kill the tree. config/security_sandbox.yaml supplies the matching per-backend caps (default_memory_mb, default_cpu_percent, max_runtime_sec), so the sandboxed-process resource limiting described in the ticket exists in code consistent with its 'Release' status.",
+ "evidence": [
+  {
+   "file": "core/resource_limits.py",
+   "symbol": "check_limits",
+   "why": "Sums cpu_percent, RSS memory and disk read/write bytes across a process and its descendants and returns a reason when cpu_percent/memory_mb/disk_mb caps are exceeded."
+  },
+  {
+   "file": "core/resource_limits.py",
+   "symbol": "prime_cpu_counter",
+   "why": "Supporting helper that primes psutil's CPU delta counter after spawn so the first limit poll measures real usage."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "",
+   "why": "Declares sandbox backends with default_memory_mb, default_cpu_percent, default_timeout_sec and a limits block, i.e. the configured caps the checker consumes."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4222,
+  "output_tokens": 484,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket concerns a planning task for requesting workspace seats and hardware (PC, laptop, monitor, VDI), but the candidate files are a Microsoft Graph REST wrapper for mail/Teams/OneDrive and an LLM provider base class. Neither has any connection to facilities or equipment requests, and the cited documentation excerpt is explicitly flagged as not describing this repository (it discusses provider contract tests).",
+ "evidence": [
+  {
+   "file": "core/ms365_graph.py",
+   "symbol": "_request",
+   "why": "A generic Microsoft Graph HTTP wrapper for Outlook/Teams/OneDrive/SharePoint endpoints, with nothing about seats, PCs, or equipment requests."
+  },
+  {
+   "file": "providers/base.py",
+   "symbol": "Provider.chat",
+   "why": "LLM provider abstraction for streaming chat turns and tool calls, unrelated to facilities provisioning."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 6764,
+  "output_tokens": 391,
+  "model": "claude-opus-5"
+ }
+}

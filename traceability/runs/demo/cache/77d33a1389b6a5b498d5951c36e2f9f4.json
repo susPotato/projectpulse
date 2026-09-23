@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a generic project-management entry (\"Refactor code BE\") with no concrete technical claim to check. The retrieved files — a Cowork agent security rulebase, an empty code-agent rules placeholder, and a sandbox config — matched only on the word \"refactoring\"/\"code\" and contain no backend refactoring work.",
+ "evidence": [
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "22. Development Activity Blocking",
+   "why": "Only mentions 'Source code refactoring' as a blocked agent activity, which is unrelated to a backend refactoring task."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "policy",
+   "why": "Sandbox/security policy settings with no connection to backend code refactoring."
+  },
+  {
+   "file": "assets/RULEforCode.md",
+   "symbol": "",
+   "why": "An intentionally empty placeholder file providing no evidence of refactoring work."
+  }
+ ],
+ "status_conflict": false
+}

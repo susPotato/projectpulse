@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "config/security_sandbox.yaml defines an enabled sandbox whose default backend is AppContainer, with all available backends (appcontainer, windows_sandbox, integrity_job_wfp) gated on Windows versions/editions and no non-Windows backend, matching the ticket's 'AppContainer on Windows, other OS not supported'. assets/RULEforCode.md confirms the Code agent's safety model relies on running inside that sandbox (resource limits, network policy, command whitelist) rather than a rulebase. No runner implementation source was shown, so the wiring itself is only inferred from configuration.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "sandbox.default_backend / backends.appcontainer",
+   "why": "Sandbox is enabled with AppContainer as default backend and Windows-version requirements, with no non-Windows backend defined."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "risk_routing",
+   "why": "Routes execution risk levels to Windows-only sandbox backends, blocking unknown risk."
+  },
+  {
+   "file": "assets/RULEforCode.md",
+   "symbol": "",
+   "why": "States the Code agent bypasses RULEBASE.md and derives its safety from running inside the sandbox with resource limits, network policy and command whitelist."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 3894,
+  "output_tokens": 845,
+  "model": "claude-opus-5"
+ }
+}

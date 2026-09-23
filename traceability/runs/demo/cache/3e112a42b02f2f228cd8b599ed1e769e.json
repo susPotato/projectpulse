@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown candidates relate to knowledge/RAG packaging, source/metadata, project isolation, citation, or ground truth: RULEBASE.md is a security policy document, security_sandbox.yaml is sandbox configuration, and holiday_calendar.py is scheduling support. The architecture excerpts describe orchestration and the app shell, with only a passing mention of StructureGraphView (GraphRAG) for codebase structure, which does not address the ticket's claims. No evidence either confirms or refutes the ticket's scope or status.",
+ "evidence": [
+  {
+   "file": "core/holiday_calendar.py",
+   "symbol": "is_holiday",
+   "why": "Public-holiday lookup for scheduled tasks — unrelated to knowledge/RAG features."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox backend/risk-routing configuration with no RAG, citation, or project-isolation logic."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy prose mentioning project-scoped resources, but it is a rulebase document, not RAG implementation code."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown candidate files relate to an AppContext, thread-safe shared state, an MCP connection cache, or a provider factory — RULEBASE.md is a security policy text, context_budget.py handles conversation compaction, and telemetry_shared.py aggregates telemetry files. The only hints are the documentation lookups confirming state.py::build_provider_for and providers/factory.py exist in the repository, but neither file's contents were shown, so the ticket's specific claims (thread safety, MCP connection caching) cannot be checked.",
+ "evidence": [
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "Conversation compaction logic, unrelated to shared application state or provider construction."
+  },
+  {
+   "file": "core/telemetry_shared.py",
+   "symbol": "load_shared_usage_events",
+   "why": "Reads telemetry JSONL files from a shared folder; 'shared' here is about telemetry files, not an AppContext."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase prose with no bearing on AppContext, MCP caching, or provider factory."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7279,
+  "output_tokens": 570,
+  "model": "claude-opus-5"
+ }
+}

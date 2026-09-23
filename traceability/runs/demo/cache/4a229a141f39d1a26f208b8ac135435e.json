@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "config.py contains a dedicated \"tools\" config block explicitly documented as \"Agent tool governance (Monitoring → Tools)\" whose listed built-in tool names are withheld from the agent, and the Monitoring screen is a real lazily-built page in app.py with sub-tabs registered as nav children. The actual tab widget file is not in the shown subset, so the UI implementation itself is inferred rather than seen, but the supporting configuration and Monitoring container clearly exist.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "Defines a \"tools\" config section commented as \"Agent tool governance (Monitoring → Tools)\" listing built-in tools withheld from the agent."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Monitoring is a real nav page built lazily and registered in _nav_parents as a container with sub-tabs, which is where a Tools tab would live."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent",
+   "why": "Shows the sibling Monitoring → Agents Admin capability exists, confirming the Monitoring admin tab pattern is implemented in this repo."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12921,
+  "output_tokens": 560,
+  "model": "claude-opus-5"
+ }
+}

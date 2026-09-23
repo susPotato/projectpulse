@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The verified lookups confirm ui/libreoffice_view.py and ui/folder_tab.py exist in this repository, and the shown core/doc_extract.py provides exactly the LibreOffice-based rendering plumbing such a viewer needs — convert_to_pdf() drives headless soffice (with an MS Office COM fallback) to turn Office/OpenDocument files into renderable PDFs, plus _soffice_to_text/_odf/_pdf extraction paths. The viewer widget's own code was not shown, so the implementation detail is unconfirmed, but the capability is clearly present rather than merely planned.",
+ "evidence": [
+  {
+   "file": "core/doc_extract.py",
+   "symbol": "convert_to_pdf",
+   "why": "Converts office documents to PDF via headless LibreOffice (with MS Office COM fallback) explicitly so they can be rendered, not just text-extracted."
+  },
+  {
+   "file": "core/doc_extract.py",
+   "symbol": "_soffice_to_text",
+   "why": "Shows a working headless LibreOffice integration path used for document content extraction."
+  },
+  {
+   "file": "ui/libreoffice_view.py",
+   "symbol": "",
+   "why": "Confirmed by the documentation lookup to exist in this repository, matching the ticket's LibreOffice document viewer."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10065,
+  "output_tokens": 632,
+  "model": "claude-opus-5"
+ }
+}

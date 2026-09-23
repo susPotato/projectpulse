@@ -1,0 +1,429 @@
+{
+ "schema_version": 1,
+ "produced_by": "translations",
+ "meta": {
+  "model": "claude-opus-5"
+ },
+ "payload": {
+  "T0147": {
+   "summary_en": "Update UI/UX",
+   "description_en": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nDate received: 46244\nNote: NamPDT,HiepHV3,LamHV7\nComponent: UI/UX",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "UI/UX",
+    "PO",
+    "BA",
+    "FSG",
+    "HoachBV",
+    "QuanDh14",
+    "NamPDT",
+    "HiepHV3",
+    "LamHV7",
+    "Component"
+   ],
+   "script": "vi",
+   "cost_usd": 0.005165
+  },
+  "T0148": {
+   "summary_en": "Refactor code BE",
+   "description_en": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nDate received: 46246\nNote: DuyLH19,HuongLTT35,AnhTNM1\nComponent: Backend Refactoring",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "BE",
+    "PO",
+    "BA",
+    "FSG",
+    "HoachBV",
+    "QuanDh14",
+    "DuyLH19",
+    "HuongLTT35",
+    "AnhTNM1",
+    "Backend Refactoring"
+   ],
+   "script": "vi",
+   "cost_usd": 0.005675
+  },
+  "T0149": {
+   "summary_en": "Test UI/UX all feature",
+   "description_en": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nDate received: 46246\nNote: HoaNH1,VuDT15,ThangNQ53\nComponent: QA & Testing",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "UI/UX",
+    "PO",
+    "BA",
+    "FSG",
+    "HoachBV",
+    "QuanDh14",
+    "HoaNH1",
+    "VuDT15",
+    "ThangNQ53",
+    "QA & Testing"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00542
+  },
+  "T0151": {
+   "summary_en": "Define Reusable MCP Tool Contract\n----------------------------------------\nThe member's final deliverable: 1 design document + 1 JSON schema + 2 sample manifests + validation testcase, and at the same time prove that the architecture only uses Cowork Tool Registry as the single management source (Single Source of Truth).",
+   "description_en": "PO: HoachBV\nBA: FSG/QuanDh14\nDeveloper: FSG\nDate received: 46246\nNote: TaiPH9,LocLP3,HieuHV1\nComponent: MCP & Connectors",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "MCP",
+    "JSON schema",
+    "Cowork Tool Registry",
+    "Single Source of Truth",
+    "PO",
+    "BA",
+    "FSG",
+    "HoachBV",
+    "QuanDh14",
+    "TaiPH9",
+    "LocLP3",
+    "HieuHV1",
+    "MCP & Connectors",
+    "manifests",
+    "testcase"
+   ],
+   "script": "vi",
+   "cost_usd": 0.009125
+  },
+  "T0153": {
+   "summary_en": "Standardize the way Agent collects context from RAG/Search/MCP instead of each Agent writing its own logic.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Knowledge & RAG",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "Agent",
+    "RAG",
+    "Search",
+    "MCP",
+    "BA",
+    "FSG",
+    "Knowledge & RAG"
+   ],
+   "script": "vi",
+   "cost_usd": 0.004215
+  },
+  "T0154": {
+   "summary_en": "Assess the current state of MCP, RAG/Search, Agent/Skill, LLM Routing and integration points of Cowork Local; clearly determine which parts are Reuse / Improve / Build as Core Asset.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Architecture & Assessment",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "MCP",
+    "RAG/Search",
+    "Agent/Skill",
+    "LLM Routing",
+    "Cowork Local",
+    "Reuse",
+    "Improve",
+    "Build as Core Asset",
+    "BA",
+    "FSG",
+    "Architecture & Assessment"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00594
+  },
+  "T0155": {
+   "summary_en": "Leverage the existing MCP Client / Tool Registry / Permission / Audit to create real capability for the project, do not build a new MCP framework.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: MCP & Connectors",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "MCP Client",
+    "Tool Registry",
+    "Permission",
+    "Audit",
+    "MCP",
+    "BA",
+    "FSG",
+    "MCP & Connectors"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00467
+  },
+  "T0156": {
+   "summary_en": "Upgrade the existing knowledge/RAG into a package with source, metadata, project isolation, citation and ground truth; do not rebuild the GraphRAG engine.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Knowledge & RAG",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "RAG",
+    "GraphRAG",
+    "BA",
+    "FSG",
+    "Knowledge & RAG",
+    "ground truth",
+    "metadata",
+    "citation",
+    "project isolation",
+    "source"
+   ],
+   "script": "vi",
+   "cost_usd": 0.0049
+  },
+  "T0157": {
+   "summary_en": "Measure Semantic Search quality numerically; evaluate Japanese and only try Hybrid/Rerank when the baseline shows improvement is needed.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Knowledge & RAG",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "Semantic Search",
+    "Hybrid",
+    "Rerank",
+    "baseline",
+    "BA",
+    "FSG",
+    "Knowledge & RAG"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00479
+  },
+  "T0158": {
+   "summary_en": "Standardize Agent/Skill into reusable assets instead of individual prompts; create skills serving real projects.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Agent Platform",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "Agent",
+    "Skill",
+    "prompt",
+    "BA",
+    "FSG",
+    "Agent Platform",
+    "reusable assets"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00408
+  },
+  "T0159": {
+   "summary_en": "Flagship product to prove that 4 workstreams produce a usable product: review requirement based on project knowledge and evidence.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Requirement Review",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "Flagship product",
+    "workstream",
+    "requirement",
+    "project knowledge",
+    "evidence",
+    "BA",
+    "FSG",
+    "Component",
+    "Requirement Review"
+   ],
+   "script": "vi",
+   "cost_usd": 0.004405
+  },
+  "T0160": {
+   "summary_en": "Turn quality/safety into PASS/WARN/FAIL with evidence instead of subjective assessment; map Cowork controls into CASAN H1–H7.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Quality & Safety",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "PASS",
+    "WARN",
+    "FAIL",
+    "Cowork",
+    "CASAN",
+    "H1–H7",
+    "BA",
+    "FSG",
+    "Quality & Safety"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00491
+  },
+  "T0161": {
+   "summary_en": "Upstream the generic improvements about Cowork instead of keeping a separate fork: Co4E branch, model routing, Superpowers and the MCP/platform gaps that are actually needed.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Core Platform",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "Cowork",
+    "Co4E",
+    "model routing",
+    "Superpowers",
+    "MCP",
+    "platform",
+    "BA",
+    "FSG",
+    "Core Platform",
+    "fork"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00502
+  },
+  "T0162": {
+   "summary_en": "Improve the experience of the AI flows that the Core Team actually uses (Agent/Skill/MCP/RAG); avoid taking on a full redesign of Cowork not tied to a use case.",
+   "description_en": "BA: FSG\nDeveloper: FSG\nComponent: UI/UX",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "AI",
+    "Core Team",
+    "Agent",
+    "Skill",
+    "MCP",
+    "RAG",
+    "Cowork",
+    "BA",
+    "FSG",
+    "UI/UX"
+   ],
+   "script": "vi",
+   "cost_usd": 0.004955
+  },
+  "T0163": {
+   "summary_en": "Add function to handle production bug (analyze bug cause, analyze impact, report to customer, dev, apply fix, automatic retest",
+   "description_en": "BA: Mynt4\nDeveloper: FNS\nComponent: New function",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "bug",
+    "prodcution",
+    "report",
+    "dev",
+    "apply fix",
+    "retest",
+    "BA",
+    "Mynt4",
+    "Developer",
+    "FNS",
+    "Component",
+    "New function"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00456
+  },
+  "T0164": {
+   "summary_en": "Add function to handle new function (handle new ticket..)",
+   "description_en": "BA: Mynt4\nDeveloper: FNS\nComponent: New function",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "BA",
+    "Mynt4",
+    "FNS",
+    "Component",
+    "New function"
+   ],
+   "script": "vi",
+   "cost_usd": 0.004465
+  },
+  "T0165": {
+   "summary_en": "Split the current graph into a new screen that is the integration of the source and the entire specification of the project; each node is attached with related document file and source code file",
+   "description_en": "BA: Mynt4\nDeveloper: FNS\nComponent: New function",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "BA",
+    "Mynt4",
+    "FNS",
+    "node",
+    "source"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00379
+  },
+  "T0166": {
+   "summary_en": "Add a screen describing the business of the system based on source and the project's specification documents (the goal is that when fixing bugs or adding new functions, it is easy to see where the part you fix/add is in the customer's business system..)",
+   "description_en": "BA: Mynt4\nDeveloper: FNS\nComponent: New function",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "business",
+    "source",
+    "BA",
+    "Mynt4",
+    "Developer",
+    "FNS",
+    "Component",
+    "New function"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00482
+  },
+  "T0167": {
+   "summary_en": "Add a report output configuration screen for dev and for customers to make customization easier (idea)",
+   "description_en": "BA: Mynt4\nDeveloper: FNS\nComponent: New function",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "report output",
+    "dev",
+    "BA",
+    "Mynt4",
+    "FNS",
+    "Component",
+    "New function"
+   ],
+   "script": "vi",
+   "cost_usd": 0.0036
+  },
+  "T0168": {
+   "summary_en": "Add attachment folder and URL section to Co4E step, for the purpose of handling information collection from sources (besides attached files and comments)",
+   "description_en": "BA: QuanDh14\nComponent: Co4E Workflow",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "Co4E",
+    "URL",
+    "BA",
+    "QuanDh14",
+    "Co4E Workflow"
+   ],
+   "script": "vi",
+   "cost_usd": 0.003995
+  },
+  "T0169": {
+   "summary_en": "re-check RULEBASE to increase/decrease the constraints for the app",
+   "description_en": "BA: QuanDh14\nComponent: Security & Sandbox",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "RULEBASE",
+    "app",
+    "BA",
+    "QuanDh14",
+    "Security & Sandbox"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00338
+  },
+  "T0170": {
+   "summary_en": "New function Create task and execute task, based on the team's plan, import from excel, AI create WBS, Export file, View status (kannban, calendar (with dependence task), Gpaph)",
+   "description_en": "BA: QuanDh14\nDeveloper: QuanDh14\nComponent: WBS",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "task",
+    "excel",
+    "AI",
+    "WBS",
+    "Export file",
+    "kannban",
+    "calendar",
+    "dependence task",
+    "Gpaph",
+    "BA",
+    "QuanDh14",
+    "Developer",
+    "Component"
+   ],
+   "script": "vi",
+   "cost_usd": 0.005435
+  },
+  "T0171": {
+   "summary_en": "Integrate additional notification settings via team for the group's chat channels, set up the schedule to check and send notifications ..",
+   "description_en": "BA: Quangld1\nComponent: None",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "BA",
+    "Quangld1",
+    "team",
+    "Component",
+    "None"
+   ],
+   "script": "vi",
+   "cost_usd": 0.0033
+  },
+  "T0172": {
+   "summary_en": "Integrate remote via slack",
+   "description_en": "BA: Quangld1\nComponent: None",
+   "detected_language": "Vietnamese",
+   "preserved_terms": [
+    "remote",
+    "slack",
+    "BA",
+    "Quangld1",
+    "Component",
+    "None"
+   ],
+   "script": "vi",
+   "cost_usd": 0.00237
+  }
+ }
+}

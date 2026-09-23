@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ai_task_planner.py directly implements AI-generated task planning: its docstring describes turning a natural-language description into a list of task dicts via the active provider, with a system prompt producing structured JSON tasks, plus normalization and dependency-chain resolution. The module also exposes plan_tasks and AI helpers for drafting descriptions/prompts, matching the ticket's scope. The i18n documentation excerpt is unrelated to this ticket.",
+ "evidence": [
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "plan_tasks",
+   "why": "Module-level entry point for converting a natural-language description into planned tasks via the active provider."
+  },
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "normalize_planned_tasks",
+   "why": "Converts the model's JSON reply into real task dicts with defaults, schedules, and resolved TASK_n dependency links."
+  },
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "_extract_json",
+   "why": "Parses the JSON object out of the LLM reply, confirming the AI-driven planning pipeline is implemented."
+  },
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "generate_task_description",
+   "why": "AI helper that drafts a task description from its title, part of the AI task planning feature set."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11593,
+  "output_tokens": 517,
+  "model": "claude-opus-5"
+ }
+}

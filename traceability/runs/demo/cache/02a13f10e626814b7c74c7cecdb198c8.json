@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only routing artifact shown is core/routing/models_config.sample.yaml, which explicitly labels itself REFERENCE/DOCUMENTATION describing a schema (per_provider_concurrency, policy: cost, switch_mode auto) rather than implementing it; no router, gate, queue, or concurrency-limiter code is visible. core/model_pricing.py handles a price table and USD cost computation (turn_cost_usd, sync_to_usage), which could feed a cost router but does not itself route or gate models.",
+ "evidence": [
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Documents the routing schema (switch_mode, policy, per_provider_concurrency) but states it is a reference file mirroring config, not executable routing logic."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "turn_cost_usd",
+   "why": "Computes per-turn USD cost from a price table — cost data only, with no routing or model-selection decision code."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4530,
+  "output_tokens": 555,
+  "model": "claude-opus-5"
+ }
+}

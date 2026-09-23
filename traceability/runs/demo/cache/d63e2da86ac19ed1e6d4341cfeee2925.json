@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/file_edit_dialog.py contains a fully implemented FileEditDialog with browse, load (text editable / binary read-only via doc_extract), AI-edit, save, and reload actions. The ticket's status of 'To Do' conflicts with this existing implementation.",
+ "evidence": [
+  {
+   "file": "ui/file_edit_dialog.py",
+   "symbol": "FileEditDialog",
+   "why": "Implements the generic file editing dialog with path row, editor, save/close buttons."
+  },
+  {
+   "file": "ui/file_edit_dialog.py",
+   "symbol": "FileEditDialog.load_file",
+   "why": "Handles loading arbitrary files, editable for text and read-only extracted text for binary documents."
+  },
+  {
+   "file": "ui/file_edit_dialog.py",
+   "symbol": "FileEditDialog._ai_edit",
+   "why": "Shows AI-driven editing of the loaded file content is already wired to the provider."
+  }
+ ],
+ "status_conflict": true
+}

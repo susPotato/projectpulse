@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ai_task_planner.py implements exactly the claimed feature: converting a natural-language description into scheduled task dicts via a provider, with JSON extraction, normalization, and dependency chaining. The module docstring and plan_tasks/normalize_planned_tasks symbols match the ticket's AI task planning scope; status 'Release' is consistent with built code.",
+ "evidence": [
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "normalize_planned_tasks",
+   "why": "Converts model-generated JSON task plans into validated task dicts with is_ai_generated flags and resolved TASK_n dependency links."
+  },
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "plan_tasks",
+   "why": "Listed module symbol that drives natural-language-to-task planning via the active provider, per the module docstring."
+  },
+  {
+   "file": "core/ai_task_planner.py",
+   "symbol": "generate_task_description",
+   "why": "AI helper drafting task descriptions, part of the AI task planning feature set."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 5160,
+  "output_tokens": 367,
+  "model": "claude-opus-5"
+ }
+}

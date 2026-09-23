@@ -1,0 +1,1421 @@
+{
+ "schema_version": 1,
+ "produced_by": "delivery",
+ "meta": {
+  "inputs": {
+   "progress": "f37053358771b927"
+  }
+ },
+ "payload": {
+  "tasks": [
+   {
+    "wid": "R01-T01",
+    "group": "EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "owner": "Team Duy",
+    "started": "2026-08-21 18:23",
+    "ended": "2026-08-21 18:24",
+    "minutes": 1.0,
+    "flags": []
+   },
+   {
+    "wid": "R01-T02",
+    "group": "EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "owner": "Team Duy",
+    "started": "2026-08-21 18:24",
+    "ended": "2026-08-21 18:26",
+    "minutes": 2.0,
+    "flags": []
+   },
+   {
+    "wid": "R01-T03",
+    "group": "EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "owner": "Team Duy",
+    "started": "2026-08-21 18:26",
+    "ended": "2026-08-21 18:28",
+    "minutes": 2.0,
+    "flags": []
+   },
+   {
+    "wid": "R01-T04",
+    "group": "EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "owner": "Team Duy",
+    "started": "2026-08-21 18:28",
+    "ended": "2026-08-21 18:32",
+    "minutes": 4.0,
+    "flags": []
+   },
+   {
+    "wid": "R01-T05",
+    "group": "EPIC R01: Architecture Foundation & Characterization (Nền Tảng Kiến Trúc & Test Bảo Vệ)",
+    "owner": "Team Duy",
+    "started": "2026-08-21 18:32",
+    "ended": "2026-08-21 18:35",
+    "minutes": 3.0,
+    "flags": []
+   },
+   {
+    "wid": "R03-T01",
+    "group": "EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "owner": "Team Duy",
+    "started": "2026-08-22 18:59",
+    "ended": "2026-08-22 19:01",
+    "minutes": 2.0,
+    "flags": []
+   },
+   {
+    "wid": "R03-T02",
+    "group": "EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "owner": "Team Duy",
+    "started": "2026-08-22 18:45",
+    "ended": "2026-08-22 18:50",
+    "minutes": 5.0,
+    "flags": []
+   },
+   {
+    "wid": "R03-T03",
+    "group": "EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "owner": "Team Duy",
+    "started": "2026-08-22 18:53",
+    "ended": "2026-08-22 18:57",
+    "minutes": 4.0,
+    "flags": []
+   },
+   {
+    "wid": "R03-T04",
+    "group": "EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "owner": "Team Duy",
+    "started": "2026-08-22 18:57",
+    "ended": "2026-08-22 18:58",
+    "minutes": 1.0,
+    "flags": []
+   },
+   {
+    "wid": "R03-T05",
+    "group": "EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "owner": "Team Duy",
+    "started": "2026-08-22 18:58",
+    "ended": "2026-08-22 18:59",
+    "minutes": 1.0,
+    "flags": []
+   },
+   {
+    "wid": "R03-T06",
+    "group": "EPIC R03: Model Providers & Routing (Hợp Nhất Nhà Cung Cấp & Bộ Định Tuyến Mô Hình)",
+    "owner": "Team Duy",
+    "started": "2026-08-22 18:50",
+    "ended": "2026-08-22 18:53",
+    "minutes": 3.0,
+    "flags": []
+   },
+   {
+    "wid": "R04-T01",
+    "group": "EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "owner": "Team Duy",
+    "started": "2026-08-23 00:56",
+    "ended": "2026-08-23 01:00",
+    "minutes": 4.0,
+    "flags": []
+   },
+   {
+    "wid": "R04-T02",
+    "group": "EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "owner": "Team Duy",
+    "started": "2026-08-23 01:00",
+    "ended": "2026-08-23 01:08",
+    "minutes": 8.0,
+    "flags": []
+   },
+   {
+    "wid": "R04-T03",
+    "group": "EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "owner": "Team Duy",
+    "started": "2026-08-23 01:08",
+    "ended": "2026-08-23 07:10",
+    "minutes": 362.0,
+    "flags": []
+   },
+   {
+    "wid": "R04-T04",
+    "group": "EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "owner": "Team Duy",
+    "started": "2026-08-23 07:10",
+    "ended": "2026-08-23 07:23",
+    "minutes": 13.0,
+    "flags": []
+   },
+   {
+    "wid": "R04-T05",
+    "group": "EPIC R04: Agent Runtime & Conversation Application Service (Vòng Đời Turn Chat & Agent Engine)",
+    "owner": "Team Duy",
+    "started": "2026-08-23 07:23",
+    "ended": "2026-08-23 07:31",
+    "minutes": 8.0,
+    "flags": []
+   },
+   {
+    "wid": "R05-T01",
+    "group": "EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 21:40",
+    "ended": "2026-08-21 21:47",
+    "minutes": 7.0,
+    "flags": []
+   },
+   {
+    "wid": "R05-T02",
+    "group": "EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 21:47",
+    "ended": "2026-08-21 21:56",
+    "minutes": 9.0,
+    "flags": []
+   },
+   {
+    "wid": "R05-T03",
+    "group": "EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 21:56",
+    "ended": "2026-08-21 22:04",
+    "minutes": 8.0,
+    "flags": []
+   },
+   {
+    "wid": "R05-T04",
+    "group": "EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 22:04",
+    "ended": "2026-08-21 22:12",
+    "minutes": 8.0,
+    "flags": []
+   },
+   {
+    "wid": "R05-T05",
+    "group": "EPIC R05: Tool, MCP & Connector Policy (Quản Lý Công Cụ, MCP & Cổng Kiểm Soát Quyền)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 22:12",
+    "ended": "2026-08-21 22:19",
+    "minutes": 7.0,
+    "flags": []
+   },
+   {
+    "wid": "R06-T01",
+    "group": "EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 22:19",
+    "ended": "2026-08-21 22:24",
+    "minutes": 5.0,
+    "flags": []
+   },
+   {
+    "wid": "R06-T02",
+    "group": "EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 22:24",
+    "ended": "2026-08-21 22:35",
+    "minutes": 11.0,
+    "flags": []
+   },
+   {
+    "wid": "R06-T03",
+    "group": "EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 22:35",
+    "ended": "2026-08-21 22:40",
+    "minutes": 5.0,
+    "flags": []
+   },
+   {
+    "wid": "R06-T04",
+    "group": "EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 22:40",
+    "ended": "2026-08-21 22:50",
+    "minutes": 10.0,
+    "flags": []
+   },
+   {
+    "wid": "R06-T05",
+    "group": "EPIC R06: Workspace, Filesystem & History Isolation (Cô Lập Không Gian Làm Việc & Quản Lý Tệp)",
+    "owner": "Team Hoa",
+    "started": "2026-08-21 22:50",
+    "ended": "2026-08-21 22:57",
+    "minutes": 7.0,
+    "flags": []
+   },
+   {
+    "wid": "R07-T01",
+    "group": "EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "owner": "Team Hoa",
+    "started": "2026-08-27 16:05",
+    "ended": "2026-08-27 16:14",
+    "minutes": 9.0,
+    "flags": []
+   },
+   {
+    "wid": "R07-T02",
+    "group": "EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "owner": "Team Hoa",
+    "started": "2026-08-27 16:14",
+    "ended": "2026-08-27 16:26",
+    "minutes": 12.0,
+    "flags": []
+   },
+   {
+    "wid": "R07-T03",
+    "group": "EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "owner": "Team Hoa",
+    "started": "2026-08-27 16:26",
+    "ended": "2026-08-27 16:47",
+    "minutes": 21.0,
+    "flags": []
+   },
+   {
+    "wid": "R07-T04",
+    "group": "EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "owner": "Team Hoa",
+    "started": "2026-08-27 16:47",
+    "ended": "2026-08-27 17:02",
+    "minutes": 15.0,
+    "flags": []
+   },
+   {
+    "wid": "R07-T05",
+    "group": "EPIC R07: Scheduling & Workflow Runtime (Bộ Lập Lịch & Động Cơ Quy Trình)",
+    "owner": "Team Hoa",
+    "started": "2026-08-27 17:02",
+    "ended": "2026-08-27 17:14",
+    "minutes": 12.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T01",
+    "group": "Team Duy (Chat UI Hub)",
+    "owner": "",
+    "started": "2026-08-25 09:00",
+    "ended": "2026-08-25 11:30",
+    "minutes": 150.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T02",
+    "group": "Team Duy (Chat UI Hub)",
+    "owner": "",
+    "started": "2026-08-25 11:30",
+    "ended": "2026-08-25 14:15",
+    "minutes": 165.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T03",
+    "group": "Team Duy (Chat UI Hub)",
+    "owner": "",
+    "started": "2026-08-25 14:15",
+    "ended": "2026-08-25 15:45",
+    "minutes": 90.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T04",
+    "group": "Team Duy (Chat UI Hub)",
+    "owner": "",
+    "started": "2026-08-25 15:45",
+    "ended": "2026-08-25 17:00",
+    "minutes": 75.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T05",
+    "group": "Team Duy (Chat UI Hub)",
+    "owner": "",
+    "started": "2026-08-26 09:00",
+    "ended": "2026-08-26 11:00",
+    "minutes": 120.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T06",
+    "group": "Team Duy (Chat UI Hub)",
+    "owner": "",
+    "started": "2026-08-26 11:00",
+    "ended": "2026-08-26 17:30",
+    "minutes": 390.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T07",
+    "group": "Team Nam (Settings, Monitoring, Co4E & Shell)",
+    "owner": "",
+    "started": "2026-08-25 08:30",
+    "ended": "2026-08-25 12:00",
+    "minutes": 210.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T08",
+    "group": "Team Nam (Settings, Monitoring, Co4E & Shell)",
+    "owner": "",
+    "started": "2026-08-25 13:00",
+    "ended": "2026-08-26 12:00",
+    "minutes": 1380.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T09",
+    "group": "Team Nam (Settings, Monitoring, Co4E & Shell)",
+    "owner": "",
+    "started": "2026-08-26 13:00",
+    "ended": "2026-08-27 15:00",
+    "minutes": 1560.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T10",
+    "group": "Team Nam (Settings, Monitoring, Co4E & Shell)",
+    "owner": "",
+    "started": "2026-08-27 15:00",
+    "ended": "2026-08-28 09:30",
+    "minutes": 1110.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T11",
+    "group": "Team Hoa (Workspace, Folder, Scheduling, Dashboard & Graph)",
+    "owner": "",
+    "started": "2026-08-27 17:14",
+    "ended": "2026-08-27 17:39",
+    "minutes": 25.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T12",
+    "group": "Team Hoa (Workspace, Folder, Scheduling, Dashboard & Graph)",
+    "owner": "",
+    "started": "2026-08-27 17:39",
+    "ended": "2026-08-27 18:09",
+    "minutes": 30.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T13",
+    "group": "Team Hoa (Workspace, Folder, Scheduling, Dashboard & Graph)",
+    "owner": "",
+    "started": "2026-08-27 18:09",
+    "ended": "2026-08-27 18:16",
+    "minutes": 7.0,
+    "flags": []
+   },
+   {
+    "wid": "R08-T14",
+    "group": "Team Hoa (Workspace, Folder, Scheduling, Dashboard & Graph)",
+    "owner": "",
+    "started": "2026-08-27 18:16",
+    "ended": "2026-08-27 20:52",
+    "minutes": 156.0,
+    "flags": []
+   },
+   {
+    "wid": "R09-T01",
+    "group": "EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "owner": "Team Nam",
+    "started": "2026-08-25 09:00",
+    "ended": "2026-08-25 17:00",
+    "minutes": 480.0,
+    "flags": []
+   },
+   {
+    "wid": "R09-T02",
+    "group": "EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "owner": "Team Nam",
+    "started": "2026-08-26 09:00",
+    "ended": "2026-08-26 12:00",
+    "minutes": 180.0,
+    "flags": []
+   },
+   {
+    "wid": "R09-T03",
+    "group": "EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "owner": "Team Nam",
+    "started": "2026-08-26 13:00",
+    "ended": "2026-08-26 17:00",
+    "minutes": 240.0,
+    "flags": []
+   },
+   {
+    "wid": "R09-T04",
+    "group": "EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "owner": "Team Nam",
+    "started": "2026-08-27 09:00",
+    "ended": "2026-08-27 12:00",
+    "minutes": 180.0,
+    "flags": []
+   },
+   {
+    "wid": "R09-T05",
+    "group": "EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "owner": "Team Nam",
+    "started": "2026-08-27 13:00",
+    "ended": "2026-08-27 17:00",
+    "minutes": 240.0,
+    "flags": []
+   },
+   {
+    "wid": "R09-T06",
+    "group": "EPIC R09: Security Runtime, Sandbox & Observability (An Ninh Runtime, Sandbox & Giám Sát)",
+    "owner": "Team Nam",
+    "started": "2026-08-28 08:30",
+    "ended": "2026-08-28 10:20",
+    "minutes": 110.0,
+    "flags": []
+   },
+   {
+    "wid": "R10-T01",
+    "group": "EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "owner": "Team Duy",
+    "started": "2026-08-28 10:30",
+    "ended": "2026-08-28 10:45",
+    "minutes": 15.0,
+    "flags": []
+   },
+   {
+    "wid": "R10-T02",
+    "group": "EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "owner": "Team Duy",
+    "started": "2026-08-28 10:50",
+    "ended": "2026-08-28 10:58",
+    "minutes": 8.0,
+    "flags": [
+     "overlaps another task by the same owner"
+    ]
+   },
+   {
+    "wid": "R10-T03",
+    "group": "EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "owner": "Team Duy",
+    "started": "2026-08-28 11:00",
+    "ended": "2026-08-28 11:06",
+    "minutes": 6.0,
+    "flags": [
+     "overlaps another task by the same owner"
+    ]
+   },
+   {
+    "wid": "R10-T04",
+    "group": "EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "owner": "Team Duy",
+    "started": "2026-08-28 10:55",
+    "ended": "2026-08-28 11:00",
+    "minutes": 5.0,
+    "flags": [
+     "overlaps another task by the same owner"
+    ]
+   },
+   {
+    "wid": "R10-T05",
+    "group": "EPIC R10: Testing, Packaging & Contributor Experience (Hệ Thống Kiểm Thử & Tài Liệu Đóng Góp)",
+    "owner": "Team Duy",
+    "started": "2026-08-28 10:56",
+    "ended": "2026-08-28 11:04",
+    "minutes": 8.0,
+    "flags": [
+     "overlaps another task by the same owner"
+    ]
+   }
+  ],
+  "overlaps": [
+   {
+    "owner": "Team Duy",
+    "first": "R10-T04",
+    "second": "R10-T05",
+    "minutes": 4.0
+   },
+   {
+    "owner": "Team Duy",
+    "first": "R10-T05",
+    "second": "R10-T03",
+    "minutes": 4.0
+   },
+   {
+    "owner": "Team Duy",
+    "first": "R10-T02",
+    "second": "R10-T04",
+    "minutes": 3.0
+   },
+   {
+    "owner": "Team Duy",
+    "first": "R10-T02",
+    "second": "R10-T05",
+    "minutes": 2.0
+   }
+  ],
+  "slips": [
+   {
+    "group": "TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Xóa copy routing cũ trong ui/chat_panel.py Fix circular import model_p",
+    "planned": "28/08 (T6)",
+    "started": "2026-08-22 18:57",
+    "days": -6
+   },
+   {
+    "group": "TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Chủ trì EPIC R10: Viết Contributor Recipes, chạy E2E Smoke Test (tests",
+    "planned": "31/08 (T2)",
+    "started": "2026-08-28 10:50",
+    "days": -3
+   },
+   {
+    "group": "TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Fix tồn đọng Check 1, cập nhật tài liệu kiến trúc, merge PR cuối",
+    "planned": "31/08 (T2)",
+    "started": "2026-08-28 11:00",
+    "days": -3
+   },
+   {
+    "group": "TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Tách TaskRepository & ScheduleCalculator Tách KanbanBoardWidget (7 cột",
+    "planned": "24/08 (T2)",
+    "started": "2026-08-27 16:05",
+    "days": 3
+   },
+   {
+    "group": "TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Fix tồn đọng Check 2, cập nhật README, merge PR cuối",
+    "planned": "31/08 (T2)",
+    "started": "2026-08-28 11:00",
+    "days": -3
+   },
+   {
+    "group": "TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Xây dựng RoutingApplicationService độc lập Qt Tách ComposerWidget & At",
+    "planned": "24/08 (T2)",
+    "started": "2026-08-22 18:53",
+    "days": -2
+   },
+   {
+    "group": "TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Xây dựng ConversationApplicationService Tách ChatHistoryWidget và bubb",
+    "planned": "25/08 (T3)",
+    "started": "2026-08-23 01:08",
+    "days": -2
+   },
+   {
+    "group": "TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Chủ trì CASAN Check 3: Chạy python scripts/check_imports.py đảm bảo 0 ",
+    "planned": "30/08 (CN)",
+    "started": "2026-08-28 10:30",
+    "days": -2
+   },
+   {
+    "group": "TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Chủ trì CASAN Check 1: Chạy python scripts/audit_security.py đảm bảo 0",
+    "planned": "30/08 (CN)",
+    "started": "2026-08-28 10:46",
+    "days": -2
+   },
+   {
+    "group": "TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Xây dựng QtSchedulerClock adapter (tách khỏi QTimer) Tách CalendarView",
+    "planned": "25/08 (T3)",
+    "started": "2026-08-27 16:26",
+    "days": 2
+   },
+   {
+    "group": "TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Nối ToolPolicyGateway qua MCP Client & Built-in Tools Integration test",
+    "planned": "29/08 (T7)",
+    "started": "2026-08-27 20:52",
+    "days": -2
+   },
+   {
+    "group": "TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Chủ trì CASAN Check 2: Chạy python scripts/check_loc.py --max-lines 40",
+    "planned": "30/08 (CN)",
+    "started": "2026-08-28 10:46",
+    "days": -2
+   },
+   {
+    "group": "TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Nối stream AgentEvent sang Chat History Tách AudioRecorderWidget",
+    "planned": "26/08 (T4)",
+    "started": "2026-08-25 15:45",
+    "days": -1
+   },
+   {
+    "group": "TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Tách ChatOutputPanel & File Watcher Lắp ráp container ChatPanel và Flo",
+    "planned": "27/08 (T5)",
+    "started": "2026-08-26 09:00",
+    "days": -1
+   },
+   {
+    "group": "TEAM DUY (Core AI, Routing, Turn Runtime & Testing Lead)",
+    "title": "Viết suite integration test cho toàn bộ luồng Chat (tests/integration/",
+    "planned": "29/08 (T7)",
+    "started": "2026-08-28 10:35",
+    "days": -1
+   },
+   {
+    "group": "TEAM NAM (Automation Workflows, Co4E, Monitoring & Governance)",
+    "title": "Fix circular import agent_security agent_security_alert Integration te",
+    "planned": "29/08 (T7)",
+    "started": "2026-08-28 10:00",
+    "days": -1
+   },
+   {
+    "group": "TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Xây dựng TaskApplicationService Tách AiTaskCreatorDialog & AiTaskImpor",
+    "planned": "26/08 (T4)",
+    "started": "2026-08-27 16:47",
+    "days": 1
+   },
+   {
+    "group": "TEAM HOA (Workspace, Filesystem, Scheduling & Tool Registry)",
+    "title": "Tách StructureGraphView (GraphRAG) Lắp ráp shell FolderTab & ScheduleT",
+    "planned": "28/08 (T6)",
+    "started": "2026-08-27 18:16",
+    "days": -1
+   }
+  ],
+  "unmet": [
+   {
+    "wid": "R01-T02",
+    "name": "tests/fakes/fake_provider.py",
+    "kind": "test",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 136
+   },
+   {
+    "wid": "R01-T02",
+    "name": "tests/fakes/fake_tool_executor.py",
+    "kind": "test",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 136
+   },
+   {
+    "wid": "R01-T04",
+    "name": "tests/characterization/test_run_cowork.py",
+    "kind": "test",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 140
+   },
+   {
+    "wid": "R03-T01",
+    "name": "tests/contracts/test_providers.py",
+    "kind": "test",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 170
+   },
+   {
+    "wid": "R10-T05",
+    "name": "tests/e2e/test_smoke.py",
+    "kind": "test",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 386
+   },
+   {
+    "wid": "R01-T03",
+    "name": "scripts/check_imports.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 138
+   },
+   {
+    "wid": "R03-T02",
+    "name": "domain/models/provider_descriptor.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 172
+   },
+   {
+    "wid": "R03-T02",
+    "name": "infrastructure/providers/provider_registry.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 172
+   },
+   {
+    "wid": "R03-T03",
+    "name": "application/model_routing/routing_application_service.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 174
+   },
+   {
+    "wid": "R03-T06",
+    "name": "infrastructure/telemetry/usage_sink.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 180
+   },
+   {
+    "wid": "R04-T01",
+    "name": "domain/agents/conversation_execution_request.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 243
+   },
+   {
+    "wid": "R04-T02",
+    "name": "domain/agents/agent_event.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 245
+   },
+   {
+    "wid": "R04-T02",
+    "name": "domain/agents/agent_event_codec.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 245
+   },
+   {
+    "wid": "R04-T03",
+    "name": "application/conversations/conversation_application_service.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 247
+   },
+   {
+    "wid": "R04-T03",
+    "name": "turn_runtime.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 247
+   },
+   {
+    "wid": "R04-T03",
+    "name": "core_runtime_adapter.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 247
+   },
+   {
+    "wid": "R04-T03",
+    "name": "domain/agents/agent_result.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 247
+   },
+   {
+    "wid": "R05-T01",
+    "name": "domain/tools/tool_descriptor.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 266
+   },
+   {
+    "wid": "R05-T01",
+    "name": "domain/tools/tool_registry.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 266
+   },
+   {
+    "wid": "R05-T02",
+    "name": "infrastructure/filesystem/file_tools.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 268
+   },
+   {
+    "wid": "R05-T02",
+    "name": "command_tools.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 268
+   },
+   {
+    "wid": "R05-T02",
+    "name": "fetch_tools.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 268
+   },
+   {
+    "wid": "R05-T03",
+    "name": "application/conversations/tool_policy_gateway.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 270
+   },
+   {
+    "wid": "R05-T05",
+    "name": "infrastructure/mcp/mcp_source_manager.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 274
+   },
+   {
+    "wid": "R06-T01",
+    "name": "domain/workspaces/workspace_session.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 283
+   },
+   {
+    "wid": "R06-T02",
+    "name": "infrastructure/persistence/json/workspace_repository_impl.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 285
+   },
+   {
+    "wid": "R06-T03",
+    "name": "infrastructure/filesystem/execution_workspace.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 287
+   },
+   {
+    "wid": "R06-T05",
+    "name": "application/workspaces/file_workspace_service.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 291
+   },
+   {
+    "wid": "R07-T01",
+    "name": "infrastructure/persistence/json/task_repository_impl.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 300
+   },
+   {
+    "wid": "R07-T02",
+    "name": "domain/tasks/schedule_calculator.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 302
+   },
+   {
+    "wid": "R07-T03",
+    "name": "infrastructure/qt/qt_scheduler_clock.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 304
+   },
+   {
+    "wid": "R07-T04",
+    "name": "application/scheduling/task_application_service.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 306
+   },
+   {
+    "wid": "R07-T05",
+    "name": "application/scheduling/ai_task_planner_service.py",
+    "kind": "code",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 308
+   },
+   {
+    "wid": "R08-T01",
+    "name": "presentation/chat/chat_history_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 320
+   },
+   {
+    "wid": "R08-T02",
+    "name": "presentation/chat/composer_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 322
+   },
+   {
+    "wid": "R08-T02",
+    "name": "chat_input_box.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 322
+   },
+   {
+    "wid": "R08-T03",
+    "name": "presentation/chat/attachment_picker.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 324
+   },
+   {
+    "wid": "R08-T04",
+    "name": "presentation/chat/audio_recorder_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 326
+   },
+   {
+    "wid": "R08-T05",
+    "name": "presentation/chat/chat_output_panel.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 328
+   },
+   {
+    "wid": "R08-T07",
+    "name": "provider_settings_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 334
+   },
+   {
+    "wid": "R08-T07",
+    "name": "connector_settings_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 334
+   },
+   {
+    "wid": "R08-T07",
+    "name": "routing_settings_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 334
+   },
+   {
+    "wid": "R08-T07",
+    "name": "general_settings_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 334
+   },
+   {
+    "wid": "R08-T08",
+    "name": "overview_tab.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 336
+   },
+   {
+    "wid": "R08-T08",
+    "name": "sandbox_status_tab.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 336
+   },
+   {
+    "wid": "R08-T08",
+    "name": "security_events_tab.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 336
+   },
+   {
+    "wid": "R08-T08",
+    "name": "mcp_history_tab.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 336
+   },
+   {
+    "wid": "R08-T08",
+    "name": "action_logs_tab.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 336
+   },
+   {
+    "wid": "R08-T08",
+    "name": "agent_status_tab.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 336
+   },
+   {
+    "wid": "R08-T08",
+    "name": "security_settings_tab.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 336
+   },
+   {
+    "wid": "R08-T09",
+    "name": "co4e_canvas_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 338
+   },
+   {
+    "wid": "R08-T09",
+    "name": "node_property_panel.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 338
+   },
+   {
+    "wid": "R08-T09",
+    "name": "co4e_run_control_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 338
+   },
+   {
+    "wid": "R08-T09",
+    "name": "co4e_chat_view.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 338
+   },
+   {
+    "wid": "R08-T10",
+    "name": "presentation/shell/main_window.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 340
+   },
+   {
+    "wid": "R08-T10",
+    "name": "tray_manager.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 340
+   },
+   {
+    "wid": "R08-T10",
+    "name": "lifecycle_coordinator.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 340
+   },
+   {
+    "wid": "R08-T11",
+    "name": "kanban_board_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 344
+   },
+   {
+    "wid": "R08-T11",
+    "name": "calendar_view_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 344
+   },
+   {
+    "wid": "R08-T11",
+    "name": "ai_task_creator_dialog.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 344
+   },
+   {
+    "wid": "R08-T11",
+    "name": "ai_task_import_dialog.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 344
+   },
+   {
+    "wid": "R08-T11",
+    "name": "run_history_dialog.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 344
+   },
+   {
+    "wid": "R08-T12",
+    "name": "workspace_file_tree.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R08-T12",
+    "name": "document_preview_manager.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R08-T12",
+    "name": "ai_file_editor_dialog.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R08-T12",
+    "name": "code_editor.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R08-T12",
+    "name": "office_document_renderer.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R08-T12",
+    "name": "ai_edit_model_resolver.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R08-T12",
+    "name": "ai_edit_pipeline.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R08-T13",
+    "name": "token_usage_card_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 348
+   },
+   {
+    "wid": "R08-T13",
+    "name": "usage_chart_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 348
+   },
+   {
+    "wid": "R08-T13",
+    "name": "habits_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 348
+   },
+   {
+    "wid": "R08-T13",
+    "name": "application/monitoring/dashboard_query_service.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 348
+   },
+   {
+    "wid": "R08-T14",
+    "name": "graph_qa_widget.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 350
+   },
+   {
+    "wid": "R08-T14",
+    "name": "graph_renderer.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 350
+   },
+   {
+    "wid": "R08-T14",
+    "name": "graph_scene_items.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 350
+   },
+   {
+    "wid": "R08-T14",
+    "name": "graph_messages_view.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 350
+   },
+   {
+    "wid": "R08-T14",
+    "name": "application/workspaces/graph_index_service.py",
+    "kind": "code",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 350
+   },
+   {
+    "wid": "R09-T05",
+    "name": "application/monitoring/monitoring_query_service.py",
+    "kind": "code",
+    "owner": "Team Nam",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 367
+   },
+   {
+    "wid": "R09-T06",
+    "name": "infrastructure/sandbox/sandbox_capabilities.py",
+    "kind": "code",
+    "owner": "Team Nam",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 369
+   },
+   {
+    "wid": "R10-T02",
+    "name": "scripts/check_imports.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 380
+   },
+   {
+    "wid": "R10-T02",
+    "name": "scripts/check_loc.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 380
+   },
+   {
+    "wid": "R10-T02",
+    "name": "scripts/audit_security.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 380
+   },
+   {
+    "wid": "R10-T02",
+    "name": "scripts/run_quality_gate.py",
+    "kind": "code",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 380
+   },
+   {
+    "wid": "R03-T04",
+    "name": "RoutingApplicationService",
+    "kind": "symbol",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 176
+   },
+   {
+    "wid": "R03-T05",
+    "name": "RoutingApplicationService",
+    "kind": "symbol",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 178
+   },
+   {
+    "wid": "R04-T04",
+    "name": "ConversationExecutionRequest",
+    "kind": "symbol",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 250
+   },
+   {
+    "wid": "R04-T05",
+    "name": "ConversationApplicationService",
+    "kind": "symbol",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 254
+   },
+   {
+    "wid": "R05-T04",
+    "name": "ToolPolicyGateway",
+    "kind": "symbol",
+    "owner": "Team Hoa",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 272
+   },
+   {
+    "wid": "R08-T12",
+    "name": "FileWorkspaceService",
+    "kind": "symbol",
+    "owner": "",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 346
+   },
+   {
+    "wid": "R10-T03",
+    "name": "START_CONTRIBUTING.md",
+    "kind": "doc",
+    "owner": "Team Duy",
+    "doc": "refactor/Refactoring_Checklist.md",
+    "line": 382
+   }
+  ],
+  "by_day": {
+   "2026-08-21": 15,
+   "2026-08-22": 6,
+   "2026-08-23": 5,
+   "2026-08-25": 7,
+   "2026-08-26": 6,
+   "2026-08-27": 13,
+   "2026-08-28": 7
+  },
+  "idle_days": [
+   "2026-08-24"
+  ]
+ }
+}

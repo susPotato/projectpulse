@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "config.py contains a dedicated \"tools\" settings block explicitly documented as \"Agent tool governance (Monitoring \\u2192 Tools)\", where listed built-in tool names are withheld from the agent at run time, which is exactly the backing state a Tools Admin tab under Monitoring would edit. app.py also wires a MonitoringTab into the nav rail with expandable sub-tabs (self._nav_parents includes _ROW_MONITORING), consistent with a Tools sub-tab existing. The monitoring_tab.py implementation itself is not shown, so the tab's UI cannot be inspected directly, but the retrieved evidence points to the feature being built as the \"Release it\" status claims.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "Defines a \"tools\" config block annotated \"Agent tool governance (Monitoring \\u2192 Tools)\" listing built-in tools withheld from the agent \\u2014 the persisted state behind a Tools Admin tab."
+  },
+  {
+   "file": "config.py",
+   "symbol": "monitoring_visibility",
+   "why": "Shows Monitoring is composed of admin-controlled sub-tabs (security_events, mcp_history, action_logs, agent_status), confirming the Monitoring tab-per-feature pattern."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "MonitoringTab is imported and registered as a lazily built nav page with expandable sub-tab children."
+  },
+  {
+   "file": "core/admin_agents.py",
+   "symbol": "AdminAgent",
+   "why": "Demonstrates an existing sibling 'Monitoring \\u2192 Agents Admin' surface, showing admin tabs under Monitoring are an established, implemented pattern."
+  }
+ ],
+ "status_conflict": false
+}

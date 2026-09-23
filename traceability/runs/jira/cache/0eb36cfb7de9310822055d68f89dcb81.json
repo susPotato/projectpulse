@@ -1,0 +1,13 @@
+{
+ "headline": "This area contains a single in-progress ticket labelled only \"Management\", and the analysis was unable to link it to any code because the ticket carries no description.",
+ "what_is_there": "The tracker shows one item in progress under the product area, but its title is a single word with no supporting detail about what behaviour or feature it covers.",
+ "what_is_unclear": "Everything about this item is unclear — with no description to work from, the analysis had no basis for searching the codebase, so it cannot say whether work exists or not.",
+ "suggested_action": "Ask the ticket owner to add a short description of the intended behaviour so the item can be matched to the code.",
+ "caveat": "",
+ "confidence": "high",
+ "_usage": {
+  "input_tokens": 119,
+  "output_tokens": 228,
+  "model": "claude-opus-5"
+ }
+}

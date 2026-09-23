@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket's claim is an event-driven notification routing capability, but the shown code contains only isolated, direct-send helpers: a best-effort admin email on a security block and a COM-based Outlook sender. Nothing here shows an event bus, subscription, or routing layer, and the one documentation excerpt that is marked as describing this repo only confirms a single notify_admin function, while the co4e split-map documents are flagged as not describing this build. The candidate subset is insufficient either to confirm or to refute the routing claim.",
+ "evidence": [
+  {
+   "file": "core/agent_security_alert.py",
+   "symbol": "notify_admin",
+   "why": "Sends a one-off admin email when a security layer blocks an action — a direct notification, not event-driven routing."
+  },
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "send_via_outlook",
+   "why": "A transport helper that sends mail through local Outlook COM; no dispatch or routing logic."
+  },
+  {
+   "file": "skill_library/03-build-implementation.skill",
+   "symbol": "",
+   "why": "A generic Tech Lead skill prompt unrelated to notification events; matched only by keyword noise."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4453,
+  "output_tokens": 498,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The candidate set shows a Monitoring page exists (app.py imports MonitoringTab and builds it lazily via _build_monitoring, with monitoring_visibility sub-tab keys in config.py), and dashboard_tab.py references a 'monitoring.overview_currency' i18n key implying a Monitoring Overview section — but ui/monitoring_tab.py itself is not shown, so nothing here demonstrates an Overview page rendering system health metrics. dashboard_tab.py is a separate token-usage/cost Dashboard, not the Monitoring overview described. No evidence contradicts the ticket either.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Shows a Monitoring page exists and is lazily built from ui.monitoring_tab.MonitoringTab, but its contents are not visible."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "The monitoring_visibility defaults list security_events/mcp_history/action_logs/agent_status sub-tabs, none of which is the claimed 'Overview' health page."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._retranslate",
+   "why": "Uses the key 'monitoring.overview_currency', hinting a Monitoring Overview exists, but this file is the token-usage dashboard, not the monitoring overview."
+  }
+ ],
+ "status_conflict": false
+}

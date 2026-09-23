@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain an untrusted-content fence or prompt-injection marker detection: RULEBASE.md is policy prose stating validators MUST detect prompt injection, while core/ms365_graph.py and providers/base.py are a Graph REST wrapper and provider/streaming plumbing with no security fencing. The architecture excerpt points at core/agent_security.py and core/security_rules.py, neither of which was shown, and the team report is explicitly flagged as not describing this repository.",
+ "evidence": [
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "States as policy that the Prompt/Attachment validators must detect prompt injection and treat uploaded content as untrusted, but is documentation text rather than detection or fencing code."
+  },
+  {
+   "file": "core/ms365_graph.py",
+   "symbol": "read_shared_file",
+   "why": "Reads remote file content with no injection-marker scanning or fencing, and is otherwise unrelated to the ticket."
+  },
+  {
+   "file": "providers/base.py",
+   "symbol": "ThinkStreamSplitter",
+   "why": "Handles <think> tags in model output streams, which is unrelated to fencing untrusted input content."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8722,
+  "output_tokens": 494,
+  "model": "claude-opus-5"
+ }
+}

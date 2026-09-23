@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrievable for this ticket, so there is nothing to compare against the claim of a report output configuration screen. Absence of candidate files provides no evidence either way.",
+ "evidence": [],
+ "status_conflict": false
+}

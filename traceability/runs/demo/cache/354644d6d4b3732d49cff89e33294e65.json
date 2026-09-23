@@ -1,0 +1,13 @@
+{
+ "headline": "Usage and telemetry covers recording what the product does per model turn and rolling that up into shared usage summaries; the shared aggregation half is backed by code we could read, while the per-turn usage tracker itself was not confirmed.",
+ "what_is_there": "There is working code that collects usage and audit records written as line-by-line log files, gathers them across multiple machines, and exposes them for summarising usage and audit activity. A usage tracker component and a token-estimation capability are referenced and appear to exist.",
+ "what_is_unclear": "The actual contents of the usage tracker were never examined, so the specific claims about logging an event per model turn, caching those events to file, and offering a summarise interface could not be checked either way. The analysis only saw a keyword-selected slice of the code, so this is unconfirmed rather than missing.",
+ "suggested_action": "Ask whoever owns the usage tracker to walk through per-turn event logging and the summarise call once, so that ticket can be closed out with confidence.",
+ "caveat": "",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 466,
+  "output_tokens": 340,
+  "model": "claude-opus-5"
+ }
+}

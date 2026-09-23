@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a project-management/configuration-management process task (start-up baseline recorded in a CM report spreadsheet), not a software feature, and nothing in it maps to source code. The candidate files shown (README boilerplate, config.py defaults, core/ext_connectors.py) concern application configuration and MCP/REST connectors and are unrelated to CI baselining, and the two cited documents are explicitly flagged as not describing this repository.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig",
+   "why": "Defines application runtime settings (providers, connectors, security toggles), unrelated to configuration-management CI baselining."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "build_ext_connector_tools",
+   "why": "Builds external MCP/REST connector tools; no connection to a CM baseline report."
+  },
+  {
+   "file": "README.md",
+   "symbol": "",
+   "why": "Unmodified GitLab template README containing no CM plan or baseline procedure information."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 13471,
+  "output_tokens": 380,
+  "model": "claude-opus-5"
+ }
+}

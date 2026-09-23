@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket describes a project-management process activity (holding a pre-planning meeting) with no software deliverable, so no source code could corroborate or contradict it. The retrieved candidates — a boilerplate GitLab README, a security rulebase, and a Microsoft Graph REST wrapper — are unrelated; ms365_graph.py only touches meetings in the sense of fetching Teams transcripts via Graph API, which has nothing to do with this governance checklist.",
+ "evidence": [
+  {
+   "file": "core/ms365_graph.py",
+   "symbol": "find_online_meeting",
+   "why": "The only 'meeting' reference in the candidates is a Graph API lookup of Teams online meetings, unrelated to a PM pre-planning meeting process."
+  },
+  {
+   "file": "README.md",
+   "symbol": "",
+   "why": "Generic GitLab template README with no project-planning process content."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8130,
+  "output_tokens": 338,
+  "model": "claude-opus-5"
+ }
+}

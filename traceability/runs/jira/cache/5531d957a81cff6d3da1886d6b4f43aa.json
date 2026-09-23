@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is an organizational PM process task about defining and approving project productivity objectives in FI2.0 — it has no software deliverable to find in this repository. The retrieved candidates (README boilerplate, a security rulebase that merely lists 'Project planning'/'PMO support' as allowed agent topics, and a Qt calendar widget) have no bearing on the claim, and the cited documentation excerpts are flagged as not describing this repository.",
+ "evidence": [
+  {
+   "file": "ui/calendar_view.py",
+   "symbol": "CalendarView",
+   "why": "A scheduling calendar widget with no notion of productivity objectives, approval workflows, or measurement frequency — unrelated to the ticket."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Only mentions 'Project planning'/'PMO support' as permitted agent topics; it does not define or implement any project productivity objective process."
+  },
+  {
+   "file": "README.md",
+   "symbol": "",
+   "why": "Generic GitLab template README containing nothing relevant to project productivity planning."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8174,
+  "output_tokens": 406,
+  "model": "claude-opus-5"
+ }
+}

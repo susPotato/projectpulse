@@ -1,0 +1,13 @@
+{
+ "headline": "Task Management covers scheduled and dependency-driven task automation with a Kanban board, calendar view, Excel bulk import and AI-assisted task planning; of 15 tickets marked ready for release, 7 are backed by code the analysis could read, 7 could not be confirmed from the code it saw, and 1 (holiday-calendar scheduling) appears not to be built.",
+ "what_is_there": "The code shows a background scheduler that ticks every 30 seconds and runs several tasks at once on separate worker threads, task dependencies where a task waits for all its prerequisites, a drag-and-drop Kanban board with status lanes, a calendar view of scheduled runs, Excel/CSV/JSON bulk import with a downloadable template, and an AI planner that turns a plain-language description into a structured list of tasks.",
+ "what_is_unclear": "The underlying task record itself (statuses, types, priorities), the range of recurrence options (daily/weekly/monthly/cron), task chaining rules, task input/output modes and artifact storage, the task approval gate, notifications via Teams or email, and the create/edit task form could not be confirmed — the files examined were a keyword-selected slice and did not include the relevant code, so this is not evidence the features are absent. Separately, the holiday-calendar and working-days-only scheduling ticket looks wrong: the task scheduling form shown supports only a simple one-time schedule and notes that repeat/cron scheduling was removed, with no holiday or country fields present.",
+ "suggested_action": "Ask the team to point to the code behind the seven unconfirmed tickets (task record and statuses, recurrence options, chaining, input/output, approval, notifications, task editor form) and to confirm whether holiday-aware scheduling was deliberately dropped so that ticket can be corrected.",
+ "caveat": "Several supporting documents cited for these tickets were flagged as not describing this repository, and specific widgets they referenced were not found, so documentation alone should not be treated as evidence here.",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 3136,
+  "output_tokens": 680,
+  "model": "claude-opus-5"
+ }
+}

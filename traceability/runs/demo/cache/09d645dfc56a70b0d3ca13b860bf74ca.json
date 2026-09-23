@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/codebase_memory.py implements a full bridge to codebase-memory-mcp with indexing, project listing, and agent-facing cmem_* tools (architecture overview, graph search, call-path tracing, code snippet retrieval), which is exactly the persistent codebase-structure memory described. config.py contains a matching 'codebase_memory' settings block (enabled, binary_path, auto_index), so the feature is wired into app configuration as well. Status 'Release it' matches the presence of working code.",
+ "evidence": [
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CodebaseMemory",
+   "why": "Class runs codebase-memory-mcp CLI to index a repository and query its persistent knowledge graph."
+  },
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CMEM_TOOL_SPECS",
+   "why": "Declares agent tools cmem_get_architecture, cmem_search_graph, cmem_trace_path, cmem_get_code_snippet over the indexed codebase."
+  },
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CodebaseMemory.index_repository",
+   "why": "Performs the indexing that creates the persistent memory of codebase structure."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.codebase_memory",
+   "why": "Config exposes codebase_memory settings (enabled, binary_path, auto_index), showing integration into the app."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8415,
+  "output_tokens": 562,
+  "model": "claude-opus-5"
+ }
+}

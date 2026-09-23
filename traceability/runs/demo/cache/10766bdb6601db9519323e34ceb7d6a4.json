@@ -1,0 +1,13 @@
+{
+ "headline": "The Performance area contains a single ticket described only as a performance update, and the code review could not link it to any specific change in the product.",
+ "what_is_there": "The ticket carries no description of what was to be made faster, only a title and role information. The code that was examined covers the visual workflow canvas and workflow tab, including connection routing and tracking of individual flow runs, but nothing there could be tied to the ticket's intent.",
+ "what_is_unclear": "Whether any performance work was done at all is unclear, because the ticket does not state a measurable or checkable change to look for. Supporting design documents reviewed alongside the code were found to describe a different codebase, so they added nothing.",
+ "suggested_action": "Ask the ticket's author to record what was slow, what was changed, and how the improvement was measured, so the work can be confirmed.",
+ "caveat": "",
+ "confidence": "high",
+ "_usage": {
+  "input_tokens": 247,
+  "output_tokens": 275,
+  "model": "claude-opus-5"
+ }
+}

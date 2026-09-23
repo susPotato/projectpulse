@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py instantiates and executes a SettingsDialog from _open_settings and, on accept, re-applies theme, language and provider selection, and the top bar itself builds provider, language and theme controls wired to ctx.config. The specific sub-features of model selection and attachment limits are not visible in the shown excerpts, so support is partial, but the settings dialog capability itself is clearly present.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._open_settings",
+   "why": "Opens SettingsDialog and on acceptance re-applies theme, language and provider from config."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_topbar",
+   "why": "Builds the provider combo (PROVIDER_LABELS), language combo (LANGUAGES/get_language) and theme button plus the Settings button."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._set_theme",
+   "why": "Persists the theme choice to config and applies it, showing theme configuration is implemented."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._on_language_changed",
+   "why": "Persists language to config and calls set_language, confirming language switching exists."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9152,
+  "output_tokens": 559,
+  "model": "claude-opus-5"
+ }
+}

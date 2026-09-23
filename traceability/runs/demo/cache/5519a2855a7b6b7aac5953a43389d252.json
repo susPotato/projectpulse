@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py instantiates a SettingsDialog from _open_settings and, on accept, re-applies theme, language and provider selections (self.ctx.config.theme/language/active_provider), with PROVIDER_LABELS, LANGUAGES and set_language/get_language from i18n all wired into the top bar. The dialog's own source is not in the shown subset, so the attachment-limit and model-selection fields are unverified, but the provider/theme/language settings machinery it depends on clearly exists and the 'Release it' status is consistent.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._open_settings",
+   "why": "Constructs SettingsDialog and, on accept, applies theme, language and provider changes back to the main window."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_topbar",
+   "why": "Builds provider combo from PROVIDER_LABELS, language combo from LANGUAGES/get_language, a theme button and the Settings button."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._set_theme",
+   "why": "Persists and applies the theme choice via ctx.config.theme and _apply_theme."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._on_provider_changed",
+   "why": "Switching provider saves config and refreshes the Cowork agent/model lists and workspace AI model picker."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10583,
+  "output_tokens": 683,
+  "model": "claude-opus-5"
+ }
+}

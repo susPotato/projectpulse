@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/appcontainer_sandbox.py implements AppContainerSandbox, which creates a Windows job object via core.win_job (create_job_object/assign_process/terminate_job) and assigns the spawned process to it for containment, with timeout and network-blocking env. The policy file config/security_sandbox.yaml declares the appcontainer backend with combine_with_job_object: true and routes high-risk commands to it, matching the ticket's 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/appcontainer_sandbox.py",
+   "symbol": "AppContainerSandbox.run_command",
+   "why": "Creates a job object, assigns the child process PID to it, and terminates the job in the finally block — the described process containment."
+  },
+  {
+   "file": "core/appcontainer_sandbox.py",
+   "symbol": "is_appcontainer_available",
+   "why": "Gates AppContainer usage on Windows 10+ as the ticket's Windows-specific sandbox implies."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares appcontainer as default backend with combine_with_job_object: true and high-risk routing."
+  },
+  {
+   "file": "core/integrity_sandbox.py",
+   "symbol": "IntegritySandbox.run_command",
+   "why": "Shows the same win_job job-object primitives are a real, shared module used by sibling sandbox backends."
+  }
+ ],
+ "status_conflict": false
+}

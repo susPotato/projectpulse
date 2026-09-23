@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "low",
+ "reasoning": "The ticket is a one-line component note about an \"AI Edit — Preview AI\" file-preview generation feature, with no concrete acceptance criteria. The candidate files show a URL link preview helper (core/link_fetch.py) and a pptx text-round-trip editor (core/pptx_edit.py), neither of which is an AI-driven file preview generator; the sandbox YAML and architecture excerpt are unrelated. Nothing shown either confirms or refutes the claimed feature.",
+ "evidence": [
+  {
+   "file": "core/link_fetch.py",
+   "symbol": "fetch_link_preview",
+   "why": "Generates a text preview of a URL's content, but is link fetching, not AI-generated file preview in an AI Edit flow."
+  },
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "pptx_to_text",
+   "why": "Renders a pptx as an editable marker-delimited document for human or AI editing, adjacent to but not evidence of a 'Preview AI' preview generator."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Static sandbox policy unrelated to AI Edit preview generation."
+  }
+ ],
+ "status_conflict": false
+}

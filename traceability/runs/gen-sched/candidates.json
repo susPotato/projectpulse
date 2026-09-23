@@ -1,0 +1,394 @@
+{
+ "schema_version": 1,
+ "produced_by": "candidates",
+ "meta": {
+  "hubdocs": [],
+  "n_indexed": 258
+ },
+ "payload": [
+  {
+   "uid": "T0000",
+   "candidates": [
+    {
+     "path": "app/api/main.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "app/api/schemas/dashboard.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "app/api/schemas/program.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "app/dashboard/agent.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "app/ids.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "app/ingest/runner.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "app/ingest/sources/excel/graph_source.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "source",
+       "df": 4,
+       "bar": 10,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "app/ingest/sources/excel/source.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "source",
+       "df": 4,
+       "bar": 10,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/ingest/sources/excel/transport.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "app/ingest/sources/jira/source.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "source",
+       "df": 4,
+       "bar": 10,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/scope.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "scripts/publish.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "tests/test_graph_source.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "source",
+       "df": 4,
+       "bar": 10,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "web/src/api.ts",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "source",
+       "df": 11,
+       "bar": 6,
+       "strong": false
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0001",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0002",
+   "candidates": [
+    {
+     "path": "app/agent/link_fetch.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "extract",
+       "df": 2,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/ingest/sources/jira/extractor.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "extract",
+       "df": 2,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/intelligence/pipeline.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "pipeline",
+       "df": 2,
+       "bar": 10,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "tests/test_pipeline.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "pipeline",
+       "df": 2,
+       "bar": 10,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0003",
+   "candidates": [
+    {
+     "path": "app/intelligence/rules/__init__.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "rules",
+       "df": 4,
+       "bar": 10,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/intelligence/rules/engine.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "rules",
+       "df": 4,
+       "bar": 10,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "rules",
+       "df": 1,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/intelligence/rules/tables.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "rules",
+       "df": 4,
+       "bar": 10,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "tests/test_rules.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "rules",
+       "df": 4,
+       "bar": 10,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0004",
+   "candidates": [
+    {
+     "path": "app/ingest/sources/excel/graph_auth.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "load",
+       "df": 6,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/ingest/sources/excel/source.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "load",
+       "df": 6,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/intelligence/pipeline.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "load",
+       "df": 6,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/ml/duration.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "load",
+       "df": 6,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "app/narration/store.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "load",
+       "df": 6,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "web/src/api.ts",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "load",
+       "df": 6,
+       "bar": 6,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0005",
+   "candidates": [],
+   "head_collision": false
+  }
+ ]
+}

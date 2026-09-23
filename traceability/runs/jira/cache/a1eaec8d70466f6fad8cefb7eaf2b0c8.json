@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/usage_tracker.py contains build_ai_analysis_prompt, which assembles an aggregated token-usage summary (turns, input/output/cache tokens, avg per prompt, top consumers, by-source breakdown) plus explicit 'Busiest day' and 'busiest hour' fields, and sends it to the model for the Dashboard's '✨ AI analyze my usage' feature. The module docstring states it is token-usage tracking for the Dashboard tab, and _AI_ANALYSIS_HEADERS provides localized habits/recommendation section titles, matching the ticket's described functionality.",
+ "evidence": [
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "build_ai_analysis_prompt",
+   "why": "Builds the AI usage-analysis prompt including busiest day and busiest hour, top consumers and per-source token totals."
+  },
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "_AI_ANALYSIS_HEADERS",
+   "why": "Localized section headers for 'Usage habits' / token-saving actions confirm the habits-analysis output format."
+  },
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "bucketed_series",
+   "why": "Token/cost aggregation over time periods feeding the Dashboard's usage-pattern views."
+  },
+  {
+   "file": "app.py",
+   "symbol": "_build_dashboard",
+   "why": "MainWindow lazily builds the Dashboard page that hosts this analysis."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10495,
+  "output_tokens": 555,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,8 @@
+{
+ "headline": "This area covers a single ticket labelled as a performance update, and the analysis was not able to confirm what, if anything, in the code corresponds to it.",
+ "what_is_there": "The ticket describes only a general \"performance update\" with no specific behaviour, target, or measurement named. No code could be matched to it, so nothing can be described in product terms.",
+ "what_is_unclear": "Everything about this item is unclear: the ticket does not state what was meant to get faster, and no relevant source material was retrieved to compare against. This is not evidence the work is missing, only that nothing could be checked.",
+ "suggested_action": "Ask the ticket owner what specific performance change was intended and how it was measured, so the item can be described concretely and re-checked.",
+ "caveat": "",
+ "confidence": "high"
+}

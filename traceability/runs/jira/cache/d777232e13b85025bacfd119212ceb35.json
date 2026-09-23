@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/outlook_notify.py implements exactly the described capability: COM automation via win32com/pythoncom Dispatch(\"Outlook.Application\") to create and send mail from the local Outlook profile, plus an availability probe. The ticket is marked Cancelled, yet the feature exists in the repository.",
+ "evidence": [
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "send_via_outlook",
+   "why": "Creates and sends an Outlook mail item through win32com COM automation, returning (ok, message) without raising."
+  },
+  {
+   "file": "core/outlook_notify.py",
+   "symbol": "available",
+   "why": "Probes for pywin32/Outlook availability so callers can fall back when the COM path is unusable."
+  },
+  {
+   "file": "core/agent_security_alert.py",
+   "symbol": "notify_admin",
+   "why": "A separate email-alert path using MS365 Graph, unrelated to the Outlook COM channel but confirming email notification plumbing exists."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 6804,
+  "output_tokens": 420,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "verdict": "unverified",
+ "confidence": "low",
+ "reasoning": "No code was retrieved for this ticket, and the ticket text itself is little more than a title and a BA name. There is no evidence either for or against a Slack remote integration existing in the repository.",
+ "evidence": [],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 141,
+  "output_tokens": 100,
+  "model": "claude-opus-5"
+ }
+}

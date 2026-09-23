@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/image_gen.py implements text-to-image generation against an OpenAI-compatible /images/generations endpoint, saves b64 or URL results to disk, and includes DALL-E-aware model detection/suggestion helpers for the AI-edit model picker. This directly matches the ticket's claim of model-based image generation for AI Edit, and the 'Release it' status is consistent with the finished code.",
+ "evidence": [
+  {
+   "file": "core/image_gen.py",
+   "symbol": "generate_image",
+   "why": "Calls the provider's /images/generations endpoint and writes the returned PNG to out_path, returning (ok, message_or_path)."
+  },
+  {
+   "file": "core/image_gen.py",
+   "symbol": "looks_like_image_model",
+   "why": "Detects image-generation-capable models via markers including 'dall-e'/'dalle', showing DALL-E support."
+  },
+  {
+   "file": "core/image_gen.py",
+   "symbol": "suggest_image_model",
+   "why": "Docstring states it picks a text-to-image model for the AI-edit model picker, tying the module to the AI Edit component."
+  },
+  {
+   "file": "core/image_gen.py",
+   "symbol": "is_configured",
+   "why": "Provides the configuration gate so the UI can fall back when no image endpoint is set."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,8 @@
+{
+ "headline": "The connectors area — letting the product talk to external tools like CAD/CAE applications and Microsoft 365 — is substantially built in code, with four of eight tickets backed up, one ticket overstating what was delivered, and three that the review could not settle.",
+ "what_is_there": "There is a working framework for user-configured external connectors covering CAD, CAE, Microsoft 365 and a general \"other\" category, including saved configurations, migration of older settings into the new unified model, a settings panel for adding and enabling connectors, and file list/read/write tools over locally synced OneDrive and SharePoint folders with path protection and audit logging. CAD/CAE integrations such as CATIA and NX are wired into the shared tool pipeline as connector entries rather than deep vendor-specific automation, which matches their in-progress status.",
+ "what_is_unclear": "One ticket claims two connection methods for MCP servers, but the code only shows the command-line style connection — the HTTP option appears absent rather than simply unseen. Three tickets — a built-in Microsoft 365 MCP server, the reusable MCP tool contract with schema and sample manifests, and the effort to build a real project capability on existing MCP plumbing — could not be confirmed either way, because the files reviewed did not cover them.",
+ "suggested_action": "Ask the team to confirm whether HTTP transport for MCP server connections was actually delivered or descoped, and update that ticket's description accordingly.",
+ "caveat": "",
+ "confidence": "medium"
+}

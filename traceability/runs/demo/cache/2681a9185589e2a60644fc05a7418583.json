@@ -1,0 +1,13 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket text is a generic placeholder (\"add function to handle new function/new ticket\") with no concrete feature described, so there is nothing specific to verify. The only candidate file, core/co4e_run_manager.py, implements concurrent Co4E flow-run tracking and history persistence, which has no discernible link to the ticket's stated scope.",
+ "evidence": [
+  {
+   "file": "core/co4e_run_manager.py",
+   "symbol": "Co4ERunManager",
+   "why": "Manages concurrent workflow runs, status and history — unrelated to any 'new function/new ticket' handling described in the ticket."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The retrieved files are UI chat/workspace code; their only link to the ticket is a shared-knowledge folder scan (ChatPanel._augment, CoworkTab.project_knowledge_dir), which is plain directory attachment loading, not any portable knowledge pack format or specification. Nothing here defines or contradicts a pack spec, and no RAG/knowledge-pack module is present in the shown subset, so the ticket's status cannot be judged.",
+ "evidence": [
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "ChatPanel._augment",
+   "why": "Embeds attachment and workspace/project folder file contents into the prompt, but defines no knowledge pack format or manifest."
+  },
+  {
+   "file": "ui/cowork_tab.py",
+   "symbol": "CoworkTab.project_knowledge_dir",
+   "why": "Returns the project's workspace root as shared knowledge folder — a directory convention, not a portable pack specification."
+  }
+ ],
+ "status_conflict": false
+}

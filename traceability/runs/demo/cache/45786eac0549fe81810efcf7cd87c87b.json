@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a generic QA task (\"Test UI/UX all feature\") with no specific functional claim that source code could confirm or refute. The retrieved files — a REST/MCP connector abstraction, the provider base class, and the Connectors settings panel — are unrelated to any test artifact, and no test suite or UI/UX test plan is visible in the candidate set.",
+ "evidence": [
+  {
+   "file": "ui/connectors_panel.py",
+   "symbol": "ConnectorsPanel",
+   "why": "A connectors management UI panel, unrelated to any QA/testing activity described in the ticket."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Connector transport code with no bearing on UI/UX test coverage."
+  },
+  {
+   "file": "providers/base.py",
+   "symbol": "Provider",
+   "why": "LLM provider abstraction; contains no tests or QA scaffolding relevant to the ticket."
+  }
+ ],
+ "status_conflict": false
+}

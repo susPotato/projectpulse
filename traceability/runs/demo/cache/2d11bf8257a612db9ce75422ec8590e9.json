@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/co4e.py defines a CustomAgent dataclass alongside the workflow Step/Node model, with a dedicated per-agent JSON store (agents_dir, list_custom_agents, save_custom_agent, new_custom_agent, agent_to_dict/agent_from_dict), and the module docstring states each node names an agent persona (built-in or custom) that compiles into per-stage prompts. core/custom_agents.py additionally provides reusable user-defined sub-agent presets with prompt/provider/model overrides and AI-assisted prompt generation. Status 'Release it' is consistent with the shipped code.",
+ "evidence": [
+  {
+   "file": "core/co4e.py",
+   "symbol": "CustomAgent",
+   "why": "Custom agent persona model persisted per-workflow-engine under ~/.cowork_local/co4e/agents."
+  },
+  {
+   "file": "core/co4e.py",
+   "symbol": "save_custom_agent",
+   "why": "Store functions for creating/listing/saving custom agents used by workflow steps."
+  },
+  {
+   "file": "core/custom_agents.py",
+   "symbol": "CustomAgent",
+   "why": "Reusable user-defined sub-agent presets with prompt/provider/model overrides usable from any Flow stage."
+  },
+  {
+   "file": "core/custom_agents.py",
+   "symbol": "generate_agent_prompt",
+   "why": "AI-assisted generation of a persona's default task prompt."
+  }
+ ],
+ "status_conflict": false
+}

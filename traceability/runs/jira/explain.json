@@ -1,0 +1,46 @@
+{
+ "schema_version": 1,
+ "produced_by": "explain",
+ "meta": {
+  "model": "claude-opus-5",
+  "inputs": {
+   "tickets": "574bdb7dd0891803",
+   "verdicts": "29e2bb2cd0cb0cc1"
+  }
+ },
+ "payload": [
+  {
+   "component": "Story",
+   "tickets": 173,
+   "cost_usd": 0.16988,
+   "headline": "The Story backlog spans the whole desktop AI assistant product — chat and workspace, scheduled tasks, the Co4E workflow builder, connectors, sandboxing and security, monitoring and dashboards — and of the 173 tickets, 74 have supporting code identified, 60 could not be confirmed from the code that was examined, and 39 were not looked at.",
+   "what_is_there": "Confirmed by code: the desktop app shell with themes, translations and a collapsible sidebar; provider integrations including Anthropic; the Co4E node-graph workflow builder with parallel fan-out, run modes, run history and self-verification; scheduled tasks with a Kanban board, calendar view, Excel import/export and AI-generated planning; usage dashboards with charts and currency selection; agent security gates with audit logging and admin alerts; sandboxing with resource limits; and connectors for Microsoft 365, Jira, Teams and Outlook. Notably, eleven features the tracker records as Cancelled, To Do or In Progress — including CAD/CAE connectors, Jira, image generation, the task scheduler, D3 graph visualisation, codebase memory, the routing toggle, permission and file-edit dialogs, Outlook notifications and TLS trust — appear to be built.",
+   "what_is_unclear": "Around 60 tickets could not be settled because the analysis only read a keyword-selected slice of the codebase and the relevant files were not among them — this covers much of the configuration and shared-state plumbing, the chat composer and model picker, task data model and notifications, several Monitoring sub-pages, skill management, and GraphRAG similarity search. A further 39 tickets, mostly testing, documentation and the Vietnamese-language strategy items, were not examined at all.",
+   "suggested_action": "Review the eleven tickets whose tracker status disagrees with the code — several marked Cancelled or To Do look shipped — and decide whether to close them or correct the status before the next reporting cycle.",
+   "caveat": "",
+   "confidence": "medium"
+  },
+  {
+   "component": "PM Task",
+   "tickets": 16,
+   "cost_usd": 0.02473,
+   "headline": "The \"PM Task\" area covers 16 project-management and planning activities (project charter, project plan, schedules, kickoff and pre-planning meetings, infrastructure and CI/CD requests, facilities, open-source policy, configuration-management baseline), and none of them could be confirmed from the codebase because they are administrative steps carried out in external PM and governance tools rather than software to be built.",
+   "what_is_there": "The code that was examined belongs to an AI agent application — task execution, provider integrations, security policy, monitoring and configuration — and contains nothing that represents project charters, project plans, resource allocation lists or procurement requests. Where a file matched on a word like \"plan\", \"schedule\" or \"resource\", it turned out to serve an unrelated in-app purpose.",
+   "what_is_unclear": "Whether each of these activities actually happened cannot be judged from source code at all; the evidence for them lives in the external planning tool, approval records, meeting notes and CM reports, none of which were available to the analysis.",
+   "suggested_action": "Track these tickets against records in the PM and governance tools (approvals, meeting minutes, request tickets) rather than expecting code evidence, and consider marking them as non-code items so future traceability reviews skip them.",
+   "caveat": "",
+   "confidence": "high"
+  },
+  {
+   "component": "Product",
+   "tickets": 1,
+   "cost_usd": 0.006295,
+   "headline": "This area contains a single in-progress ticket labelled only \"Management\", and the analysis was unable to link it to any code because the ticket carries no description.",
+   "what_is_there": "The tracker shows one item in progress under the product area, but its title is a single word with no supporting detail about what behaviour or feature it covers.",
+   "what_is_unclear": "Everything about this item is unclear — with no description to work from, the analysis had no basis for searching the codebase, so it cannot say whether work exists or not.",
+   "suggested_action": "Ask the ticket owner to add a short description of the intended behaviour so the item can be matched to the code.",
+   "caveat": "",
+   "confidence": "high"
+  }
+ ]
+}

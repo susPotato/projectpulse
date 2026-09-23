@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket concerns an \"AI Edit\" preview feature for file previews, but the shown candidates are a sandbox YAML config, a URL link-preview fetcher (core/link_fetch.py, unrelated to AI Edit file preview in the workspace), and a pptx text-round-trip editor. Neither the cited documentation (explicitly flagged as not describing this repo, with document_preview_manager.py and FileWorkspaceService absent) nor these files show a preview-AI generation path. ui/folder_tab.py exists but was not shown, so the claim can be neither confirmed nor refuted.",
+ "evidence": [
+  {
+   "file": "core/link_fetch.py",
+   "symbol": "fetch_link_preview",
+   "why": "Generates text previews of remote URLs, not AI-generated previews of workspace files."
+  },
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "pptx_to_text",
+   "why": "Produces an editable marker-delimited representation of a deck for AI editing, but is not a file preview generator and doesn't show the AI Edit preview flow."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox policy configuration entirely unrelated to AI Edit previews."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8148,
+  "output_tokens": 448,
+  "model": "claude-opus-5"
+ }
+}

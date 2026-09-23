@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/link_fetch.py implements exactly this capability: fetch_link_preview() retrieves a URL, caps the payload (_MAX_FETCH_BYTES/_MAX_DOC_FETCH_BYTES/_MAX_PREVIEW_CHARS), strips HTML to text, and returns bracketed explanatory notes instead of raw content when fetching fails or an auth wall is hit. The exact fencing markers are in the omitted tail of the function, so the truncation-and-wrapping detail is only partly visible, but the module clearly is the link-preview feature the ticket describes. The cited refactor document concerns FileWorkspaceService/document_preview_manager and is unrelated to this ticket.",
+ "evidence": [
+  {
+   "file": "core/link_fetch.py",
+   "symbol": "fetch_link_preview",
+   "why": "Fetches an http(s) URL and returns a bounded text preview or an explanatory note, never raising."
+  },
+  {
+   "file": "core/link_fetch.py",
+   "symbol": "_html_to_text",
+   "why": "Strips script/style and tags so fetched HTML becomes plain preview text."
+  },
+  {
+   "file": "core/link_fetch.py",
+   "symbol": "_extract_document",
+   "why": "Downloads document-type links and extracts text via doc_extract, with size caps applied before extraction."
+  },
+  {
+   "file": "core/link_fetch.py",
+   "symbol": "_share_download_url",
+   "why": "Rewrites SharePoint/OneDrive share links to direct downloads and the caller emits a sign-in note instead of dumping login-page text."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7575,
+  "output_tokens": 638,
+  "model": "claude-opus-5"
+ }
+}

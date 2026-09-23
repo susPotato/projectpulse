@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown source excerpts contain the dashboard stat-card code: app.py only lazily constructs DashboardTab, model_pricing.py supplies the cost engine and merely comments that it feeds \"Overview + Dashboard\", and the sandbox YAML is unrelated. The only direct hit on token cards is the verified `MonitoringTab._refresh_usage_cards` (Total/Input/Output/Cache) which lives in Monitoring, not Dashboard, and ui/dashboard_tab.py itself was never shown beyond the confirmed existence of `_refresh_chart`.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_dashboard",
+   "why": "Shows only that a DashboardTab is instantiated, with no visibility into its stat cards."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "sync_to_usage",
+   "why": "Docstring says per-model USD rates feed the Monitoring Overview cards and the Dashboard chart, indicating a cost pipeline exists but not the dashboard cards themselves."
+  },
+  {
+   "file": "ui/monitoring_tab.py",
+   "symbol": "MonitoringTab._refresh_usage_cards",
+   "why": "Confirmed by lookup to exist, but it implements Total/Input/Output/Cache cards on Monitoring rather than the Dashboard page the ticket names."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8328,
+  "output_tokens": 840,
+  "model": "claude-opus-5"
+ }
+}

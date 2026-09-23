@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/context_budget.py implements the full feature: per-model context window limits with config override, an auto_compact toggle plus threshold, token estimation over the message list, and maybe_compact/compact_messages which summarize older turns in place before the turn continues. Its module docstring states it is invoked from the shared agent loop (chat_agent.run_cowork), matching the 'compress before send' claim; ticket status 'Release it' is consistent with built code.",
+ "evidence": [
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "Compacts the message list in place when usage exceeds the configured threshold, emitting a user-facing notice."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "compact_messages",
+   "why": "Summarizes the middle of the conversation into a single system note while keeping head and recent messages verbatim."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "context_limit",
+   "why": "Resolves the context window from config override or per-model limits, i.e. the context budget."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "auto_compact_enabled",
+   "why": "Config-driven toggle for the auto-compact behaviour named in the ticket."
+  },
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "estimate_tokens",
+   "why": "Token estimation reused by estimate_messages_tokens to measure the conversation against the budget."
+  }
+ ],
+ "status_conflict": false
+}

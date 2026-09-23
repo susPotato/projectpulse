@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the candidate files contain a PASS/WARN/FAIL evidence-based grading mechanism or any CASAN H1\ninfo\nH7 mapping. RULEBASE.md and security_sandbox.yaml define block/deny security policy rules, and core/routing/README.md is about model assessment/routing (fit scores), neither of which implements the quality gate scheme described. Absence in this keyword-selected subset does not prove the feature is missing.",
+ "evidence": [
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Defines Cowork-mode security controls as allow/deny policy prose, with no PASS/WARN/FAIL verdicts or CASAN H1-H7 identifiers."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "policy",
+   "why": "Boolean block_* policy switches and risk_routing tiers, not an evidence-backed PASS/WARN/FAIL assessment."
+  },
+  {
+   "file": "core/routing/README.md",
+   "symbol": "",
+   "why": "Describes model fit scoring/routing (quality/cost/latency weights), unrelated to safety control grading or CASAN mapping."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 5753,
+  "output_tokens": 491,
+  "model": "claude-opus-5"
+ }
+}

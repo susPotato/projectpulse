@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown code covers Co4E workflow CRUD (save, duplicate, rename, delete, get_workflow) and scheduled execution of saved flows, but nothing in the visible excerpts implements serializing a workflow to a transferable file or importing one from another instance. The core/co4e.py module where such import/export helpers would live is not shown, so neither confirmation nor refutation is possible.",
+ "evidence": [
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab._duplicate_selected_workflow",
+   "why": "Shows in-instance workflow management (duplicate/rename/delete/save) but no import or export action in the sidebar context menu."
+  },
+  {
+   "file": "ui/co4e_tab.py",
+   "symbol": "Co4ETab._save",
+   "why": "Persists a workflow via co4e.save_workflow locally, with no cross-instance transfer or file export path visible."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_resolve_co4e_workflow",
+   "why": "Loads saved Co4E workflows for scheduled execution; unrelated to import/export between instances."
+  }
+ ],
+ "status_conflict": false
+}

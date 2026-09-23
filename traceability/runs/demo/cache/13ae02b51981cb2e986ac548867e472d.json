@@ -1,0 +1,8 @@
+{
+ "headline": "The model/provider layer — connecting to OpenAI-compatible services, Anthropic, Ollama, GitHub Copilot and Codex, plus pricing, context management and automatic model selection — is largely backed by code, with the automatic routing engine itself only partly visible.",
+ "what_is_there": "The code shows working connections to all five named model providers, including streaming responses, tool calling and model listing, along with a per-model price table with VND/USD/JPY conversion, context-window management that compresses older conversation before sending, and a health prober that measures model latency and scores quality. Configuration and settings for automatic model routing are clearly present and described, and pricing data that a cost-based router would use is in place.",
+ "what_is_unclear": "The actual decision-making logic for automatic routing — the cost router, model gate, concurrency control and per-provider queue — was not seen in the code that was examined, so it could not be confirmed either way; only its configuration and surrounding pieces were visible. The 'budget alerts' part of the pricing ticket was also not seen, though nothing suggests it is absent.",
+ "suggested_action": "Ask the team to walk through the automatic routing behaviour end to end and confirm whether budget alerts exist, so the two open questions can be closed.",
+ "caveat": "",
+ "confidence": "medium"
+}

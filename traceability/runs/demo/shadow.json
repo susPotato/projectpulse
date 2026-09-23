@@ -1,0 +1,45 @@
+{
+ "schema_version": 1,
+ "produced_by": "shadow",
+ "meta": {
+  "inputs": {
+   "candidates": "9a084319116dce2d",
+   "corpus": "e6efcfbae0cbd378",
+   "verdicts": "3029506211b50451"
+  }
+ },
+ "payload": {
+  "counts": {
+   "eligible_files": 156,
+   "cited": 78,
+   "retrieved_only": 71,
+   "unclaimed": 7
+  },
+  "groups": [
+   {
+    "directory": "core/routing",
+    "n_symbols": 14,
+    "files": [
+     "core/routing/selector.py",
+     "core/routing/scorer.py",
+     "core/routing/classifier.py"
+    ]
+   },
+   {
+    "directory": "ui",
+    "n_symbols": 4,
+    "files": [
+     "ui/osutil.py"
+    ]
+   },
+   {
+    "directory": "core",
+    "n_symbols": 2,
+    "files": [
+     "core/agent_roles.py"
+    ]
+   }
+  ],
+  "described": null
+ }
+}

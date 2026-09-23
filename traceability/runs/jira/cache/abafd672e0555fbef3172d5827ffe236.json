@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/task_import.py implements multi-format task import (.xlsx/.xls via task_excel, plus CSV/JSON) with shared field mapping, and ui/schedule_task_tab.py's _AiCreateDialog has an Import tab with an Excel template export button (_export_template calling core.task_excel.export_template), a file picker, drag-and-drop zone, and a preview before bulk creation. This matches the ticket's Excel import/export for bulk task operations and is consistent with a 'Release' status.",
+ "evidence": [
+  {
+   "file": "core/task_import.py",
+   "symbol": "import_tasks",
+   "why": "Dispatches by extension to Excel/CSV/JSON importers producing task dicts for bulk creation."
+  },
+  {
+   "file": "core/task_import.py",
+   "symbol": "auto_chain_in_order",
+   "why": "Post-processes imported task batches, showing bulk import semantics."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "_AiCreateDialog._export_template",
+   "why": "Exports the fill-in Excel template via core.task_excel.export_template."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "_AiCreateDialog._load_import_file",
+   "why": "Loads the chosen/dropped file through core.task_import.import_tasks and previews the tasks before confirming."
+  },
+  {
+   "file": "ui/schedule_task_tab.py",
+   "symbol": "_DropZone",
+   "why": "Accepts drag-and-drop of .xlsx/.xls/.csv/.json files for import."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9097,
+  "output_tokens": 587,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/resource_limits.py implements exactly CPU, memory, and disk-I/O caps for spawned process trees via psutil, with a check_limits() poll hook documented as called from deps.py::run_cancellable to kill offending trees. The declarative policy in config/security_sandbox.yaml supplies matching per-backend defaults (default_memory_mb, default_cpu_percent, timeouts), consistent with the ticket's 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/resource_limits.py",
+   "symbol": "check_limits",
+   "why": "Sums CPU percent, RSS memory, and disk I/O across a process tree and returns a violation reason when a configured cap is exceeded."
+  },
+  {
+   "file": "core/resource_limits.py",
+   "symbol": "prime_cpu_counter",
+   "why": "Supporting helper that primes psutil's CPU delta counter right after spawn so the first limit poll is accurate."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares per-backend default_memory_mb, default_cpu_percent, and timeout limits plus global runtime caps that the sandbox enforcement consumes."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "config.py defines a `monitoring_visibility` block whose keys explicitly include `agent_status` alongside security_events/mcp_history/action_logs, described as \"Which Monitoring tabs a Sub-admin may see\", and app.py wires a Monitoring nav row with a lazily-built `_build_monitoring` container page whose sub-tabs become nav children. That is positive evidence an Agent Status tab exists within Monitoring, even though the tab widget's own module was not among the retrieved files. The Co4E refactor document is unrelated to this ticket and, being flagged as not describing this repository, carries no weight.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "AppConfig (monitoring_visibility default)",
+   "why": "Default config contains a monitoring_visibility dict with an `agent_status: True` key described as controlling which Monitoring tabs a Sub-admin can see."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "A Monitoring page is registered in _nav_defs and treated as a container whose sub-views appear as nav children, implying multiple Monitoring tabs."
+  },
+  {
+   "file": "ui/co4e_config_panel.py",
+   "symbol": "StepConfigPanel",
+   "why": "Retrieved but unrelated to the Agent Status monitoring page; it edits Co4E step personas."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 13378,
+  "output_tokens": 646,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,15 @@
+{
+ "summary_en": "Leverage the existing MCP Client / Tool Registry / Permission / Audit to create real capability for the project, do not build a new MCP framework.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: MCP & Connectors",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "MCP Client",
+  "Tool Registry",
+  "Permission",
+  "Audit",
+  "MCP",
+  "BA",
+  "FSG",
+  "MCP & Connectors"
+ ]
+}

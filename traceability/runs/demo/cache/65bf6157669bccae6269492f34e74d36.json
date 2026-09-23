@@ -1,0 +1,12 @@
+{
+ "summary_en": "Split the current graph into a new screen that is the integration of the source and the entire specification of the project; each node is attached with related document file and source code file",
+ "description_en": "BA: Mynt4\nDeveloper: FNS\nComponent: New function",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "BA",
+  "Mynt4",
+  "FNS",
+  "node",
+  "source"
+ ]
+}

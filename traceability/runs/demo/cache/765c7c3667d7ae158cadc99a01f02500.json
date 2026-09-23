@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the candidate files are tests or test infrastructure — they are connector logic, provider base classes, and a Qt settings panel. Nothing here shows the presence or absence of a pytest suite with 95+ tests, so the claim cannot be settled from this subset.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector.test_connection",
+   "why": "Only a runtime connectivity check, not a pytest test — the keyword match on 'test' is misleading."
+  },
+  {
+   "file": "providers/base.py",
+   "symbol": "Provider.test_connection",
+   "why": "Again a provider connectivity helper, unrelated to a unit/integration test suite."
+  },
+  {
+   "file": "ui/connectors_panel.py",
+   "symbol": "JiraConnectDialog._test",
+   "why": "UI 'Test connection' button handler, not test-suite code."
+  }
+ ],
+ "status_conflict": false
+}

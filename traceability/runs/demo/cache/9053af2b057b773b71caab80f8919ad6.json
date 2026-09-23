@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/co4e_builtins.py imports Workflow, Node, Edge, Step, get_workflow and save_workflow from core/co4e, and builds/persists a concrete multi-step flow (build_delivery_lifecycle_flow, seed_builtin_flows), showing a workflow definition and storage layer exists. config.py's seeded_builtin_flows accessor confirms flow seeding is wired into app configuration. The execution runner itself is only referenced in comments (\"the runner threads it automatically\"), not shown, so definition is directly evidenced while execution is inferred.",
+ "evidence": [
+  {
+   "file": "core/co4e_builtins.py",
+   "symbol": "build_delivery_lifecycle_flow",
+   "why": "Constructs a Workflow from Node/Edge/Step objects, showing a workflow definition model exists."
+  },
+  {
+   "file": "core/co4e_builtins.py",
+   "symbol": "seed_builtin_flows",
+   "why": "Persists built-in flows into the user's workflow store, indicating a flow engine with storage."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.seeded_builtin_flows",
+   "why": "Configuration bookkeeping for seeded built-in flows ties the flows engine into the app config."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9947,
+  "output_tokens": 579,
+  "model": "claude-opus-5"
+ }
+}

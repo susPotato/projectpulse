@@ -1,0 +1,11 @@
+{
+ "n_labelled": 46,
+ "precision": 0.8333333333333334,
+ "recall": 0.7142857142857143,
+ "f1": 0.7692307692307692,
+ "hit_rate": 0.6521739130434783,
+ "exact": 28,
+ "empty_correct": 4,
+ "false_positive_only": 0,
+ "missed": 12
+}

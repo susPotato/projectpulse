@@ -1,0 +1,13 @@
+{
+ "headline": "The Dashboard & Analytics area covers usage charts, cost reporting and AI-driven usage insights; all six tickets are marked ready for release and the code backs up four of them, with two not confirmed either way.",
+ "what_is_there": "The code shows a dashboard with a usage-trend chart at week/month/year granularity, an AI feature that summarises token-usage habits including busiest day and hour, an AI cost-saving recommendation with a one-click apply control, and a display-currency picker that saves the chosen currency and converts cost figures.",
+ "what_is_unclear": "The token usage and cost overview with its today/week/month/all period filter, and the stat cards for total/input/output/cache tokens and cost per bucket, could not be confirmed because the main dashboard screen file was never examined directly — similar token cards were found in the monitoring screen instead. Several of the confirmed items were matched from names and surrounding wiring rather than the full implementation, so depth of behaviour is not established.",
+ "suggested_action": "",
+ "caveat": "",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 1561,
+  "output_tokens": 351,
+  "model": "claude-opus-5"
+ }
+}

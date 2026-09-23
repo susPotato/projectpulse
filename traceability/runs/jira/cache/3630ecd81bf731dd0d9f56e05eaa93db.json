@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/co4e_runner.py implements exactly the described feature: it computes waves via compile_run_stages, runs each wave's stages, and threads each node's output into successors through extra_context_for/_predecessors. Its module docstring explicitly states outputs of one wave are fed into the next wave's prompts, and task_executors._run_co4e_flow consumes run_workflow, so the feature is built and in use, consistent with Release status.",
+ "evidence": [
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "run_workflow",
+   "why": "Executes stages wave-by-wave and recompiles each node's prompt with upstream outputs before running it."
+  },
+  {
+   "file": "core/co4e_runner.py",
+   "symbol": "_predecessors",
+   "why": "Supplies the graph predecessor map used to concatenate prior outputs into a node's context."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Calls co4e_runner.run_workflow as the wave-by-wave runner for scheduled Co4E flows, showing the runner is integrated."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10363,
+  "output_tokens": 388,
+  "model": "claude-opus-5"
+ }
+}

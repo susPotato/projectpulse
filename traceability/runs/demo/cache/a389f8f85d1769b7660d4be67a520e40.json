@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The retrieved candidates are a security rulebase, a D3 graph HTML template, and a sandbox YAML config — none of them touch knowledge/RAG packaging, source metadata, project isolation, citation or ground truth. The only documentation describing a project-knowledge search capability is explicitly flagged as not describing this repository, and its key symbols (_score_chunk, top_k) were looked up and not found. Nothing shown settles whether the upgrade exists.",
+ "evidence": [
+  {
+   "file": "assets/graph_template.html",
+   "symbol": "",
+   "why": "A static D3 knowledge-graph visualisation template with a GRAPH_DATA placeholder; it shows no source/metadata, project isolation or citation logic."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox backend and risk-routing configuration, unrelated to knowledge/RAG packaging."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Agent security policy text, unrelated to the ticket's knowledge/RAG scope."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7792,
+  "output_tokens": 421,
+  "model": "claude-opus-5"
+ }
+}

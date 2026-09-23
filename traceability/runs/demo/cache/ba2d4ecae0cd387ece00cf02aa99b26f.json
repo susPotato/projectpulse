@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/custom_agents.py implements user-defined agent presets with a name, description, custom prompt/instructions, and provider/model overrides, persisted per-user under ~/.cowork_local/agents/, plus AI-assisted prompt generation. core/co4e.py also carries a CustomAgent model with its own store (list/save custom agents) used as node personas in flows, matching the ticket's 'Release it' status.",
+ "evidence": [
+  {
+   "file": "core/custom_agents.py",
+   "symbol": "CustomAgent",
+   "why": "Dataclass defining a user-defined agent preset with name, description, prompt (custom instructions) and provider/model overrides."
+  },
+  {
+   "file": "core/custom_agents.py",
+   "symbol": "save_agent",
+   "why": "Persists each user-defined agent as JSON under the local agents directory, showing the feature is implemented end-to-end."
+  },
+  {
+   "file": "core/custom_agents.py",
+   "symbol": "generate_agent_prompt",
+   "why": "AI-assisted generation of an agent's default instruction prompt from a short description."
+  },
+  {
+   "file": "core/co4e.py",
+   "symbol": "list_custom_agents",
+   "why": "Flow engine maintains a custom-agent store so personas can be attached to workflow nodes."
+  }
+ ],
+ "status_conflict": false
+}

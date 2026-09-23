@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "providers/anthropic.py implements an AnthropicProvider against the Messages API (/v1/messages, x-api-key, anthropic-version header) with model listing, message/system splitting, tool_use handling and a streaming request (payload \"stream\": True with stream=True on the HTTP call). This directly matches the ticket's Claude API integration with native streaming; status \"Release\" is consistent.",
+ "evidence": [
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "AnthropicProvider",
+   "why": "Provider class for Anthropic with base_url /v1/messages, API key headers and anthropic-version, i.e. the Claude API integration."
+  },
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "chat",
+   "why": "Builds a payload with \"stream\": True and issues a streaming POST, consuming events with on_text callbacks — native streaming support."
+  },
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "list_models",
+   "why": "Queries /v1/models with a built-in Claude fallback model list, showing full API integration beyond just chat."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7177,
+  "output_tokens": 432,
+  "model": "claude-opus-5"
+ }
+}

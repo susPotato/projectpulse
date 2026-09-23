@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/co4e.py explicitly models parallel nodes: its module docstring states a parallel node fans out into one stage per sub-agent plus an optional join stage the following wave, and the data model carries a SubAgent dataclass, Step.variant == \"parallel\" with an is_parallel property, a sub_agents list, and deserialization for sub-agents. core/flows.py separately implements a parallel FlowAction kind and FlowRunner fan-out, reinforcing that the fan-out mechanism exists. The Release status is consistent with implemented code.",
+ "evidence": [
+  {
+   "file": "core/co4e.py",
+   "symbol": "SubAgent",
+   "why": "Dataclass documented as \"One concurrent worker inside a parallel node\", the unit of fan-out."
+  },
+  {
+   "file": "core/co4e.py",
+   "symbol": "Step.is_parallel",
+   "why": "Step variant \"parallel\" plus sub_agents list encodes a fan-out node in the workflow graph."
+  },
+  {
+   "file": "core/co4e.py",
+   "symbol": "step_from_dict",
+   "why": "Persists/loads sub_agents for parallel nodes, showing the feature is wired into the stored model."
+  },
+  {
+   "file": "core/flows.py",
+   "symbol": "FlowAction",
+   "why": "Has kind \"parallel\" with the step carrying .parallel_agents that the caller fans out, with on_parallel_finished as the join point."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10734,
+  "output_tokens": 601,
+  "model": "claude-opus-5"
+ }
+}

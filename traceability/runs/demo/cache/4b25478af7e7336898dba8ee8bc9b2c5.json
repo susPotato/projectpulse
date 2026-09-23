@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/co4e_builtins.py imports Workflow, Node, Edge, Step, get_workflow and save_workflow from core.co4e and constructs a persisted multi-step workflow (build_delivery_lifecycle_flow, seed_builtin_flows), showing a workflow definition/persistence layer exists with step handoff and self-verify semantics executed by a 'runner'. config.py also tracks seeded_builtin_flows for one-time flow seeding, consistent with a shipped feature. The execution engine itself (core/flows.py, co4e.py) isn't shown, so only the definition/seeding side is directly visible.",
+ "evidence": [
+  {
+   "file": "core/co4e_builtins.py",
+   "symbol": "build_delivery_lifecycle_flow",
+   "why": "Builds a concrete multi-step Workflow of Nodes/Edges chaining agent personas with per-step handoff context and self-verify gates."
+  },
+  {
+   "file": "core/co4e_builtins.py",
+   "symbol": "seed_builtin_flows",
+   "why": "Persists/refreshes built-in flows in the user's workflow store so they appear in the Flow sidebar."
+  },
+  {
+   "file": "core/co4e_builtins.py",
+   "symbol": "step_from_builtin",
+   "why": "Creates Step definitions with role, instructions and permission presets, i.e. the workflow definition model."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.seeded_builtin_flows",
+   "why": "Configuration bookkeeping for already-seeded built-in flow ids indicates the flow feature is wired into app startup."
+  }
+ ],
+ "status_conflict": false
+}

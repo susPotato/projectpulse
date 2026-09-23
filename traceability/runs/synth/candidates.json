@@ -1,0 +1,1153 @@
+{
+ "schema_version": 1,
+ "produced_by": "candidates",
+ "meta": {
+  "hubdocs": [],
+  "n_indexed": 13
+ },
+ "payload": [
+  {
+   "uid": "T0000",
+   "candidates": [
+    {
+     "path": "billing/refund.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "refund",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "refund",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0001",
+   "candidates": [
+    {
+     "path": "ui/sidebar.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "sidebar",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "sidebar",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0002",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0003",
+   "candidates": [
+    {
+     "path": "auth/session.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "session",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "session",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "store",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0004",
+   "candidates": [
+    {
+     "path": "billing/invoice.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "invoice",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "invoice",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": true
+  },
+  {
+   "uid": "T0005",
+   "candidates": [
+    {
+     "path": "integrations/slack.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "client",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "slack",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "slack",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0006",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0007",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0008",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0009",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0010",
+   "candidates": [
+    {
+     "path": "core/importer.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "importer",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "importer",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "sheet",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0011",
+   "candidates": [
+    {
+     "path": "billing/invoice.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "billing",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "billing/refund.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "billing",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "refund",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "refund",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0012",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0013",
+   "candidates": [
+    {
+     "path": "core/exporter.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      },
+      {
+       "matcher": "stem",
+       "anchor": "exporter",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "exporter",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "core/importer.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "core/logging_util.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "core/scheduler.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0014",
+   "candidates": [
+    {
+     "path": "ui/dashboard.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "dashboard",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "dashboard",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "view",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0015",
+   "candidates": [
+    {
+     "path": "core/exporter.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "exporter",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "exporter",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0016",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0017",
+   "candidates": [
+    {
+     "path": "ui/dashboard.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "dashboard",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "dashboard",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0018",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0019",
+   "candidates": [
+    {
+     "path": "billing/invoice.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "billing",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "invoice",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "invoice",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "billing/refund.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "billing",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0020",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0021",
+   "candidates": [
+    {
+     "path": "billing/invoice.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "engine",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "invoice",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "invoice",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0022",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0023",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0024",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0025",
+   "candidates": [
+    {
+     "path": "ui/toast.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "toast",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "toast",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0026",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0027",
+   "candidates": [
+    {
+     "path": "integrations/outlook.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "integrations",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "outlook",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "outlook",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "integrations/slack.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "integrations",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0028",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0029",
+   "candidates": [
+    {
+     "path": "billing/invoice.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "invoice",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "invoice",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0030",
+   "candidates": [
+    {
+     "path": "auth/password.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "password",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "password",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "policy",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0031",
+   "candidates": [
+    {
+     "path": "core/exporter.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "core/importer.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      },
+      {
+       "matcher": "stem",
+       "anchor": "importer",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "importer",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "core/logging_util.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "core/scheduler.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0032",
+   "candidates": [
+    {
+     "path": "core/scheduler.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "scheduler",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "scheduler",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "task",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0033",
+   "candidates": [
+    {
+     "path": "billing/refund.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "refund",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "refund",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": true
+  },
+  {
+   "uid": "T0034",
+   "candidates": [
+    {
+     "path": "integrations/outlook.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "integrations",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "integrations/slack.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "integrations",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "slack",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "slack",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0035",
+   "candidates": [
+    {
+     "path": "core/exporter.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "core/importer.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "core/logging_util.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      }
+     ]
+    },
+    {
+     "path": "core/scheduler.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "core",
+       "df": 4,
+       "bar": 2,
+       "strong": false
+      },
+      {
+       "matcher": "stem",
+       "anchor": "scheduler",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "scheduler",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0036",
+   "candidates": [
+    {
+     "path": "billing/refund.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "processor",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "refund",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "refund",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0037",
+   "candidates": [],
+   "head_collision": false
+  },
+  {
+   "uid": "T0038",
+   "candidates": [
+    {
+     "path": "ui/sidebar.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "sidebar",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "sidebar",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0039",
+   "candidates": [
+    {
+     "path": "auth/password.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "auth",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "password",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "password",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "auth/session.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "auth",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0040",
+   "candidates": [
+    {
+     "path": "auth/session.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "session",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "session",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": true
+  },
+  {
+   "uid": "T0041",
+   "candidates": [
+    {
+     "path": "integrations/outlook.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "mailer",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "outlook",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "outlook",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0042",
+   "candidates": [
+    {
+     "path": "ui/toast.py",
+     "evidence": [
+      {
+       "matcher": "sym",
+       "anchor": "banner",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "toast",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "toast",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0043",
+   "candidates": [
+    {
+     "path": "auth/password.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "password",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "password",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": true
+  },
+  {
+   "uid": "T0044",
+   "candidates": [
+    {
+     "path": "auth/password.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "auth",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      }
+     ]
+    },
+    {
+     "path": "auth/session.py",
+     "evidence": [
+      {
+       "matcher": "stem",
+       "anchor": "auth",
+       "df": 2,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "stem",
+       "anchor": "session",
+       "df": 1,
+       "bar": 2,
+       "strong": true
+      },
+      {
+       "matcher": "sym",
+       "anchor": "session",
+       "df": 1,
+       "bar": 1,
+       "strong": true
+      }
+     ]
+    }
+   ],
+   "head_collision": false
+  },
+  {
+   "uid": "T0045",
+   "candidates": [],
+   "head_collision": false
+  }
+ ]
+}

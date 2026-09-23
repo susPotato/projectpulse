@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The only positive signal is the documentation lookup confirming `state.py::AppContext.build_provider_for` and `providers/factory.py` exist, which touches the provider-factory part of the ticket; state.py itself was never shown, so thread-safe state and an MCP connection cache cannot be checked. The candidate files retrieved (context_budget.py, telemetry_shared.py, RULEBASE.md) concern context compaction, telemetry aggregation and security policy and are unrelated to AppContext.",
+ "evidence": [
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "Conversation compaction logic, unrelated to AppContext state, MCP caching or provider construction."
+  },
+  {
+   "file": "core/telemetry_shared.py",
+   "symbol": "load_shared_usage_events",
+   "why": "Shared-folder telemetry aggregation; the word 'shared' matches the ticket only by keyword, not by subject."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy prose with no bearing on the AppContext implementation."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 5843,
+  "output_tokens": 684,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The candidate files show a Monitoring screen exists (app.py imports MonitoringTab and has _build_monitoring) and config.py defines a \"Sandbox Security Layer\" with capacity knobs (resource_limit_cpu_percent/memory_mb/disk_mb, sandbox_pw), but the comments place those in Settings \\u2192 Security, not a Monitoring Sandbox Admin tab, and monitoring_visibility lists only security_events, mcp_history, action_logs, agent_status. The actual ui/monitoring_tab.py is not in the shown subset, so whether a Sandbox Admin sub-tab with capacity management is implemented cannot be settled here. The documentation excerpts cited concern security policy and agent admin prompts and do not speak to this tab.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Confirms a lazily-built Monitoring page exists but shows nothing about its sub-tabs."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.agent_security",
+   "why": "Defines sandbox capacity limits (CPU%, memory MB, disk MB) and a sandbox password, described in comments as Settings \\u2192 Security rather than a Monitoring tab."
+  },
+  {
+   "file": "config.py",
+   "symbol": "",
+   "why": "The monitoring_visibility block enumerates Monitoring sub-tabs (security_events, mcp_history, action_logs, agent_status) with no sandbox entry, which is suggestive but not conclusive."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 11601,
+  "output_tokens": 839,
+  "model": "claude-opus-5"
+ }
+}

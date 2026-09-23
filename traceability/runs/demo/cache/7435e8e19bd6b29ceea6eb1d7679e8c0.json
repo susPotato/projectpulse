@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the candidate files touch a Workspace folder picker or AI-edit target-file selection UI; the retrieved files are a security rulebase, a pptx editing helper, and a routing sample config. The architecture excerpt mentions ui/workspace_tab.py::WorkspaceTab but that file was not shown, so the folder-picker claim cannot be checked either way.",
+ "evidence": [
+  {
+   "file": "core/pptx_edit.py",
+   "symbol": "pptx_to_text",
+   "why": "Relates to AI editing of deck content but contains no file/folder selection logic and no Qt UI."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Only mentions an 'ai_edit' routing surface toggle, unrelated to a workspace folder picker."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy text with no bearing on the workspace folder picker feature."
+  }
+ ],
+ "status_conflict": false
+}

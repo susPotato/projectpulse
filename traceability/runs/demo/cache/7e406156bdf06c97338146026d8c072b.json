@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/codebase_memory.py implements a full integration with codebase-memory-mcp, exposing indexing (index_repository), project listing, and agent-facing cmem_* tools over a persistent knowledge graph of the working directory. config.py contains a dedicated \"codebase_memory\" settings block (enabled, binary_path, auto_index), and the app shell docs mention stopping the Codebase-Memory UI server on shutdown, consistent with a released feature.",
+ "evidence": [
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CodebaseMemory",
+   "why": "Bridges to codebase-memory-mcp CLI to build/query a persistent knowledge graph of the codebase."
+  },
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CodebaseMemory.index_repository",
+   "why": "Indexes a repository into persistent memory with a long timeout."
+  },
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CMEM_TOOL_SPECS",
+   "why": "Defines agent tools for architecture overview, graph search, call-path tracing and code snippet retrieval."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.codebase_memory",
+   "why": "Persisted configuration section for enabling codebase memory, binary path and auto-indexing."
+  }
+ ],
+ "status_conflict": false
+}

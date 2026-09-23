@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py builds a Monitoring nav page (_build_monitoring, _ROW_MONITORING) treated as a container with sub-views, and config.py defines monitoring_visibility with an explicit \"security_events\" tab flag, so a Security Events page under Monitoring clearly exists in the product. core/agent_security.py feeds that surface by recording audit_log.record(\"security_block\", ...) and calling notify_admin on every block, which is the alerting path. The actual page widget file was not in the candidate set, so the \"real-time\" refresh mechanics themselves are not directly visible.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "Monitoring is a lazily-built top-level nav page listed in _nav_defs and registered as a container with sub-views."
+  },
+  {
+   "file": "config.py",
+   "symbol": "monitoring_visibility",
+   "why": "Config defines per-tab Monitoring visibility including a 'security_events' key, showing a Security Events tab exists."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "enforce_prompt",
+   "why": "Blocked actions emit a UI notice, write audit_log.record('security_block', ...) and call notify_admin, supplying the security event/alert data."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 15068,
+  "output_tokens": 764,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/jira_tool.py is a complete read-only Jira Cloud connector (configuration check, JQL search, get_issue, URL/key parsing, TLS recovery) and core/tools.py registers jira_search / jira_get_issue in execute_tool, describe_action, and routes pasted Jira links through the authenticated API in _fetch_url. The feature is clearly built despite the ticket sitting at In Progress. The cited documentation excerpt is about test runtime markers and is irrelevant to the Jira integration.",
+ "evidence": [
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "search",
+   "why": "Implements JQL issue search against Jira REST API v2 with Basic auth and formatted output."
+  },
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "get_issue",
+   "why": "Fetches a single issue's fields/description by key, returning human-readable text."
+  },
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "is_jira_issue_url",
+   "why": "Detects issue links on the configured Jira host so they resolve via the authenticated API."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "execute_tool",
+   "why": "Dispatches the jira_search and jira_get_issue tool names to the Jira connector, showing the integration is wired into the agent."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "_jira_search",
+   "why": "Adapter calling jira_tool.search and returning the agent tool result envelope."
+  },
+  {
+   "file": "core/tools.py",
+   "symbol": "describe_action",
+   "why": "Provides permission-dialog previews for the Jira search and read-issue tools."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 9222,
+  "output_tokens": 598,
+  "model": "claude-opus-5"
+ }
+}

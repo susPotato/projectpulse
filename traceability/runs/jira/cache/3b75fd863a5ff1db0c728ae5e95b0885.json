@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "The backend for external connector configuration is clearly present in core/ext_connectors.py (CATEGORIES, PRESETS, new_connector for the \"Add dialog\", _redact for sensitive keys) and config.py persists/migrates ext_connectors buckets, with comments explicitly referencing a Settings → \"Connectors (MCP)\" panel. The documentation lookup confirms ui/connectors_panel.py exists in this repository, though its contents were not shown, so the UI details themselves are unverified.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "new_connector",
+   "why": "Creates a fresh connector entry explicitly 'for the Add dialog', showing backend support driving a connectors management UI."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "CATEGORIES",
+   "why": "Defines the CAD/CAE/MS365/Other connector categories described as the Settings → 'Connectors (MCP)' section."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Persists and migrates ext_connectors configuration into the unified Connectors model that the panel would edit."
+  },
+  {
+   "file": "ui/connectors_panel.py",
+   "symbol": "",
+   "why": "Confirmed by the documentation lookup to exist in this repository, matching the ticket's UI panel; contents not shown."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12130,
+  "output_tokens": 679,
+  "model": "claude-opus-5"
+ }
+}

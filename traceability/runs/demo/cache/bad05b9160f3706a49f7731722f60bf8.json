@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files only hint that MCP-related plumbing exists — audit_log.py documents an \"mcp_call\" event kind and security_sandbox.yaml caps max_mcp_calls / block_mcp_discovery — but no MCP client, tool registry, or permission gate implementation is in the candidate set. The ticket's actual deliverable (building a real project capability on top of that existing infrastructure) cannot be confirmed or refuted from these files, and jira_tool.py is a separate REST connector, not an MCP capability.",
+ "evidence": [
+  {
+   "file": "core/audit_log.py",
+   "symbol": "record",
+   "why": "Audit logging exists and already recognises an \"mcp_call\" event kind plus \"permission\" decisions, implying MCP/permission subsystems exist elsewhere but are not shown."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares max_mcp_calls and block_mcp_discovery limits, confirming MCP is a known concept in the system but showing no capability implementation."
+  },
+  {
+   "file": "core/jira_tool.py",
+   "symbol": "search",
+   "why": "A direct read-only Jira REST connector, not an MCP-based capability, so it does not speak to the ticket's claim."
+  }
+ ],
+ "status_conflict": false
+}

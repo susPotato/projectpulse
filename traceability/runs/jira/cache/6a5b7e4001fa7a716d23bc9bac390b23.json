@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/codebase_memory.py implements a full bridge to codebase-memory-mcp — binary resolution, pip install, index_repository, list_projects, and agent-facing cmem_* tool specs for architecture, graph search, call-path tracing and snippet retrieval. config.py additionally carries a dedicated \"codebase_memory\" settings block (enabled, binary_path, auto_index). The feature is clearly built despite the ticket being marked Cancelled.",
+ "evidence": [
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CodebaseMemory",
+   "why": "Class wrapping the codebase-memory-mcp CLI with index_repository/list_projects/call for a persistent knowledge graph of the workdir."
+  },
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "CMEM_TOOL_SPECS",
+   "why": "Agent-facing tools cmem_get_architecture, cmem_search_graph, cmem_trace_path, cmem_get_code_snippet expose the persisted codebase structure."
+  },
+  {
+   "file": "core/codebase_memory.py",
+   "symbol": "resolve_binary",
+   "why": "Resolves the configured or PATH binary, matching the config key binary_path."
+  },
+  {
+   "file": "config.py",
+   "symbol": "DEFAULT_CONFIG",
+   "why": "Contains a codebase_memory section with enabled/binary_path/auto_index, showing the feature is wired into app configuration."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 8301,
+  "output_tokens": 603,
+  "model": "claude-opus-5"
+ }
+}

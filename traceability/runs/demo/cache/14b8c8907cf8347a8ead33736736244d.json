@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "None of the shown files contain an MCP call-history view: app.py's excerpt only shows the nav rail with a lazily-built Monitoring page (`_build_monitoring`) without revealing its sub-tabs, config.py exposes `mcp_servers`/`ext_connectors`/`monitoring_visibility` settings but no call-history logging, and core/code_agent.py is unrelated to monitoring UI. The retrieved subset simply doesn't settle whether an MCP Call History page exists.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._build_monitoring",
+   "why": "A Monitoring page exists and is built lazily, but its sub-tabs are not visible in the excerpt so an MCP Call History sub-view can be neither confirmed nor ruled out."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.mcp_servers",
+   "why": "Shows MCP server configuration and a monitoring_visibility map exist, but contains no call-history recording or page definition."
+  },
+  {
+   "file": "core/code_agent.py",
+   "symbol": "run_code",
+   "why": "Agent tool loop unrelated to monitoring UI or MCP call logging."
+  }
+ ],
+ "status_conflict": false
+}

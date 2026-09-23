@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a broad UI/UX improvement effort for AI flows (Agent/Skill/MCP/RAG), but the shown candidates are backend/config files: config.py (persisted settings), config/security_sandbox.yaml (sandbox policy), and core/co4e_builtins.py (built-in agent personas and a seeded flow definition). None of these are UI/UX artifacts, and no Cowork UI code or redesign work is visible, so neither the claim nor the To Do status can be settled from this subset.",
+ "evidence": [
+  {
+   "file": "core/co4e_builtins.py",
+   "symbol": "BUILTIN_AGENTS",
+   "why": "Defines agent personas and the delivery-lifecycle flow as code constants — backend orchestration content, not the UI/UX experience the ticket targets."
+  },
+  {
+   "file": "config.py",
+   "symbol": "AppConfig.cowork",
+   "why": "Only exposes persisted Cowork/routing/MCP settings dictionaries; shows no UI flow or experience changes."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox enforcement policy, unrelated to the AI-flow UX work described."
+  }
+ ],
+ "status_conflict": false
+}

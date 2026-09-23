@@ -1,0 +1,13 @@
+{
+ "headline": "AI Edit covers AI-assisted document editing — presentation editing, document text/style extraction, an Office document viewer and image generation — and four of its six tickets are backed by code we could read, with Excel editing and AI-generated file previews not settled either way.",
+ "what_is_there": "The code shows in-place editing of PowerPoint decks (text, position, size, fonts and image replacement), extraction of text, styles and structure from documents, conversion of Office and OpenDocument files into a previewable form for an in-app viewer, and text-to-image generation against a DALL-E-style image service including model selection for the edit picker.",
+ "what_is_unclear": "Two tickets could not be confirmed: AI-driven Excel cell editing (only read-only spreadsheet extraction and an account template import/export were seen) and the AI-generated file preview feature (the relevant screen exists but its code was not among the files examined). Some supporting documentation appears to describe a different product, so it was not treated as evidence.",
+ "suggested_action": "Ask the team to point to where AI-driven Excel cell editing and the AI preview generation live, so those two tickets can be checked against the right code.",
+ "caveat": "Documentation cited alongside these tickets appears to describe a different system, so it was disregarded when assessing the Excel and preview claims.",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 1302,
+  "output_tokens": 446,
+  "model": "claude-opus-5"
+ }
+}

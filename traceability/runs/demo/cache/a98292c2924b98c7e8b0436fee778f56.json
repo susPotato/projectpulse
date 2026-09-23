@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a generic backend-refactoring task with no concrete deliverable, and the retrieved candidates (RULEBASE.md, RULEforCode.md, security_sandbox.yaml) are agent security policy artifacts unrelated to any refactoring work. The only capability document is an explicitly flagged refactor plan whose target paths (presentation/, infrastructure/, application/) and symbols such as _build_calendar and calendar_view_widget.py do not exist here, showing intent rather than implementation.",
+ "evidence": [
+  {
+   "file": "refactor/plan.md",
+   "symbol": "_build_calendar",
+   "why": "The migration plan's target module presentation/scheduling/calendar_view_widget.py and _build_calendar are confirmed absent from the repository, so the refactor is planned, not done."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Retrieved only because it mentions 'source code refactoring' as a blocked agent activity; it has nothing to do with backend refactoring work."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Sandbox/risk-routing configuration, unrelated to any backend refactoring effort."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 4151,
+  "output_tokens": 490,
+  "model": "claude-opus-5"
+ }
+}

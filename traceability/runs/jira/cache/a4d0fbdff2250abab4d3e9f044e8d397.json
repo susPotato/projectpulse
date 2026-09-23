@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "config.py defines an `agent_security` config block with independent toggles (enabled, validate_prompt, validate_attachments, validate_commands, command_ai_check), an admin-authored OneDrive rules URL, a custom rulebase_path, and sandbox limits — exactly the configurable policy engine described. The rule documents assets/RULEBASE.md and assets/RULEforCode.md exist, and the lookup confirms core/security_rules.py is present.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "agent_security",
+   "why": "Defines the configurable security policy block with per-layer toggles, master switch, OneDrive rules URL, admin email and sandbox resource/network limits."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "The Cowork agent rulebase document referenced by the policy engine."
+  },
+  {
+   "file": "assets/RULEforCode.md",
+   "symbol": "",
+   "why": "Separate (currently placeholder) rulebase for the Code agent, matching the documented split."
+  },
+  {
+   "file": "core/security_rules.py",
+   "symbol": "",
+   "why": "Confirmed present by the documentation symbol lookup as the local rule source."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7427,
+  "output_tokens": 570,
+  "model": "claude-opus-5"
+ }
+}

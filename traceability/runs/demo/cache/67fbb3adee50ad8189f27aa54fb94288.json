@@ -1,0 +1,17 @@
+{
+ "summary_en": "Upgrade the existing knowledge/RAG into a package with source, metadata, project isolation, citation and ground truth; do not rebuild the GraphRAG engine.",
+ "description_en": "BA: FSG\nDeveloper: FSG\nComponent: Knowledge & RAG",
+ "detected_language": "Vietnamese",
+ "preserved_terms": [
+  "RAG",
+  "GraphRAG",
+  "BA",
+  "FSG",
+  "Knowledge & RAG",
+  "ground truth",
+  "metadata",
+  "citation",
+  "project isolation",
+  "source"
+ ]
+}

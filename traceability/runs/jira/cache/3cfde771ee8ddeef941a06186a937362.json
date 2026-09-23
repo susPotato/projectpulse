@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The ticket is a project-management administrative task performed on an external Jira/ISMS tool, not a code change, so no source artifact could corroborate it. The candidate files (README boilerplate, core/task_executors.py, providers/base.py) are unrelated to ISMS keyword definition, and the architecture excerpts concern a Co4E chat/run-control file split and are flagged as not describing this repository.",
+ "evidence": [
+  {
+   "file": "core/task_executors.py",
+   "symbol": "execute_task",
+   "why": "Task-execution dispatch logic with no relation to ISMS keyword registration; matched only via the word 'task'."
+  },
+  {
+   "file": "providers/base.py",
+   "symbol": "ThinkStreamSplitter",
+   "why": "Provider streaming helpers, unrelated to the ticket's planning activity."
+  },
+  {
+   "file": "README.md",
+   "symbol": "",
+   "why": "Default GitLab README template containing no ISMS or keyword-management content."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 9672,
+  "output_tokens": 370,
+  "model": "claude-opus-5"
+ }
+}

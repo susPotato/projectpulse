@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/routing/prober.py implements exactly the described probing: benchmark prompts per model, wall-clock latency measurement, LLM-as-judge quality scoring with per-provider concurrency limits, and failure capture (success=False) for dead models. The routing config sample documents scoring policy knobs (latency/quality/cost, min_score_gain, per_provider_concurrency), and model_pricing.auto_link enriches the model table with live provider model lists. Status 'Release it' matches built code; no conflict.",
+ "evidence": [
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "probe_model",
+   "why": "Times a completion call and returns latency_ms plus a judged quality score, or success=False on error — the health/latency probe."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "probe_candidates",
+   "why": "Runs probes across all candidate models with per-provider semaphores and a thread pool, returning per-model per-task results."
+  },
+  {
+   "file": "core/routing/prober.py",
+   "symbol": "make_judge / parse_judge_score",
+   "why": "Fixed cheap judge model grades answers and the score is parsed to a 0..1 value for scoring."
+  },
+  {
+   "file": "core/routing/models_config.sample.yaml",
+   "symbol": "",
+   "why": "Documents the routing/assessment schema including policy (latency/quality/cost), min_score_gain and per_provider_concurrency used by the prober."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "auto_link",
+   "why": "Fetches live model lists from providers to add metadata rows (context length, pricing) per model — metadata enrichment."
+  }
+ ],
+ "status_conflict": false
+}

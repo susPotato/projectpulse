@@ -1,0 +1,38 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "config.py defines PROVIDER_LABELS with exactly the five providers named in the ticket (openai_compat, anthropic, ollama, github_copilot, codex), per-provider config sections and env overrides, and active_provider validation that guards against building an unknown provider. The documentation lookups confirm providers/factory.py and state.py::build_provider_for exist in this repository, which is where the instantiation happens. The factory body itself is not shown, so the exact dynamic-dispatch mechanism is inferred rather than read.",
+ "evidence": [
+  {
+   "file": "config.py",
+   "symbol": "PROVIDER_LABELS",
+   "why": "Enumerates precisely the five providers listed in the ticket as supported provider keys."
+  },
+  {
+   "file": "config.py",
+   "symbol": "active_provider",
+   "why": "Validates the stored provider against the known provider set so the app never builds an unknown provider, implying a keyed factory."
+  },
+  {
+   "file": "config.py",
+   "symbol": "provider_conf",
+   "why": "Returns per-provider configuration by name, the input a dynamic factory would consume."
+  },
+  {
+   "file": "providers/factory.py",
+   "symbol": "",
+   "why": "Confirmed present in the repository by the documentation symbol lookup; it is the provider factory module the ticket describes."
+  },
+  {
+   "file": "core/routing/README.md",
+   "symbol": "",
+   "why": "States AppProbeClient wraps AppContext.build_provider_for, confirming providers are constructed dynamically through a single entry point."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 12970,
+  "output_tokens": 662,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "providers/anthropic.py implements an AnthropicProvider against the Claude Messages API with streaming enabled (\"stream\": True), SSE block assembly, tool_use support, retries on 429, and model listing with fallbacks. This directly matches the ticket's claim of a Claude integration with native streaming; status \"Release it\" is consistent with the implemented code.",
+ "evidence": [
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "AnthropicProvider",
+   "why": "Class docstring and implementation target the Anthropic Messages API with anthropic-version headers and API key handling."
+  },
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "AnthropicProvider.chat",
+   "why": "Sets \"stream\": True and processes streamed content blocks/tool_use, showing native streaming support."
+  },
+  {
+   "file": "providers/anthropic.py",
+   "symbol": "AnthropicProvider.list_models",
+   "why": "Queries /v1/models with a built-in Claude fallback model list, confirming full provider integration."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 7233,
+  "output_tokens": 388,
+  "model": "claude-opus-5"
+ }
+}

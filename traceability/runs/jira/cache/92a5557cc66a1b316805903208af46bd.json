@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "ui/dashboard_tab.py implements a display-currency picker on the Dashboard header: a `currency_combo` with an `_on_currency_changed` handler that persists the choice to `usage.currency` and refreshes, and cost formatting flows through `mp.convert(...)`/`ut.format_cost(...)` using the selected currency. The file docstring explicitly describes the \"display-currency picker\" living beside refresh. The specific VND/USD/JPY option list isn't in the shown excerpt, so the exact currency set is unconfirmed.",
+ "evidence": [
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._on_currency_changed",
+   "why": "Reads the currency combo's data, stores it under config usage.currency, saves and refreshes the dashboard."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._retranslate",
+   "why": "References currency_lbl and currency_combo tooltips, confirming a currency picker widget exists in the Dashboard header."
+  },
+  {
+   "file": "ui/dashboard_tab.py",
+   "symbol": "DashboardTab._refresh_budget",
+   "why": "Converts USD amounts into the configured display currency via model_pricing.convert, showing costs honor the picked currency."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 10524,
+  "output_tokens": 525,
+  "model": "claude-opus-5"
+ }
+}

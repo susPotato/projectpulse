@@ -1,0 +1,28 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the retrieved files touch workspace deletion, trash, or restore: they cover MCP stdio clients, REST connectors, and a security rulebase markdown. The documentation excerpts are flagged as not describing this repository and discuss a tool/MCP policy epic, which is unrelated to soft-delete. Nothing here either supports or refutes a workspace trash feature.",
+ "evidence": [
+  {
+   "file": "core/mcp_client.py",
+   "symbol": "McpServerConnection",
+   "why": "Implements an external MCP stdio client, unrelated to workspace soft delete or restore."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Generic REST connector tooling with no workspace trash or restore logic."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security policy prose mentioning 'workspace' only in the sense of project isolation, not trash/restore."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 8621,
+  "output_tokens": 393,
+  "model": "claude-opus-5"
+ }
+}

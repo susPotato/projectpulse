@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The retrieved files show only the shell wiring (app.py constructs a single `CoworkTab` instance and connects its signals) and the Cowork chat backend loops in core/chat_agent.py; neither shows a tabbed container for multiple concurrent Cowork chat panels with independent sessions. ui/cowork_tab.py itself was not provided, so the presence or absence of multi-tab session management cannot be determined from this subset.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "MainWindow.__init__",
+   "why": "Creates one `CoworkTab(ctx)` embedded in the Workspace screen and wires its signals, with no visible multi-panel/tab-per-session logic."
+  },
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Implements the Cowork chat/tool loop but says nothing about UI tabs or per-tab session isolation."
+  }
+ ],
+ "status_conflict": false
+}

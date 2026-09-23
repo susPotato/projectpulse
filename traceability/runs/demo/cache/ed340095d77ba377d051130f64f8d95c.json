@@ -1,0 +1,13 @@
+{
+ "headline": "Documentation covers a single in-progress task to produce business and detailed design documents from the existing source code, and the code review could not confirm its state either way.",
+ "what_is_there": "The only item in this area is a deliverable to write business design and detailed design documentation derived from the current system. What the analysis found nearby related to agent security and sandboxing rules rather than design documentation.",
+ "what_is_unclear": "Whether any of the design documentation has actually been drafted could not be established, largely because a documentation deliverable leaves no code trace and one document that surfaced was explicitly noted as belonging to a different system.",
+ "suggested_action": "Ask the ticket owner to point to where the business and detailed design documents live, or to share a current draft, so progress can be tracked outside the codebase.",
+ "caveat": "",
+ "confidence": "high",
+ "_usage": {
+  "input_tokens": 229,
+  "output_tokens": 274,
+  "model": "claude-opus-5"
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/ext_connectors.py explicitly implements the unified CAD/CAE/MS365/Other connector model, naming CATIA/NX/ANSYS automation as the target and providing both mcp_stdio (via McpServerConnection) and rest_api (RestApiConnector) modes that feed into the standard (tools, executor) shape. config.py backs this with an ext_connectors section containing 'cad' and 'cae' buckets and a migration routine. Status 'In Progress' is consistent since the code deliberately provides generic plumbing rather than vendor-specific CATIA integration.",
+ "evidence": [
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "build_ext_connector_tools",
+   "why": "Builds tools/executor for every enabled connector across CAD/CAE/MS365/Other categories via mcp_stdio or REST."
+  },
+  {
+   "file": "core/ext_connectors.py",
+   "symbol": "RestApiConnector",
+   "why": "Generic HTTP-request tool scoped to a vendor connector's base_url, the REST path for CAD/CAE tool integrations."
+  },
+  {
+   "file": "config.py",
+   "symbol": "_migrate_connectors",
+   "why": "Ensures ext_connectors categories 'cad', 'cae', 'ms365', 'other' exist in stored config."
+  }
+ ],
+ "status_conflict": false,
+ "_usage": {
+  "input_tokens": 13819,
+  "output_tokens": 688,
+  "model": "claude-opus-5"
+ }
+}

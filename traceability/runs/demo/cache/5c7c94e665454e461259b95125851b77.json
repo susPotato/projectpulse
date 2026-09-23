@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "app.py's startup path loads a `core.skills` module with `prune_seeded_builtins` and `seed_library_skills`, seeding a bundled built-in skill library into user-editable stores that surface in a \"Skill Manager\", plus a persisted `ctx.config.seeded_library_skills` tag list for content-versioned updates. That is a reusable skill-asset library rather than ad-hoc prompts, so the platform side of the ticket already exists despite the \"To Do\" status. The specific claim about authoring skills for real projects cannot be checked from the shown files (core/skills.py itself is not in the candidate set).",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "run",
+   "why": "Calls `prune_seeded_builtins` and `seed_library_skills`, seeding a bundled built-in skill library into editable stores exposed via the Skill Manager."
+  },
+  {
+   "file": "app.py",
+   "symbol": "run",
+   "why": "Persists `ctx.config.seeded_library_skills` tags, indicating skills are versioned, updatable assets rather than one-off prompts."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Security rulebase asset unrelated to the Agent/Skill asset standardization claim."
+  }
+ ],
+ "status_conflict": true,
+ "_usage": {
+  "input_tokens": 6697,
+  "output_tokens": 773,
+  "model": "claude-opus-5"
+ }
+}

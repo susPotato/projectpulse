@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The ticket concerns Microsoft Teams notification settings for group chat channels and a scheduled notification check job, but the retrieved files are all part of a local desktop AI-agent application (Cowork/Code chat tabs, message bubbles, agent workers) with no messaging-platform integration, webhooks, or scheduler code visible. The keyword matcher appears to have latched onto the word \"chat\" alone. Nothing here confirms or refutes the existence of a Teams notification feature elsewhere in the repository.",
+ "evidence": [
+  {
+   "file": "core/chat_agent.py",
+   "symbol": "run_cowork",
+   "why": "Implements an LLM chat loop with a save_file tool for the Cowork tab, unrelated to Teams notifications or scheduling."
+  },
+  {
+   "file": "ui/chat_panel.py",
+   "symbol": "ChatPanel.__init__",
+   "why": "Builds the in-app chat UI (model selector, routing toggle, file panes); contains no notification-settings or channel configuration."
+  },
+  {
+   "file": "ui/chat_view.py",
+   "symbol": "ChatView",
+   "why": "Renders the scrollable transcript of local chat bubbles, with no external channel or alert delivery logic."
+  }
+ ],
+ "status_conflict": false
+}

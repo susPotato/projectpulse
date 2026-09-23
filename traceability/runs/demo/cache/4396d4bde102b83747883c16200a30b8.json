@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/routing_toggle.py contains a fully implemented RoutingToggle QWidget offering Off/Auto/Manual modes with persistence via AppContext.project_routing_mode/set_project_routing_mode, i18n labels, refresh and a mode_changed signal. This matches the ticket's UI toggle for model routing on/off, consistent with its 'Release it' status.",
+ "evidence": [
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "RoutingToggle",
+   "why": "Implements the Routing: [Off/Auto/Manual] combo widget with mode_changed signal and injectable get/set storage."
+  },
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "RoutingToggle._on_changed",
+   "why": "Persists the newly chosen routing mode and emits the change, showing the toggle is wired to routing configuration."
+  },
+  {
+   "file": "ui/routing_toggle.py",
+   "symbol": "AutoRunToggle",
+   "why": "Additional related toggle in the same module, confirming this file is the routing toggle UI component."
+  }
+ ],
+ "status_conflict": false
+}

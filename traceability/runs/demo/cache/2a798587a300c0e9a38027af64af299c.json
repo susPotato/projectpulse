@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "No source files were retrievable for this ticket, so there is nothing to compare against the claim of Teams webhook, Outlook email, and in-app notification bell functionality. Absence of candidate files says nothing about whether the feature exists in the repository.",
+ "evidence": [],
+ "status_conflict": false
+}

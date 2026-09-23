@@ -1,0 +1,23 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "ui/agent_manager_tab.py implements a dedicated AgentManagerTab widget with a list of saved agents, an editor form, and New/Save/Delete buttons wired to _new_agent, _save and _delete, backed by core.custom_agents' list_agents/save_agent/delete_agent — exactly the CRUD agent manager tab described. Status 'Release it' is consistent with the code being present. The sandbox_manager and co4e_run_manager candidates are unrelated keyword matches.",
+ "evidence": [
+  {
+   "file": "ui/agent_manager_tab.py",
+   "symbol": "AgentManagerTab",
+   "why": "A full tab for creating/editing/deleting reusable custom Agent presets, with list, editor form, and New/Save/Delete buttons."
+  },
+  {
+   "file": "ui/agent_manager_tab.py",
+   "symbol": "list_agents, save_agent, delete_agent",
+   "why": "Imports from core.custom_agents provide the create/read/update/delete backing operations."
+  },
+  {
+   "file": "core/sandbox_manager.py",
+   "symbol": "SandboxManager",
+   "why": "Unrelated to the agent manager tab; matched only on the word 'manager'."
+  }
+ ],
+ "status_conflict": false
+}

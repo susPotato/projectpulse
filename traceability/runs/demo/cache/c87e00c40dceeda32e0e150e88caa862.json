@@ -1,0 +1,13 @@
+{
+ "headline": "Notifications covers four capabilities — a Microsoft Teams webhook, Outlook email sending, an in-app notification centre, and event-driven routing — and the code confirms the two outbound channels while the other two could not be confirmed from what was examined.",
+ "what_is_there": "There is a working Teams integration that posts formatted notification cards to a Teams webhook, including a plain-text fallback and error handling, and a separate path that sends email through a locally installed Outlook, including a check for whether Outlook is available. Both of these are direct send paths for individual messages.",
+ "what_is_unclear": "The analysis found nothing about an in-app notification bell with unread counts, and nothing resembling a central dispatcher or routing layer that decides which events go to which channel — only two standalone senders. Because only a keyword-selected slice of the code was read, this does not mean those pieces are absent, just unconfirmed. It is also unconfirmed whether the Outlook email path is wired into scheduling or task editing.",
+ "suggested_action": "Ask the team to point to where the in-app notification centre and the event routing layer live, so those two tickets can be checked directly; separately, confirm whether the Outlook email work marked 'In Progress' is in fact finished, since the send path itself appears complete.",
+ "caveat": "",
+ "confidence": "high",
+ "_usage": {
+  "input_tokens": 854,
+  "output_tokens": 440,
+  "model": "claude-opus-5"
+ }
+}

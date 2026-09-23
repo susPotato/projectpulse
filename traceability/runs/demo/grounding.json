@@ -1,0 +1,4462 @@
+{
+ "schema_version": 1,
+ "produced_by": "grounding",
+ "meta": {
+  "verdicts": 173,
+  "citations": 539,
+  "defined": 428,
+  "present": 7,
+  "absent": 1,
+  "no_file": 4,
+  "grounded": 159,
+  "partly_grounded": 4,
+  "ungrounded": 1,
+  "uncited": 9,
+  "inputs": {
+   "corpus": "e6efcfbae0cbd378",
+   "verdicts": "3029506211b50451"
+  }
+ },
+ "payload": [
+  {
+   "uid": "T0000",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": []
+  },
+  {
+   "uid": "T0001",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/code_agent.py",
+     "symbol": "run_code",
+     "status": "defined",
+     "line": 196
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0002",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/context_budget.py",
+     "symbol": "maybe_compact",
+     "status": "defined",
+     "line": 135
+    },
+    {
+     "file": "core/telemetry_shared.py",
+     "symbol": "load_shared_usage_events",
+     "status": "defined",
+     "line": 45
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0003",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_topbar",
+     "status": "defined",
+     "line": 531
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._on_language_changed",
+     "status": "defined",
+     "line": 652
+    },
+    {
+     "file": "app.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.language",
+     "status": "defined",
+     "line": 447
+    }
+   ]
+  },
+  {
+   "uid": "T0004",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "theme.py",
+     "symbol": "resolve_theme",
+     "status": "defined",
+     "line": 277
+    },
+    {
+     "file": "theme.py",
+     "symbol": "stylesheet",
+     "status": "defined",
+     "line": 294
+    },
+    {
+     "file": "theme.py",
+     "symbol": "ACCENT",
+     "status": "defined",
+     "line": 7
+    }
+   ]
+  },
+  {
+   "uid": "T0005",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    },
+    {
+     "file": "core/routing/prober.py",
+     "symbol": "_PerProviderSemaphores.get",
+     "status": "defined",
+     "line": 167
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0006",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._open_settings",
+     "status": "defined",
+     "line": 660
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_topbar",
+     "status": "defined",
+     "line": 531
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._set_theme",
+     "status": "defined",
+     "line": 631
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._on_language_changed",
+     "status": "defined",
+     "line": 652
+    }
+   ]
+  },
+  {
+   "uid": "T0007",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "PROVIDER_LABELS",
+     "status": "defined",
+     "line": 255
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.active_provider",
+     "status": "defined",
+     "line": 383
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.provider_conf",
+     "status": "defined",
+     "line": 394
+    },
+    {
+     "file": "core/routing/README.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0008",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._on_provider_changed",
+     "status": "defined",
+     "line": 640
+    },
+    {
+     "file": "core/agent_security.py",
+     "symbol": "_ai_verdict",
+     "status": "defined",
+     "line": 149
+    },
+    {
+     "file": "core/appcontainer_sandbox.py",
+     "symbol": "AppContainerSandbox",
+     "status": "defined",
+     "line": 42
+    }
+   ]
+  },
+  {
+   "uid": "T0009",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "providers/anthropic.py",
+     "symbol": "AnthropicProvider",
+     "status": "defined",
+     "line": 17
+    },
+    {
+     "file": "providers/anthropic.py",
+     "symbol": "AnthropicProvider.chat",
+     "status": "defined",
+     "line": 112
+    },
+    {
+     "file": "providers/anthropic.py",
+     "symbol": "AnthropicProvider.list_models",
+     "status": "defined",
+     "line": 37
+    }
+   ]
+  },
+  {
+   "uid": "T0010",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/routing/models_config.sample.yaml",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/model_pricing.py",
+     "symbol": "turn_cost_usd",
+     "status": "defined",
+     "line": 135
+    }
+   ]
+  },
+  {
+   "uid": "T0011",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/context_budget.py",
+     "symbol": "context_limit",
+     "status": "defined",
+     "line": 54
+    },
+    {
+     "file": "core/agent_security.py",
+     "symbol": "SecurityVerdict",
+     "status": "defined",
+     "line": 47
+    },
+    {
+     "file": "core/agent_security_alert.py",
+     "symbol": "notify_admin",
+     "status": "defined",
+     "line": 19
+    }
+   ]
+  },
+  {
+   "uid": "T0012",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/routing/prober.py",
+     "symbol": "probe_model",
+     "status": "defined",
+     "line": 123
+    },
+    {
+     "file": "core/routing/prober.py",
+     "symbol": "probe_candidates",
+     "status": "defined",
+     "line": 176
+    },
+    {
+     "file": "core/routing/prober.py",
+     "symbol": "make_judge",
+     "status": "defined",
+     "line": 99
+    },
+    {
+     "file": "core/model_pricing.py",
+     "symbol": "auto_link",
+     "status": "defined",
+     "line": 264
+    }
+   ]
+  },
+  {
+   "uid": "T0013",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/context_budget.py",
+     "symbol": "maybe_compact",
+     "status": "defined",
+     "line": 135
+    },
+    {
+     "file": "core/context_budget.py",
+     "symbol": "model_context_limit",
+     "status": "defined",
+     "line": 35
+    },
+    {
+     "file": "core/context_budget.py",
+     "symbol": "auto_compact_enabled",
+     "status": "defined",
+     "line": 61
+    },
+    {
+     "file": "core/context_budget.py",
+     "symbol": "compact_messages",
+     "status": "defined",
+     "line": 116
+    },
+    {
+     "file": "core/usage_tracker.py",
+     "symbol": "estimate_tokens",
+     "status": "defined",
+     "line": 81
+    }
+   ]
+  },
+  {
+   "uid": "T0014",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_dashboard",
+     "status": "defined",
+     "line": 338
+    },
+    {
+     "file": "core/calendar_grid.py",
+     "symbol": "shift_period",
+     "status": "defined",
+     "line": 38
+    },
+    {
+     "file": "core/ms365_auth.py",
+     "symbol": "get_access_token",
+     "status": "defined",
+     "line": 176
+    }
+   ]
+  },
+  {
+   "uid": "T0015",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._refresh_chart",
+     "status": "defined",
+     "line": 270
+    },
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._on_gran_changed",
+     "status": "defined",
+     "line": 249
+    },
+    {
+     "file": "ui/spline_chart.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_dashboard",
+     "status": "defined",
+     "line": 338
+    },
+    {
+     "file": "core/calendar_grid.py",
+     "symbol": "GRANULARITIES",
+     "status": "defined",
+     "line": 13
+    }
+   ]
+  },
+  {
+   "uid": "T0016",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_dashboard",
+     "status": "defined",
+     "line": 338
+    },
+    {
+     "file": "core/model_pricing.py",
+     "symbol": "sync_to_usage",
+     "status": "defined",
+     "line": 147
+    },
+    {
+     "file": "ui/monitoring_tab.py",
+     "symbol": "MonitoringTab._refresh_usage_cards",
+     "status": "defined",
+     "line": 807
+    }
+   ]
+  },
+  {
+   "uid": "T0017",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/usage_tracker.py",
+     "symbol": "build_ai_analysis_prompt",
+     "status": "defined",
+     "line": 489
+    },
+    {
+     "file": "core/usage_tracker.py",
+     "symbol": "_AI_ANALYSIS_HEADERS",
+     "status": "defined",
+     "line": 482
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_dashboard",
+     "status": "defined",
+     "line": 338
+    }
+   ]
+  },
+  {
+   "uid": "T0018",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._ai_analyze",
+     "status": "defined",
+     "line": 375
+    },
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._apply_saving_strategy",
+     "status": "defined",
+     "line": 359
+    },
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._retranslate",
+     "status": "defined",
+     "line": 195
+    }
+   ]
+  },
+  {
+   "uid": "T0019",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._on_currency_changed",
+     "status": "defined",
+     "line": 187
+    },
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._refresh_budget",
+     "status": "defined",
+     "line": 220
+    },
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._retranslate",
+     "status": "defined",
+     "line": 195
+    }
+   ]
+  },
+  {
+   "uid": "T0020",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/usage_tracker.py",
+     "symbol": "estimate_tokens",
+     "status": "defined",
+     "line": 81
+    },
+    {
+     "file": "core/agent_security.py",
+     "symbol": "SecurityVerdict",
+     "status": "defined",
+     "line": 47
+    },
+    {
+     "file": "core/agent_security_alert.py",
+     "symbol": "notify_admin",
+     "status": "defined",
+     "line": 19
+    }
+   ]
+  },
+  {
+   "uid": "T0021",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow.__init__",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "ui/workspace_tab.py",
+     "symbol": "WorkspaceTab._create",
+     "status": "defined",
+     "line": 554
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager.set_current_project",
+     "status": "defined",
+     "line": 301
+    }
+   ]
+  },
+  {
+   "uid": "T0022",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow.__init__",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_cowork",
+     "status": "defined",
+     "line": 325
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0023",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/d3_graph.py",
+     "symbol": "build_html",
+     "status": "defined",
+     "line": 20
+    },
+    {
+     "file": "assets/graph_template.html",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0024",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/history.py",
+     "symbol": "list_conversations",
+     "status": "defined",
+     "line": 114
+    },
+    {
+     "file": "core/history.py",
+     "symbol": "save_conversation",
+     "status": "defined",
+     "line": 34
+    },
+    {
+     "file": "core/history.py",
+     "symbol": "rename_conversation",
+     "status": "defined",
+     "line": 80
+    },
+    {
+     "file": "core/history.py",
+     "symbol": "delete_conversation",
+     "status": "defined",
+     "line": 73
+    },
+    {
+     "file": "core/history.py",
+     "symbol": "new_session_id",
+     "status": "defined",
+     "line": 22
+    }
+   ]
+  },
+  {
+   "uid": "T0025",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/pptx_edit.py",
+     "symbol": "pptx_to_text",
+     "status": "defined",
+     "line": 92
+    },
+    {
+     "file": "core/routing/models_config.sample.yaml",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0026",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ms365_auth.py",
+     "symbol": "sign_in_device_code",
+     "status": "defined",
+     "line": 144
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0027",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/mcp_client.py",
+     "symbol": "McpServerConnection",
+     "status": "defined",
+     "line": 33
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "RestApiConnector",
+     "status": "defined",
+     "line": 89
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0028",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_chat",
+     "status": "defined",
+     "line": 295
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_cowork",
+     "status": "defined",
+     "line": 325
+    },
+    {
+     "file": "ui/chat_panel.py",
+     "symbol": "ChatPanel.submit",
+     "status": "defined",
+     "line": 778
+    }
+   ]
+  },
+  {
+   "uid": "T0029",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": [
+    {
+     "file": "README.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0030",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_cowork",
+     "status": "defined",
+     "line": 325
+    },
+    {
+     "file": "core/model_pricing.py",
+     "symbol": "turn_cost_usd",
+     "status": "defined",
+     "line": 135
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0031",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "SAVE_FILE_SPEC",
+     "status": "defined",
+     "line": 106
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_cowork",
+     "status": "defined",
+     "line": 325
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "_do_save_file",
+     "status": "defined",
+     "line": 274
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "_cleanup_cowork_intermediates",
+     "status": "defined",
+     "line": 196
+    }
+   ]
+  },
+  {
+   "uid": "T0032",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": [
+    {
+     "file": "assets/RULEforCode.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0033",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "sandbox",
+     "status": "defined",
+     "line": 1
+    },
+    {
+     "file": "assets/RULEforCode.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0034",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_cowork",
+     "status": "defined",
+     "line": 325
+    },
+    {
+     "file": "core/agent_command.py",
+     "symbol": "parse_agent_command",
+     "status": "defined",
+     "line": 75
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0035",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "_do_save_file",
+     "status": "defined",
+     "line": 274
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_cowork",
+     "status": "defined",
+     "line": 325
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0036",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow.__init__",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0037",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_cowork",
+     "status": "defined",
+     "line": 325
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "_do_save_file",
+     "status": "defined",
+     "line": 274
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "_unique_path",
+     "status": "defined",
+     "line": 182
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "COWORK_TOOL_PROMPT",
+     "status": "defined",
+     "line": 46
+    }
+   ]
+  },
+  {
+   "uid": "T0038",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/account_excel.py",
+     "symbol": "export_template",
+     "status": "defined",
+     "line": 24
+    },
+    {
+     "file": "core/doc_extract.py",
+     "symbol": "_xlsx",
+     "status": "defined",
+     "line": 194
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    }
+   ]
+  },
+  {
+   "uid": "T0039",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/pptx_edit.py",
+     "symbol": "pptx_to_text",
+     "status": "defined",
+     "line": 92
+    },
+    {
+     "file": "core/pptx_edit.py",
+     "symbol": "_apply_font",
+     "status": "defined",
+     "line": 146
+    },
+    {
+     "file": "core/doc_style_extract.py",
+     "symbol": "extract_pptx_structure",
+     "status": "defined",
+     "line": 46
+    }
+   ]
+  },
+  {
+   "uid": "T0040",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/pptx_edit.py",
+     "symbol": "_parse",
+     "status": "defined",
+     "line": 184
+    },
+    {
+     "file": "core/pptx_edit.py",
+     "symbol": "apply_text_to_pptx",
+     "status": "defined",
+     "line": 241
+    },
+    {
+     "file": "core/link_fetch.py",
+     "symbol": "_extract_document",
+     "status": "defined",
+     "line": 114
+    }
+   ]
+  },
+  {
+   "uid": "T0041",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/doc_extract.py",
+     "symbol": "convert_to_pdf",
+     "status": "defined",
+     "line": 292
+    },
+    {
+     "file": "core/doc_extract.py",
+     "symbol": "_soffice_to_text",
+     "status": "defined",
+     "line": 371
+    },
+    {
+     "file": "ui/libreoffice_view.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0042",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/image_gen.py",
+     "symbol": "generate_image",
+     "status": "defined",
+     "line": 63
+    },
+    {
+     "file": "core/image_gen.py",
+     "symbol": "looks_like_image_model",
+     "status": "defined",
+     "line": 30
+    },
+    {
+     "file": "core/image_gen.py",
+     "symbol": "suggest_image_model",
+     "status": "defined",
+     "line": 35
+    },
+    {
+     "file": "core/image_gen.py",
+     "symbol": "is_configured",
+     "status": "defined",
+     "line": 56
+    }
+   ]
+  },
+  {
+   "uid": "T0043",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/link_fetch.py",
+     "symbol": "fetch_link_preview",
+     "status": "defined",
+     "line": 135
+    },
+    {
+     "file": "core/pptx_edit.py",
+     "symbol": "pptx_to_text",
+     "status": "defined",
+     "line": 92
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0044",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/model_pricing.py",
+     "symbol": "add_entry",
+     "status": "defined",
+     "line": 181
+    },
+    {
+     "file": "core/routing/models_config.sample.yaml",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "skill_library/03-build-implementation.skill",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0045",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/task_scheduler.py",
+     "symbol": "TICK_MS",
+     "status": "defined",
+     "line": 29
+    },
+    {
+     "file": "core/task_scheduler.py",
+     "symbol": "TaskScheduler.__init__",
+     "status": "defined",
+     "line": 42
+    },
+    {
+     "file": "core/task_scheduler.py",
+     "symbol": "TaskScheduler.tick",
+     "status": "defined",
+     "line": 103
+    },
+    {
+     "file": "core/task_scheduler.py",
+     "symbol": "TaskScheduler.running_count",
+     "status": "defined",
+     "line": 142
+    },
+    {
+     "file": "core/routing/scheduler.py",
+     "symbol": "RoutingScheduler",
+     "status": "defined",
+     "line": 29
+    }
+   ]
+  },
+  {
+   "uid": "T0046",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": []
+  },
+  {
+   "uid": "T0047",
+   "verdict": "contradicted",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/task_editor_dialog.py",
+     "symbol": "TaskEditorDialog",
+     "status": "defined",
+     "line": 55
+    },
+    {
+     "file": "ui/task_editor_dialog.py",
+     "symbol": "TaskEditorDialog.__init__",
+     "status": "defined",
+     "line": 60
+    }
+   ]
+  },
+  {
+   "uid": "T0048",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/tasks.py",
+     "symbol": "DEFAULT_TASK",
+     "status": "defined",
+     "line": 37
+    },
+    {
+     "file": "core/tasks.py",
+     "symbol": "_all_prerequisites",
+     "status": "defined",
+     "line": 219
+    },
+    {
+     "file": "core/tasks.py",
+     "symbol": "dependencies_met",
+     "status": "defined",
+     "line": 230
+    }
+   ]
+  },
+  {
+   "uid": "T0049",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "state.py",
+     "symbol": "AppContext.project_confirm_commands",
+     "status": "defined",
+     "line": 102
+    },
+    {
+     "file": "ui/chat_panel.py",
+     "symbol": "ChatPanel._on_permission",
+     "status": "defined",
+     "line": 1282
+    },
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab._chart_prev",
+     "status": "defined",
+     "line": 253
+    }
+   ]
+  },
+  {
+   "uid": "T0050",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig",
+     "status": "defined",
+     "line": 343
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0051",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager.start",
+     "status": "defined",
+     "line": 167
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "RunHandle",
+     "status": "defined",
+     "line": 39
+    },
+    {
+     "file": "core/sandbox_manager.py",
+     "symbol": "SandboxManager",
+     "status": "defined",
+     "line": 43
+    }
+   ]
+  },
+  {
+   "uid": "T0052",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "state.py",
+     "symbol": "AppContext.project_confirm_commands",
+     "status": "defined",
+     "line": 102
+    },
+    {
+     "file": "ui/permission_dialog.py",
+     "symbol": "PermissionDialog",
+     "status": "defined",
+     "line": 13
+    },
+    {
+     "file": "ui/chat_panel.py",
+     "symbol": "ChatPanel._on_permission",
+     "status": "defined",
+     "line": 1282
+    }
+   ]
+  },
+  {
+   "uid": "T0053",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager._on_event",
+     "status": "defined",
+     "line": 215
+    },
+    {
+     "file": "core/routing/prober.py",
+     "symbol": "probe_candidates",
+     "status": "defined",
+     "line": 176
+    },
+    {
+     "file": "core/routing/switch_controller.py",
+     "symbol": "PendingSwitchRegistry",
+     "status": "defined",
+     "line": 129
+    }
+   ]
+  },
+  {
+   "uid": "T0054",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/schedule_task_tab.py",
+     "symbol": "_KanbanColumn.dropEvent",
+     "status": "defined",
+     "line": 57
+    },
+    {
+     "file": "ui/schedule_task_tab.py",
+     "symbol": "ScheduleTaskTab.__init__",
+     "status": "defined",
+     "line": 46
+    },
+    {
+     "file": "ui/schedule_task_tab.py",
+     "symbol": "ScheduleTaskTab._on_task_dropped",
+     "status": "defined",
+     "line": 254
+    }
+   ]
+  },
+  {
+   "uid": "T0055",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/agent_manager_tab.py",
+     "symbol": "AgentManagerTab",
+     "status": "defined",
+     "line": 28
+    },
+    {
+     "file": "ui/flow_dialog.py",
+     "symbol": "FlowBuilderDialog",
+     "status": "defined",
+     "line": 34
+    },
+    {
+     "file": "ui/folder_tab.py",
+     "symbol": "FolderTab",
+     "status": "defined",
+     "line": 235
+    }
+   ]
+  },
+  {
+   "uid": "T0056",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/task_import.py",
+     "symbol": "import_tasks",
+     "status": "defined",
+     "line": 31
+    },
+    {
+     "file": "core/task_import.py",
+     "symbol": "auto_chain_in_order",
+     "status": "defined",
+     "line": 48
+    },
+    {
+     "file": "ui/schedule_task_tab.py",
+     "symbol": "_AiCreateDialog._export_template",
+     "status": "defined",
+     "line": 597
+    },
+    {
+     "file": "ui/schedule_task_tab.py",
+     "symbol": "_AiCreateDialog._load_import_file",
+     "status": "defined",
+     "line": 623
+    },
+    {
+     "file": "ui/schedule_task_tab.py",
+     "symbol": "_DropZone.dragEnterEvent",
+     "status": "defined",
+     "line": 489
+    }
+   ]
+  },
+  {
+   "uid": "T0057",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/calendar_grid.py",
+     "symbol": "month_grid",
+     "status": "defined",
+     "line": 16
+    },
+    {
+     "file": "core/calendar_grid.py",
+     "symbol": "group_tasks_by_date",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "core/calendar_grid.py",
+     "symbol": "shift_period",
+     "status": "defined",
+     "line": 38
+    },
+    {
+     "file": "core/calendar_grid.py",
+     "symbol": "month_task_counts",
+     "status": "defined",
+     "line": 69
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_schedule",
+     "status": "defined",
+     "line": 344
+    }
+   ]
+  },
+  {
+   "uid": "T0058",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ai_task_planner.py",
+     "symbol": "plan_tasks",
+     "status": "defined",
+     "line": 204
+    },
+    {
+     "file": "core/ai_task_planner.py",
+     "symbol": "normalize_planned_tasks",
+     "status": "defined",
+     "line": 60
+    },
+    {
+     "file": "core/ai_task_planner.py",
+     "symbol": "_extract_json",
+     "status": "defined",
+     "line": 39
+    },
+    {
+     "file": "core/ai_task_planner.py",
+     "symbol": "generate_task_description",
+     "status": "defined",
+     "line": 112
+    }
+   ]
+  },
+  {
+   "uid": "T0059",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_run_co4e_flow",
+     "status": "defined",
+     "line": 382
+    },
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_resolve_co4e_workflow",
+     "status": "defined",
+     "line": 373
+    }
+   ]
+  },
+  {
+   "uid": "T0060",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "Co4ECanvas",
+     "status": "defined",
+     "line": 366
+    },
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "_NodeItem",
+     "status": "defined",
+     "line": 43
+    },
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "Co4ECanvas.dropEvent",
+     "status": "defined",
+     "line": 759
+    },
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "_PaletteList.startDrag",
+     "status": "defined",
+     "line": 106
+    }
+   ]
+  },
+  {
+   "uid": "T0061",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "Co4ECanvas",
+     "status": "defined",
+     "line": 366
+    },
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "Co4ECanvas.relayout",
+     "status": "defined",
+     "line": 636
+    },
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_run_co4e_flow",
+     "status": "defined",
+     "line": 382
+    }
+   ]
+  },
+  {
+   "uid": "T0062",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e.py",
+     "symbol": "SubAgent",
+     "status": "defined",
+     "line": 61
+    },
+    {
+     "file": "core/co4e.py",
+     "symbol": "Step.is_parallel",
+     "status": "defined",
+     "line": 88
+    },
+    {
+     "file": "core/co4e.py",
+     "symbol": "Workflow",
+     "status": "defined",
+     "line": 108
+    },
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_run_co4e_flow",
+     "status": "defined",
+     "line": 382
+    }
+   ]
+  },
+  {
+   "uid": "T0063",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/routing/switch_controller.py",
+     "symbol": "decide",
+     "status": "defined",
+     "line": 44
+    },
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_run_co4e_flow",
+     "status": "defined",
+     "line": 382
+    }
+   ]
+  },
+  {
+   "uid": "T0064",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "RunHandle.__init__",
+     "status": "defined",
+     "line": 42
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "RunHandle.to_record",
+     "status": "defined",
+     "line": 71
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    }
+   ]
+  },
+  {
+   "uid": "T0065",
+   "verdict": "unverified",
+   "status": "partly-grounded",
+   "checks": [
+    {
+     "file": "core/permissions.py",
+     "symbol": "PermissionGate.set_mode",
+     "status": "defined",
+     "line": 24
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "RunHandle.to_record",
+     "status": "defined",
+     "line": 71
+    },
+    {
+     "file": "architecture/security-policy.md",
+     "symbol": "domain/security/tool_policy.py",
+     "status": "no-file",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0066",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_runner.py",
+     "symbol": "run_workflow",
+     "status": "defined",
+     "line": 205
+    },
+    {
+     "file": "core/co4e_runner.py",
+     "symbol": "_predecessors",
+     "status": "defined",
+     "line": 31
+    },
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_run_co4e_flow",
+     "status": "defined",
+     "line": 382
+    }
+   ]
+  },
+  {
+   "uid": "T0067",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager._save_history",
+     "status": "defined",
+     "line": 149
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "RunHandle.from_record",
+     "status": "defined",
+     "line": 87
+    }
+   ]
+  },
+  {
+   "uid": "T0068",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab._save",
+     "status": "defined",
+     "line": 1059
+    },
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab._wf_context_menu",
+     "status": "defined",
+     "line": 1003
+    },
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_resolve_co4e_workflow",
+     "status": "defined",
+     "line": 373
+    }
+   ]
+  },
+  {
+   "uid": "T0069",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e.py",
+     "symbol": "CustomAgent",
+     "status": "defined",
+     "line": 117
+    },
+    {
+     "file": "core/co4e.py",
+     "symbol": "save_custom_agent",
+     "status": "defined",
+     "line": 306
+    },
+    {
+     "file": "core/co4e.py",
+     "symbol": "Step",
+     "status": "defined",
+     "line": 68
+    },
+    {
+     "file": "core/custom_agents.py",
+     "symbol": "CustomAgent",
+     "status": "defined",
+     "line": 23
+    }
+   ]
+  },
+  {
+   "uid": "T0070",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_runner.py",
+     "symbol": "_run_self_verify",
+     "status": "defined",
+     "line": 141
+    },
+    {
+     "file": "core/co4e_runner.py",
+     "symbol": "_VERIFY_PROMPT",
+     "status": "defined",
+     "line": 131
+    }
+   ]
+  },
+  {
+   "uid": "T0071",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_run_co4e_flow",
+     "status": "defined",
+     "line": 382
+    },
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "Co4ECanvas.update_node_status",
+     "status": "defined",
+     "line": 688
+    },
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab._apply_workflow",
+     "status": "defined",
+     "line": 956
+    }
+   ]
+  },
+  {
+   "uid": "T0072",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "_KIND_PROMPTS",
+     "status": "defined",
+     "line": 44
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "AdminAgent.effective_prompt",
+     "status": "defined",
+     "line": 87
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "ensure_help_agent",
+     "status": "defined",
+     "line": 146
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "agents_admin_dir",
+     "status": "defined",
+     "line": 92
+    }
+   ]
+  },
+  {
+   "uid": "T0073",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ms365_tools.py",
+     "symbol": "MS365_WRITE_TOOLS",
+     "status": "defined",
+     "line": 160
+    },
+    {
+     "file": "core/ms365_tools.py",
+     "symbol": "build_ms365_tools",
+     "status": "defined",
+     "line": 177
+    },
+    {
+     "file": "core/tasks.py",
+     "symbol": "DEFAULT_TASK",
+     "status": "defined",
+     "line": 37
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    }
+   ]
+  },
+  {
+   "uid": "T0074",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/permission_dialog.py",
+     "symbol": "PermissionDialog",
+     "status": "defined",
+     "line": 13
+    },
+    {
+     "file": "state.py",
+     "symbol": "AppContext.project_confirm_commands",
+     "status": "defined",
+     "line": 102
+    },
+    {
+     "file": "core/agent_security.py",
+     "symbol": "validate_command",
+     "status": "defined",
+     "line": 181
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/integrity_sandbox.py",
+     "symbol": "IntegritySandbox.run_command",
+     "status": "defined",
+     "line": 49
+    },
+    {
+     "file": "core/appcontainer_sandbox.py",
+     "symbol": "AppContainerSandbox.run_command",
+     "status": "defined",
+     "line": 56
+    }
+   ]
+  },
+  {
+   "uid": "T0075",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/agent_security_alert.py",
+     "symbol": "notify_admin",
+     "status": "defined",
+     "line": 19
+    },
+    {
+     "file": "core/agent_security.py",
+     "symbol": "SecurityBlocked",
+     "status": "defined",
+     "line": 37
+    },
+    {
+     "file": "core/agent_security.py",
+     "symbol": "_ai_verdict",
+     "status": "defined",
+     "line": 149
+    }
+   ]
+  },
+  {
+   "uid": "T0076",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/tools.py",
+     "symbol": "_run_command",
+     "status": "defined",
+     "line": 521
+    },
+    {
+     "file": "security/command_risk_classifier.py",
+     "symbol": "classify_command",
+     "status": "defined",
+     "line": 67
+    },
+    {
+     "file": "core/agent_command.py",
+     "symbol": "parse_agent_command",
+     "status": "defined",
+     "line": 75
+    }
+   ]
+  },
+  {
+   "uid": "T0077",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "AdminAgent",
+     "status": "defined",
+     "line": 76
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "AdminAgent.effective_prompt",
+     "status": "defined",
+     "line": 87
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "new_agent",
+     "status": "defined",
+     "line": 105
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "list_agents",
+     "status": "defined",
+     "line": 134
+    }
+   ]
+  },
+  {
+   "uid": "T0078",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "AdminAgent",
+     "status": "defined",
+     "line": 76
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "agents_admin_dir",
+     "status": "defined",
+     "line": 92
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "ensure_help_agent",
+     "status": "defined",
+     "line": 146
+    },
+    {
+     "file": "ui/agents_admin_tab.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0079",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/agent_manager_tab.py",
+     "symbol": "AgentManagerTab",
+     "status": "defined",
+     "line": 28
+    },
+    {
+     "file": "ui/agent_manager_tab.py",
+     "symbol": "AgentManagerTab._delete",
+     "status": "defined",
+     "line": 272
+    },
+    {
+     "file": "ui/agent_manager_tab.py",
+     "symbol": "CustomAgent",
+     "status": "present",
+     "line": 21
+    }
+   ]
+  },
+  {
+   "uid": "T0080",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "HELP_AGENT_ID",
+     "status": "defined",
+     "line": 40
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "ensure_help_agent",
+     "status": "defined",
+     "line": 146
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "_KIND_PROMPTS",
+     "status": "defined",
+     "line": 44
+    },
+    {
+     "file": "ui/help_agent_widget.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0081",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/mcp_client.py",
+     "symbol": "McpServerConnection._connect",
+     "status": "defined",
+     "line": 81
+    },
+    {
+     "file": "core/mcp_client.py",
+     "symbol": "McpServerConnection.__init__",
+     "status": "defined",
+     "line": 36
+    },
+    {
+     "file": "core/mcp_client.py",
+     "symbol": "build_mcp_tools",
+     "status": "defined",
+     "line": 143
+    },
+    {
+     "file": "core/routing/clients.py",
+     "symbol": "AppProbeClient",
+     "status": "defined",
+     "line": 53
+    }
+   ]
+  },
+  {
+   "uid": "T0082",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ms365_auth.py",
+     "symbol": "SCOPES",
+     "status": "defined",
+     "line": 47
+    },
+    {
+     "file": "core/ms365_graph.py",
+     "symbol": "_path_segment",
+     "status": "defined",
+     "line": 68
+    },
+    {
+     "file": "core/graph_server.py",
+     "symbol": "GraphServer",
+     "status": "defined",
+     "line": 27
+    }
+   ]
+  },
+  {
+   "uid": "T0083",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ms365_graph.py",
+     "symbol": "_request",
+     "status": "defined",
+     "line": 39
+    },
+    {
+     "file": "core/ms365_auth.py",
+     "symbol": "SCOPES",
+     "status": "defined",
+     "line": 47
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    }
+   ]
+  },
+  {
+   "uid": "T0084",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "CATEGORIES",
+     "status": "defined",
+     "line": 31
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "new_connector",
+     "status": "defined",
+     "line": 63
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "RestApiConnector",
+     "status": "defined",
+     "line": 89
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "build_ext_connector_tools",
+     "status": "defined",
+     "line": 172
+    },
+    {
+     "file": "config.py",
+     "symbol": "_migrate_connectors",
+     "status": "defined",
+     "line": 300
+    }
+   ]
+  },
+  {
+   "uid": "T0085",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/connectors_panel.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "new_connector",
+     "status": "defined",
+     "line": 63
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "RestApiConnector.test_connection",
+     "status": "defined",
+     "line": 155
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "_redact",
+     "status": "defined",
+     "line": 81
+    },
+    {
+     "file": "config.py",
+     "symbol": "_migrate_connectors",
+     "status": "defined",
+     "line": 300
+    }
+   ]
+  },
+  {
+   "uid": "T0086",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "build_ext_connector_tools",
+     "status": "defined",
+     "line": 172
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "RestApiConnector",
+     "status": "defined",
+     "line": 89
+    },
+    {
+     "file": "config.py",
+     "symbol": "_migrate_connectors",
+     "status": "defined",
+     "line": 300
+    }
+   ]
+  },
+  {
+   "uid": "T0087",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "sandbox.backends.appcontainer",
+     "status": "defined",
+     "line": 10
+    },
+    {
+     "file": "core/appcontainer_sandbox.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0088",
+   "verdict": "unverified",
+   "status": "partly-grounded",
+   "checks": [
+    {
+     "file": "core/windows_sandbox_vm.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/appcontainer_sandbox.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "architecture/security-policy.md",
+     "symbol": "",
+     "status": "no-file",
+     "line": null
+    },
+    {
+     "file": "__init__.py",
+     "symbol": "DISPLAY_NAME",
+     "status": "defined",
+     "line": 23
+    }
+   ]
+  },
+  {
+   "uid": "T0089",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/resource_limits.py",
+     "symbol": "check_limits",
+     "status": "defined",
+     "line": 19
+    },
+    {
+     "file": "core/resource_limits.py",
+     "symbol": "prime_cpu_counter",
+     "status": "defined",
+     "line": 65
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0090",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/deps.py",
+     "symbol": "network_blocked_env",
+     "status": "defined",
+     "line": 217
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab",
+     "status": "defined",
+     "line": 227
+    }
+   ]
+  },
+  {
+   "uid": "T0091",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/tls_trust.py",
+     "symbol": "capture_and_trust",
+     "status": "defined",
+     "line": 69
+    },
+    {
+     "file": "core/tls_trust.py",
+     "symbol": "verify_for",
+     "status": "defined",
+     "line": 87
+    },
+    {
+     "file": "core/tls_trust.py",
+     "symbol": "request",
+     "status": "defined",
+     "line": 98
+    },
+    {
+     "file": "core/tls_trust.py",
+     "symbol": "looks_like_cert_trust_error",
+     "status": "defined",
+     "line": 41
+    }
+   ]
+  },
+  {
+   "uid": "T0092",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/ms365_graph.py",
+     "symbol": "read_shared_file",
+     "status": "defined",
+     "line": 187
+    },
+    {
+     "file": "providers/base.py",
+     "symbol": "ThinkStreamSplitter",
+     "status": "defined",
+     "line": 118
+    }
+   ]
+  },
+  {
+   "uid": "T0093",
+   "verdict": "contradicted",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/integrity_sandbox.py",
+     "symbol": "IntegritySandbox",
+     "status": "defined",
+     "line": 22
+    },
+    {
+     "file": "core/integrity_sandbox.py",
+     "symbol": "IntegritySandbox.run_command",
+     "status": "defined",
+     "line": 49
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/appcontainer_sandbox.py",
+     "symbol": "AppContainerSandbox",
+     "status": "defined",
+     "line": 42
+    }
+   ]
+  },
+  {
+   "uid": "T0094",
+   "verdict": "corroborated",
+   "status": "partly-grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "DEFAULT_CONFIG['agent_security']",
+     "status": "absent",
+     "line": null
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.agent_security",
+     "status": "defined",
+     "line": 520
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEforCode.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/security_rules.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0095",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/audit_log.py",
+     "symbol": "record",
+     "status": "defined",
+     "line": 46
+    },
+    {
+     "file": "core/audit_log.py",
+     "symbol": "load_events",
+     "status": "defined",
+     "line": 88
+    },
+    {
+     "file": "security/audit_logger.py",
+     "symbol": "record",
+     "status": "defined",
+     "line": 54
+    },
+    {
+     "file": "core/telemetry_shared.py",
+     "symbol": "load_shared_audit_events",
+     "status": "defined",
+     "line": 53
+    }
+   ]
+  },
+  {
+   "uid": "T0096",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/code_agent.py",
+     "symbol": "run_code",
+     "status": "defined",
+     "line": 196
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0097",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "app.py",
+     "symbol": "MonitoringTab",
+     "status": "present",
+     "line": 25
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig",
+     "status": "defined",
+     "line": 343
+    },
+    {
+     "file": "ui/co4e_config_panel.py",
+     "symbol": "StepConfigPanel",
+     "status": "defined",
+     "line": 27
+    }
+   ]
+  },
+  {
+   "uid": "T0098",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.monitoring_visibility",
+     "status": "defined",
+     "line": 575
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "ui/co4e_config_panel.py",
+     "symbol": "StepConfigPanel",
+     "status": "defined",
+     "line": 27
+    }
+   ]
+  },
+  {
+   "uid": "T0099",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.mcp_servers",
+     "status": "defined",
+     "line": 524
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.monitoring_visibility",
+     "status": "defined",
+     "line": 575
+    },
+    {
+     "file": "core/code_agent.py",
+     "symbol": "run_code",
+     "status": "defined",
+     "line": 196
+    }
+   ]
+  },
+  {
+   "uid": "T0100",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig",
+     "status": "defined",
+     "line": 343
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "security/action_validator.py",
+     "symbol": "validate_action",
+     "status": "defined",
+     "line": 10
+    }
+   ]
+  },
+  {
+   "uid": "T0101",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig",
+     "status": "defined",
+     "line": 343
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "ui/co4e_config_panel.py",
+     "symbol": "StepConfigPanel",
+     "status": "defined",
+     "line": 27
+    }
+   ]
+  },
+  {
+   "uid": "T0102",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/agents_admin_tab.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig",
+     "status": "defined",
+     "line": 343
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0103",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.agent_security",
+     "status": "defined",
+     "line": 520
+    },
+    {
+     "file": "config.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0104",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig",
+     "status": "defined",
+     "line": 343
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "AdminAgent",
+     "status": "defined",
+     "line": 76
+    }
+   ]
+  },
+  {
+   "uid": "T0105",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/icons_admin_tab.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._build_monitoring",
+     "status": "defined",
+     "line": 350
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig",
+     "status": "defined",
+     "line": 343
+    }
+   ]
+  },
+  {
+   "uid": "T0106",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "run",
+     "status": "defined",
+     "line": 809
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.seeded_library_skills",
+     "status": "defined",
+     "line": 488
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    }
+   ]
+  },
+  {
+   "uid": "T0107",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/telemetry_shared.py",
+     "symbol": "load_shared_usage_events",
+     "status": "defined",
+     "line": 45
+    },
+    {
+     "file": "core/telemetry_shared.py",
+     "symbol": "_load_events",
+     "status": "defined",
+     "line": 20
+    },
+    {
+     "file": "security/audit_logger.py",
+     "symbol": "record",
+     "status": "defined",
+     "line": 54
+    }
+   ]
+  },
+  {
+   "uid": "T0108",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab._build_center",
+     "status": "defined",
+     "line": 548
+    },
+    {
+     "file": "ui/tools_admin_tab.py",
+     "symbol": "ToolsAdminTab",
+     "status": "defined",
+     "line": 39
+    },
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "Co4ECanvas",
+     "status": "defined",
+     "line": 366
+    }
+   ]
+  },
+  {
+   "uid": "T0109",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/teams.py",
+     "symbol": "TeamsNotifier.send",
+     "status": "defined",
+     "line": 28
+    },
+    {
+     "file": "core/teams.py",
+     "symbol": "TeamsNotifier._adaptive_card",
+     "status": "defined",
+     "line": 142
+    },
+    {
+     "file": "core/teams.py",
+     "symbol": "TeamsNotifier._message_card",
+     "status": "defined",
+     "line": 129
+    },
+    {
+     "file": "core/teams.py",
+     "symbol": "TeamsNotifier.url_warning",
+     "status": "defined",
+     "line": 62
+    }
+   ]
+  },
+  {
+   "uid": "T0110",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/outlook_notify.py",
+     "symbol": "send_via_outlook",
+     "status": "defined",
+     "line": 27
+    },
+    {
+     "file": "core/outlook_notify.py",
+     "symbol": "available",
+     "status": "defined",
+     "line": 18
+    },
+    {
+     "file": "core/agent_security_alert.py",
+     "symbol": "notify_admin",
+     "status": "defined",
+     "line": 19
+    }
+   ]
+  },
+  {
+   "uid": "T0111",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/agent_security_alert.py",
+     "symbol": "notify_admin",
+     "status": "defined",
+     "line": 19
+    },
+    {
+     "file": "core/outlook_notify.py",
+     "symbol": "send_via_outlook",
+     "status": "defined",
+     "line": 27
+    },
+    {
+     "file": "skill_library/03-build-implementation.skill",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0112",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/skills.py",
+     "symbol": "library_skills",
+     "status": "defined",
+     "line": 186
+    },
+    {
+     "file": "core/skills.py",
+     "symbol": "seed_library_skills",
+     "status": "defined",
+     "line": 210
+    },
+    {
+     "file": "skill_library/01-analyze-requirement.skill",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.seeded_library_skills",
+     "status": "defined",
+     "line": 488
+    }
+   ]
+  },
+  {
+   "uid": "T0113",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "skill_library/01-analyze-requirement.skill",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/sandbox_manager.py",
+     "symbol": "SandboxManager",
+     "status": "defined",
+     "line": 43
+    },
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    }
+   ]
+  },
+  {
+   "uid": "T0114",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.seeded_library_skills",
+     "status": "defined",
+     "line": 488
+    },
+    {
+     "file": "__init__.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/__init__.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0115",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/d3_graph.py",
+     "symbol": "build_html",
+     "status": "defined",
+     "line": 20
+    },
+    {
+     "file": "core/d3_graph.py",
+     "symbol": "NODE_KIND_COLORS",
+     "status": "present",
+     "line": 12
+    },
+    {
+     "file": "assets/graph_template.html",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "ui/structure_graph_view.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0116",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/d3_graph.py",
+     "symbol": "build_html",
+     "status": "defined",
+     "line": 20
+    },
+    {
+     "file": "assets/graph_template.html",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0117",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "assets/graph_template.html",
+     "symbol": "GRAPH_DATA_PLACEHOLDER",
+     "status": "present",
+     "line": 392
+    },
+    {
+     "file": "core/d3_graph.py",
+     "symbol": "build_html",
+     "status": "defined",
+     "line": 20
+    },
+    {
+     "file": "core/graph_server.py",
+     "symbol": "GraphServer.start",
+     "status": "defined",
+     "line": 59
+    }
+   ]
+  },
+  {
+   "uid": "T0118",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/d3_graph.py",
+     "symbol": "build_html",
+     "status": "defined",
+     "line": 20
+    },
+    {
+     "file": "assets/graph_template.html",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0119",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/codebase_memory.py",
+     "symbol": "CodebaseMemory",
+     "status": "defined",
+     "line": 77
+    },
+    {
+     "file": "core/codebase_memory.py",
+     "symbol": "CMEM_TOOL_SPECS",
+     "status": "defined",
+     "line": 121
+    },
+    {
+     "file": "core/codebase_memory.py",
+     "symbol": "CodebaseMemory.index_repository",
+     "status": "defined",
+     "line": 109
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.codebase_memory",
+     "status": "defined",
+     "line": 516
+    }
+   ]
+  },
+  {
+   "uid": "T0120",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/jira_tool.py",
+     "symbol": "search",
+     "status": "defined",
+     "line": 109
+    },
+    {
+     "file": "core/jira_tool.py",
+     "symbol": "get_issue",
+     "status": "defined",
+     "line": 130
+    },
+    {
+     "file": "core/tools.py",
+     "symbol": "execute_tool",
+     "status": "defined",
+     "line": 288
+    },
+    {
+     "file": "core/tools.py",
+     "symbol": "_fetch_url",
+     "status": "defined",
+     "line": 334
+    }
+   ]
+  },
+  {
+   "uid": "T0121",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab.set_project",
+     "status": "defined",
+     "line": 1406
+    },
+    {
+     "file": "tests/routing/test_per_workspace_modes.py",
+     "symbol": "test_per_workspace_routing_is_isolated",
+     "status": "defined",
+     "line": 42
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0122",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/java_runtime.py",
+     "symbol": "find_java",
+     "status": "defined",
+     "line": 37
+    },
+    {
+     "file": "core/java_runtime.py",
+     "symbol": "_version_key",
+     "status": "defined",
+     "line": 29
+    },
+    {
+     "file": "core/java_runtime.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0123",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/link_fetch.py",
+     "symbol": "fetch_link_preview",
+     "status": "defined",
+     "line": 135
+    },
+    {
+     "file": "core/link_fetch.py",
+     "symbol": "_html_to_text",
+     "status": "defined",
+     "line": 50
+    },
+    {
+     "file": "core/link_fetch.py",
+     "symbol": "_extract_document",
+     "status": "defined",
+     "line": 114
+    },
+    {
+     "file": "core/link_fetch.py",
+     "symbol": "_share_download_url",
+     "status": "defined",
+     "line": 88
+    }
+   ]
+  },
+  {
+   "uid": "T0124",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_builtins.py",
+     "symbol": "build_delivery_lifecycle_flow",
+     "status": "defined",
+     "line": 160
+    },
+    {
+     "file": "core/co4e_builtins.py",
+     "symbol": "seed_builtin_flows",
+     "status": "defined",
+     "line": 181
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.seeded_builtin_flows",
+     "status": "defined",
+     "line": 498
+    }
+   ]
+  },
+  {
+   "uid": "T0125",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "20.1 Denied Languages",
+     "status": "present",
+     "line": 849
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "Formats",
+     "status": "present",
+     "line": 849
+    }
+   ]
+  },
+  {
+   "uid": "T0126",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/appcontainer_sandbox.py",
+     "symbol": "AppContainerSandbox.run_command",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "__init__.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0127",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow.__init__",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "app.py",
+     "symbol": "_NAV_EXPANDED_WIDTH",
+     "status": "defined",
+     "line": 36
+    },
+    {
+     "file": "app.py",
+     "symbol": "_NAV_COLLAPSED_WIDTH",
+     "status": "defined",
+     "line": 37
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._apply_nav_labels",
+     "status": "defined",
+     "line": 390
+    }
+   ]
+  },
+  {
+   "uid": "T0128",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._notify_task",
+     "status": "defined",
+     "line": 472
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._on_scheduled_task_done",
+     "status": "defined",
+     "line": 450
+    }
+   ]
+  },
+  {
+   "uid": "T0129",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/routing_toggle.py",
+     "symbol": "RoutingToggle",
+     "status": "defined",
+     "line": 28
+    },
+    {
+     "file": "ui/routing_toggle.py",
+     "symbol": "RoutingToggle._on_changed",
+     "status": "defined",
+     "line": 107
+    },
+    {
+     "file": "ui/routing_toggle.py",
+     "symbol": "AutoRunToggle",
+     "status": "defined",
+     "line": 116
+    }
+   ]
+  },
+  {
+   "uid": "T0130",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/spline_chart.py",
+     "symbol": "SplineChart",
+     "status": "defined",
+     "line": 55
+    },
+    {
+     "file": "ui/spline_chart.py",
+     "symbol": "_catmull_rom",
+     "status": "defined",
+     "line": 35
+    },
+    {
+     "file": "ui/dashboard_tab.py",
+     "symbol": "DashboardTab",
+     "status": "defined",
+     "line": 34
+    }
+   ]
+  },
+  {
+   "uid": "T0131",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/file_edit_dialog.py",
+     "symbol": "FileEditDialog",
+     "status": "defined",
+     "line": 50
+    },
+    {
+     "file": "ui/file_edit_dialog.py",
+     "symbol": "FileEditDialog.load_file",
+     "status": "defined",
+     "line": 132
+    },
+    {
+     "file": "ui/file_edit_dialog.py",
+     "symbol": "FileEditDialog._ai_edit",
+     "status": "defined",
+     "line": 177
+    }
+   ]
+  },
+  {
+   "uid": "T0132",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/permissions.py",
+     "symbol": "PermissionGate.request",
+     "status": "defined",
+     "line": 27
+    },
+    {
+     "file": "core/worker.py",
+     "symbol": "AgentWorker.permission_requested",
+     "status": "defined",
+     "line": 22
+    },
+    {
+     "file": "ui/chat_panel.py",
+     "symbol": "ChatPanel._on_permission",
+     "status": "defined",
+     "line": 1282
+    },
+    {
+     "file": "ui/permission_dialog.py",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0133",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ms365_auth.py",
+     "symbol": "sign_in_device_code",
+     "status": "defined",
+     "line": 144
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0134",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.routing_mode_for",
+     "status": "defined",
+     "line": 554
+    },
+    {
+     "file": "core/history.py",
+     "symbol": "save_conversation",
+     "status": "defined",
+     "line": 34
+    },
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "build_ext_connector_tools",
+     "status": "defined",
+     "line": 172
+    }
+   ]
+  },
+  {
+   "uid": "T0135",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_config_panel.py",
+     "symbol": "StepConfigPanel",
+     "status": "defined",
+     "line": 27
+    },
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab",
+     "status": "defined",
+     "line": 227
+    }
+   ]
+  },
+  {
+   "uid": "T0136",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": []
+  },
+  {
+   "uid": "T0137",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "Co4ECanvas",
+     "status": "defined",
+     "line": 366
+    },
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_run_co4e_flow",
+     "status": "defined",
+     "line": 382
+    },
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab._apply_workflow",
+     "status": "defined",
+     "line": 956
+    }
+   ]
+  },
+  {
+   "uid": "T0138",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "paths.py",
+     "symbol": "detect_onedrive_roots",
+     "status": "defined",
+     "line": 15
+    },
+    {
+     "file": "paths.py",
+     "symbol": "is_onedrive_path",
+     "status": "defined",
+     "line": 58
+    },
+    {
+     "file": "paths.py",
+     "symbol": "normalize_workdir",
+     "status": "defined",
+     "line": 73
+    },
+    {
+     "file": "paths.py",
+     "symbol": "default_workdir",
+     "status": "defined",
+     "line": 78
+    }
+   ]
+  },
+  {
+   "uid": "T0139",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/cowork_tab.py",
+     "symbol": "CoworkTab._promote_turn_outputs",
+     "status": "defined",
+     "line": 254
+    },
+    {
+     "file": "ui/chat_panel.py",
+     "symbol": "ChatPanel._on_finished",
+     "status": "defined",
+     "line": 1441
+    }
+   ]
+  },
+  {
+   "uid": "T0140",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": [
+    {
+     "file": "skill_library/03-build-implementation.skill",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0141",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": []
+  },
+  {
+   "uid": "T0142",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/tasks.py",
+     "symbol": "_all_prerequisites",
+     "status": "defined",
+     "line": 219
+    },
+    {
+     "file": "core/tasks.py",
+     "symbol": "dependencies_met",
+     "status": "defined",
+     "line": 230
+    }
+   ]
+  },
+  {
+   "uid": "T0143",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/appcontainer_sandbox.py",
+     "symbol": "AppContainerSandbox",
+     "status": "defined",
+     "line": 42
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0144",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/routing/models_config.sample.yaml",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/model_pricing.py",
+     "symbol": "auto_link",
+     "status": "defined",
+     "line": 264
+    },
+    {
+     "file": "core/model_pricing.py",
+     "symbol": "turn_cost_usd",
+     "status": "defined",
+     "line": 135
+    }
+   ]
+  },
+  {
+   "uid": "T0145",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "_route",
+     "status": "defined",
+     "line": 246
+    },
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab._update_run_btn",
+     "status": "defined",
+     "line": 420
+    }
+   ]
+  },
+  {
+   "uid": "T0146",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ms365_local.py",
+     "symbol": "build_ms365_local_tools",
+     "status": "defined",
+     "line": 78
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "core/routing/models_config.sample.yaml",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0147",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/calendar_view.py",
+     "symbol": "CalendarView",
+     "status": "defined",
+     "line": 86
+    },
+    {
+     "file": "ui/co4e_tab.py",
+     "symbol": "Co4ETab._update_run_btn",
+     "status": "defined",
+     "line": 420
+    }
+   ]
+  },
+  {
+   "uid": "T0148",
+   "verdict": "unverified",
+   "status": "ungrounded",
+   "checks": [
+    {
+     "file": "refactor/plan.md",
+     "symbol": "_build_calendar",
+     "status": "no-file",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0149",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/ext_connectors.py",
+     "symbol": "RestApiConnector",
+     "status": "defined",
+     "line": 89
+    },
+    {
+     "file": "ui/connectors_panel.py",
+     "symbol": "ConnectorsPanel",
+     "status": "defined",
+     "line": 112
+    },
+    {
+     "file": "providers/base.py",
+     "symbol": "Provider",
+     "status": "defined",
+     "line": 211
+    }
+   ]
+  },
+  {
+   "uid": "T0150",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/code_agent.py",
+     "symbol": "run_code",
+     "status": "defined",
+     "line": 196
+    },
+    {
+     "file": "assets/RULEforCode.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0151",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig",
+     "status": "defined",
+     "line": 343
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0152",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "AdminAgent",
+     "status": "defined",
+     "line": 76
+    },
+    {
+     "file": "ui/chat_panel.py",
+     "symbol": "ChatPanel._augment",
+     "status": "defined",
+     "line": 799
+    },
+    {
+     "file": "ui/cowork_tab.py",
+     "symbol": "CoworkTab.project_knowledge_dir",
+     "status": "defined",
+     "line": 159
+    }
+   ]
+  },
+  {
+   "uid": "T0153",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/context_budget.py",
+     "symbol": "maybe_compact",
+     "status": "defined",
+     "line": 135
+    },
+    {
+     "file": "core/doc_extract.py",
+     "symbol": "extract_text",
+     "status": "defined",
+     "line": 130
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0154",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.routing",
+     "status": "defined",
+     "line": 541
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.mcp_servers",
+     "status": "defined",
+     "line": 524
+    },
+    {
+     "file": "core/chat_agent.py",
+     "symbol": "run_cowork",
+     "status": "defined",
+     "line": 325
+    }
+   ]
+  },
+  {
+   "uid": "T0155",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/audit_log.py",
+     "symbol": "record",
+     "status": "defined",
+     "line": 46
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.connect_external",
+     "status": "defined",
+     "line": 476
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0156",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": [
+    {
+     "file": "assets/graph_template.html",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "security_sandbox.yaml",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0157",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/doc_extract.py",
+     "symbol": "extract_text",
+     "status": "defined",
+     "line": 130
+    },
+    {
+     "file": "core/jira_tool.py",
+     "symbol": "search",
+     "status": "defined",
+     "line": 109
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0158",
+   "verdict": "corroborated",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "run",
+     "status": "defined",
+     "line": 809
+    },
+    {
+     "file": "app.py",
+     "symbol": "run",
+     "status": "defined",
+     "line": 809
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0159",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "TASK_KINDS",
+     "status": "defined",
+     "line": 35
+    },
+    {
+     "file": "core/admin_agents.py",
+     "symbol": "ensure_help_agent",
+     "status": "defined",
+     "line": 146
+    }
+   ]
+  },
+  {
+   "uid": "T0160",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "policy",
+     "status": "defined",
+     "line": 58
+    },
+    {
+     "file": "core/routing/README.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0161",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/routing/models_config.sample.yaml",
+     "symbol": "routing",
+     "status": "defined",
+     "line": 30
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "risk_routing",
+     "status": "defined",
+     "line": 44
+    },
+    {
+     "file": "core/structure_graph.py",
+     "symbol": "StructureGraph",
+     "status": "defined",
+     "line": 53
+    }
+   ]
+  },
+  {
+   "uid": "T0162",
+   "verdict": "unverified",
+   "status": "partly-grounded",
+   "checks": [
+    {
+     "file": "core/co4e_builtins.py",
+     "symbol": "build_delivery_lifecycle_flow",
+     "status": "defined",
+     "line": 160
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.mcp_servers",
+     "status": "defined",
+     "line": 524
+    },
+    {
+     "file": "architecture/co4e-split-map-node-property.md",
+     "symbol": "StepConfigPanel",
+     "status": "no-file",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0163",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    },
+    {
+     "file": "skill_library/01-analyze-requirement.skill",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "ui/co4e_canvas.py",
+     "symbol": "Co4ECanvas",
+     "status": "defined",
+     "line": 366
+    }
+   ]
+  },
+  {
+   "uid": "T0164",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/co4e_run_manager.py",
+     "symbol": "Co4ERunManager",
+     "status": "defined",
+     "line": 109
+    }
+   ]
+  },
+  {
+   "uid": "T0165",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow.__init__",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._nav_defs",
+     "status": "defined",
+     "line": 79
+    },
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0166",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._goto",
+     "status": "defined",
+     "line": 722
+    },
+    {
+     "file": "app.py",
+     "symbol": "MainWindow._fit_to_screen",
+     "status": "defined",
+     "line": 748
+    },
+    {
+     "file": "config/security_sandbox.yaml",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0167",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow.__init__",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "core/codebase_memory.py",
+     "symbol": "CodebaseMemory",
+     "status": "defined",
+     "line": 77
+    },
+    {
+     "file": "core/routing/prober.py",
+     "symbol": "probe_candidates",
+     "status": "defined",
+     "line": 176
+    }
+   ]
+  },
+  {
+   "uid": "T0168",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "ui/co4e_config_panel.py",
+     "symbol": "StepConfigPanel._add_attachment",
+     "status": "defined",
+     "line": 307
+    },
+    {
+     "file": "core/tools.py",
+     "symbol": "fetch_url",
+     "status": "present",
+     "line": 54
+    },
+    {
+     "file": "core/task_executors.py",
+     "symbol": "_run_co4e_flow",
+     "status": "defined",
+     "line": 382
+    }
+   ]
+  },
+  {
+   "uid": "T0169",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "assets/RULEBASE.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    },
+    {
+     "file": "config.py",
+     "symbol": "AppConfig.agent_security",
+     "status": "defined",
+     "line": 520
+    },
+    {
+     "file": "assets/RULEforCode.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0170",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "core/calendar_grid.py",
+     "symbol": "group_tasks_by_date",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "core/account_excel.py",
+     "symbol": "export_template",
+     "status": "defined",
+     "line": 24
+    },
+    {
+     "file": "core/holiday_calendar.py",
+     "symbol": "is_holiday",
+     "status": "defined",
+     "line": 46
+    }
+   ]
+  },
+  {
+   "uid": "T0171",
+   "verdict": "unverified",
+   "status": "grounded",
+   "checks": [
+    {
+     "file": "app.py",
+     "symbol": "MainWindow.__init__",
+     "status": "defined",
+     "line": 56
+    },
+    {
+     "file": "core/agent_security.py",
+     "symbol": "combined_rules_text",
+     "status": "defined",
+     "line": 53
+    },
+    {
+     "file": "README.md",
+     "symbol": "",
+     "status": "no-symbol",
+     "line": null
+    }
+   ]
+  },
+  {
+   "uid": "T0172",
+   "verdict": "unverified",
+   "status": "uncited",
+   "checks": []
+  }
+ ]
+}

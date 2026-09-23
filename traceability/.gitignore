@@ -1,0 +1,22 @@
+# Generated run artifacts — free to reproduce from the inputs, large, noisy in diffs.
+runs/*/tickets.json
+runs/*/corpus.json
+runs/*/index.json
+runs/*/candidates.json
+runs/*/config.json
+runs/*/features.json
+runs/*/progress.json
+runs/*/reconciliation.json
+runs/*/gates.json
+runs/*/delivery.json
+# Raw model responses. Keyed by content, so re-creatable, but re-creating costs money —
+# keep them locally, don't commit them.
+runs/*/cache/
+__pycache__/
+.pytest_cache/
+# Kept on purpose: labels.json (hand-made), verdicts.json and shadow.json (cost money).
+
+# Local credentials — never commit.
+.env
+.coverage
+htmlcov/

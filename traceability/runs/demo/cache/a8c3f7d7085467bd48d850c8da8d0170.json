@@ -1,0 +1,28 @@
+{
+ "verdict": "corroborated",
+ "confidence": "high",
+ "reasoning": "core/usage_tracker.py implements exactly the claimed functionality: record() appends one JSON-line event per provider turn into dated .jsonl files under ~/.cowork_local/usage/, load_events() reads them back, and summarize() aggregates them into dashboard numbers. Thread-local context tagging and accumulators are also present, matching the ticket's scope.",
+ "evidence": [
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "record",
+   "why": "Appends one usage event per provider turn as a JSON line to a per-day .jsonl file."
+  },
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "summarize",
+   "why": "Aggregates events into totals, per-label/source breakdowns and habit stats — the summarize API claimed."
+  },
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "load_events",
+   "why": "Reads back the JSONL cache files filtered by date range."
+  },
+  {
+   "file": "core/usage_tracker.py",
+   "symbol": "set_context",
+   "why": "Thread-local tagging of subsequent records with source/label for each turn."
+  }
+ ],
+ "status_conflict": false
+}

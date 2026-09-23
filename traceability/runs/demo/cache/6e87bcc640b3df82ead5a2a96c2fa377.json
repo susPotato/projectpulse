@@ -1,0 +1,18 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The retrieved files match on the word \"switch\" but concern Auto Model Routing (core/routing/switch_controller.py decides which LLM to use), not Co4E workflow conditional branching. core/task_executors.py shows a Co4E node-graph runner exists (_run_co4e_flow, co4e_runner.run_workflow) but nothing about IF/Switch nodes or typed ports; the co4e/co4e_runner modules themselves were not shown.",
+ "evidence": [
+  {
+   "file": "core/routing/switch_controller.py",
+   "symbol": "decide",
+   "why": "The 'switch' here is model switching between providers/models, unrelated to workflow conditional branching."
+  },
+  {
+   "file": "core/task_executors.py",
+   "symbol": "_run_co4e_flow",
+   "why": "Confirms a Co4E node/edge workflow runner exists but shows no branching, condition evaluation, or port typing."
+  }
+ ],
+ "status_conflict": false
+}

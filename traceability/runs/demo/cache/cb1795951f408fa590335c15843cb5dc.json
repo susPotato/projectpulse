@@ -1,0 +1,13 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "The only candidate file shown is assets/RULEBASE.md, a security policy document for the agent guardrails, and the architecture excerpt covers the security sandbox module. Nothing here relates to GraphRAG, knowledge-graph construction from file content, or similarity search, so the ticket's claim cannot be evaluated either way.",
+ "evidence": [
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "An agent security policy document with no reference to knowledge graphs, embeddings, or similarity search — unrelated to the GraphRAG ticket."
+  }
+ ],
+ "status_conflict": false
+}

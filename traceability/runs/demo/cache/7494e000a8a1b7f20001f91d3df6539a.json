@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the shown files contain an MCP tool manifest JSON schema, sample manifests, or a Cowork Tool Registry. assets/RULEBASE.md and config/security_sandbox.yaml only state MCP security/limit policies (approved servers, max_mcp_calls), and core/groups.py is an unrelated org-unit store. The retrieved subset simply does not address the tool-contract deliverable either way.",
+ "evidence": [
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "limits",
+   "why": "Only declares MCP call limits and risk routing, not a tool manifest schema or registry."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "Section 27/28 state tool and MCP security policy in prose, but define no JSON schema or manifest contract."
+  },
+  {
+   "file": "core/groups.py",
+   "symbol": "Group",
+   "why": "Handles group/account JSON storage and is unrelated to MCP tool contracts."
+  }
+ ],
+ "status_conflict": false
+}

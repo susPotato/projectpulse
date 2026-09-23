@@ -1,0 +1,13 @@
+{
+ "headline": "Platform Integrations covers seven connector and execution features marked as released, of which four (Jira issue tracking, Java runtime support, link previews, and the workflow/flows engine) are backed by code the analysis could read, while three (Git operations, batch processing, and Windows COM) could not be confirmed from the code that was examined.",
+ "what_is_there": "The code shows a working read-only Jira connector (search and issue lookup with authentication, plus Jira link resolution in previews), a Java runtime locator used to run an external PDF tool, a URL preview feature that fetches pages, caps size and substitutes explanatory notes when a page can't be read, and a workflow layer that defines and saves multi-step flows seeded at application start.",
+ "what_is_unclear": "Git workspace operations, application batch processing and Windows COM integration were not settled — the files pulled in matched on words like 'workspace' and 'batch' rather than the actual features, so there is no evidence either way. For the workflow engine, flow definition and storage are visible but the part that actually runs a flow was only referred to indirectly; similarly, Java support is shown as locating a Java runtime for one specific tool rather than general code execution.",
+ "suggested_action": "Ask the team to point to where Git operations, batch processing and Windows COM live so those three can be checked directly, and confirm whether 'Java code execution' and 'Flows execution' mean more than what is currently visible.",
+ "caveat": "The Windows COM ticket is still open in the tracker, so its unconfirmed status may simply reflect work not yet done rather than a gap in the analysis.",
+ "confidence": "medium",
+ "_usage": {
+  "input_tokens": 1461,
+  "output_tokens": 541,
+  "model": "claude-opus-5"
+ }
+}

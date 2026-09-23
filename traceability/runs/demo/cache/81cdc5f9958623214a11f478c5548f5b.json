@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "medium",
+ "reasoning": "The shown files cover the app shell's toast/tray notifications (`_Toast`, `MainWindow._on_scheduled_task_done`) and agent security guardrails — none of which concern Microsoft Teams channel notification settings or a scheduled notification-check job. No Teams integration or notification-settings UI code appears in the candidate subset, so neither confirmation nor refutation is possible from this evidence.",
+ "evidence": [
+  {
+   "file": "app.py",
+   "symbol": "_Toast.show_message",
+   "why": "Implements in-app toast popups, unrelated to Teams channel notification settings."
+  },
+  {
+   "file": "app.py",
+   "symbol": "MainWindow._on_scheduled_task_done",
+   "why": "Raises a desktop tray balloon for finished scheduled tasks, which is local OS notification, not Teams delivery."
+  },
+  {
+   "file": "core/agent_security.py",
+   "symbol": "combined_rules_text",
+   "why": "Touches Microsoft 365 Graph only for fetching admin rule documents, not for Teams notifications."
+  }
+ ],
+ "status_conflict": false
+}

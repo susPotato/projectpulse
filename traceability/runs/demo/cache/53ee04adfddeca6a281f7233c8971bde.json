@@ -1,0 +1,33 @@
+{
+ "verdict": "corroborated",
+ "confidence": "medium",
+ "reasoning": "core/model_pricing.py implements exactly the per-model price table described — entries persisted under model_pricing.entries, import/export of a vendor-column template, and convert()/usd_rates_for()/turn_cost_usd() performing currency conversion between VND/JPY/USD as documented in the module docstring. The budget-alert portion of the ticket is not visible in the shown files (usage_tracker is only referenced, not included), so that sub-feature is unconfirmed, but nothing contradicts it and the status 'Release it' is consistent with the built code.",
+ "evidence": [
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "COLUMNS",
+   "why": "Defines the per-model pricing table schema (model, context length, input/output price and units) matching the ticket's pricing table."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "usd_rates_for",
+   "why": "Converts an entry's own currency to USD using convert(), showing multi-currency handling."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "sync_to_usage",
+   "why": "Pushes per-model USD rates into usage tracking so cost totals derive from this price table."
+  },
+  {
+   "file": "core/model_pricing.py",
+   "symbol": "import_table",
+   "why": "Implements import of a filled pricing template (.xlsx/.csv) into price entries."
+  },
+  {
+   "file": "core/context_budget.py",
+   "symbol": "maybe_compact",
+   "why": "This file is about context-window budget/compaction, not monetary budget alerts, so it is unrelated to the ticket despite the 'budget' keyword match."
+  }
+ ],
+ "status_conflict": false
+}

@@ -1,0 +1,23 @@
+{
+ "verdict": "unverified",
+ "confidence": "high",
+ "reasoning": "None of the candidate files relate to knowledge/RAG packaging: RULEBASE.md is a security policy document, security_sandbox.yaml is sandbox configuration, and core/routing/metadata.py enriches LLM model metadata for routing. There is no visible knowledge base, source/citation, project isolation, or ground-truth code to judge the ticket against.",
+ "evidence": [
+  {
+   "file": "core/routing/metadata.py",
+   "symbol": "enrich",
+   "why": "Deals with LLM model price/context metadata for routing, not knowledge-base document metadata or citations."
+  },
+  {
+   "file": "config/security_sandbox.yaml",
+   "symbol": "security_sandbox.yaml",
+   "why": "Declares sandbox backends and limits, unrelated to RAG source/metadata packaging."
+  },
+  {
+   "file": "assets/RULEBASE.md",
+   "symbol": "",
+   "why": "A security/governance rulebase document with no RAG or knowledge-indexing implementation."
+  }
+ ],
+ "status_conflict": false
+}

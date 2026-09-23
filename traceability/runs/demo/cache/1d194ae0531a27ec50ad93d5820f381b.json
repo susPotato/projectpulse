@@ -1,0 +1,7 @@
+{
+ "verdict": "unverified",
+ "confidence": "low",
+ "reasoning": "No source files were retrieved or readable, so there is nothing to evaluate against the ticket's claim about a requires_approval gate and manual confirmation before task execution. Without any code evidence, neither corroboration nor contradiction is possible.",
+ "evidence": [],
+ "status_conflict": false
+}
