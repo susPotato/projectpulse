@@ -236,6 +236,28 @@ def test_the_script_sends_each_page_as_it_reads_it():
     assert send > loop, "the push must happen inside the paging loop"
 
 
+def test_a_403_from_jira_is_not_retried_as_a_rate_limit():
+    """403 is two failures wearing one number, and `connect.py` says so.
+
+    Jira's own 403 is "authenticated, but refused" - a permission on the
+    account or a restriction on the site. Waiting does not fix it, so
+    retrying spends two minutes arriving at the same answer and then reports
+    a rate limit, sending somebody to look for a queue that is not there. A
+    bot filter in front of Jira also answers 403, but with an HTML page
+    instead of Jira's JSON, and that one is worth waiting out.
+    """
+    section = _powershell_section()
+    assert re.search(r"\$code\s+-eq\s+403", section), "403 is not handled apart"
+    assert "!doctype" in section.lower(), (
+        "nothing tells Jira's own 403 from a filter's HTML challenge page, so "
+        "a permission problem is retried as though it were a rate limit"
+    )
+    # And the non-HTML case must stop rather than fall into the backoff.
+    stop = section.index("Jira refused this account (403)")
+    backoff = section.index("$code -eq 429 -or $code -eq 403")
+    assert stop < backoff
+
+
 def test_the_script_backs_off_rather_than_giving_up_on_one_refusal():
     text = TEMPLATE.read_text(encoding="utf-8")
     assert "Retry-After" in text, "Jira says how long to wait; ask it"

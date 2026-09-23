@@ -218,6 +218,39 @@ while ($pages -lt $MaxPages) {
                 continue
             }
 
+            # 403 is two different failures wearing one number, and only one
+            # of them is worth waiting out.
+            #
+            # Jira's own 403 means the credential was accepted and this
+            # account may not read the API - a permission on the account or a
+            # restriction on the site. Retrying that just spends two minutes
+            # to arrive at the same answer, and reports it as a rate limit,
+            # which sends somebody looking for a queue that is not there.
+            #
+            # A bot filter in front of Jira also answers 403, but with an HTML
+            # page rather than Jira's JSON. That one is the limiter, and
+            # waiting is exactly right. Same rule `connect.py` uses.
+            if ($code -eq 403) {
+                $body = ""
+                if ($_.ErrorDetails -and $_.ErrorDetails.Message) {
+                    $body = $_.ErrorDetails.Message.TrimStart()
+                }
+                if ($body -notmatch '^\s*<(!doctype|html)') {
+                    Write-Bad "Jira refused this account (403)."
+                    Write-Note "The token was accepted, so this is not a wrong or expired one."
+                    Write-Note "The account it belongs to is not allowed to read the API for"
+                    Write-Note "$ProjectKey, or this site restricts API access generally."
+                    Write-Note ""
+                    Write-Note "Check by opening this in a browser where you are signed in:"
+                    Write-Note "  $JiraSite/rest/api/2/myself"
+                    Write-Note "JSON means the API is open to you and the token needs the"
+                    Write-Note "right permission; the same 403 means the site is the limit."
+                    if ($body) { Write-Note "" ; Write-Note $body }
+                    Read-Host "Enter to close"; exit 1
+                }
+                Write-Note "a filter in front of Jira answered with a page, not Jira"
+            }
+
             if ($code -eq 429 -or $code -eq 403 -or $code -eq 503) {
                 if ($try -ge $MaxRetries) {
                     Write-Bad "Jira's gateway kept refusing ($code). Stopping here."
