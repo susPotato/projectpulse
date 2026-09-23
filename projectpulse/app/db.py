@@ -24,6 +24,7 @@ from app.models import (  # noqa: F401
     repo,
     sync,
     tool,
+    traceability,
     uploads,
 )
 
@@ -132,6 +133,14 @@ _ADDITIVE_COLUMNS: tuple[tuple[str, str, str], ...] = (
     # task with no recorded transition into a closed status simply has none,
     # which is the same answer it would get from a fresh conversion.
     ("tasks", "actual_end", "DATE"),
+    # The tracker's own "last updated", added to the model by 94b3b4e without
+    # an entry here - so every database that predates that commit answers
+    # `column tasks.source_updated_at does not exist` on the first request
+    # that reads a task, and `/api/portfolio` is the health check, so Fly
+    # takes the machine out of the pool and the whole app is down rather than
+    # one feature. Found on a local database that had simply been running
+    # since before the column existed.
+    ("tasks", "source_updated_at", "DATE"),
 )
 
 

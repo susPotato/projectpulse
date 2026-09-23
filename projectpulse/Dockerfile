@@ -66,6 +66,50 @@ COPY traceability_runs ./traceability_runs
 # live, not gated behind a key - python-docx has no fallback otherwise.
 RUN pip install -e ".[llm,report]"
 
+# CodeWiki's dependency analyser, which `tracelink/corpus.py` prefers over its
+# Python-only AST fallback. Without it the deployed server silently builds a
+# weaker corpus: `codewiki_symbols` logs at INFO and returns None, so the only
+# evidence is `analyzer: "python-ast"` buried in corpus.json - no error, no
+# failed boot, just a corpus with no edges and no non-Python symbols. On the
+# CoWorkLocal tree that is the difference between 2084 symbols with 506 edges
+# and names-only with none at all.
+#
+# `--no-deps`, and the runtime dependencies listed by hand, because CodeWiki's
+# own dependency list is written for the whole product - litellm, openai,
+# pydantic-ai, fastapi, uvicorn, mermaid, networkx. Installing it wholesale
+# pulls ~414 MB for an analyser that needs ~33 MB of it, onto a 512 MB machine.
+# The list below is what `codewiki.src.be.dependency_analyzer` and
+# `codewiki.src.config` actually import, verified by building a corpus in a
+# venv holding only these - see tests/test_codewiki_analyzer.py, which fails if
+# the image ever falls back.
+#
+# `tiktoken` is in the list but NOT in CodeWiki's pyproject.toml:
+# `codewiki/src/be/utils.py` imports it and upstream gets away with it because
+# litellm happens to pull it in. Installing with --no-deps removes that
+# accident, so it has to be named. Unpinned, like `tiktoken` upstream: there is
+# no declared floor to respect.
+#
+# Pinned to a commit rather than a branch - the analyser's output is an input
+# to every verdict, and "whatever main said on build day" is not a fixed input.
+RUN pip install --no-deps \
+        "git+https://github.com/FSoft-AI4Code/CodeWiki@9ed15bad90170bb4db6b708210e7bc90a130a953" \
+    && pip install \
+        "tree-sitter==0.26.0" \
+        "tree-sitter-c==0.24.2" \
+        "tree-sitter-c-sharp==0.23.5" \
+        "tree-sitter-cpp==0.23.4" \
+        "tree-sitter-java==0.23.5" \
+        "tree-sitter-javascript==0.25.0" \
+        "tree-sitter-kotlin==1.1.0" \
+        "tree-sitter-php==0.24.1" \
+        "tree-sitter-python==0.25.0" \
+        "tree-sitter-ruby==0.23.1" \
+        "tree-sitter-typescript==0.23.2" \
+        "pathspec==1.1.1" \
+        "colorama==0.4.6" \
+        "python-dotenv==1.2.3" \
+        tiktoken
+
 # Where `app/ingest/sources/git/source.py` looks for the pipeline. `/app` is on
 # the path anyway under `python -m`, so this is belt and braces - but the
 # alternative to being explicit is a feature that works or not depending on the
@@ -80,12 +124,22 @@ ENV PULSE_TRACELINK_HOME=/app
 RUN mkdir -p /app/data/demo /app/models /app/.pulse/repos \
     && useradd --create-home --uid 10001 pulse \
     && chown -R pulse:pulse /app
-USER pulse
+
+# ⚠️ No `USER pulse` here, and that is not a regression - see
+# `docker-entrypoint.sh`. A Fly volume mounts root:root, so a container that
+# has already dropped to `pulse` cannot make its own state directory writable
+# and dies at boot with a permission error. The entrypoint starts as root,
+# chowns `/data` alone, and execs the app as uid 10001. Nothing
+# application-shaped runs privileged.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Fly, Railway and Render all inject PORT. 8080 is the value they inject most
 # often, and `scripts.serve` reads the variable rather than this default.
 ENV PORT=8080
 EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Schema, seed-if-empty, then uvicorn. See scripts/serve.py for why the seeding
 # is conditional rather than unconditional.

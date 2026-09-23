@@ -1,0 +1,40 @@
+# Line endings, decided here rather than by whoever cloned.
+#
+# `core.autocrlf=true` is the Windows default and it checks text files out
+# with CRLF. That is right for a file Notepad opens and wrong for a file
+# Linux executes: `docker-entrypoint.sh` starting `#!/bin/sh\r` makes the
+# kernel look for an interpreter literally named `sh\r`, and the container
+# exits before a single line of the app runs. The image built fine from the
+# working copy it was written in and would have broken on the next clone.
+*.sh text eol=lf
+
+# Same reason, one step removed: a `RUN` with backslash continuations is a
+# shell script by the time it executes.
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+
+# Read by Linux tooling, and YAML is whitespace-significant enough without
+# stray carriage returns in it.
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# PowerShell runs on Windows and CRLF is what an editor there expects. The
+# `.tmpl` is served as a download and run by double-click, so it wants the
+# native endings too.
+*.ps1 text eol=crlf
+*.ps1.tmpl text eol=crlf
+
+# Binary, so never touched.
+*.xlsx binary
+*.xlsm binary
+*.pptx binary
+*.docx binary
+*.pdf binary
+*.7z binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.db binary

@@ -24,6 +24,13 @@
   --color-surface: #ffffff;
   --color-rule: #dce2eb;
   --color-rule-2: #edf0f5;
+  /* Text and icons drawn ON an accent fill (the blue primary button).
+     Not `--color-surface`: that is white in light mode and near-black in
+     dark, so reusing it turns a blue button's label dark the moment the
+     theme flips. What sits on an accent stays light in both modes, so this
+     is one value repeated rather than a pair - a token anyway, so no
+     component has to write a literal. Mirrored in `shell.css`. */
+  --color-on-accent: #ffffff;
 
   --font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
 
@@ -70,6 +77,7 @@
     --color-surface: #151d28;
     --color-rule: #26313f;
     --color-rule-2: #1c2531;
+    --color-on-accent: #ffffff;
 
     color-scheme: dark;
   }
@@ -94,6 +102,7 @@
   --color-surface: #151d28;
   --color-rule: #26313f;
   --color-rule-2: #1c2531;
+  --color-on-accent: #ffffff;
 
   color-scheme: dark;
 }

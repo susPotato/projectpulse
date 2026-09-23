@@ -6,6 +6,11 @@
 # computer on purpose: Jira refuses requests from the server but accepts
 # them from an ordinary office machine, so the fetch has to happen here.
 #
+# Safe to run again at any time. It asks ProjectPulse what it already has
+# and reads only what changed since, so the second run is quick. If Jira's
+# gateway cuts you off part way, everything read up to that point has
+# already been sent - run it again and it carries on from there.
+#
 # Nothing is installed. Nothing is left behind except a saved token, and
 # only if you say yes.
 
@@ -31,9 +36,27 @@ $Headers = @{
 $PageSize = 25
 $Pace     = 4
 
+# How many times to wait out a refusal before giving up on a page. The
+# first refusal is usually the limiter rather than a wall, and waiting is
+# what gets through it - but a genuinely blocked host should not be
+# hammered, so this is small and the waits get longer.
+$MaxRetries = 3
+
+# A ceiling, so a project far larger than expected cannot walk for hours.
+# 400 pages is 10,000 issues; reaching it is reported, not silent, and the
+# next run resumes from where this one stopped.
+$MaxPages = 400
+
+# Only the fields anything downstream reads, instead of every field the
+# site defines. A corporate Jira carries hundreds of custom fields and they
+# are most of the weight of a response that also expands the changelog -
+# which is the request the gateway refuses first.
+$Fields = "project,summary,issuetype,status,assignee,created,updated,duedate,priority,labels,parent,description,customfield_10016"
+
 function Write-Step($text) { Write-Host $text -ForegroundColor Cyan }
 function Write-Note($text) { Write-Host "  $text" -ForegroundColor DarkGray }
 function Write-Bad($text)  { Write-Host $text -ForegroundColor Red }
+function Write-Good($text) { Write-Host $text -ForegroundColor Green }
 
 Write-Host ""
 Write-Host "ProjectPulse - Jira sync" -ForegroundColor White
@@ -64,67 +87,150 @@ if (Test-Path $TokenFile) {
 $JiraHeaders = $Headers.Clone()
 $JiraHeaders["Authorization"] = "Bearer $JiraToken"
 
-# --- Read from Jira -------------------------------------------------------
-Write-Host ""
-Write-Step "Reading $ProjectKey from Jira"
-$jql = [uri]::EscapeDataString("project = ""$ProjectKey"" ORDER BY updated ASC")
-$all = New-Object System.Collections.ArrayList
-$start = 0
-$total = $null
-
-while ($true) {
-    $url = "$JiraSite/rest/api/2/search?jql=$jql&startAt=$start&maxResults=$PageSize&expand=changelog"
-    try {
-        $page = Invoke-RestMethod -Uri $url -Headers $JiraHeaders -TimeoutSec 60
-    } catch {
-        $code = $_.Exception.Response.StatusCode.value__
-        if ($code -eq 401) {
-            Write-Bad "Jira rejected the token (401). Check it has not expired."
-        } elseif ($code -eq 403 -or $code -eq 429) {
-            Write-Bad "Jira's gateway refused this request ($code)."
-            Write-Note "That is the rate limiter, not your token. Wait a minute and run this again."
-        } else {
-            Write-Bad "Jira answered $code."
-        }
-        Read-Host "Enter to close"; exit 1
-    }
-
-    if ($null -eq $total) { $total = $page.total; Write-Note "$total issue(s) to read" }
-    if ($page.issues.Count -eq 0) { break }
-    [void]$all.AddRange($page.issues)
-    Write-Note "read $($all.Count) of $total"
-    $start += $page.issues.Count
-    if ($start -ge $total) { break }
-    Start-Sleep -Seconds $Pace
-}
-
-if ($all.Count -eq 0) { Write-Bad "No issues came back."; Read-Host "Enter to close"; exit 1 }
-
-# --- Send to ProjectPulse -------------------------------------------------
-Write-Host ""
-Write-Step "Sending to ProjectPulse"
 $pushHeaders = @{
     "Content-Type"        = "application/json"
     "X-Pulse-Admin-Token" = $PushToken
 }
-$sent = 0
-for ($i = 0; $i -lt $all.Count; $i += 50) {
-    $batch = $all[$i..([Math]::Min($i + 49, $all.Count - 1))]
-    $body = @{ project_key = $ProjectKey; issues = $batch; url = "$JiraSite/rest/api/2/search" } |
-        ConvertTo-Json -Depth 30 -Compress
-    try {
-        $reply = Invoke-RestMethod -Uri "$Server/api/jira/ingest" -Method Post `
-            -Headers $pushHeaders -Body ([Text.Encoding]::UTF8.GetBytes($body)) -TimeoutSec 180
-    } catch {
-        Write-Bad "ProjectPulse refused the upload: $($_.ErrorDetails.Message)"
-        Read-Host "Enter to close"; exit 1
+
+# --- What does ProjectPulse already have? ---------------------------------
+# Without this the script re-reads the whole project every time, which is
+# both slow and the thing that earns a refusal from Jira's gateway.
+Write-Step "Asking ProjectPulse what it already has"
+$Since = ""
+try {
+    $mark = Invoke-RestMethod -Uri "$Server/api/jira/watermark?project_key=$ProjectKey" -TimeoutSec 60
+    $Since = $mark.since
+    if ($Since) {
+        Write-Note "$($mark.issues_held) issue(s) already there, newest change $Since"
+        Write-Note "reading only what changed since then"
+    } else {
+        Write-Note "nothing there yet - reading the whole project"
     }
-    $sent += $reply.received
-    Write-Note "sent $sent of $($all.Count) - $($reply.tasks) task(s) on the site"
+} catch {
+    # Not fatal: a full read still works, it is just the slow one.
+    Write-Note "could not ask (reading everything): $($_.Exception.Message)"
 }
 
+# --- Read from Jira, sending each page as it arrives ----------------------
+# Sent per page rather than all at the end. A refusal half way through then
+# costs the rest of the run and nothing else: what was read is already on
+# the server, and the next run's watermark starts from there.
 Write-Host ""
-Write-Host "Done. $sent issue(s) are now on $Server" -ForegroundColor Green
-Write-Note "Open the site and look at the Jira tab."
+Write-Step "Reading $ProjectKey from Jira"
+
+$jqlText = "project = ""$ProjectKey"""
+if ($Since) { $jqlText += " AND updated >= ""$Since""" }
+$jqlText += " ORDER BY updated ASC"
+$jql = [uri]::EscapeDataString($jqlText)
+
+$start = 0
+$total = $null
+$read = 0
+$sent = 0
+$pages = 0
+$stoppedEarly = $false
+
+function Send-Page($issues) {
+    $body = @{ project_key = $ProjectKey; issues = $issues; url = "$JiraSite/rest/api/2/search" } |
+        ConvertTo-Json -Depth 30 -Compress
+    $reply = Invoke-RestMethod -Uri "$Server/api/jira/ingest" -Method Post `
+        -Headers $pushHeaders -Body ([Text.Encoding]::UTF8.GetBytes($body)) -TimeoutSec 180
+    return $reply
+}
+
+while ($pages -lt $MaxPages) {
+    $url = "$JiraSite/rest/api/2/search?jql=$jql&startAt=$start&maxResults=$PageSize&fields=$Fields&expand=changelog"
+
+    $page = $null
+    for ($try = 0; $try -le $MaxRetries; $try++) {
+        try {
+            $page = Invoke-RestMethod -Uri $url -Headers $JiraHeaders -TimeoutSec 60
+            break
+        } catch {
+            $response = $_.Exception.Response
+            $code = $null
+            if ($response) { $code = $response.StatusCode.value__ }
+
+            if ($code -eq 401) {
+                Write-Bad "Jira rejected the token (401). Check it has not expired."
+                Read-Host "Enter to close"; exit 1
+            }
+
+            if ($code -eq 429 -or $code -eq 403 -or $code -eq 503) {
+                if ($try -ge $MaxRetries) {
+                    Write-Bad "Jira's gateway kept refusing ($code). Stopping here."
+                    $stoppedEarly = $true
+                    break
+                }
+                # Jira says how long to wait when it knows; otherwise back
+                # off further each time rather than guessing once.
+                $wait = 0
+                if ($response) {
+                    $retryAfter = $response.Headers["Retry-After"]
+                    if ($retryAfter) { [int]::TryParse($retryAfter, [ref]$wait) | Out-Null }
+                }
+                if ($wait -le 0) { $wait = 20 * ($try + 1) }
+                Write-Note "gateway refused ($code) - waiting $wait s, then trying this page again"
+                Start-Sleep -Seconds $wait
+                continue
+            }
+
+            Write-Bad "Jira answered $code."
+            $stoppedEarly = $true
+            break
+        }
+    }
+
+    if ($null -eq $page) { break }
+
+    # A challenge page comes back as HTML with a 200, so there is no error
+    # to catch - it simply has no `issues`. Saying so beats "no issues came
+    # back", which sends somebody to check a JQL that was never the problem.
+    if ($null -eq $page.PSObject.Properties["issues"]) {
+        Write-Bad "Jira's gateway answered with a page instead of data."
+        Write-Note "That is the bot filter, not your token or your project key."
+        Write-Note "Wait a few minutes and run this again - what was read is already sent."
+        $stoppedEarly = $true
+        break
+    }
+
+    $pages++
+    if ($null -eq $total) { $total = $page.total; Write-Note "$total issue(s) to read" }
+
+    $issues = @($page.issues)
+    if ($issues.Count -eq 0) { break }
+    $read += $issues.Count
+
+    try {
+        $reply = Send-Page $issues
+        $sent += $reply.received
+        Write-Note "read $read of $total - sent $sent - $($reply.tasks) task(s) on the site"
+    } catch {
+        Write-Bad "ProjectPulse refused the upload: $($_.ErrorDetails.Message)"
+        Write-Note "Everything sent before this is already saved."
+        Read-Host "Enter to close"; exit 1
+    }
+
+    $start += $issues.Count
+    if ($start -ge $total) { break }
+    Start-Sleep -Seconds $Pace
+}
+
+if ($pages -ge $MaxPages) {
+    Write-Note "stopped at $MaxPages pages - run this again to carry on"
+    $stoppedEarly = $true
+}
+
+# --- What happened --------------------------------------------------------
+Write-Host ""
+if ($sent -eq 0 -and -not $stoppedEarly) {
+    Write-Good "Already up to date. Nothing has changed in Jira since the last sync."
+} elseif ($stoppedEarly) {
+    Write-Host "Stopped early. $sent issue(s) were sent and saved." -ForegroundColor Yellow
+    Write-Note "Run this again when you can - it will carry on from here."
+} else {
+    Write-Good "Done. $sent issue(s) are now on $Server"
+    Write-Note "Open the site and look at the Jira tab."
+}
 Write-Host ""
 Read-Host "Enter to close"

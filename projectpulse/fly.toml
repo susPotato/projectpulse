@@ -41,17 +41,42 @@ primary_region = 'sin'
   # selects is the secret. Any feature can override this on `/llm` without a
   # deploy; see `app/llm/features.py`.
   PULSE_NARRATION_PROVIDER = 'anthropic'
-  # Where the Traceability page looks for run snapshots. Baked into the image
-  # by the Dockerfile; a project with no run there reads "Not traced" rather
-  # than erroring.
-  TRACELINK_RUNS = '/app/traceability_runs'
+  # Where the Traceability page looks for run snapshots, and where
+  # `app/traceability_run.py` writes the ones this server produces.
+  #
+  # On the volume, not in the image. A run is minutes of CPU and the only copy
+  # of what it found, so it has to outlive the machine - `auto_stop_machines`
+  # takes the container's own filesystem away every time the app idles.
+  #
+  # ⚠️ Deliberately **not** `/app/traceability_runs`. A Fly mount covers the
+  # directory it is mounted at, so pointing the volume there would hide the
+  # runs the Dockerfile copies in - the page would go from 173 verdicts to
+  # "Not traced" on the first deploy, with the artifacts still in the image and
+  # unreachable. The baked runs stay where they are and `scripts/serve.py`
+  # seeds them onto the volume when it is empty.
+  TRACELINK_RUNS = '/data/runs'
+  # The clone cache, also on the volume. Still disposable - `tracelink.source`
+  # re-fetches rather than re-clones and `app/models/repo.py` explains why a
+  # clone is the one input this app does not keep in Postgres - but keeping it
+  # across an idle-stop turns the first run after a sleep from a fresh shallow
+  # clone into a fetch of whatever changed.
+  PULSE_REPO_CACHE = '/data/repos'
 
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 0
+  # One machine stays up, because a traceability run is a background thread
+  # rather than a request. At zero, Fly stops the machine when the last
+  # request finishes and nothing holds it open - the run is killed part-way
+  # through, which is not corrupt (the page names each missing artifact) but
+  # is entirely wasted work.
+  #
+  # ⚠️ This is the one setting here that costs money while idle. Set it back
+  # to 0 if you would rather the machine sleep and accept that a run only
+  # completes while somebody keeps the page busy.
+  min_machines_running = 1
 
   [http_service.http_options]
     [http_service.http_options.response]
@@ -72,6 +97,18 @@ primary_region = 'sin'
     grace_period = '20s'
     method = 'GET'
     path = '/api/portfolio'
+
+# The volume runs are written to, and the clone cache alongside them.
+#
+# One volume, therefore one machine that can mount it - which is consistent
+# with `min_machines_running = 1` above and with the runner refusing to start a
+# second run concurrently. Scaling past one machine means either a volume each
+# (and runs that only exist on whichever machine produced them) or moving the
+# artifacts to object storage; neither is a config change, so do not scale this
+# app out without reading `app/traceability_run.py` first.
+[[mounts]]
+  source = 'pulse_data'
+  destination = '/data'
 
 [[vm]]
   size = 'shared-cpu-1x'

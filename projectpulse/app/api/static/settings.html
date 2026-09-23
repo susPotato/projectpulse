@@ -287,6 +287,34 @@
         '<button class="primary" id="rp-save">Register &amp; read</button>' +
         '<span id="rp-status" class="hint" style="margin:0"></span>' +
       "</div></div></div>" +
+      '<div class="card"><div class="lbl">Backlog export</div>' +
+      '<div class="hint" style="margin:6px 0 12px">The tracker export a ' +
+      "traceability run reads its tickets from. Stored <b>as exported</b>, and " +
+      "deliberately not the same upload as the one above: that one converts a " +
+      "Jira export into a schedule and a worklog and keeps those, which is what " +
+      "the dashboard needs and loses the ticket prose. The process stage reads " +
+      "that prose, so it needs the file as it left the tracker. One export per " +
+      "project; uploading again replaces it.</div>" +
+      '<table class="grid" id="tx-table"><tr><th>Delivery project</th>' +
+      "<th>File</th><th>Size</th><th>Rows from</th><th>Finished status</th>" +
+      "<th>Uploaded</th></tr></table>" +
+      '<div class="hint" id="tx-empty" style="margin:8px 0 0"></div>' +
+      '<div style="margin-top:14px">' +
+      '<label for="tx-project">Store an export</label>' +
+      '<select id="tx-project">' + projectOptions + "</select>" +
+      '<label for="tx-file">Export workbook</label>' +
+      '<input type="file" id="tx-file" accept=".xlsx,.xlsm">' +
+      '<label for="tx-filter">Project name inside the export ' +
+      '<span class="hint">(blank reads every row)</span></label>' +
+      '<input type="text" id="tx-filter" autocomplete="off">' +
+      '<label for="tx-done">Status(es) meaning finished ' +
+      '<span class="hint">(comma separated; blank skips reconciliation, which ' +
+      "will not guess)</span></label>" +
+      '<input type="text" id="tx-done" placeholder="Done,Closed" autocomplete="off">' +
+      '<div class="row" style="margin-top:14px">' +
+        '<button class="primary" id="tx-save">Store export</button>' +
+        '<span id="tx-status" class="hint" style="margin:0"></span>' +
+      "</div></div></div>" +
       '<div class="card"><div class="lbl">Project pairing</div>' +
       '<div class="hint" style="margin:6px 0 12px">One delivery project can have several source ids. ' +
       "Jira and Excel each create their own row for the same work, and without this pairing a Jira event " +
@@ -309,7 +337,9 @@
     loadConnections();
 
     document.getElementById("rp-save").addEventListener("click", saveRepo);
+    document.getElementById("tx-save").addEventListener("click", saveExport);
     loadRepos();
+    loadExports();
 
     /* Forgetting a source. Deliberately the same endpoint, the same wording
        and the same gate as the Imports page rather than a second way to do
@@ -535,6 +565,20 @@
     return h;
   }
 
+  /* The gate, without the content type.
+     `fetch` must be left to set `Content-Type` itself for a `FormData` body,
+     because only it knows the multipart boundary it generated. Sending
+     `application/json` alongside one makes the server parse an empty form and
+     answer "field required" about a field that was in fact sent. */
+  function adminTokenOnly() {
+    var h = {};
+    try {
+      var t = sessionStorage.getItem("pulse-admin-token");
+      if (t) h["X-Pulse-Admin-Token"] = t;
+    } catch (e) { /* refused below, with a reason */ }
+    return h;
+  }
+
   function loadConnections() {
     return fetch("/api/jira/connections")
       .then(function (r) { return r.ok ? r.json() : { connections: [] }; })
@@ -611,6 +655,10 @@
                      "It is a PowerShell script that reads Jira on whichever " +
                      "computer runs it and sends the result here - for a " +
                      "machine that Jira accepts but this server does not.\n\n" +
+                     "Keep it and run it again whenever you want an update: " +
+                     "it asks what is already here and reads only what " +
+                     "changed, and if Jira cuts it off part way it carries " +
+                     "on from there next time.\n\n" +
                      "It contains this server's admin token, so treat the " +
                      "file as a credential and rotate the token afterwards.")) return;
         fetch("/api/jira/sync-tool?project_key=" + encodeURIComponent(key),
@@ -759,6 +807,115 @@
           .catch(function (e) { alert("Could not forget it.\n\n" + e.message); });
       });
     });
+  }
+
+  /* `12 Sep 2026`. There is no shared date helper on the static pages - the
+     only formatter in the front end is Team.tsx's chart axis - so this matches
+     that one's vocabulary rather than inventing a third spelling. Move both to
+     one helper if a second page ever needs a date. */
+  function uploadedOn(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    return d.getDate() + " " +
+      d.toLocaleDateString("en", { month: "short" }) + " " + d.getFullYear();
+  }
+
+  function fileSize(bytes) {
+    var kb = Number(bytes || 0) / 1024;
+    if (kb < 1) return "<1 kB";
+    if (kb < 1024) return Math.round(kb).toLocaleString() + " kB";
+    return (kb / 1024).toFixed(1) + " MB";
+  }
+
+  /* The stored exports. Four states, as every data view here has: loading,
+     failed, none stored, and the rows. "None stored" says what it blocks -
+     a run cannot read a backlog it does not have - rather than only that the
+     table is empty. */
+  function loadExports() {
+    var table = document.getElementById("tx-table");
+    var empty = document.getElementById("tx-empty");
+    if (!table) return Promise.resolve();
+    empty.className = "hint";
+    empty.textContent = "Loading…";
+
+    return fetch("/api/traceability/export")
+      .then(function (r) {
+        if (!r.ok) throw new Error("the server could not list stored exports");
+        return r.json();
+      })
+      .then(function (j) {
+        while (table.rows.length > 1) table.deleteRow(1);
+        var rows = j.exports || [];
+        empty.textContent = rows.length ? ""
+          : "No export is stored yet. A traceability run reads its tickets " +
+            "from one, so nothing can be traced until there is.";
+
+        rows.forEach(function (c) {
+          var tr = table.insertRow();
+          tr.innerHTML =
+            "<td><b>" + esc(c.project_id) + "</b></td>" +
+            "<td><code>" + esc(c.original_filename || "—") + "</code></td>" +
+            '<td class="num">' + esc(fileSize(c.size)) + "</td>" +
+            "<td>" + (c.project_filter
+              ? esc(c.project_filter)
+              : '<span class="hint">every row</span>') + "</td>" +
+            /* Named rather than left blank, because an absent value here is a
+               decision with a consequence: reconciliation is skipped. */
+            "<td>" + (c.done_status
+              ? "<code>" + esc(c.done_status) + "</code>"
+              : '<span class="hint">not set &mdash; reconcile skipped</span>') +
+            "</td>" +
+            "<td>" + esc(uploadedOn(c.updated_at)) + "</td>";
+        });
+      })
+      .catch(function (e) {
+        while (table.rows.length > 1) table.deleteRow(1);
+        empty.className = "hint bad";
+        empty.textContent = e.message;
+      });
+  }
+
+  function saveExport() {
+    var statusEl = document.getElementById("tx-status");
+    var fileEl = document.getElementById("tx-file");
+    var project = document.getElementById("tx-project").value;
+
+    if (project === "__new__") {
+      statusEl.className = "hint bad";
+      statusEl.textContent = "Pick an existing project - an export is the " +
+        "backlog for one, not a way to create one.";
+      return;
+    }
+    if (!fileEl.files || !fileEl.files.length) {
+      statusEl.className = "hint bad";
+      statusEl.textContent = "Choose the export workbook first.";
+      return;
+    }
+
+    var form = new FormData();
+    form.append("file", fileEl.files[0]);
+    form.append("project_id", project);
+    form.append("project_filter", document.getElementById("tx-filter").value.trim());
+    form.append("done_status", document.getElementById("tx-done").value.trim());
+
+    statusEl.className = "hint";
+    statusEl.textContent = "Storing…";
+
+    fetch("/api/traceability/export",
+          { method: "POST", headers: adminTokenOnly(), body: form })
+      .then(readBody)
+      .then(function (j) {
+        statusEl.className = "hint ok";
+        statusEl.textContent = "Stored " + (j.original_filename || "the export") +
+          " (" + fileSize(j.size) + "). Run it from the Traceability page.";
+        fileEl.value = "";
+        return loadExports();
+      })
+      .catch(function (e) {
+        statusEl.className = "hint bad";
+        statusEl.textContent = e.message;
+      });
   }
 
   function saveRepo() {

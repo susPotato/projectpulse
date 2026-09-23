@@ -230,6 +230,29 @@ a red suite rather than a deployed image quietly running last month's
 pipeline. On a machine without that checkout the test skips and the committed
 copy is used as-is.
 
+**The code analyser is in the image.** `tracelink/corpus.py` reads a repository
+with CodeWiki's dependency analyser and falls back to a Python-only AST walk
+when it cannot import it. The fallback is correct on a laptop and wrong here,
+and it is *silent* - it logs at INFO and the only evidence is
+`analyzer: "python-ast"` inside `corpus.json`, on a server that otherwise looks
+healthy. What it costs is every dependency edge and every non-Python symbol: on
+the CoWorkLocal tree, 2084 symbols with 506 edges becomes names-only with none.
+
+So the Dockerfile installs it, pinned to a commit and with `--no-deps`.
+CodeWiki's declared dependencies are written for the whole product - litellm,
+openai, pydantic-ai, fastapi, uvicorn, mermaid, networkx - and pull ~414 MB for
+an analyser that needs ~33 MB of it, onto a 512 MB machine. The runtime
+dependencies are therefore listed by hand, and that list includes `tiktoken`,
+which is **not** in CodeWiki's own `pyproject.toml`: `codewiki/src/be/utils.py`
+imports it and upstream only gets away with that because litellm happens to
+pull it in.
+
+`tests/test_codewiki_analyzer.py` guards both halves - it builds a real corpus
+and asserts the analyser that ran was CodeWiki (skipped where CodeWiki is
+absent, which is the honest state on a laptop), and it reads the Dockerfile to
+check the install is still there, still pinned to a sha, and still names
+`tiktoken`. That second test runs everywhere, including where the first skips.
+
 **A private repository needs a token**, and it is a credential, so it is a
 secret rather than `[env]`:
 
@@ -250,6 +273,51 @@ it survives a deploy. The clone is not: it goes to `/app/.pulse/repos`, which
 is container-local and disposable, and a machine that loses it pays one
 shallow clone on the next refresh. That is the right split, because a clone
 can always be re-derived and an uploaded workbook cannot.
+
+## Running the pipeline on the server
+
+Registering a repository used to write a row nothing read: the Traceability
+page could only show runs baked into the image at build time. It can now
+produce them.
+
+```
+POST /api/traceability/export   # the backlog export, byte for byte (multipart)
+POST /api/traceability/run      # clone, then run every free stage
+GET  /api/traceability/run      # progress, and the tail of the output
+```
+
+The export is a **separate upload from `POST /api/sources/upload`**, which
+takes the same file for a different purpose: it converts a Jira export into the
+schedule and worklog contracts and discards the original. `governance` exists
+because the keyed PM rows carry prose those contracts do not keep, so the
+pipeline needs the file as exported. It lives in `ticket_exports`, one row per
+project, in Postgres for the reason every other upload is - a Fly machine's
+filesystem does not survive a deploy.
+
+**Only the free stages run.** `translate`, `adjudicate` and `explain` cost
+money per ticket - the demo run was $9.26 for 173 verdicts on `claude-opus-5` -
+and are deliberately not wired to a button. `tracelink` names them, with their
+commands, at the end of every run.
+
+Two things to set before relying on this:
+
+**`TRACELINK_RUNS` must point at a volume**, or runs are not kept. The default
+is `/app/traceability_runs`, which is inside the image: a run completes, the
+page reads it, and the next idle-stop takes it away along with the adjudication
+cache. `fly volumes create pulse_runs --size 1`, mount it, and point
+`TRACELINK_RUNS` into it.
+
+**`min_machines_running` must be 1**, or a run is killed part-way. With
+`auto_stop_machines = 'stop'` and a minimum of zero, Fly stops the machine when
+the last request finishes - and the run is a background thread, not a request,
+so nothing holds the machine open. A half-finished run is not corrupt; the page
+names each missing artifact. It is just wasted.
+
+A run is one at a time per process, by refusal rather than by queue: a second
+corpus build on one shared CPU makes both slow instead of either quick. The
+run record is in memory, so a restart forgets a run in flight while its
+subprocess carries on - the artifacts still land, and the page still reads
+them.
 
 ⚠️ **The documentation tree is enforced, not assumed.** A repository with no
 `docs/` (or whatever the registration names) is refused with a 400 listing the

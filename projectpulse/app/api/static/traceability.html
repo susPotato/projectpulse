@@ -99,6 +99,35 @@
                                color var(--dur-tap) var(--ease-out); }
     .chip button:hover { background: var(--red); color: var(--surface); }
 
+    /* The one primary action on this page: produce a run rather than only
+       read one. Sits in the project bar because what it runs is whatever
+       project that picker names. */
+    button.run { font: inherit; font-size: var(--text-body); font-weight: 600;
+                 cursor: pointer; border-radius: 6px; padding: 7px 14px;
+                 border: 1px solid var(--blue); background: var(--blue);
+                 color: var(--on-accent);
+                 transition: opacity var(--dur-tap) var(--ease-out); }
+    button.run:hover { opacity: .88; }
+    button.run:disabled { opacity: .55; cursor: default; }
+    /* The stage the pipeline is on. `tabular-nums` because the elapsed
+       seconds tick beside it and digits of different widths make the whole
+       line jitter once a second. */
+    .run-state { font-size: var(--text-label); color: var(--ink-3);
+                 font-variant-numeric: tabular-nums; }
+    .run-state.ok { color: var(--green); }
+    .run-state.bad { color: var(--red); }
+    /* The tail of the pipeline's own output, for a run that stopped. Shown
+       rather than summarised: the last lines name the stage and what it
+       wanted, which no paraphrase of ours would improve on. */
+    details.runlog { margin-top: 10px; }
+    details.runlog > summary { cursor: pointer; font-size: var(--text-label);
+                               color: var(--ink-3); }
+    details.runlog pre { margin: 8px 0 0; padding: 10px 12px; max-height: 260px;
+                         overflow: auto; background: var(--bg);
+                         border: 1px solid var(--rule); border-radius: 6px;
+                         font-size: var(--text-label); white-space: pre-wrap;
+                         color: var(--ink-2); }
+
     /* Collapsed by default. Two sentences about what the export cannot
        support are worth having and are not worth the top of the page. */
     details.notes { background: var(--surface); border: 1px solid var(--rule);
@@ -234,7 +263,11 @@
     <label for="project" class="lbl" style="align-self:center">Project</label>
     <select id="project"></select>
     <span class="muted" id="runinfo"></span>
+    <button type="button" class="run" id="run-btn" style="margin-left:auto"
+            disabled>Run traceability</button>
+    <span class="run-state" id="run-state"></span>
   </div>
+  <div id="run-detail"></div>
 
   <div id="gaps"></div>
   <div id="mix"></div>
@@ -1668,6 +1701,159 @@
     });
   }
 
+  /* Producing a run, rather than only reading one.
+     ----------------------------------------------------------------
+     The POST returns as soon as the pipeline starts, so everything a
+     person learns after that comes from polling. Three things have to be
+     on screen at all times: whether this server can run at all (the
+     button is disabled with the reason when it cannot), which stage is
+     executing, and - if it stopped - the pipeline's own last words. */
+
+  var runTimer = null;
+  var runStartedAt = 0;
+
+  function adminTokenOnly() {
+    var h = {};
+    try {
+      var t = sessionStorage.getItem("pulse-admin-token");
+      if (t) h["X-Pulse-Admin-Token"] = t;
+    } catch (e) { /* reported by the request that needed it */ }
+    return h;
+  }
+
+  function elapsed() {
+    if (!runStartedAt) return "";
+    return " · " + Math.round((Date.now() - runStartedAt) / 1000) + "s";
+  }
+
+  function paintRun(j) {
+    var btn = document.getElementById("run-btn");
+    var state = document.getElementById("run-state");
+    var detail = document.getElementById("run-detail");
+    var run = j.run;
+
+    /* State 3 of the four: this deployment cannot do it at all. Disabled
+       with the reason beside it, rather than a button that fails when
+       pressed. */
+    if (j.available === false) {
+      btn.disabled = true;
+      state.className = "run-state";
+      state.textContent = j.detail || "This server cannot run the pipeline.";
+      detail.innerHTML = "";
+      return false;
+    }
+
+    if (j.running && run) {
+      btn.disabled = true;
+      state.className = "run-state";
+      /* The stage, paired with the word "Running" - motion and colour never
+         carry the meaning alone. */
+      state.textContent = "Running" +
+        (run.stage ? ": " + run.stage : "…") + elapsed();
+      detail.innerHTML = "";
+      return true;
+    }
+
+    btn.disabled = false;
+    if (!run) {
+      state.className = "run-state";
+      state.textContent = "";
+      detail.innerHTML = "";
+      return false;
+    }
+
+    if (run.status === "done") {
+      state.className = "run-state ok";
+      state.textContent = "Last run finished";
+      detail.innerHTML = "";
+      return false;
+    }
+
+    state.className = "run-state bad";
+    state.textContent = "Last run failed";
+    var log = (run.log || []).join("\n");
+    detail.innerHTML =
+      '<details class="runlog"><summary>Why it stopped</summary><pre>' +
+      esc(run.error ? run.error + "\n\n" + log : log) + "</pre></details>";
+    return false;
+  }
+
+  function refreshRun(onFinish) {
+    return fetch("/api/traceability/run")
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var stillRunning = paintRun(j);
+        if (!stillRunning && runTimer) {
+          clearInterval(runTimer);
+          runTimer = null;
+          runStartedAt = 0;
+          if (onFinish) onFinish(j);
+        }
+        return j;
+      })
+      .catch(function () { /* a failed poll is not a failed run */ });
+  }
+
+  function watchRun() {
+    if (runTimer) clearInterval(runTimer);
+    runStartedAt = runStartedAt || Date.now();
+    runTimer = setInterval(function () {
+      refreshRun(function (j) {
+        /* Finished: show what it produced. A successful run means this
+           project has a run it did not have a minute ago, so the page has
+           to re-read rather than leave "Not traced" on screen. */
+        if (j && j.run && j.run.status === "done") load(wantedProject());
+      });
+    }, 2000);
+  }
+
+  function startRun() {
+    var btn = document.getElementById("run-btn");
+    var state = document.getElementById("run-state");
+    var project = wantedProject();
+    if (!project) {
+      state.className = "run-state bad";
+      state.textContent = "Pick a project first.";
+      return;
+    }
+
+    btn.disabled = true;
+    state.className = "run-state";
+    /* The clone happens inside this request, so the first press is slow.
+       Saying so beats a button that looks stuck. */
+    state.textContent = "Reading the repository…";
+    document.getElementById("run-detail").innerHTML = "";
+
+    var headers = adminTokenOnly();
+    headers["Content-Type"] = "application/json";
+
+    fetch("/api/traceability/run", {
+      method: "POST", headers: headers,
+      body: JSON.stringify({ project_id: project })
+    })
+      .then(function (r) {
+        return r.text().then(function (text) {
+          var data = null;
+          try { data = JSON.parse(text); } catch (e) { /* not JSON */ }
+          if (!r.ok) {
+            throw new Error((data && data.detail) || text ||
+                            ("the server answered " + r.status));
+          }
+          return data;
+        });
+      })
+      .then(function () {
+        runStartedAt = Date.now();
+        watchRun();
+        return refreshRun();
+      })
+      .catch(function (e) {
+        btn.disabled = false;
+        state.className = "run-state bad";
+        state.textContent = e.message;
+      });
+  }
+
   function load(project) {
     var url = "/api/traceability" + (project ? "?project=" + encodeURIComponent(project) : "");
     fetch(url).then(function (r) { return r.json(); }).then(function (data) {
@@ -1684,9 +1870,14 @@
         showBar(null);
         document.getElementById("main").innerHTML =
           '<div class="empty"><p><b>Not traced.</b></p><p>' + esc(data.detail) +
-          "</p><p>Attach a run to this project by reading its backlog with " +
-          "<code>tracelink tickets &lt;export&gt; --project-id " +
-          esc(project || "&lt;this project&gt;") + "</code>.</p></div>";
+          '</p><p>Press <b>Run traceability</b> above to produce one. It ' +
+          "needs two things registered for this project on " +
+          '<a href="/settings">Settings &rsaquo; Sources</a>: the ' +
+          "<b>code repository</b> it is traced against, and the <b>backlog " +
+          "export</b> its tickets are read from.</p>" +
+          "<p class=\"muted\">Only the free stages run. The ones that call a " +
+          "model &mdash; translate, adjudicate, explain &mdash; cost money per " +
+          "ticket and are run from the command line deliberately.</p></div>";
         return;
       }
       D = data;
@@ -1714,6 +1905,12 @@
       else b.removeAttribute("aria-current");
     });
   load(wantedProject());
+
+  document.getElementById("run-btn").addEventListener("click", startRun);
+  /* Asked once on load, so the button knows whether this server can run at
+     all before anybody presses it - and so a run somebody else started, or
+     one still going after a reload, is picked up rather than invisible. */
+  refreshRun().then(function (j) { if (j && j.running) watchRun(); });
 })();
 </script>
 </body>

@@ -73,11 +73,25 @@ def run_dir() -> Path | None:
 
 
 def runs_root() -> Path | None:
-    raw = os.environ.get("TRACELINK_RUNS")
-    if not raw:
-        return None
-    p = Path(raw).expanduser()
-    return p if p.is_dir() else None
+    """Where run directories live.
+
+    Falls back to the image's own `traceability_runs/` when `TRACELINK_RUNS`
+    is unset, and **must** agree with `app/traceability_run.runs_root`, which
+    is where a run this server produces is written. The two disagreeing is a
+    run that completes, costs minutes of CPU, and is invisible: the runner
+    wrote to the fallback and the page only looked at the variable. That is
+    exactly what a local `docker compose up` did - it sets no
+    `TRACELINK_RUNS`, so the page showed neither the baked demo run nor any
+    run somebody had just produced.
+    """
+    raw = (os.environ.get("TRACELINK_RUNS") or "").strip()
+    if raw:
+        p = Path(raw).expanduser()
+        return p if p.is_dir() else None
+    from app.config import REPO_ROOT
+
+    fallback = REPO_ROOT / "traceability_runs"
+    return fallback if fallback.is_dir() else None
 
 
 def _manifest(run: Path) -> dict[str, Any]:

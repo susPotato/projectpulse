@@ -28,6 +28,13 @@
   --surface: #fff;
   --rule: #DCE2EB;
   --rule-2: #EDF0F5;
+  /* Text and icons drawn ON an accent fill (the blue primary button).
+     Not `--surface`: that is white in light mode and near-black in dark, so
+     reusing it turns a blue button's label dark the moment the theme flips.
+     What sits on an accent stays light in both modes, so this is one value
+     repeated rather than a pair - kept as a token anyway so no component has
+     to write a literal. */
+  --on-accent: #fff;
 
   /* The two data fills, validated with the dataviz validator against this
      surface in both modes (all six checks PASS).
@@ -74,6 +81,7 @@
     --surface: #151D28;
     --rule: #26313F;
     --rule-2: #1C2531;
+    --on-accent: #fff;
 
     --viz-plan: #3987e5;
   --viz-done: #42c98a;
@@ -102,6 +110,7 @@
   --surface: #151D28;
   --rule: #26313F;
   --rule-2: #1C2531;
+  --on-accent: #fff;
 
   --viz-plan: #3987e5;
   --viz-done: #42c98a;

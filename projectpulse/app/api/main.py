@@ -448,6 +448,268 @@ def api_traceability_rows(project: str | None = None) -> dict:
     return {"rows": tracelink_view.feature_rows(run), "run": str(run)}
 
 
+@app.get("/api/traceability/export")
+def list_ticket_exports(project: str | None = None) -> dict:
+    """Every stored backlog export, or one project's. Never the bytes.
+
+    The size, never the blob - the same rule `app/imports.py` states for
+    uploaded sheets. This runs on a page load, and selecting the entity would
+    pull every workbook into memory to render a table showing how big they are.
+    """
+    from sqlalchemy import func, select
+
+    from app.models.traceability import TicketExport
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    query = select(
+        TicketExport.project_id,
+        TicketExport.original_filename,
+        func.length(TicketExport.content),
+        TicketExport.project_filter,
+        TicketExport.done_status,
+        TicketExport.updated_at,
+    ).order_by(TicketExport.project_id)
+    if project:
+        query = query.where(TicketExport.project_id == project)
+
+    with session_scope() as session:
+        rows = session.execute(query).all()
+
+    return {"exports": [
+        {
+            "project_id": row[0],
+            "original_filename": row[1] or "",
+            "size": int(row[2] or 0),
+            "project_filter": row[3] or "",
+            "done_status": row[4] or "",
+            "updated_at": row[5].isoformat() if row[5] else None,
+        }
+        for row in rows
+    ]}
+
+
+@app.post("/api/traceability/export")
+async def save_ticket_export(
+    request: Request,
+    file: UploadFile = File(...),
+    project_id: str = Form(...),
+    project_filter: str = Form(""),
+    done_status: str = Form(""),
+) -> dict:
+    """Store the backlog export a run for this project will be built from.
+
+    Separate from `POST /api/sources/upload`, which takes the same file for a
+    different purpose and *throws the original away*: it converts a Jira
+    export into the schedule and worklog contracts and stores those. That is
+    right for the dashboard, and useless to the pipeline - `governance` exists
+    because the keyed PM rows carry prose the converted sheets do not keep.
+
+    So this is the export as uploaded, byte for byte, and nothing here parses
+    it. Validating it would mean reading it with the pipeline's own adapter,
+    which is exactly what `tickets` does two minutes later with better error
+    messages than this route could invent.
+    """
+    from app import admin, scope
+    from app.models.traceability import TicketExport
+
+    actor = admin.require(request)
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    project_id = (project_id or "").strip()
+    if not project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Choose which delivery project this backlog is for.",
+        )
+    if scope.find(project_id) is None:
+        raise HTTPException(status_code=400, detail=f"unknown project {project_id!r}")
+
+    if file.filename and not file.filename.lower().endswith((".xlsx", ".xlsm")):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{file.filename!r} is not an Excel workbook (.xlsx)",
+        )
+
+    payload = await file.read()
+    if not payload:
+        raise HTTPException(status_code=400, detail="that file is empty")
+
+    with session_scope() as session:
+        session.merge(TicketExport(
+            project_id=project_id,
+            original_filename=file.filename or "",
+            content=payload,
+            project_filter=(project_filter or "").strip(),
+            done_status=(done_status or "").strip(),
+            updated_by=actor,
+        ))
+
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "original_filename": file.filename or "",
+        "size": len(payload),
+    }
+
+
+@app.get("/api/traceability/run")
+def traceability_run_status() -> dict:
+    """What the pipeline is doing, or what it last did.
+
+    Reports the analyser the corpus was built with, because a server missing
+    CodeWiki produces a *complete* run with no dependency edges and no
+    non-Python symbols, and nothing else on the page would say so - see
+    `tracelink/corpus.py`.
+    """
+    from app import traceability_run
+
+    payload = traceability_run.state()
+    ok, why = _pipeline_ready()
+    payload["available"] = ok
+    payload["detail"] = why
+    return payload
+
+
+def _pipeline_ready() -> tuple[bool, str]:
+    """Whether this server can run the pipeline at all, and why not.
+
+    Both halves are checked - the pipeline and git - for the reason
+    `app/ingest/sources/git/source.available` gives: they fail for unrelated
+    reasons, and reporting only the first sends somebody to install the wrong
+    thing.
+    """
+    from app.ingest.sources.git import source
+
+    return source.available()
+
+
+class TraceabilityRunIn(BaseModel):
+    """Which delivery project to trace.
+
+    Only the project: the repository, the branch and the documentation tree
+    come from its registration, and the export's own options are stored with
+    the export. Accepting them here too would give one run two sources of
+    truth about what it was built from, and the run's manifest would record
+    whichever this route happened to prefer.
+    """
+
+    project_id: str = ""
+
+
+@app.post("/api/traceability/run")
+def start_traceability_run(request: Request, body: TraceabilityRunIn) -> dict:
+    """Clone, read the backlog, and produce a run the Traceability page reads.
+
+    The order matters and is the same one `POST /api/repos` settled on: fetch
+    the repository first, enforce its documentation tree, and only then start
+    anything. A run begun against a repository nobody could reach would write
+    a half directory the page then reports as a set of named gaps, which reads
+    as "the pipeline is broken" rather than "the clone failed".
+
+    Returns as soon as the run starts. It continues in a background thread;
+    poll `GET /api/traceability/run` for progress. Only the *free* stages run
+    - `translate`, `adjudicate` and `explain` cost money per ticket and are
+    deliberately not wired to a button.
+    """
+    from app import admin, traceability_run
+    from app.ingest.sources.git import source, store
+    from app.llm.keys import KeyStoreUnavailable
+    from app.models.traceability import TicketExport
+
+    actor = admin.require(request)
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    project_id = (body.project_id or "").strip()
+    if not project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Choose which delivery project to trace.",
+        )
+
+    ready, why = _pipeline_ready()
+    if not ready:
+        raise HTTPException(status_code=503, detail=why)
+
+    with session_scope() as session:
+        row = store.for_project(session, project_id)
+        if row is None:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"no repository is registered for {project_id!r}. The "
+                    f"pipeline reads the code and the documents from one, so "
+                    f"register it on Settings > Sources first."
+                ),
+            )
+        registration = {
+            "repo_url": row.repo_url, "ref": row.ref, "docs_path": row.docs_path,
+        }
+        try:
+            token = store.token_for(row)
+        except KeyStoreUnavailable as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from None
+
+        export = session.get(TicketExport, project_id)
+        if export is None:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"no backlog export is stored for {project_id!r}. The "
+                    f"`tickets` and `governance` stages read the tracker "
+                    f"export as a workbook - upload it first."
+                ),
+            )
+        export_bytes = export.content
+        export_name = export.original_filename
+        project_filter = export.project_filter
+        done_status = export.done_status
+
+    # Fetched here rather than inside the run so a failure is *this* request's
+    # 400, with the message `tracelink.source` wrote, instead of a line buried
+    # in a log the caller has to go and poll for.
+    try:
+        fetched = source.fetch(
+            repo_url=registration["repo_url"], ref=registration["ref"],
+            docs_path=registration["docs_path"], token=token,
+        )
+    except source.PipelineMissing as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from None
+    except (source.DocsMissing, source.RepoUnavailable) as exc:
+        with session_scope() as session:
+            store.record_failure(session, project_id, str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+    try:
+        started = traceability_run.start(
+            project_id=project_id,
+            repo_tree=fetched["tree"],
+            docs_dir=fetched["docs_dir"],
+            export_bytes=export_bytes,
+            export_name=export_name,
+            project_filter=project_filter,
+            done_status=done_status,
+            actor=actor,
+        )
+    except traceability_run.RunBusy as exc:
+        # 409, not 400: the request is fine and will succeed later, which is a
+        # different thing for a page to say than "you asked for the wrong one".
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+    except traceability_run.RunUnavailable as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+    return {"ok": True, "run": started, "commit": fetched["commit"],
+            "doc_count": fetched["doc_count"]}
+
+
 @app.get("/gantt")
 def gantt_page() -> FileResponse:
     """The schedule view.
@@ -1936,6 +2198,62 @@ def ingest_jira_issues(request: Request, body: JiraIngestIn) -> dict:
             "changelogs": changelogs, "extracted_issues": extracted,
             "extracted_changes": changes_extracted, "tasks": tasks,
             "state_changes": state_changes, "paired_with": paired}
+
+
+@app.get("/api/jira/watermark")
+def jira_watermark(project_key: str) -> dict:
+    """The newest `updated` this server already holds for one project.
+
+    What the sync tool needs to stop re-downloading a project it has
+    already sent. `live.collect` has had this since it was written - it
+    reads its own watermark from the raw table - and the PowerShell tool
+    never did, so every run fetched every issue with its full changelog
+    and a project large enough to trip Jira's rate limiter could not be
+    collected at all: each attempt re-read everything and banked none of
+    it.
+
+    Read from `updated_at_src` - the timestamp *Jira* put on the issue -
+    and not from `fetched_at`, because the JQL this feeds is
+    `updated >= …`. Those two answer different questions, and using the
+    collection time would skip anything edited while a slow collection
+    was running.
+
+    Ungated on purpose: it is one timestamp about a project the caller
+    has to name, it decloses nothing an issue list would not, and the tool
+    asks for it before it has any reason to hold a credential.
+    """
+    from sqlalchemy import func, select as _select
+
+    from app.models.tool import ToolJiraIssue
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    key = (project_key or "").strip().upper()
+    if not key:
+        raise HTTPException(status_code=400, detail="name a project_key")
+
+    mine = func.upper(ToolJiraIssue.project_key) == key
+    with session_scope() as session:
+        newest = session.scalar(
+            _select(func.max(ToolJiraIssue.updated_at_src)).where(mine)
+        )
+        # Reported so the tool can say "42 already there" - a person seeing
+        # an incremental run finish in two seconds needs to know it added to
+        # a set rather than replaced one with nothing.
+        held = int(session.scalar(
+            _select(func.count()).select_from(ToolJiraIssue).where(mine)
+        ) or 0)
+
+    return {
+        "project_key": key,
+        # Jira's JQL wants minute precision: `updated >=` is inclusive, so a
+        # second-precision bound re-collects the boundary issue every run.
+        # `live._jql` uses the same format for the same reason.
+        "since": newest.strftime("%Y-%m-%d %H:%M") if newest else "",
+        "issues_held": held,
+    }
 
 
 @app.get("/api/jira/sync-tool")

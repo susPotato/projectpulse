@@ -157,6 +157,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/traceability/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Save Ticket Export
+         * @description Store the backlog export a run for this project will be built from.
+         *
+         *     Separate from `POST /api/sources/upload`, which takes the same file for a
+         *     different purpose and *throws the original away*: it converts a Jira
+         *     export into the schedule and worklog contracts and stores those. That is
+         *     right for the dashboard, and useless to the pipeline - `governance` exists
+         *     because the keyed PM rows carry prose the converted sheets do not keep.
+         *
+         *     So this is the export as uploaded, byte for byte, and nothing here parses
+         *     it. Validating it would mean reading it with the pipeline's own adapter,
+         *     which is exactly what `tickets` does two minutes later with better error
+         *     messages than this route could invent.
+         */
+        post: operations["save_ticket_export_api_traceability_export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/traceability/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Traceability Run Status
+         * @description What the pipeline is doing, or what it last did.
+         *
+         *     Reports the analyser the corpus was built with, because a server missing
+         *     CodeWiki produces a *complete* run with no dependency edges and no
+         *     non-Python symbols, and nothing else on the page would say so - see
+         *     `tracelink/corpus.py`.
+         */
+        get: operations["traceability_run_status_api_traceability_run_get"];
+        put?: never;
+        /**
+         * Start Traceability Run
+         * @description Clone, read the backlog, and produce a run the Traceability page reads.
+         *
+         *     The order matters and is the same one `POST /api/repos` settled on: fetch
+         *     the repository first, enforce its documentation tree, and only then start
+         *     anything. A run begun against a repository nobody could reach would write
+         *     a half directory the page then reports as a set of named gaps, which reads
+         *     as "the pipeline is broken" rather than "the clone failed".
+         *
+         *     Returns as soon as the run starts. It continues in a background thread;
+         *     poll `GET /api/traceability/run` for progress. Only the *free* stages run
+         *     - `translate`, `adjudicate` and `explain` cost money per ticket and are
+         *     deliberately not wired to a button.
+         */
+        post: operations["start_traceability_run_api_traceability_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/gantt": {
         parameters: {
             query?: never;
@@ -2071,6 +2142,23 @@ export interface components {
              */
             api_key: string;
         };
+        /** Body_save_ticket_export_api_traceability_export_post */
+        Body_save_ticket_export_api_traceability_export_post: {
+            /** File */
+            file: string;
+            /** Project Id */
+            project_id: string;
+            /**
+             * Project Filter
+             * @default
+             */
+            project_filter: string;
+            /**
+             * Done Status
+             * @default
+             */
+            done_status: string;
+        };
         /** Body_upload_source_api_sources_upload_post */
         Body_upload_source_api_sources_upload_post: {
             /** File */
@@ -2904,6 +2992,8 @@ export interface components {
             projected_end: string | null;
             /** Actual End */
             actual_end: string | null;
+            /** Days Past Due */
+            days_past_due: number | null;
             /** Propagated Days */
             propagated_days: number | null;
             /** Recorded Slip Days */
@@ -4252,6 +4342,23 @@ export interface components {
              */
             precision: "exact" | "bounded";
         };
+        /**
+         * TraceabilityRunIn
+         * @description Which delivery project to trace.
+         *
+         *     Only the project: the repository, the branch and the documentation tree
+         *     come from its registration, and the export's own options are stored with
+         *     the export. Accepting them here too would give one run two sources of
+         *     truth about what it was built from, and the run's manifest would record
+         *     whichever this route happened to prefer.
+         */
+        TraceabilityRunIn: {
+            /**
+             * Project Id
+             * @default
+             */
+            project_id: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -4449,6 +4556,98 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_ticket_export_api_traceability_export_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_save_ticket_export_api_traceability_export_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    traceability_run_status_api_traceability_run_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    start_traceability_run_api_traceability_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TraceabilityRunIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
