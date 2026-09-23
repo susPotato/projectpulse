@@ -26,6 +26,24 @@
   --color-rule-2: #edf0f5;
 
   --font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+
+  /* The six sizes, and only these six. Declared here so each is also a
+     utility (`text-label`, `text-kpi`) and so `web/` and the hand-written
+     pages can be checked against one list rather than against each other.
+     Line heights ride along: a size without one is a size that wraps
+     differently in every component that uses it. */
+  --text-label: 11px;
+  --text-label--line-height: 1.35;
+  --text-body: 13px;
+  --text-body--line-height: 1.55;
+  --text-emph: 15px;
+  --text-emph--line-height: 1.45;
+  --text-title: 18px;
+  --text-title--line-height: 1.3;
+  --text-heading: 24px;
+  --text-heading--line-height: 1.2;
+  --text-kpi: 32px;
+  --text-kpi--line-height: 1;
 }
 
 /* System preference, unless the rail's switch has picked a side. These are
@@ -103,4 +121,157 @@ body {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* --- motion ------------------------------------------------------------
+
+  One motion vocabulary, shared with `app/api/static/shell.css` so a card on
+  the Insight page and a card on the Traceability page settle at the same
+  speed with the same curve. Keep the two in step.
+
+  The rule this encodes: motion here is *explanatory*, never decorative. A
+  thing may move because it arrived, because it changed, or because you are
+  pointing at it. Nothing loops, nothing bounces for attention, and no
+  reader ever waits on an animation to read a number - every animated value
+  is already in the DOM at its final state before the animation plays over
+  it, so a screen reader and a print stylesheet see the answer.
+
+  Four durations, because a delivery tool that needs five is really
+  inventing a fifth meaning it has not thought about.
+*/
+:root {
+  --dur-tap: 110ms;   /* pointer feedback: hover, press, focus */
+  --dur-move: 210ms;  /* an element entering, leaving, or resizing */
+  --dur-draw: 480ms;  /* a chart drawing itself */
+  --dur-count: 760ms; /* a figure counting up to its value */
+
+  /* Decelerate on entry: fast off the mark, settling slowly, which is what
+     reads as "it arrived" rather than "it is sliding". */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.25, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  /* A single restrained overshoot, only for a selection indicator moving
+     between two positions. Never for content. */
+  --ease-emph: cubic-bezier(0.34, 1.26, 0.5, 1);
+
+  --stagger: 45ms;
+}
+
+@keyframes pulse-rise {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes pulse-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Bars and meters grow from their own baseline, so the growth carries the
+   same meaning the bar does. `transform-origin` is set by the utility. */
+@keyframes pulse-grow-x {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes pulse-grow-y {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+/* A line drawing itself. The element sets `--len` to its own path length. */
+@keyframes pulse-draw {
+  from { stroke-dashoffset: var(--len, 1000); }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes pulse-shimmer {
+  from { background-position: -180% 0; }
+  to   { background-position: 180% 0; }
+}
+
+@layer utilities {
+  /* An element that has just arrived. `both` so it holds the start frame
+     during its delay instead of flashing at full opacity first. */
+  .rise {
+    animation: pulse-rise var(--dur-move) var(--ease-out) both;
+  }
+
+  /* Children arrive in reading order. Ten steps is the cap on purpose: past
+     that the last card waits half a second for no information gain, so
+     everything from the eleventh on arrives with the tenth. */
+  .stagger > * { animation: pulse-rise var(--dur-move) var(--ease-out) both; }
+  .stagger > *:nth-child(1)  { animation-delay: calc(var(--stagger) * 0); }
+  .stagger > *:nth-child(2)  { animation-delay: calc(var(--stagger) * 1); }
+  .stagger > *:nth-child(3)  { animation-delay: calc(var(--stagger) * 2); }
+  .stagger > *:nth-child(4)  { animation-delay: calc(var(--stagger) * 3); }
+  .stagger > *:nth-child(5)  { animation-delay: calc(var(--stagger) * 4); }
+  .stagger > *:nth-child(6)  { animation-delay: calc(var(--stagger) * 5); }
+  .stagger > *:nth-child(7)  { animation-delay: calc(var(--stagger) * 6); }
+  .stagger > *:nth-child(8)  { animation-delay: calc(var(--stagger) * 7); }
+  .stagger > *:nth-child(9)  { animation-delay: calc(var(--stagger) * 8); }
+  .stagger > *:nth-child(n+10) { animation-delay: calc(var(--stagger) * 9); }
+
+  .fade-in { animation: pulse-fade var(--dur-move) var(--ease-out) both; }
+
+  .grow-x {
+    transform-origin: left center;
+    animation: pulse-grow-x var(--dur-draw) var(--ease-out) both;
+  }
+
+  .grow-y {
+    transform-origin: bottom center;
+    animation: pulse-grow-y var(--dur-draw) var(--ease-out) both;
+  }
+
+  .draw {
+    stroke-dasharray: var(--len, 1000);
+    animation: pulse-draw var(--dur-draw) var(--ease-out) both;
+  }
+
+  /* A surface you can point at. Border first, elevation second: on a dense
+     enterprise screen a shadow alone reads as blur, a border change reads as
+     "this one". */
+  .lift {
+    transition:
+      border-color var(--dur-tap) var(--ease-out),
+      box-shadow var(--dur-tap) var(--ease-out),
+      transform var(--dur-tap) var(--ease-out);
+  }
+  .lift:hover {
+    border-color: color-mix(in oklab, var(--color-navy) 40%, var(--color-rule));
+    box-shadow: 0 1px 2px color-mix(in oklab, var(--color-ink) 7%, transparent);
+    transform: translate3d(0, -1px, 0);
+  }
+
+  /* Loading, at the size of the thing that is coming, so nothing jumps when
+     it lands. */
+  .skeleton {
+    background-image: linear-gradient(
+      90deg,
+      var(--color-rule-2) 0%,
+      color-mix(in oklab, var(--color-rule) 65%, var(--color-surface)) 50%,
+      var(--color-rule-2) 100%
+    );
+    background-size: 180% 100%;
+    animation: pulse-shimmer 1.35s linear infinite;
+    border-radius: 4px;
+    color: transparent;
+  }
+}
+
+/* The whole system, off. Not "faster" - off: a vestibular trigger is not
+   fixed by shortening it. Every animation above ends on the state the
+   element should hold, so forcing it to the last frame is the correct
+   result and not a degraded one. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover { transform: none; }
+  .skeleton { animation: none; }
 }

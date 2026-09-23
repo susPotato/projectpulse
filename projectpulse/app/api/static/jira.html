@@ -34,6 +34,19 @@
       border: 1px solid var(--rule); border-radius: 6px; }
     input[type=search] { min-width: 280px; }
     .hint { font-size: 12px; color: var(--ink-3); }
+    /* The description column. Capped and clipped: these run to a thousand
+       characters on the process tickets, and a table cell that wraps one of
+       them is a row taller than the viewport. */
+    .note-cell { max-width: 320px; }
+    /* A wide table scrolls inside its own box; the page never scrolls
+       sideways. This table was already wider than a phone before the Note
+       column was added - nine columns of issue metadata - and the column
+       took it past a laptop too. One scroller fixes both. */
+    .table-scroll { overflow-x: auto; }
+    .table-scroll table { min-width: max-content; }
+    .note-cell span { display: block; overflow: hidden; text-overflow: ellipsis;
+                      white-space: nowrap; }
+
     .note { background: var(--surface); border: 1px solid var(--rule);
             border-left: 3px solid var(--amber); border-radius: 6px;
             padding: 10px 13px; margin-bottom: 14px; font-size: 12.5px;
@@ -113,7 +126,10 @@
     { key: "created", label: "Created" },
     { key: "updated", label: "Updated" },
     { key: "due_date", label: "Due" },
-    { key: "story_points", label: "Points", num: true }
+    { key: "story_points", label: "Points", num: true },
+    /* The ticket's own description. Last because it is the widest thing on
+       the row and the only one somebody scans rather than compares. */
+    { key: "note", label: "Note" }
   ];
 
   function esc(s) {
@@ -157,8 +173,10 @@
   function render() {
     var el = document.getElementById("main");
     var list = visible();
+    var noted = list.filter(function (r) { return r.note; }).length;
     document.getElementById("count").textContent =
-      list.length + " of " + rows.length + " issue(s)";
+      list.length + " of " + rows.length + " issue(s)" +
+      (list.length ? " \u00b7 " + noted + " with a note" : "");
 
     if (!rows.length) {
       el.innerHTML = '<div class="empty">Nothing collected from Jira yet. ' +
@@ -191,11 +209,18 @@
                              : '<span class="none">&mdash;</span>') + "</td>" +
         "<td>" + (r.story_points == null ? '<span class="none">&mdash;</span>'
                                          : esc(r.story_points)) + "</td>" +
+        /* Clipped to one line with the whole thing in the tooltip. One of
+           these is eleven hundred characters of procedure; printed in full
+           it makes its row taller than the screen and pushes every other
+           column off the side. */
+        '<td class="note-cell">' + (r.note
+          ? '<span title="' + esc(r.note) + '">' + esc(r.note) + "</span>"
+          : '<span class="none">&mdash;</span>') + "</td>" +
         "</tr>";
     }).join("");
 
-    el.innerHTML = '<table class="grid"><thead><tr>' + head +
-      "</tr></thead><tbody>" + body + "</tbody></table>";
+    el.innerHTML = '<div class="table-scroll"><table class="grid"><thead><tr>' +
+      head + "</tr></thead><tbody>" + body + "</tbody></table></div>";
 
     [].forEach.call(el.querySelectorAll("th[data-key]"), function (th) {
       th.addEventListener("click", function () {

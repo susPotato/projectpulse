@@ -110,7 +110,6 @@ const cases: Array<[string, string, string[]]> = [
       // The within-project views exist and the default one is Overview.
       "Overview",
       "Risk",
-      "Evidence",
       // The AI-analysis panel and how well evidenced its claim is.
       "The plan cannot hold",
       "stated dependency",
@@ -118,7 +117,7 @@ const cases: Array<[string, string, string[]]> = [
       "What is at risk",
       "Why it is happening",
       // The pressure tiles, the rule traces and the data-quality panel moved to
-      // the Risk and Evidence views - asserted in their own cases below, so
+      // the Risk view - asserted in its own case below, so
       // that a section quietly vanishing still fails something.
     ],
   ],
@@ -135,8 +134,8 @@ const cases: Array<[string, string, string[]]> = [
     ["Where the pressure is", "Findings", "The plan cannot hold", "milestones at risk"],
   ],
   [
-    "Insight - Evidence view",
-    renderToString(<InsightView bundle={insight} view="Evidence" />),
+    "Insight - Risk view",
+    renderToString(<InsightView bundle={insight} view="Risk" />),
     ["What this analysis could not use", "source rows", "dependencies inferred"],
   ],
   [

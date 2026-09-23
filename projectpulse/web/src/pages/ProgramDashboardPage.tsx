@@ -24,7 +24,7 @@ export function ProgramDashboardPage() {
           title="No program selected"
           detail="Open a program from the Programs list first."
         />
-        <a href="/programs" className="mt-3 inline-block text-[12.5px] font-semibold text-navy hover:underline">
+        <a href="/programs" className="mt-3 inline-block text-body font-semibold text-navy hover:underline">
           Go to Programs &rarr;
         </a>
       </Page>

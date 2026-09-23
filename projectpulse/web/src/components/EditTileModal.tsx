@@ -43,17 +43,17 @@ export function EditTileModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="m-0 text-[14.5px] font-semibold">Edit Tile</h2>
+          <h2 className="m-0 text-emph font-semibold">Edit Tile</h2>
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded border-0 bg-transparent text-[18px] leading-none text-ink-3 hover:text-ink"
+            className="cursor-pointer rounded border-0 bg-transparent text-title leading-none text-ink-3 hover:text-ink"
             aria-label="Close"
           >
             &times;
           </button>
         </div>
-        <label className="mb-1 block text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+        <label className="mb-1 block text-label font-bold tracking-[0.06em] text-ink-3 uppercase">
           Title
         </label>
         <input
@@ -61,16 +61,16 @@ export function EditTileModal({
           onChange={(e) => setTitle(e.target.value)}
           placeholder={defaultLabel}
           autoFocus
-          className="w-full rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[12.5px] text-ink"
+          className="w-full rounded-md border border-rule bg-bg px-2.5 py-1.5 text-body text-ink"
         />
-        <p className="mt-1.5 mb-0 text-[11px] text-ink-3">
+        <p className="mt-1.5 mb-0 text-label text-ink-3">
           Leave blank to use the catalogue name ({defaultLabel}).
         </p>
         <div className="mt-3 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
+            className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-body font-semibold text-ink hover:bg-bg"
           >
             Cancel
           </button>
@@ -78,7 +78,7 @@ export function EditTileModal({
             type="button"
             disabled={busy}
             onClick={save}
-            className="cursor-pointer rounded-md border border-navy bg-navy px-2.5 py-1 text-[12px] font-semibold text-surface disabled:opacity-50"
+            className="cursor-pointer rounded-md border border-navy bg-navy px-2.5 py-1 text-body font-semibold text-surface disabled:opacity-50"
           >
             {busy ? "Saving..." : "Save"}
           </button>

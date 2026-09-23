@@ -16,6 +16,7 @@ import {
   type ProjectRow,
 } from "../api";
 import { ProjectPicker } from "./ProjectPicker";
+import { CountUp, Skeleton } from "./motion";
 
 /* One list, and the hand-written pages carry the same one. `tests/test_api.py`
    asserts they match, because three copies of a nav is how the six original
@@ -225,27 +226,23 @@ export function SubTabs({
   current: string;
   onSelect: (view: string) => void;
 }) {
+  /* `.subtabs` from `shell.css`, not a second copy of it in Tailwind. The
+     hand-written pages already had this row and this one had drifted from
+     it by two pixels of padding; more to the point, the sliding underline
+     now lives in that stylesheet, so a Tailwind reimplementation here would
+     be a tab bar that moves on Traceability and blinks on Insight. */
   return (
-    <nav className="mb-4 flex flex-wrap border-b border-rule" aria-label="Views">
-      {views.map((view) => {
-        const active = view === current;
-        return (
-          <button
-            key={view}
-            type="button"
-            onClick={() => onSelect(view)}
-            aria-current={active ? "page" : undefined}
-            className={
-              "-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-[15px] py-2.5 text-[13px] " +
-              (active
-                ? "border-navy font-semibold text-ink"
-                : "border-transparent text-ink-2 hover:text-ink")
-            }
-          >
-            {view}
-          </button>
-        );
-      })}
+    <nav className="subtabs" aria-label="Views">
+      {views.map((view) => (
+        <button
+          key={view}
+          type="button"
+          onClick={() => onSelect(view)}
+          aria-current={view === current ? "page" : undefined}
+        >
+          {view}
+        </button>
+      ))}
     </nav>
   );
 }
@@ -360,8 +357,14 @@ export function Page({
         {asof && <span className="asof">{asof}</span>}
         {action}
       </div>
-      {subtitle && <p className="mt-0 mb-4 text-[13px] text-ink-2">{subtitle}</p>}
-      {children}
+      {subtitle && <p className="mt-0 mb-4 text-body text-ink-2">{subtitle}</p>}
+      {/* The body arrives as one block rather than per-panel. A page whose
+          every card fades in separately reads as a page still loading; one
+          settle, once, reads as a page that has arrived. Keyed on the title
+          so moving between screens replays it - which is the only cue this
+          app gives that a navigation happened at all, the rail being
+          otherwise identical on both sides of the click. */}
+      <div key={title} className="rise">{children}</div>
         </div>
       </main>
     </div>
@@ -370,11 +373,27 @@ export function Page({
 
 /* A 12-column board, so panels sit side by side the way a dashboard does
    instead of stacking full width. Collapses to one column when narrow -
-   `col` spans are ignored below the breakpoint by `Panel`. */
-export function Board({ children, className = "" }: { children: ReactNode; className?: string }) {
+   `col` spans are ignored below the breakpoint by `Panel`.
+
+   `stagger` puts the panels on screen in reading order, about a twentieth of
+   a second apart. It is the one place this app uses a sequence rather than a
+   single settle, and the reason is that a board is a *set* - the order they
+   land in is the order they should be read in, and a simultaneous arrival
+   says they are interchangeable. */
+export function Board({
+  children,
+  className = "",
+  stagger = true,
+}: {
+  children: ReactNode;
+  className?: string;
+  stagger?: boolean;
+}) {
   return (
     <div
-      className={`grid gap-3.5 md:[grid-template-columns:repeat(12,minmax(0,1fr))] ${className}`}
+      className={`grid gap-3.5 md:[grid-template-columns:repeat(12,minmax(0,1fr))] ${
+        stagger ? "stagger" : ""
+      } ${className}`}
     >
       {children}
     </div>
@@ -382,23 +401,41 @@ export function Board({ children, className = "" }: { children: ReactNode; class
 }
 
 /* One panel on the board: a captioned card spanning `span` of 12 columns. The
-   caption is the micro-label the whole app uses, defined once here. */
+   caption is the micro-label the whole app uses, defined once here.
+
+   `action` is the slot that stopped panels growing their own headers. Three
+   of them had a link floated to the right of the caption, each with its own
+   spelling of the same flex row. */
 export function Panel({
   caption,
   span = 12,
+  action,
   children,
   className = "",
 }: {
   caption?: string;
   span?: number;
+  action?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <div
-      className={`rounded-lg border border-rule bg-surface p-4 ${SPAN[span] ?? ""} ${className}`}
+      /* `min-w-0` is the grid-item fix, and it is load-bearing rather than
+         defensive. A grid item's default `min-width: auto` refuses to go
+         below its content's intrinsic width, so one un-truncatable child -
+         a long ticket title, a file path - pushes the panel past its track
+         and the whole document scrolls sideways. On a phone that was 793px
+         of horizontal scroll on the Insight page alone. Zero lets the
+         track win and lets the `truncate` inside actually truncate. */
+      className={`lift min-w-0 rounded-lg border border-rule bg-surface p-4 ${SPAN[span] ?? ""} ${className}`}
     >
-      {caption && <div className="mb-3 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">{caption}</div>}
+      {(caption || action) && (
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          {caption && <div className={MICRO_LABEL}>{caption}</div>}
+          {action}
+        </div>
+      )}
       {children}
     </div>
   );
@@ -417,22 +454,49 @@ const SPAN: Record<number, string> = {
   12: "md:col-span-12",
 };
 
-export function Section({ title, children }: { title?: string; children: ReactNode }) {
+/* The micro-label, once. Panel captions, section headings, column headers
+   and KPI labels are the same typographic object and were four near-copies
+   of it, differing by a hundredth of an em of tracking. */
+export const MICRO_LABEL =
+  "text-label font-bold tracking-[0.05em] text-ink-3 uppercase";
+
+export function Section({
+  title,
+  action,
+  children,
+}: {
+  title?: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="mb-6">
-      {title && (
-        <h2 className="mt-6 mb-2 text-xs font-bold tracking-[0.08em] text-ink-3 uppercase">
-          {title}
-        </h2>
+      {(title || action) && (
+        <div className="mt-6 mb-2 flex items-baseline justify-between gap-3">
+          {title && <h2 className={`m-0 ${MICRO_LABEL}`}>{title}</h2>}
+          {action}
+        </div>
       )}
       {children}
     </section>
   );
 }
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function Card({
+  children,
+  className = "",
+  lift = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  /* Off by default. A card that reacts to the pointer is making a promise
+     that it does something when clicked, so only the ones that do get it. */
+  lift?: boolean;
+}) {
   return (
-    <div className={`rounded-lg border border-rule bg-surface p-4 ${className}`}>
+    <div
+      className={`min-w-0 rounded-lg border border-rule bg-surface p-4 ${lift ? "lift" : ""} ${className}`}
+    >
       {children}
     </div>
   );
@@ -440,42 +504,122 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 
 export function Stats({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-3 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
+    <div className="stagger mb-3 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(164px,1fr))]">
       {children}
     </div>
   );
 }
 
-/* `tabular-nums` is deliberately absent on these: equal-width digits make a
-   large standalone figure look mechanical. */
+const STAT_TONE: Record<string, string> = {
+  good: "text-green",
+  warn: "text-amber",
+  bad: "text-red",
+  plain: "text-ink",
+};
+
+/* One figure, its name, and - where there is one - the way into the rows
+   behind it.
+
+   Three things changed here and each was a real complaint about the old
+   tile. The figure counts up, because a dashboard of eight numbers that all
+   appear at once is eight numbers nobody's eye lands on first. It is
+   `tabular-nums` after all, which the old comment argued against: a figure
+   that is *animating* and not monospaced reflows the tile on every frame,
+   and a row of tiles whose labels jitter is far worse than a slightly
+   mechanical digit. And `href` makes the number a door - the single most
+   requested thing on this product, from a PM who could see "5 unassigned"
+   and had no way to ask which five.
+
+   `bad` is kept as an alias for `tone="bad"` so the existing call sites do
+   not all have to change in the same commit. */
 export function Stat({
   value,
   label,
   bad = false,
+  tone,
+  hint,
+  href,
+  foot,
 }: {
   value: ReactNode;
   label: string;
   bad?: boolean;
+  tone?: "good" | "warn" | "bad" | "plain";
+  /* Method, caveat, breakdown - whatever a reader would otherwise need the
+     documentation for. On the tile as a tooltip, never as a second line of
+     body text competing with the figure. */
+  hint?: string;
+  href?: string;
+  foot?: ReactNode;
 }) {
-  return (
-    <div className="rounded-lg border border-rule bg-surface px-3.5 py-3">
-      <b className={`block text-[23px] leading-none font-bold ${bad ? "text-red" : ""}`}>
-        {value}
+  const shade = STAT_TONE[tone ?? (bad ? "bad" : "plain")] ?? "text-ink";
+  const body = (
+    <>
+      <b className={`block text-kpi font-bold ${shade}`}>
+        {typeof value === "number" ? <CountUp value={value} /> : value}
       </b>
-      <span className="mt-1.5 block text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
-        {label}
-      </span>
+      <span className={`mt-1.5 block ${MICRO_LABEL}`}>{label}</span>
+      {foot && <span className="mt-1 block text-label text-ink-3">{foot}</span>}
+    </>
+  );
+
+  const shell = "block min-w-0 rounded-lg border border-rule bg-surface px-3.5 py-3";
+  return href ? (
+    <a href={href} title={hint} className={`lift ${shell} no-underline`}>
+      {body}
+    </a>
+  ) : (
+    <div title={hint} className={shell}>
+      {body}
     </div>
   );
 }
 
 export function Note({ children }: { children: ReactNode }) {
   return (
-    <div className="mt-3 rounded-md border border-amber/40 bg-amber/10 px-3 py-2 text-[12.5px]">
+    <div className="mt-3 rounded-md border border-amber/40 bg-amber/10 px-3 py-2 text-body">
       {children}
     </div>
   );
 }
+
+/* Rule 7's third and fourth states, told apart in the markup rather than
+   left to the sentence inside them.
+
+   `NoInput` is "this was never supplied" - a dashed edge, because a dashed
+   edge is what a placeholder looks like everywhere else in software.
+   `AllClear` is "we looked and it is fine" - a solid card with a green mark.
+   A PM must never have to read the sentence to know which of the two they
+   are looking at. */
+export function NoInput({ what, how }: { what: string; how?: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-dashed border-rule bg-bg px-4 py-5">
+      <p className="m-0 text-body font-semibold text-ink-2">{what}</p>
+      {how && <p className="mt-1 mb-0 text-body text-ink-3">{how}</p>}
+    </div>
+  );
+}
+
+export function AllClear({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg border border-green/40 bg-green/8 px-4 py-3">
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className="h-4 w-4 shrink-0 fill-none stroke-green stroke-2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="m5 13 4 4L19 7" />
+      </svg>
+      <span className="text-body text-ink-2">{children}</span>
+    </div>
+  );
+}
+
+/* Rule 7's first state, re-exported so a page never has to reach past the
+   shell for it. */
+export { Skeleton, SkeletonStats } from "./motion";
 
 export function Problem({
   title,
@@ -489,12 +633,42 @@ export function Problem({
   return (
     <Card>
       <p className="m-0 font-semibold text-red">{title}</p>
-      <p className="mt-1 mb-0 text-[13px] text-ink-2">{detail}</p>
+      <p className="mt-1 mb-0 text-body text-ink-2">{detail}</p>
       {fix && (
-        <pre className="mt-3 mb-0 overflow-x-auto rounded bg-bg p-2.5 font-mono text-xs text-ink">
+        <pre className="mt-3 mb-0 overflow-x-auto rounded bg-bg p-2.5 font-mono text-label text-ink">
           {fix}
         </pre>
       )}
     </Card>
+  );
+}
+
+/* The waiting state for a whole page, at the shape of one. Used by every
+   page's `if (!bundle)` branch, which until now returned the word
+   "Loading..." under a title and let the layout jump when the real content
+   landed. */
+export function PageSkeleton() {
+  return (
+    <>
+      <div className="mb-3 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(164px,1fr))]">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="rounded-lg border border-rule bg-surface px-3.5 py-3">
+            <div className="skeleton h-7 w-16" />
+            <div className="skeleton mt-2 h-2.5 w-24" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-3.5 md:[grid-template-columns:repeat(12,minmax(0,1fr))]">
+        {[7, 5].map((span) => (
+          <div
+            key={span}
+            className={`rounded-lg border border-rule bg-surface p-4 ${SPAN[span]}`}
+          >
+            <div className="skeleton mb-3 h-2.5 w-28" />
+            <Skeleton rows={4} />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

@@ -94,7 +94,7 @@ function AddProjectForm({
       onSubmit={submit}
       className="mb-3.5 grid gap-2.5 rounded-lg border border-rule bg-surface p-3.5"
     >
-      <h3 className="m-0 text-[14px] font-semibold text-ink">New project</h3>
+      <h3 className="m-0 text-emph font-semibold text-ink">New project</h3>
       <div className="flex flex-wrap gap-2">
         <input
           value={name}
@@ -102,13 +102,13 @@ function AddProjectForm({
           placeholder="Project name"
           aria-label="Project name"
           autoFocus
-          className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+          className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-body text-ink outline-none focus:border-navy"
         />
         <select
           value={programId}
           onChange={(e) => setProgramId(e.target.value)}
           aria-label="Program"
-          className="min-w-[200px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+          className="min-w-[200px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-body text-ink outline-none focus:border-navy"
         >
           {/* "No program" is a real choice, not a placeholder - so it is a
               selectable option rather than a disabled prompt. */}
@@ -133,13 +133,13 @@ function AddProjectForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-rule bg-surface px-3 py-1.5 text-[12.5px] text-ink-2"
+          className="rounded-md border border-rule bg-surface px-3 py-1.5 text-body text-ink-2"
           style={{ cursor: "pointer" }}
         >
           Cancel
         </button>
       </div>
-      <p className="m-0 text-[11.5px] text-ink-3">
+      <p className="m-0 text-body text-ink-3">
         It will show as <b>No data</b> until a document is ingested for it. Uploading a
         schedule for the same name later fills in this project rather than creating a
         second one.
@@ -231,7 +231,7 @@ export function ProjectsView({
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by project, program or source id..."
           aria-label="Search projects"
-          className="w-full max-w-[420px] rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+          className="w-full max-w-[420px] rounded-md border border-rule bg-surface px-3 py-2 text-body text-ink outline-none focus:border-navy"
         />
       </div>
 
@@ -245,7 +245,7 @@ export function ProjectsView({
           />
         ))}
         {matched.length === 0 && (
-          <p className="m-0 rounded-lg border border-dashed border-rule px-3 py-6 text-center text-[13px] text-ink-3">
+          <p className="m-0 rounded-lg border border-dashed border-rule px-3 py-6 text-center text-body text-ink-3">
             {rows.length === 0
               ? "No projects yet. Run python -m scripts.replay, or upload a sheet from Settings > Sources."
               : `No project matches "${query}".`}
@@ -314,7 +314,7 @@ function RemoveProject({ row, onRemoved }: { row: ProjectRow; onRemoved: () => v
         onClick={ask}
         disabled={busy}
         title={`Remove ${row.name}`}
-        className="shrink-0 cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-[11.5px] text-ink-3 hover:border-red hover:text-red disabled:opacity-50"
+        className="shrink-0 cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-body text-ink-3 hover:border-red hover:text-red disabled:opacity-50"
       >
         {busy ? "..." : "Remove"}
       </button>
@@ -323,16 +323,16 @@ function RemoveProject({ row, onRemoved }: { row: ProjectRow; onRemoved: () => v
 
   return (
     <div className="w-full rounded-md border border-rule bg-bg p-2.5">
-      {error && <p className="m-0 text-[12px] text-red">{error}</p>}
+      {error && <p className="m-0 text-body text-red">{error}</p>}
       {preview && !preview.removable && (
-        <p className="m-0 text-[12px] text-ink-2">{preview.reason}</p>
+        <p className="m-0 text-body text-ink-2">{preview.reason}</p>
       )}
       {preview?.removable && (
         <>
-          <p className="m-0 text-[12.5px] text-ink">
+          <p className="m-0 text-body text-ink">
             Remove <b>{preview.name}</b> and everything about it?
           </p>
-          <p className="mt-1 mb-0 text-[11.5px] text-ink-3">
+          <p className="mt-1 mb-0 text-body text-ink-3">
             {Object.entries(preview.counts)
               .filter(([, n]) => n > 0)
               .map(([k, n]) => `${n} ${k.replace(/_/g, " ")}`)
@@ -341,7 +341,7 @@ function RemoveProject({ row, onRemoved }: { row: ProjectRow; onRemoved: () => v
           </p>
           {/* Led with, because it is the half no sync brings back. */}
           {Object.keys(preview.irreplaceable).length > 0 && (
-            <p className="mt-1 mb-0 text-[11.5px] font-semibold text-red">
+            <p className="mt-1 mb-0 text-body font-semibold text-red">
               Includes{" "}
               {Object.entries(preview.irreplaceable)
                 .map(([k, n]) => `${n} ${k.replace(/_/g, " ")}`)
@@ -357,7 +357,7 @@ function RemoveProject({ row, onRemoved }: { row: ProjectRow; onRemoved: () => v
             type="button"
             onClick={confirm}
             disabled={busy}
-            className="cursor-pointer rounded-md border border-red bg-red px-2.5 py-1 text-[11.5px] font-semibold text-surface disabled:opacity-50"
+            className="cursor-pointer rounded-md border border-red bg-red px-2.5 py-1 text-body font-semibold text-surface disabled:opacity-50"
           >
             {busy ? "Removing..." : "Remove permanently"}
           </button>
@@ -368,7 +368,7 @@ function RemoveProject({ row, onRemoved }: { row: ProjectRow; onRemoved: () => v
             setPreview(null);
             setError(null);
           }}
-          className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[11.5px] text-ink-2"
+          className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-body text-ink-2"
         >
           Cancel
         </button>
@@ -396,8 +396,8 @@ function ProjectRowCard({
       <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${BAND_DOT[row.band] ?? "bg-rule"}`} />
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[14px] font-semibold text-ink">{row.name}</span>
-        <span className="block truncate text-[11.5px] text-ink-3">
+        <span className="block truncate text-emph font-semibold text-ink">{row.name}</span>
+        <span className="block truncate text-body text-ink-3">
           {program ? `${program} · ` : ""}
           {row.project_id}
         </span>
@@ -405,17 +405,17 @@ function ProjectRowCard({
 
       {/* The one number on this row, for the same reason it is the one number
           on the portfolio: it is a subtraction over two dates, not a score. */}
-      <span className="shrink-0 text-right text-[12px]">
+      <span className="shrink-0 text-right text-body">
         <span className={row.days_late > 0 ? "font-semibold text-red" : "text-ink-3"}>
           {row.days_late > 0 ? `+${row.days_late}d` : "on plan"}
         </span>
-        <span className="block text-[11px] text-ink-3">
+        <span className="block text-label text-ink-3">
           {row.findings} finding{row.findings === 1 ? "" : "s"}
         </span>
       </span>
 
       <span
-        className={`shrink-0 rounded px-2 py-0.5 text-[10.5px] font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[row.band]}`}
+        className={`shrink-0 rounded px-2 py-0.5 text-label font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[row.band]}`}
       >
         {BAND_LABEL[row.band]}
       </span>

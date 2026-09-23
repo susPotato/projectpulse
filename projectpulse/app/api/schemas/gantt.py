@@ -52,6 +52,18 @@ class GanttRow(Response):
     #: rather than one that merely stopped being updated.
     actual_end: date | None = None
 
+    #: Days between a passed planned finish and today, on a row still open.
+    #:
+    #: Absent until now, and the Schedule page's "most overdue" ordering read
+    #: it anyway - so that sort compared `undefined` against `undefined` on
+    #: every row and did nothing at all, on a project with thirty-four late
+    #: tasks. Same rule and same import as `MemberTask.days_past_due`
+    #: (`agent.brief.CLOSED`), because two definitions of late is how a chart
+    #: and a chat come to disagree about the same task.
+    #:
+    #: `None` on a row that is closed or not yet due - "not late" and "late by
+    #: nothing" are different answers and must not share a zero.
+    days_past_due: int | None = None
     #: Slip the chain implies that the sheet does not show.
     propagated_days: int | None = None
     #: Slip a human already recorded against the baseline.

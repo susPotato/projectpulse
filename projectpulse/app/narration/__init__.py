@@ -43,7 +43,12 @@ from app.narration.providers import (
     ModelConfig,
     drafter_for,
 )
-from app.narration.fallback import QUESTION_HEADINGS, render_narrative
+from app.narration.fallback import (
+    DISPLAY_HEADINGS,
+    QUESTION_HEADINGS,
+    display_heading,
+    render_narrative,
+)
 from app.narration.validator import (
     ValidationIssue,
     ValidationResult,
@@ -54,7 +59,9 @@ from app.narration.validator import (
 __all__ = [
     "DEFAULT_MODELS",
     "PROVIDERS",
+    "DISPLAY_HEADINGS",
     "QUESTION_HEADINGS",
+    "display_heading",
     "BriefLeak",
     "Drafter",
     "ModelConfig",

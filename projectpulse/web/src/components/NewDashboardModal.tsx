@@ -113,11 +113,11 @@ export function NewDashboardModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="m-0 text-[15px] font-semibold">New Dashboard</h2>
+          <h2 className="m-0 text-emph font-semibold">New Dashboard</h2>
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded border-0 bg-transparent text-[18px] leading-none text-ink-3 hover:text-ink"
+            className="cursor-pointer rounded border-0 bg-transparent text-title leading-none text-ink-3 hover:text-ink"
             aria-label="Close"
           >
             &times;
@@ -135,7 +135,7 @@ export function NewDashboardModal({
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2 text-[12.5px] ${
+              className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2 text-body ${
                 tab === id ? "border-navy font-semibold text-ink" : "border-transparent text-ink-2 hover:text-ink"
               }`}
             >
@@ -146,11 +146,11 @@ export function NewDashboardModal({
 
         {tab === "fit" && (
           <div>
-            <p className="mt-0 mb-2 text-[12.5px] text-ink-2">
+            <p className="mt-0 mb-2 text-body text-ink-2">
               Places every tile this project&rsquo;s data can actually fill, and
               leaves out the ones whose inputs are not there.
             </p>
-            <p className="mt-0 mb-3 text-[11.5px] text-ink-3">
+            <p className="mt-0 mb-3 text-body text-ink-3">
               A template assumes a baseline, a dependency graph and a worklog. A
               project imported from a single issue export has none of them, and
               gets a board of empty tiles &mdash; which looks exactly like a
@@ -158,12 +158,12 @@ export function NewDashboardModal({
             </p>
             {fit && (
               <div className="mb-3 rounded-md border border-rule bg-bg p-2.5">
-                <p className="m-0 text-[12px] text-ink">
+                <p className="m-0 text-body text-ink">
                   Placed <b>{fit.placed}</b> of {fit.of} tiles &middot; this data
                   carries {(fit.signals ?? []).join(", ") || "nothing yet"}.
                 </p>
                 {Object.entries(fit.missing ?? {}).map(([signal, tiles]) => (
-                  <p key={signal} className="mt-1.5 mb-0 text-[11px] text-ink-3">
+                  <p key={signal} className="mt-1.5 mb-0 text-label text-ink-3">
                     No <b>{signal}</b> &mdash; would add{" "}
                     {tiles.join(", ")}.
                   </p>
@@ -174,7 +174,7 @@ export function NewDashboardModal({
               type="button"
               disabled={busy}
               onClick={useFit}
-              className="w-full cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-surface disabled:opacity-50"
+              className="w-full cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-body font-semibold text-surface disabled:opacity-50"
             >
               {busy ? "Fitting..." : fit ? "Fit again" : "Fit to this data"}
             </button>
@@ -184,12 +184,12 @@ export function NewDashboardModal({
         {tab === "ai" && (
           <div>
             <div className="mb-2 flex items-center gap-1.5">
-              <span className="text-[13px] font-semibold text-ink">AI Dashboard Creator</span>
-              <span className="rounded bg-navy px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-surface">
+              <span className="text-body font-semibold text-ink">AI Dashboard Creator</span>
+              <span className="rounded bg-navy px-1.5 py-0.5 text-label font-extrabold uppercase text-surface">
                 Beta
               </span>
             </div>
-            <p className="mt-0 mb-2 text-[12px] text-ink-3">
+            <p className="mt-0 mb-2 text-body text-ink-3">
               Describe the dashboard you want and AI will create it for you.
             </p>
             <textarea
@@ -197,7 +197,7 @@ export function NewDashboardModal({
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe your dashboard..."
               rows={3}
-              className="w-full resize-none rounded-md border border-rule bg-bg p-2 text-[12.5px] text-ink"
+              className="w-full resize-none rounded-md border border-rule bg-bg p-2 text-body text-ink"
             />
             <div className="mt-2 flex flex-wrap gap-1.5">
               {SAMPLE_PROMPTS.map((p) => (
@@ -205,14 +205,14 @@ export function NewDashboardModal({
                   key={p}
                   type="button"
                   onClick={() => setPrompt(p)}
-                  className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-1 text-[11px] text-ink-2 hover:bg-rule/30"
+                  className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-1 text-label text-ink-2 hover:bg-rule/30"
                 >
                   {p}
                 </button>
               ))}
             </div>
             {fallback && (
-              <p className="mt-2 mb-0 text-[11.5px] text-amber">
+              <p className="mt-2 mb-0 text-body text-amber">
                 Used the default layout instead: {fallback}.
               </p>
             )}
@@ -220,7 +220,7 @@ export function NewDashboardModal({
               type="button"
               disabled={busy || !prompt.trim()}
               onClick={createWithAi}
-              className="mt-3 w-full cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-surface disabled:opacity-50"
+              className="mt-3 w-full cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-body font-semibold text-surface disabled:opacity-50"
             >
               {busy ? "Creating..." : "Create Dashboard"}
             </button>
@@ -237,10 +237,10 @@ export function NewDashboardModal({
                 onClick={() => useTemplate(name)}
                 className="cursor-pointer rounded-lg border border-rule p-3 text-left hover:bg-bg disabled:opacity-50"
               >
-                <div className="text-[12.5px] font-semibold text-ink">
+                <div className="text-body font-semibold text-ink">
                   {name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                 </div>
-                <div className="mt-0.5 text-[11px] text-ink-3">{keys.length} tile(s)</div>
+                <div className="mt-0.5 text-label text-ink-3">{keys.length} tile(s)</div>
               </button>
             ))}
           </div>
@@ -248,14 +248,14 @@ export function NewDashboardModal({
 
         {tab === "blank" && (
           <div>
-            <p className="mt-0 mb-3 text-[12.5px] text-ink-2">
+            <p className="mt-0 mb-3 text-body text-ink-2">
               Start from an empty canvas and add tiles yourself.
             </p>
             <button
               type="button"
               disabled={busy}
               onClick={useBlank}
-              className="w-full cursor-pointer rounded-md border border-rule bg-surface px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:bg-bg disabled:opacity-50"
+              className="w-full cursor-pointer rounded-md border border-rule bg-surface px-3 py-1.5 text-body font-semibold text-ink hover:bg-bg disabled:opacity-50"
             >
               Use Blank Canvas
             </button>

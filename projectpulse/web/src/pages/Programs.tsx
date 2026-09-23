@@ -51,15 +51,15 @@ function ProgramCard({ program }: { program: ProgramSummary }) {
           className="block no-underline hover:underline"
           title="Open this program's dashboard"
         >
-          <h3 className="m-0 text-[15px] font-semibold text-ink">{program.name}</h3>
+          <h3 className="m-0 text-emph font-semibold text-ink">{program.name}</h3>
         </a>
         <span
-          className={`shrink-0 rounded px-2 py-0.5 text-[10.5px] font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[program.band]}`}
+          className={`shrink-0 rounded px-2 py-0.5 text-label font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[program.band]}`}
         >
           {BAND_LABEL[program.band]}
         </span>
       </div>
-      <p className="mt-1 mb-2.5 text-[12.5px] text-ink-3">
+      <p className="mt-1 mb-2.5 text-body text-ink-3">
         {program.project_count} project{program.project_count === 1 ? "" : "s"}
         {program.owner ? ` · ${program.owner}` : ""}
       </p>
@@ -71,11 +71,11 @@ function ProgramCard({ program }: { program: ProgramSummary }) {
               key={row.project_id}
               href={projectLink("/project/dashboard", row)}
               title={`Open ${row.name}'s dashboard`}
-              className="flex items-center gap-1.5 rounded px-1 py-0.5 text-[12px] no-underline hover:bg-bg"
+              className="flex items-center gap-1.5 rounded px-1 py-0.5 text-body no-underline hover:bg-bg"
             >
               <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT_STYLE[row.band] ?? "bg-rule"}`} />
               <span className="min-w-0 flex-1 truncate text-ink">{row.name}</span>
-              <span className="shrink-0 text-[11px] text-ink-3">
+              <span className="shrink-0 text-label text-ink-3">
                 {row.days_late > 0 ? `+${row.days_late}d` : "on plan"}
               </span>
             </a>
@@ -123,7 +123,7 @@ function AddProgramForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
   return (
     <Panel span={12} className="content-start">
       <form onSubmit={submit} className="grid gap-2.5">
-        <h3 className="m-0 text-[14px] font-semibold text-ink">New program</h3>
+        <h3 className="m-0 text-emph font-semibold text-ink">New program</h3>
         <div className="flex flex-wrap gap-2">
           <input
             value={name}
@@ -131,14 +131,14 @@ function AddProgramForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
             placeholder="Program name"
             aria-label="Program name"
             autoFocus
-            className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+            className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-body text-ink outline-none focus:border-navy"
           />
           <input
             value={owner}
             onChange={(e) => setOwner(e.target.value)}
             placeholder="Owner (optional)"
             aria-label="Program owner"
-            className="min-w-[180px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] text-ink outline-none focus:border-navy"
+            className="min-w-[180px] flex-1 rounded-md border border-rule bg-surface px-3 py-2 text-body text-ink outline-none focus:border-navy"
           />
         </div>
         {problem && <Problem {...problem} />}
@@ -154,7 +154,7 @@ function AddProgramForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-rule bg-surface px-3 py-1.5 text-[12.5px] text-ink-2"
+            className="rounded-md border border-rule bg-surface px-3 py-1.5 text-body text-ink-2"
             style={{ cursor: "pointer" }}
           >
             Cancel
@@ -162,7 +162,7 @@ function AddProgramForm({ onDone, onCancel }: { onDone: () => void; onCancel: ()
         </div>
         {/* Said here rather than discovered later: a program with no projects
             is a legitimate row, not a half-finished one. */}
-        <p className="m-0 text-[11.5px] text-ink-3">
+        <p className="m-0 text-body text-ink-3">
           A new program starts empty. Add projects to it from the Projects tab, or by
           uploading a document for one.
         </p>

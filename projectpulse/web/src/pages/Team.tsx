@@ -31,6 +31,7 @@ import {
   withProject,
 } from "../api";
 import { Board, Card, Page, Panel, Problem, Section, Stat, Stats } from "../components/Shell";
+import { HeatStrip, SplitRows } from "../components/charts";
 
 /** Days between two ISO dates, or null if either is missing. */
 function days(from?: string | null, to?: string | null): number | null {
@@ -156,20 +157,48 @@ function why(task: MemberTask) {
   return "no dates";
 }
 
+/* How late, as its own figure. `why` buried this: a row twenty days past its
+   date read "due 2026-08-31, not started", which is the same sentence a row
+   due tomorrow gets. The number is the whole triage. */
+function lateDays(task: MemberTask): number {
+  return task.closed ? 0 : (task.days_past_due ?? 0);
+}
+
 /* How many undated rows to print before folding the rest away. Eleven
    Vietnamese titles at full length filled a screen on their own, and this
    panel is a summary of one person's week, not a backlog export. */
 const FEW = 3;
 
-function UndatedList({ tasks }: { tasks: MemberTask[] }) {
+function UndatedList({
+  tasks,
+  expanded = false,
+}: {
+  tasks: MemberTask[];
+  /* Opened by the caller when the reader asked for exactly this list. Folding
+     a list somebody clicked a number to see is asking them to click twice for
+     one answer. */
+  expanded?: boolean;
+}) {
   const [open, setOpen] = useState(false);
-  const shown = open ? tasks : tasks.slice(0, FEW);
+  const showAll = open || expanded;
+  const shown = showAll ? tasks : tasks.slice(0, FEW);
   const rest = tasks.length - shown.length;
+
+  /* Worst first. A list of sixteen late rows in sheet order makes the reader
+     scan for the big number; sorted, the first line is the answer. */
+  const ordered = shown
+    .slice()
+    .sort((a, b) => lateDays(b) - lateDays(a));
 
   return (
     <div className="grid gap-0.5 py-1">
-      {shown.map((t) => (
-        <div key={t.entity_id} className="truncate text-[11.5px] text-ink-3">
+      {ordered.map((t) => (
+        <div key={t.entity_id} className="truncate text-body text-ink-3">
+          {lateDays(t) > 0 && (
+            <b className="mr-1.5 font-semibold text-red tabular-nums">
+              {lateDays(t)}d late
+            </b>
+          )}
           <b className="font-semibold text-ink-2">{t.label}</b>
           {t.title && t.title !== t.label && (
             <span className="ml-1.5">{t.title}</span>
@@ -177,11 +206,11 @@ function UndatedList({ tasks }: { tasks: MemberTask[] }) {
           <span className="ml-1.5 italic">{why(t)}</span>
         </div>
       ))}
-      {(rest > 0 || open) && (
+      {!expanded && (rest > 0 || open) && (
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="w-fit cursor-pointer border-0 bg-transparent p-0 text-[11px] text-blue underline"
+          className="w-fit cursor-pointer border-0 bg-transparent p-0 text-label text-blue underline"
         >
           {open ? "show fewer" : `${rest} more`}
         </button>
@@ -197,12 +226,14 @@ function WorkloadRow({
   span,
   filter,
   query,
+  expanded = false,
 }: {
   member: Member;
   start: string;
   span: number;
   filter: TaskFilter;
   query: string;
+  expanded?: boolean;
 }) {
   /* Filter once, here, so the bars and the folded list below them are the
      same set of tasks. Filtering them separately is how a row comes to say
@@ -220,8 +251,8 @@ function WorkloadRow({
   return (
     <div className="flex items-start gap-3 border-b border-rule-2 py-2 last:border-b-0">
       <div className="w-[150px] shrink-0">
-        <div className="truncate text-[12.5px] font-semibold">{member.name}</div>
-        <div className="mt-0.5 text-[11px] text-ink-3">
+        <div className="truncate text-body font-semibold">{member.name}</div>
+        <div className="mt-0.5 text-label text-ink-3">
           {dated.length > 0
             ? `${dated.length} dated task(s)`
             : member.qa_items > 0
@@ -236,12 +267,12 @@ function WorkloadRow({
           same mistake the Gantt already fixed once. */}
       <div className="min-w-0 flex-1 pr-[76px]">
         {dated.length === 0 && undated.length === 0 ? (
-          <div className="py-2 text-[11.5px] text-ink-3 italic">
+          <div className="py-2 text-body text-ink-3 italic">
             No task recorded for this person
             {member.qa_items > 0 && " - this person appears only on the worklog"}
           </div>
         ) : dated.length === 0 ? (
-          <UndatedList tasks={undated} />
+          <UndatedList tasks={undated} expanded={expanded} />
         ) : (
           <div className="grid gap-1.5">
             {dated.map((task) => {
@@ -316,7 +347,7 @@ function WorkloadRow({
                       next column. Clipped to a readable stub; the title
                       attribute above still carries the whole thing. */}
                   <span
-                    className="absolute top-0 max-w-[280px] overflow-hidden text-[10.5px] text-ellipsis whitespace-nowrap text-ink-3"
+                    className="absolute top-0 max-w-[280px] overflow-hidden text-label text-ellipsis whitespace-nowrap text-ink-3"
                     style={{ left: `calc(${offset + planned + over}% + 6px)` }}
                   >
                     <b className="font-semibold text-ink-2">{task.label}</b>
@@ -353,7 +384,9 @@ function WorkloadRow({
                 </div>
               );
             })}
-            {undated.length > 0 && <UndatedList tasks={undated} />}
+            {undated.length > 0 && (
+              <UndatedList tasks={undated} expanded={expanded} />
+            )}
           </div>
         )}
       </div>
@@ -368,11 +401,279 @@ function WorkloadRow({
    reading is 84 planned of which 11 are done. The planned bar is a recessive
    track and the logged bar sits inside it, so "how much of my estimate have I
    burned" is answerable without arithmetic. */
+/* ---- who is carrying what ---------------------------------------------
+
+   The question this page kept failing to answer: one person is doing most of
+   the work - is that a problem, and when did it happen?
+
+   Two panels, because those are two questions and one chart cannot hold
+   both. `Concentration` is "how is the load split, and in what state".
+   `Closures` is "when did it actually land", which is the one that catches a
+   hundred tickets being closed in an afternoon.
+*/
+
+/* Three states that sum to the total, so a stacked bar is honest arithmetic
+   rather than three overlapping filters. A row is finished, or it is open
+   and within its date, or it is open and past it - never two of those. */
+function split(member: Member): [number, number, number] {
+  let done = 0;
+  let open = 0;
+  let late = 0;
+  for (const task of member.tasks) {
+    if (task.closed) done += 1;
+    else if ((task.days_past_due ?? 0) > 0) late += 1;
+    else open += 1;
+  }
+  return [done, open, late];
+}
+
+function Concentration({
+  bundle,
+  onPick,
+}: {
+  bundle: TeamBundle;
+  onPick: (member: string, filter: TaskFilter) => void;
+}) {
+  const ranked = bundle.members
+    .map((m) => ({ member: m, values: split(m), total: m.tasks.length }))
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.total - a.total);
+
+  if (ranked.length === 0) return null;
+
+  const all = ranked.reduce((n, r) => n + r.total, 0);
+  const top = ranked[0];
+  if (!top) return null;
+  const share = Math.round((top.total / all) * 100);
+
+  /* A threshold, not a vibe. Half the backlog on one person is the point at
+     which "they are busy" becomes "the plan has a single point of failure",
+     and the sentence says which of the two this is rather than leaving a
+     bar chart to imply it. */
+  const concentrated = share >= 50 && ranked.length > 1;
+
+  return (
+    <Panel caption="Who is carrying the work" span={12}>
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <b className={concentrated ? "text-emph font-semibold text-amber" : "text-emph font-semibold text-ink"}>
+          {share}% of the work sits with {top.member.name}
+        </b>
+        <span className="text-body text-ink-2 tabular-nums">
+          {top.total} of {all} items, across {ranked.length} people
+        </span>
+      </div>
+
+      <SplitRows
+        /* Segment index -> the filter that isolates it, matching the order
+           of `parts` below. -1 is the row label: everything that person
+           carries, unfiltered. */
+        onPick={(name, part) =>
+          onPick(name, part === 0 ? "done" : part === 1 ? "open" : part === 2 ? "overdue" : "all")
+        }
+        ariaLabel={`Work items per person: ${ranked
+          .map((r) => `${r.member.name} ${r.total}`)
+          .join(", ")}`}
+        parts={[
+          { label: "finished", tone: "good" },
+          { label: "open, within date", tone: "info" },
+          { label: "open, past due", tone: "bad" },
+        ]}
+        rows={ranked.map((r) => ({
+          key: r.member.name,
+          label: r.member.name,
+          values: r.values,
+          title: `${r.member.name}: ${r.values[0]} finished, ${r.values[1]} open, ${r.values[2]} past due`,
+        }))}
+      />
+
+      <p className="mt-2 mb-0 text-label text-ink-3">
+        Click a name for everything they carry, or a coloured segment for
+        just that part of it.
+      </p>
+
+      {concentrated && (
+        <p className="mt-3 mb-0 border-l-2 border-amber pl-3 text-body text-ink-2">
+          Bars are drawn against the largest, so the others are as small as
+          they look. Before reading this as one person out-delivering the
+          team, check the timeline below: a large share closed on a single
+          day is a tracker being tidied up, not a week of work.
+        </p>
+      )}
+    </Panel>
+  );
+}
+
+/* ---- when the work actually landed ------------------------------------ */
+
+/** ISO day, UTC, so bucketing never shifts a date across a timezone. */
+function isoDay(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+/* Days while the window is short enough to read, weeks after that. The
+   boundary is about labels, not about data: past a fortnight the day ticks
+   collide and the strip stops being a timeline and becomes texture. */
+function buckets(from: number, to: number): { keys: string[]; labels: string[]; byWeek: boolean } {
+  const DAY = 86_400_000;
+  const spanDays = Math.round((to - from) / DAY) + 1;
+  const byWeek = spanDays > 21;
+  const step = byWeek ? 7 * DAY : DAY;
+  const keys: string[] = [];
+  const labels: string[] = [];
+  for (let t = from; t <= to; t += step) {
+    keys.push(isoDay(t));
+    labels.push(byWeek ? isoDay(t).slice(5) : isoDay(t).slice(8));
+  }
+  return { keys, labels, byWeek };
+}
+
+function Closures({ bundle }: { bundle: TeamBundle }) {
+  const finished = bundle.members.flatMap((m) =>
+    m.tasks
+      .filter((t) => t.actual_end)
+      .map((t) => ({ who: m.name, at: Date.parse(t.actual_end as string) })),
+  );
+
+  const withStart = bundle.members.reduce(
+    (n, m) => n + m.tasks.filter((t) => t.start).length,
+    0,
+  );
+  const allTasks = bundle.members.reduce((n, m) => n + m.tasks.length, 0);
+
+  if (finished.length === 0) {
+    return (
+      <Panel caption="When the work landed" span={12}>
+        <p className="m-0 text-body text-ink-2">
+          No task in this project has a recorded completion date, so there is
+          nothing to place on a timeline. Completion dates come from the
+          tracker&rsquo;s changelog &mdash; a project imported from a
+          spreadsheet alone will not have them.
+        </p>
+      </Panel>
+    );
+  }
+
+  const from = Math.min(...finished.map((f) => f.at));
+  const to = Math.max(...finished.map((f) => f.at));
+  const { keys, labels, byWeek } = buckets(from, to);
+  const index = new Map(keys.map((k, i) => [k, i]));
+
+  function bucketOf(at: number): number {
+    if (!byWeek) return index.get(isoDay(at)) ?? 0;
+    // Weeks: fall into the last bucket that starts on or before this day.
+    let last = 0;
+    for (let i = 0; i < keys.length; i += 1) {
+      if (Date.parse(keys[i] as string) <= at) last = i;
+    }
+    return last;
+  }
+
+  const rows = bundle.members
+    .map((m) => {
+      const cells = new Array(keys.length).fill(0) as number[];
+      for (const task of m.tasks) {
+        if (!task.actual_end) continue;
+        // Clamped rather than trusted: `bucketOf` derives an index from a
+        // date, and a date outside the window it was built from would write
+        // past the end of the row and silently drop the count.
+        const at = Math.min(keys.length - 1, Math.max(0, bucketOf(Date.parse(task.actual_end))));
+        cells[at] = (cells[at] ?? 0) + 1;
+      }
+      return {
+        key: m.name,
+        label: m.name,
+        cells,
+        total: cells.reduce((a, b) => a + b, 0),
+      };
+    })
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.total - a.total);
+
+  /* Absence is a result. A person with tasks and no completions drops out
+     of the strip entirely, and a chart that quietly omits the people who
+     have delivered nothing is a chart that flatters the team. */
+  const silent = bundle.members
+    .filter((m) => m.tasks.length > 0 && !m.tasks.some((t) => t.actual_end))
+    .map((m) => `${m.name} (${m.tasks.length})`);
+
+  /* The finding this panel exists to surface. A person whose completions are
+     nearly all in one bucket did not work through them one at a time, and a
+     PM reading "151 done" without this would credit a month of delivery to
+     an afternoon of housekeeping. */
+  const spikes = rows
+    .map((r) => {
+      const peak = Math.max(...r.cells);
+      // The full date, not the axis tick. A tick reads "20" because the
+      // column beside it reads "19"; a sentence quoting "(20)" on its own
+      // names nothing.
+      return { name: r.label, peak, total: r.total, at: keys[r.cells.indexOf(peak)] };
+    })
+    /* Two conditions, and the volume one is what stops this crying wolf.
+       "5 of 5 in one day" is a plausible good day and the first draft
+       flagged it in the same words as "134 of 135", which is the fastest
+       way to teach a reader to skip a warning. Ten is the point where a
+       single day stops being a plausible amount of finished work. */
+    .filter((s) => s.peak >= 10 && s.peak / s.total >= 0.6);
+
+  return (
+    <Panel caption="When the work landed" span={12}>
+      <p className="m-0 mb-3 text-body text-ink-2">
+        Each cell is one {byWeek ? "week" : "day"}, shaded by how many items
+        that person finished in it &mdash;{" "}
+        <b className="font-semibold text-ink tabular-nums">{isoDay(from)}</b> to{" "}
+        <b className="font-semibold text-ink tabular-nums">{isoDay(to)}</b>.
+      </p>
+
+      <HeatStrip
+        rows={rows}
+        columns={labels}
+        ariaLabel={`Completions per person over ${labels.length} ${byWeek ? "weeks" : "days"}: ${rows
+          .map((r) => `${r.label} ${r.total}`)
+          .join(", ")}`}
+      />
+
+      {silent.length > 0 && (
+        <p className="mt-3 mb-0 border-l-2 border-red pl-3 text-body text-ink-2">
+          <b className="text-ink">
+            Nothing finished in this window: {silent.join(", ")}
+          </b>
+          . They are not on the chart because they have no completions to
+          plot &mdash; which is the finding, not a gap in the data.
+        </p>
+      )}
+
+      {spikes.map((spike) => (
+        <p
+          key={spike.name}
+          className="mt-3 mb-0 border-l-2 border-amber pl-3 text-body text-ink-2"
+        >
+          <b className="text-ink">
+            {spike.name}: {spike.peak} of {spike.total} finished in one{" "}
+            {byWeek ? "week" : "day"}
+          </b>{" "}
+          ({spike.at}). That is a batch update to the tracker, not{" "}
+          {spike.peak} separate pieces of work &mdash; so their completion
+          count says when the board was tidied, not when the work happened.
+        </p>
+      ))}
+
+      {/* The limitation, stated where the chart is, not in a footnote at the
+          bottom of the page. This is the panel a reader would otherwise
+          mistake for a Gantt. */}
+      <p className="mt-3 mb-0 text-label text-ink-3">
+        Completions only. {withStart} of {allTasks} tasks carry a recorded
+        start date, so no duration can be drawn for the rest &mdash; a bar
+        from an assumed start would be a picture of an assumption.
+      </p>
+    </Panel>
+  );
+}
+
 function Hours({ members }: { members: Member[] }) {
   const withEffort = members.filter((m) => m.hours_planned > 0 || m.hours_logged > 0);
   if (withEffort.length === 0) {
     return (
-      <p className="m-0 text-[12.5px] text-ink-2">
+      <p className="m-0 text-body text-ink-2">
         No source carried an <code className="font-mono">Estimate</code> or{" "}
         <code className="font-mono">Hours</code> column with anything in it, so there is
         no effort to show.
@@ -389,7 +690,7 @@ function Hours({ members }: { members: Member[] }) {
     <div className="grid gap-2">
       {withEffort.map((member) => (
         <div key={member.name} className="flex items-center gap-3">
-          <span className="w-[104px] shrink-0 truncate text-[12px] text-ink-2">
+          <span className="w-[104px] shrink-0 truncate text-body text-ink-2">
             {member.name}
           </span>
           <span className="relative h-[14px] min-w-0 flex-1">
@@ -407,18 +708,18 @@ function Hours({ members }: { members: Member[] }) {
               title={`${member.hours_logged}h logged`}
             />
           </span>
-          <b className="w-[74px] shrink-0 text-right text-[12px] font-semibold tabular-nums">
+          <b className="w-[74px] shrink-0 text-right text-body font-semibold tabular-nums">
             {member.hours_logged}
             <span className="font-normal text-ink-3">/{member.hours_planned}h</span>
           </b>
         </div>
       ))}
       <div className="mt-1 flex flex-wrap gap-4 border-t border-rule pt-2">
-        <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+        <span className="flex items-center gap-1.5 text-label text-ink-3">
           <span className="h-2 w-4 rounded-[4px]" style={{ background: "var(--viz-plan)" }} />
           logged
         </span>
-        <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+        <span className="flex items-center gap-1.5 text-label text-ink-3">
           <span className="h-2 w-4 rounded-[4px] bg-[var(--rule)]" />
           planned
         </span>
@@ -442,7 +743,7 @@ function Hours({ members }: { members: Member[] }) {
 function Burn({ burn }: { burn: BurnSeries }) {
   if (burn.points.length < 2) {
     return (
-      <p className="m-0 text-[12.5px] text-ink-2">
+      <p className="m-0 text-body text-ink-2">
         {burn.points.length === 0
           ? "The worklog sheet has not been scanned yet, so there is nothing to plot."
           : "One observation is a total, not a series. A second scan is what makes a burn chart possible."}
@@ -494,7 +795,7 @@ function Burn({ burn }: { burn: BurnSeries }) {
             <line x1={PAD.left} x2={W - PAD.right} y1={y(hours)} y2={y(hours)}
               stroke="var(--rule)" strokeWidth={1} />
             <text x={PAD.left - 6} y={y(hours) + 3.5} textAnchor="end"
-              className="fill-[var(--ink-3)] text-[9.5px] tabular-nums">{hours}</text>
+              className="fill-[var(--ink-3)] text-label tabular-nums">{hours}</text>
           </g>
         ))}
 
@@ -538,7 +839,7 @@ function Burn({ burn }: { burn: BurnSeries }) {
                 textAnchor={
                   i === 0 ? "start" : i === burn.points.length - 1 ? "end" : "middle"
                 }
-                className="fill-[var(--ink-1)] text-[9.5px] font-semibold tabular-nums">
+                className="fill-[var(--ink-1)] text-label font-semibold tabular-nums">
                 {p.logged_hours}
               </text>
             )}
@@ -546,7 +847,7 @@ function Burn({ burn }: { burn: BurnSeries }) {
               textAnchor={
                 i === 0 ? "start" : i === burn.points.length - 1 ? "end" : "middle"
               }
-              className="fill-[var(--ink-3)] text-[9px] tabular-nums">
+              className="fill-[var(--ink-3)] text-label tabular-nums">
               {p.observed_at.slice(5)}
             </text>
           </g>
@@ -554,18 +855,18 @@ function Burn({ burn }: { burn: BurnSeries }) {
       </svg>
 
       <div className="mt-2 flex flex-wrap gap-4 border-t border-rule pt-2.5">
-        <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+        <span className="flex items-center gap-1.5 text-label text-ink-3">
           <span className="h-0.5 w-4" style={{ background: "var(--viz-plan)" }} />
           logged - cumulative, from observed changes
         </span>
-        <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+        <span className="flex items-center gap-1.5 text-label text-ink-3">
           <span className="h-0.5 w-4" style={{
             background: "repeating-linear-gradient(90deg, var(--ink-3) 0 6px, transparent 6px 10px)",
           }} />
           planned - {burn.planned_hours}h of estimates
         </span>
         {stallIndex > 0 && (
-          <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+          <span className="flex items-center gap-1.5 text-label text-ink-3">
             <span className="h-2.5 w-4 rounded-sm" style={{ background: "var(--viz-over)", opacity: 0.4 }} />
             nothing logged since {burn.stalled_from}
           </span>
@@ -580,7 +881,7 @@ function Burn({ burn }: { burn: BurnSeries }) {
    precisely each change is dated, because that distinction is the product. */
 function Activity({ bundle }: { bundle: TeamBundle }) {
   if (bundle.activity.length === 0) {
-    return <p className="m-0 text-[12.5px] text-ink-2">No state changes observed yet.</p>;
+    return <p className="m-0 text-body text-ink-2">No state changes observed yet.</p>;
   }
 
   const most = Math.max(...bundle.activity.map((w) => w.changes));
@@ -597,7 +898,7 @@ function Activity({ bundle }: { bundle: TeamBundle }) {
             key={week.week_start}
             className="flex h-full min-w-0 flex-1 flex-col items-center justify-end"
           >
-            <b className="mb-1 text-[11px] font-semibold tabular-nums">{week.changes}</b>
+            <b className="mb-1 text-label font-semibold tabular-nums">{week.changes}</b>
             <div
               className="flex w-full max-w-[52px] flex-col justify-end"
               style={{ height: `${(week.changes / most) * 100}%` }}
@@ -622,7 +923,7 @@ function Activity({ bundle }: { bundle: TeamBundle }) {
                 />
               )}
             </div>
-            <span className="mt-1.5 text-[10.5px] whitespace-nowrap text-ink-3">
+            <span className="mt-1.5 text-label whitespace-nowrap text-ink-3">
               {week.week_start.slice(5)}
             </span>
           </div>
@@ -630,14 +931,14 @@ function Activity({ bundle }: { bundle: TeamBundle }) {
       </div>
       {/* Two series, so a legend is always present. */}
       <div className="mt-3 flex flex-wrap gap-4 border-t border-rule pt-2.5">
-        <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+        <span className="flex items-center gap-1.5 text-label text-ink-3">
           <span
             className="h-2.5 w-4 rounded-sm"
             style={{ background: "var(--viz-plan)" }}
           />
           bounded - seen by comparing two snapshots
         </span>
-        <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+        <span className="flex items-center gap-1.5 text-label text-ink-3">
           <span
             className="h-2.5 w-4 rounded-sm"
             style={{ background: "var(--viz-over)" }}
@@ -653,15 +954,41 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
   const [query, setQuery] = useState("");
   const [memberSort, setMemberSort] = useState<MemberSort>("load");
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
+  /* Who the workload panel is narrowed to, set by clicking a bar above.
+     Empty is everyone, which is the honest default - this is a team page
+     before it is a person page. */
+  const [focus, setFocus] = useState("");
+
+  /* One number, one list. Clicking "16 past due" on Quan's bar has to land
+     the reader on those sixteen rows and nothing else; anything short of
+     that leaves them scrolling a hundred and fifty-one. The scroll is part
+     of the answer: the list is a screen further down, and a filter that
+     changes something off-screen reads as a control that did nothing. */
+  function drillTo(member: string, filter: TaskFilter) {
+    setFocus(member);
+    setTaskFilter(filter);
+    setQuery("");
+    requestAnimationFrame(() => {
+      document
+        .getElementById("workload")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   const needle = query.trim().toLowerCase();
-  const shownMembers = orderMembers(bundle.members, memberSort).filter(
-    (m) =>
-      m.tasks.some((t) => keeps(t, taskFilter) && matches(t, needle)) ||
-      (!needle && taskFilter === "all"),
-  );
+  const shownMembers = orderMembers(bundle.members, memberSort)
+    .filter((m) => !focus || m.name === focus)
+    .filter(
+      (m) =>
+        m.tasks.some((t) => keeps(t, taskFilter) && matches(t, needle)) ||
+        (!needle && taskFilter === "all" && !focus),
+    );
   const totalTasks = bundle.members.reduce((n, m) => n + m.tasks.length, 0);
-  const shownTasks = bundle.members.reduce(
+  /* Counted over the members actually on screen, not over the whole team.
+     Focused on one person's past-due rows this said "34" - the team's total
+     - directly beside that person's name, which is the one number a reader
+     would have quoted straight into a status report. */
+  const shownTasks = shownMembers.reduce(
     (n, m) =>
       n + m.tasks.filter((t) => keeps(t, taskFilter) && matches(t, needle)).length,
     0,
@@ -707,7 +1034,37 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
       </Stats>
 
       <Board className="mb-6">
-        <Panel caption="Workload on one window" span={12}>
+        <Concentration bundle={bundle} onPick={drillTo} />
+        <Closures bundle={bundle} />
+        <Panel caption="Workload on one window" span={12} className="scroll-mt-4">
+          <div id="workload" />
+          {/* Why this list is shorter than the whole team. Same pattern as
+              the Traceability page's filter chip, and for the same reason:
+              a list narrowed by a click somewhere else, with nothing saying
+              so, gets read as the total. */}
+          {(focus || taskFilter !== "all") && (
+            <div className="fade-in mb-2.5 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-rule bg-bg py-1 pr-1 pl-3 text-body text-ink-2">
+                Showing{" "}
+                <b className="font-semibold text-ink">
+                  {focus || "everyone"}
+                  {taskFilter !== "all" &&
+                    ` · ${TASK_FILTERS.find(([v]) => v === taskFilter)?.[1]}`}
+                </b>
+                <span className="tabular-nums text-ink-3">{shownTasks}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFocus("");
+                    setTaskFilter("all");
+                  }}
+                  className="cursor-pointer rounded-full border-0 bg-rule-2 px-2.5 py-1 text-label text-ink-2 transition-colors duration-100 hover:bg-red hover:text-surface"
+                >
+                  Clear
+                </button>
+              </span>
+            </div>
+          )}
           {/* Controls above the window, not inside it: they change which
               rows exist, and a control that sits among the rows it removes
               moves as you use it. */}
@@ -718,13 +1075,13 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search key, title, type..."
               aria-label="Search tasks"
-              className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-2.5 py-1.5 text-[13px] text-ink"
+              className="min-w-[220px] flex-1 rounded-md border border-rule bg-surface px-2.5 py-1.5 text-body text-ink"
             />
             <select
               value={memberSort}
               onChange={(e) => setMemberSort(e.target.value as MemberSort)}
               aria-label="Sort people"
-              className="rounded-md border border-rule bg-surface px-2.5 py-1.5 text-[13px] text-ink"
+              className="rounded-md border border-rule bg-surface px-2.5 py-1.5 text-body text-ink"
             >
               {MEMBER_SORTS.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -736,7 +1093,7 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
               value={taskFilter}
               onChange={(e) => setTaskFilter(e.target.value as TaskFilter)}
               aria-label="Filter tasks by status"
-              className="rounded-md border border-rule bg-surface px-2.5 py-1.5 text-[13px] text-ink"
+              className="rounded-md border border-rule bg-surface px-2.5 py-1.5 text-body text-ink"
             >
               {TASK_FILTERS.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -744,7 +1101,7 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
                 </option>
               ))}
             </select>
-            <span className="ml-auto text-[11.5px] text-ink-3">
+            <span className="ml-auto text-body text-ink-3">
               {shownTasks === totalTasks
                 ? `${totalTasks} tasks`
                 : `${shownTasks} of ${totalTasks} tasks`}
@@ -756,7 +1113,7 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
                   and 76px reserved on the right for a bar's end label - or
                   the ticks would name dates the bars below do not sit on. */}
               <div className="mb-1 flex items-end gap-3">
-                <div className="w-[150px] shrink-0 text-[10.5px] text-ink-3">
+                <div className="w-[150px] shrink-0 text-label text-ink-3">
                   {bundle.window_start}
                 </div>
                 <div className="min-w-0 flex-1 pr-[76px]">
@@ -764,20 +1121,20 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
                     {scaleTicks(bundle.window_start, span).map((tick) => (
                       <span
                         key={tick.label}
-                        className="absolute top-0 -translate-x-1/2 text-[10px] whitespace-nowrap text-ink-3"
+                        className="absolute top-0 -translate-x-1/2 text-label whitespace-nowrap text-ink-3"
                         style={{ left: `${tick.at}%` }}
                       >
                         {tick.label}
                       </span>
                     ))}
-                    <span className="absolute top-0 left-full ml-1.5 text-[10.5px] whitespace-nowrap text-ink-3">
+                    <span className="absolute top-0 left-full ml-1.5 text-label whitespace-nowrap text-ink-3">
                       {bundle.window_end}
                     </span>
                   </div>
                 </div>
               </div>
               {shownMembers.length === 0 ? (
-                <p className="m-0 py-3 text-[12.5px] text-ink-3 italic">
+                <p className="m-0 py-3 text-body text-ink-3 italic">
                   Nothing matches that. Clear the search to see everyone.
                 </p>
               ) : (
@@ -789,25 +1146,29 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
                     span={span}
                     filter={taskFilter}
                     query={query.trim().toLowerCase()}
+                    /* Unfolded when the reader narrowed to this person on
+                       purpose. Folding a list somebody clicked a number to
+                       see makes them click twice for one answer. */
+                    expanded={Boolean(focus)}
                   />
                 ))
               )}
               <div className="mt-3 flex flex-wrap gap-4 border-t border-rule pt-2.5">
-                <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+                <span className="flex items-center gap-1.5 text-label text-ink-3">
                   <span
                     className="h-2.5 w-4 rounded-sm"
                     style={{ background: "var(--viz-plan)" }}
                   />
                   plan - what the tracker says
                 </span>
-                <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+                <span className="flex items-center gap-1.5 text-label text-ink-3">
                   <span
                     className="h-2.5 w-4 rounded-sm"
                     style={{ background: "var(--viz-over)" }}
                   />
                   later than planned - the slip the chain implies
                 </span>
-                <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+                <span className="flex items-center gap-1.5 text-label text-ink-3">
                   <span
                     className="h-2.5 w-4 rounded-sm"
                     style={{ background: "var(--viz-over)", opacity: 0.62 }}
@@ -817,7 +1178,7 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
               </div>
             </>
           ) : (
-            <p className="m-0 text-[12.5px] text-ink-2">
+            <p className="m-0 text-body text-ink-2">
               No task carries both a start and a planned finish, so there is no window to
               draw against.
             </p>
@@ -826,19 +1187,19 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
 
         <Panel caption="Effort logged against plan" span={12}>
           <Burn burn={bundle.burn} />
-          <p className="mt-2.5 mb-0 text-[11.5px] text-ink-3">
+          <p className="mt-2.5 mb-0 text-body text-ink-3">
             One point per scan of the work log. Every rise is a{" "}
-            <code className="font-mono text-[11px]">hours_spent</code> change the differ
+            <code className="font-mono text-label">hours_spent</code> change the differ
             detected, so a flat stretch is evidence that nothing was logged &mdash; not
             evidence that nobody looked. The planned line is one value because{" "}
-            <code className="font-mono text-[11px]">estimate_hours</code> is not tracked:
+            <code className="font-mono text-label">estimate_hours</code> is not tracked:
             we have never observed the plan change and will not draw where it used to be.
           </p>
         </Panel>
 
         <Panel caption="Logged against planned, by owner" span={6} className="content-start">
           <Hours members={bundle.members} />
-          <p className="mt-3 mb-0 border-t border-rule pt-2.5 text-[11.5px] text-ink-3">
+          <p className="mt-3 mb-0 border-t border-rule pt-2.5 text-body text-ink-3">
             Both halves are columns a person filled in, so this is a variance and its
             derivation can be shown. It is not a productivity figure: that would need
             output per unit of effort, and the only output measure here is a
@@ -855,8 +1216,8 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
         <Card className="grid gap-2.5">
           <div>
             <b className="font-semibold">A planned line that moves.</b>{" "}
-            <span className="text-[13px] text-ink-2">
-              <code className="font-mono text-[12px]">estimate_hours</code> is not a
+            <span className="text-body text-ink-2">
+              <code className="font-mono text-body">estimate_hours</code> is not a
               tracked field, so no scan has ever recorded the plan changing. It is drawn
               as one reference value; sloping it would be inventing the history of a
               number we only know the present of. Scope growth is reported instead as the
@@ -865,9 +1226,9 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
           </div>
           <div>
             <b className="font-semibold">Productivity, as output per unit of effort.</b>{" "}
-            <span className="text-[13px] text-ink-2">
+            <span className="text-body text-ink-2">
               The effort half now exists &mdash; that is the panel above. The output half
-              does not: <code className="font-mono text-[12px]">progress</code> is a
+              does not: <code className="font-mono text-body">progress</code> is a
               self-reported percentage, and a ratio built on it would inherit that and
               present it as measurement. Effort variance is served in its place, because
               both of its halves are columns somebody filled in.
@@ -875,7 +1236,7 @@ export function TeamView({ bundle }: { bundle: TeamBundle }) {
           </div>
           <div>
             <b className="font-semibold">Capacity.</b>{" "}
-            <span className="text-[13px] text-ink-2">
+            <span className="text-body text-ink-2">
               The bars above are the calendar span someone&rsquo;s work covers, not how
               full their days are. No allocation data has been ingested, so
               &ldquo;overloaded&rdquo; is not a claim this can make.

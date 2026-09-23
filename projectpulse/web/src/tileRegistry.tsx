@@ -25,6 +25,14 @@ import {
   type TeamBundle,
 } from "./api";
 import { Problem } from "./components/Shell";
+import {
+  BarRows,
+  ChartEmpty,
+  Donut,
+  MAX_DONUT_SLICES,
+  Sparkline,
+} from "./components/charts";
+import { Skeleton } from "./components/motion";
 import { GanttChart } from "./components/GanttChart";
 
 export interface TileProps {
@@ -38,27 +46,28 @@ export interface TileProps {
   settings?: Record<string, unknown> | null;
 }
 
-/* Fixed categorical order (dataviz skill: never cycled, never assigned by
-   rank) - reused from the app's own token set rather than a second palette.
-   A pie past this many slices folds the rest into "Other" instead of
-   generating a color nobody chose. */
-const CATEGORICAL_ORDER = ["navy", "blue", "orange", "green", "red", "amber", "purple"] as const;
-const MAX_PIE_SLICES = CATEGORICAL_ORDER.length;
+/* A custom tile's whole chart, in one component.
 
-/* label/value only - a custom tile's whole chart, one hue for a magnitude
-   series (bar/line), the fixed categorical order for a pie's slice identity.
+   It used to be three charts written out here - a wedge pie, a bare
+   sparkline and a row of divs - and each had drifted from the equivalent
+   drawing on some other page. They now come from `components/charts.tsx`,
+   which is the one place this app decides what a bar looks like, and the
+   only thing left in this file is the part that is actually about a *tile*:
+   which form a `chart_type` should take at tile size.
 
-   `compact`: the ~64x22px version chip in the tile builder's transcript
-   (`TileBuilder.tsx`) is too small for a label next to every bar to mean
-   anything - it stays the plain sparkline, no labels, same as `line`. Every
-   other place this renders (the stage, a saved tile's card, the tile as it
-   actually sits on a dashboard) uses the labelled version by default: a bar
-   chart with no visible label next to each bar is the actual bug behind
-   "everyone has the same color so I can't tell who is who" - color was never
-   going to fix that, since a magnitude comparison like this should carry
-   identity in its labels, not in a hue nothing else here uses that way
-   (dataviz skill: color follows the entity's role, not a bar's rank, and a
-   sequential/magnitude series is one hue by design). */
+   Two of those choices changed, and both are the same judgement.
+
+   A pie past four slices was folding everything beyond the seventh into
+   "Other" and asking a reader to tell navy from blue from purple around a
+   circle. `<Donut>` draws four or fewer as a donut with the total in the
+   hole, and hands anything larger to labelled bars - where identity is a
+   word rather than a hue. A reader never has to decode a colour to know
+   which row is which.
+
+   `compact` is the ~64x22px version chip in the tile builder's transcript
+   (`TileBuilder.tsx`): too small for a label beside every bar to mean
+   anything, so it stays a sparkline whatever the type says.
+*/
 export function MiniChart({
   chartType,
   labels,
@@ -70,136 +79,60 @@ export function MiniChart({
   values: number[];
   compact?: boolean;
 }) {
-  if (chartType === "pie") {
-    const overflow = values.length > MAX_PIE_SLICES;
-    const shown = overflow ? values.slice(0, MAX_PIE_SLICES - 1) : values;
-    const shownLabels = overflow ? labels.slice(0, MAX_PIE_SLICES - 1) : labels;
-    const rest = overflow ? values.slice(MAX_PIE_SLICES - 1).reduce((a, b) => a + b, 0) : 0;
-    const slices = overflow ? [...shown, rest] : shown;
-    const sliceLabels = overflow ? [...shownLabels, "Other"] : shownLabels;
-    const total = slices.reduce((a, b) => a + Math.max(0, b), 0) || 1;
+  const named = labels.map((label, i) => ({
+    key: `${i}-${label}`,
+    label: label || `#${i + 1}`,
+    value: values[i] ?? 0,
+  }));
 
-    let angle = -Math.PI / 2;
-    const r = 30;
-    const cx = 32;
-    const cy = 32;
-    const paths = slices.map((v, i) => {
-      const fraction = Math.max(0, v) / total;
-      const start = angle;
-      angle += fraction * 2 * Math.PI;
-      const large = fraction > 0.5 ? 1 : 0;
-      const x1 = cx + r * Math.cos(start);
-      const y1 = cy + r * Math.sin(start);
-      const x2 = cx + r * Math.cos(angle);
-      const y2 = cy + r * Math.sin(angle);
-      const color = i === slices.length - 1 && overflow ? "var(--rule)" : `var(--color-${CATEGORICAL_ORDER[i % CATEGORICAL_ORDER.length]})`;
-      return (
-        <path
-          key={i}
-          d={`M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${large} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`}
-          fill={color}
-          stroke="var(--surface)"
-          strokeWidth={2}
-        >
-          <title>{`${sliceLabels[i]}: ${v}`}</title>
-        </path>
-      );
-    });
+  if (!named.length) {
+    return <ChartEmpty reason="This tile's query returned no rows." />;
+  }
 
+  if (compact) {
     return (
-      <div className="flex items-center gap-3">
-        <svg viewBox="0 0 64 64" className="h-[64px] w-[64px] shrink-0">
-          {paths}
-        </svg>
-        <div className="grid min-w-0 flex-1 gap-1">
-          {sliceLabels.map((label, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-[11px] text-ink-2">
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{
-                  background:
-                    i === sliceLabels.length - 1 && overflow
-                      ? "var(--rule)"
-                      : `var(--color-${CATEGORICAL_ORDER[i % CATEGORICAL_ORDER.length]})`,
-                }}
-              />
-              <span className="min-w-0 flex-1 truncate">{label}</span>
-              <span className="shrink-0 text-ink-3">{slices[i]}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Sparkline
+        values={values}
+        labels={labels}
+        ariaLabel={`${values.length} points, ending at ${values[values.length - 1]}`}
+        height={22}
+      />
     );
   }
 
-  const w = 260;
-  const h = 64;
-  const maxY = Math.max(1, ...values.map((v) => Math.abs(v)));
+  if (chartType === "pie") {
+    return (
+      <Donut
+        parts={named}
+        ariaLabel={`Breakdown across ${named.length} categories`}
+        centerLabel={
+          named.length <= MAX_DONUT_SLICES
+            ? String(named.reduce((a, b) => a + Math.max(0, b.value), 0))
+            : undefined
+        }
+      />
+    );
+  }
 
   if (chartType === "line") {
-    const path = values
-      .map((v, i) => {
-        const x = values.length > 1 ? (i / (values.length - 1)) * w : 0;
-        const y = h - (v / maxY) * h;
-        return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-      })
-      .join(" ");
     return (
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full text-navy" preserveAspectRatio="none">
-        <line x1={0} y1={h} x2={w} y2={h} stroke="var(--rule)" strokeWidth={1} />
-        <path d={path} fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" />
-      </svg>
+      <Sparkline
+        values={values}
+        labels={labels}
+        ariaLabel={`${labels[0] ?? "start"} to ${labels[labels.length - 1] ?? "end"}, ending at ${values[values.length - 1]}`}
+      />
     );
   }
 
-  // bar, compact: the old unlabelled sparkline - only for the transcript's
-  // 64x22px version chips, where a label next to each bar could not be read
-  // anyway.
-  if (compact) {
-    const barW = values.length > 0 ? (w / values.length) * 0.6 : 0;
-    const gap = values.length > 0 ? w / values.length : 0;
-    return (
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full text-navy" preserveAspectRatio="none">
-        <line x1={0} y1={h} x2={w} y2={h} stroke="var(--rule)" strokeWidth={1} />
-        {values.map((v, i) => {
-          const barH = (Math.max(0, v) / maxY) * h;
-          return (
-            <rect
-              key={i}
-              x={i * gap + (gap - barW) / 2}
-              y={h - barH}
-              width={barW}
-              height={barH}
-              rx={2}
-              fill="currentColor"
-            >
-              <title>{`${labels[i]}: ${v}`}</title>
-            </rect>
-          );
-        })}
-      </svg>
-    );
-  }
-
-  // bar, full: horizontal, one row per label - the label sits right next to
-  // its own bar, so telling rows apart never depended on color.
+  // bar: horizontal, one row per label, the label beside its own bar. One
+  // hue, because this is a magnitude series - telling rows apart was never
+  // going to be a colour's job.
   return (
-    <div className="grid gap-1.5">
-      {values.map((v, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <span className="w-[92px] shrink-0 truncate text-[11px] text-ink-2" title={labels[i]}>
-            {labels[i]}
-          </span>
-          <div className="h-[9px] flex-1 overflow-hidden rounded-sm bg-rule-2">
-            <div
-              className="h-full rounded-sm bg-navy"
-              style={{ width: `${Math.min(100, (Math.max(0, v) / maxY) * 100)}%` }}
-            />
-          </div>
-          <span className="w-[46px] shrink-0 text-right text-[11px] text-ink-3">{v}</span>
-        </div>
-      ))}
-    </div>
+    <BarRows
+      rows={named}
+      ariaLabel={`${named.length} rows, largest ${Math.max(...values)}`}
+      labelWidth="w-[92px]"
+    />
   );
 }
 
@@ -293,7 +226,10 @@ function TileShell({
   children: React.ReactNode;
 }) {
   if (problem) return <Problem {...problem} />;
-  if (loading) return <p className="m-0 text-[12.5px] text-ink-3">Loading...</p>;
+  // Shaped like the content, not the word "Loading" - a board of twelve
+  // tiles each saying "Loading..." and then jumping to a different height
+  // is the single jankiest thing this app does on a cold cache.
+  if (loading) return <Skeleton rows={3} />;
   return <>{children}</>;
 }
 
@@ -310,11 +246,11 @@ const ProgramHealth: ComponentType<TileProps> = ({ scopeId }) => {
       {bundle && (
         <>
           <span
-            className={`inline-block rounded px-2 py-0.5 text-[11px] font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[bundle.program.band]}`}
+            className={`inline-block rounded px-2 py-0.5 text-label font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[bundle.program.band]}`}
           >
             {bundle.program.band.replace("_", " ")}
           </span>
-          <p className="mt-2 mb-0 text-[12.5px] text-ink-2">
+          <p className="mt-2 mb-0 text-body text-ink-2">
             {bundle.program.project_count} project(s) in this program.
           </p>
         </>
@@ -333,7 +269,7 @@ const ProjectPortfolio: ComponentType<TileProps> = ({ scopeId }) => {
             <a
               key={row.project_id}
               href={projectLink("/project/dashboard", row)}
-              className="flex items-center gap-2 rounded px-1 py-0.5 text-[12.5px] no-underline hover:bg-bg"
+              className="flex items-center gap-2 rounded px-1 py-0.5 text-body no-underline hover:bg-bg"
               title={`Open ${row.name}'s dashboard`}
             >
               <span className={`h-2 w-2 shrink-0 rounded-full ${(BAND_STYLE[row.band] ?? "bg-rule").split(" ")[0]}`} />
@@ -342,7 +278,7 @@ const ProjectPortfolio: ComponentType<TileProps> = ({ scopeId }) => {
             </a>
           ))}
           {bundle.projects.length === 0 && (
-            <p className="m-0 text-[12.5px] text-ink-3">No projects yet.</p>
+            <p className="m-0 text-body text-ink-3">No projects yet.</p>
           )}
         </div>
       )}
@@ -375,7 +311,7 @@ const ProjectHealthHeatmap: ComponentType<TileProps> = ({ scopeId }) => {
               title={`Open ${row.name}'s dashboard`}
               className="grid grid-cols-[1fr_repeat(5,20px)] items-center gap-1.5 rounded px-1 py-0.5 no-underline hover:bg-bg"
             >
-              <span className="truncate text-[12px] text-ink">{row.name}</span>
+              <span className="truncate text-body text-ink">{row.name}</span>
               {DIMENSIONS.map((d) => (
                 <span
                   key={d}
@@ -388,7 +324,7 @@ const ProjectHealthHeatmap: ComponentType<TileProps> = ({ scopeId }) => {
           {/* Five unlabelled squares need naming once - there is no room for a
               header row at 20px per column, and the full labelled grid is on
               the Portfolio page. */}
-          <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             Left to right: {DIMENSIONS.join(", ")}. Resource is banded from
             cross-project contention, so it can be the only one that is not green.
           </p>
@@ -405,7 +341,7 @@ const ResourceConflictTile: ComponentType<TileProps> = ({ scopeId }) => {
       {bundle && (
         <div className="grid gap-2">
           {bundle.resource_conflicts.length === 0 && (
-            <p className="m-0 text-[12.5px] text-ink-3">
+            <p className="m-0 text-body text-ink-3">
               No one is committed beyond their capacity in any month.
             </p>
           )}
@@ -420,20 +356,20 @@ const ResourceConflictTile: ComponentType<TileProps> = ({ scopeId }) => {
             so one person legitimately appears once per contended month.
           */}
           {bundle.resource_conflicts.map((c) => (
-            <div key={`${c.resource_name}:${c.window_label}`} className="text-[12.5px]">
+            <div key={`${c.resource_name}:${c.window_label}`} className="text-body">
               <b className="font-semibold text-orange">{c.excess_days} effort-days</b>{" "}
               <span className="text-ink">short · {c.resource_name}</span>
-              <div className="text-[11px] text-ink-3">
+              <div className="text-label text-ink-3">
                 {c.projects.join(" + ")} · {c.window_label}
               </div>
-              <div className="text-[11px] text-ink-3">
+              <div className="text-label text-ink-3">
                 {c.total_allocation_percent}% allocated · demand {c.demand_days} vs supply{" "}
                 {c.supply_days} effort-days
               </div>
               {/* A delay figure never renders without its absorption assumption. */}
               {c.absorption && (
                 <div
-                  className={`text-[11px] ${
+                  className={`text-label ${
                     c.breaches_overtime_limit ? "text-orange" : "text-ink-3"
                   }`}
                 >
@@ -462,16 +398,16 @@ const CrossProjectRisk: ComponentType<TileProps> = ({ scopeId }) => {
       {risks && (
         <div className="grid gap-1.5">
           {risks.risks.slice(0, 6).map((r) => (
-            <div key={r.id} className="flex items-center gap-2 text-[12.5px]">
+            <div key={r.id} className="flex items-center gap-2 text-body">
               <span className={`font-semibold ${RATING_STYLE[r.pre_rating ?? ""] ?? "text-ink-3"}`}>
                 {r.pre_rating ?? "n/a"}
               </span>
               <span className="min-w-0 flex-1 truncate">{r.title}</span>
-              <span className="shrink-0 text-[11px] text-ink-3">{r.project_id.split(":").pop()}</span>
+              <span className="shrink-0 text-label text-ink-3">{r.project_id.split(":").pop()}</span>
             </div>
           ))}
           {risks.risks.length === 0 && (
-            <p className="m-0 text-[12.5px] text-ink-3">No risks logged across this program yet.</p>
+            <p className="m-0 text-body text-ink-3">No risks logged across this program yet.</p>
           )}
         </div>
       )}
@@ -497,8 +433,8 @@ const AiCrossProjectBrief: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!insight && !problem} problem={problem}>
       {insight && (
         <>
-          <p className="mt-0 mb-1.5 text-[11px] text-ink-3">for {worstName}</p>
-          <p className="m-0 whitespace-pre-line text-[12.5px] text-ink-2">
+          <p className="mt-0 mb-1.5 text-label text-ink-3">for {worstName}</p>
+          <p className="m-0 whitespace-pre-line text-body text-ink-2">
             {insight.narrative || "No narrative available."}
           </p>
         </>
@@ -513,16 +449,16 @@ const AiDetectedRisksTop: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!insight && !problem} problem={problem}>
       {insight && (
         <>
-          <p className="mt-0 mb-1.5 text-[11px] text-ink-3">for {worstName}</p>
+          <p className="mt-0 mb-1.5 text-label text-ink-3">for {worstName}</p>
           <div className="grid gap-1.5">
             {insight.findings.slice(0, 5).map((f) => (
-              <div key={f.id} className="text-[12.5px]">
+              <div key={f.id} className="text-body">
                 <span className="mr-1.5 font-semibold uppercase text-ink-3">{f.severity}</span>
                 {f.headline}
               </div>
             ))}
             {insight.findings.length === 0 && (
-              <p className="m-0 text-[12.5px] text-ink-3">No findings.</p>
+              <p className="m-0 text-body text-ink-3">No findings.</p>
             )}
           </div>
         </>
@@ -553,7 +489,7 @@ const ProjectsNeedingAttention: ComponentType<TileProps> = ({ scopeId }) => {
             key={row.project_id}
             href={projectLink("/project/dashboard", row)}
             title={`Open ${row.name}'s dashboard`}
-            className="flex items-start gap-2 rounded px-1 py-0.5 text-[12.5px] no-underline hover:bg-bg"
+            className="flex items-start gap-2 rounded px-1 py-0.5 text-body no-underline hover:bg-bg"
           >
             <span
               className={`mt-[3px] h-2 w-2 shrink-0 rounded-full ${(BAND_STYLE[row.band] ?? "bg-rule").split(" ")[0]}`}
@@ -563,17 +499,17 @@ const ProjectsNeedingAttention: ComponentType<TileProps> = ({ scopeId }) => {
               {row.headline && <span className="text-ink-2"> · {row.headline}</span>}
             </span>
             {row.days_late > 0 && (
-              <span className="shrink-0 text-[11px] text-orange">+{row.days_late}d</span>
+              <span className="shrink-0 text-label text-orange">+{row.days_late}d</span>
             )}
           </a>
         ))}
         {attention.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             No project in this program is critical or on watch.
           </p>
         )}
         {unknown.length > 0 && (
-          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             {unknown.length} project(s) have nothing ingested yet, so they are
             unranked rather than healthy: {unknown.map((p) => p.name).join(", ")}.
           </p>
@@ -598,7 +534,7 @@ const TopDelayedProjects: ComponentType<TileProps> = ({ scopeId }) => {
       <div className="grid gap-2">
         {late.map((row) => (
           <div key={row.project_id} className="flex items-center gap-2">
-            <span className="w-[84px] shrink-0 truncate text-[11.5px] text-ink-2" title={row.name}>
+            <span className="w-[84px] shrink-0 truncate text-body text-ink-2" title={row.name}>
               {row.name}
             </span>
             <div className="h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
@@ -607,13 +543,13 @@ const TopDelayedProjects: ComponentType<TileProps> = ({ scopeId }) => {
                 style={{ width: `${Math.max(4, (row.days_late / worst) * 100)}%` }}
               />
             </div>
-            <span className="w-[44px] shrink-0 text-right text-[11px] text-ink-3">
+            <span className="w-[44px] shrink-0 text-right text-label text-ink-3">
               +{row.days_late}d
             </span>
           </div>
         ))}
         {late.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             No project's dependencies imply a slip past its plan.
           </p>
         )}
@@ -670,7 +606,7 @@ const ResourceContentionSplit: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       <div className="grid gap-2">
         {rows.map((row) => (
-          <div key={row.name} className="text-[12.5px]">
+          <div key={row.name} className="text-body">
             <div className="flex items-baseline gap-2">
               <b className="shrink-0 font-semibold text-orange">{row.effortDays.toFixed(2)}d</b>
               <span className="min-w-0 flex-1 truncate text-ink">{row.name}</span>
@@ -681,20 +617,20 @@ const ResourceContentionSplit: ComponentType<TileProps> = ({ scopeId }) => {
                 style={{ width: `${Math.max(4, (row.effortDays / worst) * 100)}%` }}
               />
             </div>
-            <div className="mt-0.5 text-[11px] text-ink-3">
+            <div className="mt-0.5 text-label text-ink-3">
               {Array.from(row.people).join(", ")} · {row.windows} contended month
               {row.windows === 1 ? "" : "s"}
             </div>
           </div>
         ))}
         {rows.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             Nobody shared between these projects is committed beyond their
             capacity in any month.
           </p>
         )}
         {rows.length > 0 && (
-          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             {excess.toFixed(2)} effort-days of excess demand, apportioned in full
             - this column adds up to it. A deferral figure is per row only.
           </p>
@@ -736,19 +672,19 @@ const TeamAllocation: ComponentType<TileProps> = ({ scopeId }) => {
         {people.map(([name, entry]) => {
           const nominal = entry.rows.reduce((sum, r) => sum + (r.percent ?? 0), 0);
           return (
-            <div key={name} className="text-[12.5px]">
+            <div key={name} className="text-body">
               <div className="flex items-baseline gap-2">
                 <span className="min-w-0 flex-1 truncate font-semibold text-ink">
                   {name}
                   {entry.role && <span className="font-normal text-ink-3"> · {entry.role}</span>}
                 </span>
                 <span
-                  className={`shrink-0 text-[11px] ${entry.rows.length > 1 ? "text-ink-2" : "text-ink-3"}`}
+                  className={`shrink-0 text-label ${entry.rows.length > 1 ? "text-ink-2" : "text-ink-3"}`}
                 >
                   {nominal}% over {entry.rows.length} project{entry.rows.length === 1 ? "" : "s"}
                 </span>
               </div>
-              <div className="text-[11px] text-ink-3">
+              <div className="text-label text-ink-3">
                 {entry.rows
                   .map((r) => `${r.project}${r.percent == null ? "" : ` ${r.percent}%`}`)
                   .join(" · ")}
@@ -757,12 +693,12 @@ const TeamAllocation: ComponentType<TileProps> = ({ scopeId }) => {
           );
         })}
         {people.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             No resource allocations recorded for this program's projects.
           </p>
         )}
         {people.length > 0 && (
-          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             Stated percentages, summed nominally - not the contention test. Two
             allocations that never overlap add up here and are not a conflict.
           </p>
@@ -783,10 +719,10 @@ const MilestonesAtRisk: ComponentType<TileProps> = ({ scopeId }) => {
   const value = bundle ? Number(bundle.context.milestones_at_risk ?? 0) : null;
   return (
     <TileShell loading={value === null && !problem} problem={problem}>
-      <b className={`block text-[26px] leading-none font-bold ${value && value > 0 ? "text-red" : ""}`}>
+      <b className={`block text-heading leading-none font-bold ${value && value > 0 ? "text-red" : ""}`}>
         {value}
       </b>
-      <span className="mt-1 block text-[11px] text-ink-3">milestone(s)</span>
+      <span className="mt-1 block text-label text-ink-3">milestone(s)</span>
     </TileShell>
   );
 };
@@ -797,10 +733,10 @@ const BlockingQa: ComponentType<TileProps> = ({ scopeId }) => {
   const total = bundle ? Number(bundle.context.qa_count ?? 0) : null;
   return (
     <TileShell loading={blocked === null && !problem} problem={problem}>
-      <b className={`block text-[26px] leading-none font-bold ${blocked && blocked > 0 ? "text-red" : ""}`}>
+      <b className={`block text-heading leading-none font-bold ${blocked && blocked > 0 ? "text-red" : ""}`}>
         {blocked} / {total}
       </b>
-      <span className="mt-1 block text-[11px] text-ink-3">QA items blocked</span>
+      <span className="mt-1 block text-label text-ink-3">QA items blocked</span>
     </TileShell>
   );
 };
@@ -812,12 +748,12 @@ const QualityHealth: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       <div className="grid gap-1.5">
         {findings.slice(0, 4).map((f) => (
-          <div key={f.id} className="text-[12.5px]">
+          <div key={f.id} className="text-body">
             <span className="mr-1.5 font-semibold uppercase text-ink-3">{f.severity}</span>
             {f.headline}
           </div>
         ))}
-        {findings.length === 0 && <p className="m-0 text-[12.5px] text-ink-3">No quality findings.</p>}
+        {findings.length === 0 && <p className="m-0 text-body text-ink-3">No quality findings.</p>}
       </div>
     </TileShell>
   );
@@ -861,7 +797,7 @@ const RiskMatrixTile: ComponentType<TileProps> = ({ scopeId }) => {
                     title={`${likelihood} x ${impact} = ${cell?.rating ?? "unrated"}${
                       cell?.risk_count ? ` · ${cell.risk_count} risk(s)` : ""
                     }`}
-                    className={`flex h-[26px] items-center justify-center rounded-sm text-[11px] font-bold text-ink ${
+                    className={`flex h-[26px] items-center justify-center rounded-sm text-label font-bold text-ink ${
                       CELL_STYLE[cell?.rating ?? ""] ?? "bg-rule/20"
                     }`}
                   >
@@ -871,12 +807,12 @@ const RiskMatrixTile: ComponentType<TileProps> = ({ scopeId }) => {
               }),
             )}
           </div>
-          <p className="mt-2 mb-0 text-[10.5px] text-ink-3">
+          <p className="mt-2 mb-0 text-label text-ink-3">
             Rows: likelihood, {bundle.likelihoods[0]} to{" "}
             {bundle.likelihoods[bundle.likelihoods.length - 1]}. Columns: impact,{" "}
             {bundle.impacts[0]} to {bundle.impacts[bundle.impacts.length - 1]}.
           </p>
-          <p className="m-0 text-[10.5px] text-ink-3">
+          <p className="m-0 text-label text-ink-3">
             {assessed} risk(s) placed, pre-treatment.
             {assessed < bundle.risks.length &&
               ` ${bundle.risks.length - assessed} not assessed, so unplaced.`}
@@ -891,7 +827,7 @@ const AiManagementBrief: ComponentType<TileProps> = ({ scopeId }) => {
   const { bundle, problem } = useInsight(scopeId);
   return (
     <TileShell loading={!bundle && !problem} problem={problem}>
-      <p className="m-0 whitespace-pre-line text-[12.5px] text-ink-2">
+      <p className="m-0 whitespace-pre-line text-body text-ink-2">
         {bundle?.narrative || "No narrative available."}
       </p>
     </TileShell>
@@ -904,13 +840,13 @@ const AiDetectedRisks: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       <div className="grid gap-1.5">
         {bundle?.findings.slice(0, 6).map((f) => (
-          <div key={f.id} className="text-[12.5px]">
+          <div key={f.id} className="text-body">
             <span className="mr-1.5 font-semibold uppercase text-ink-3">{f.severity}</span>
             {f.headline}
           </div>
         ))}
         {bundle && bundle.findings.length === 0 && (
-          <p className="m-0 text-[12.5px] text-ink-3">No findings.</p>
+          <p className="m-0 text-body text-ink-3">No findings.</p>
         )}
       </div>
     </TileShell>
@@ -924,16 +860,16 @@ const AiRootCauseImpact: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       {top ? (
         <>
-          <p className="m-0 text-[12.5px] text-ink-2">{top.headline}</p>
+          <p className="m-0 text-body text-ink-2">{top.headline}</p>
           {top.recommendation && (
-            <p className="mt-2 mb-0 text-[12.5px] text-ink">
+            <p className="mt-2 mb-0 text-body text-ink">
               <span className="font-semibold">Recommended: </span>
               {top.recommendation}
             </p>
           )}
         </>
       ) : (
-        <p className="m-0 text-[12.5px] text-ink-3">No finding to explain.</p>
+        <p className="m-0 text-body text-ink-3">No finding to explain.</p>
       )}
     </TileShell>
   );
@@ -954,7 +890,7 @@ const ScheduleGanttTile: ComponentType<TileProps> = ({ scopeId }) => {
       {bundle && bundle.rows.length > 0 ? (
         <GanttChart bundle={bundle} showKey={false} />
       ) : (
-        <p className="m-0 text-[12.5px] text-ink-3">No schedule rows yet.</p>
+        <p className="m-0 text-body text-ink-3">No schedule rows yet.</p>
       )}
     </TileShell>
   );
@@ -970,7 +906,7 @@ const DeliveryForecastTile: ComponentType<TileProps> = ({ scopeId }) => {
   if (bundle && !bundle.available) {
     return (
       <TileShell loading={false} problem={null}>
-        <p className="m-0 text-[12.5px] text-ink-3">{bundle.reason || "No forecast available."}</p>
+        <p className="m-0 text-body text-ink-3">{bundle.reason || "No forecast available."}</p>
       </TileShell>
     );
   }
@@ -981,22 +917,22 @@ const DeliveryForecastTile: ComponentType<TileProps> = ({ scopeId }) => {
       <div className="grid gap-2">
         {points.map((p) => (
           <div key={p.percentile} className="flex items-center gap-2" title={`P${p.percentile}: ${p.finish}`}>
-            <span className="w-[28px] shrink-0 text-[11px] text-ink-3">P{p.percentile}</span>
+            <span className="w-[28px] shrink-0 text-label text-ink-3">P{p.percentile}</span>
             <div className="h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
               <div
                 className="h-full rounded-sm bg-navy"
                 style={{ width: `${Math.max(4, (p.days_late / maxLate) * 100)}%` }}
               />
             </div>
-            <span className="w-[70px] shrink-0 text-right text-[11px] text-ink-2">
+            <span className="w-[70px] shrink-0 text-right text-label text-ink-2">
               {p.days_late > 0 ? `+${p.days_late}d` : "on time"}
             </span>
           </div>
         ))}
-        {points.length === 0 && <p className="m-0 text-[12.5px] text-ink-3">No forecast points.</p>}
+        {points.length === 0 && <p className="m-0 text-body text-ink-3">No forecast points.</p>}
       </div>
       {bundle?.committed_end && (
-        <p className="mt-2.5 mb-0 text-[11px] text-ink-3">committed {bundle.committed_end}</p>
+        <p className="mt-2.5 mb-0 text-label text-ink-3">committed {bundle.committed_end}</p>
       )}
     </TileShell>
   );
@@ -1010,16 +946,6 @@ const EffortBurnTile: ComponentType<TileProps> = ({ scopeId }) => {
     `/api/team?project=${encodeURIComponent(scopeId)}`,
   );
   const points = bundle?.burn.points ?? [];
-  const w = 260;
-  const h = 64;
-  const maxY = Math.max(1, ...points.map((p) => p.logged_hours));
-  const path = points
-    .map((p, i) => {
-      const x = points.length > 1 ? (i / (points.length - 1)) * w : 0;
-      const y = h - (p.logged_hours / maxY) * h;
-      return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
   const first = points.length > 1 ? points[0] : undefined;
   const last = points.length > 1 ? points[points.length - 1] : undefined;
 
@@ -1027,24 +953,31 @@ const EffortBurnTile: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       {first && last ? (
         <>
-          <svg viewBox={`0 0 ${w} ${h}`} className="w-full text-navy" preserveAspectRatio="none">
-            <title>Cumulative hours logged over time</title>
-            <line x1={0} y1={h} x2={w} y2={h} stroke="var(--rule)" strokeWidth={1} />
-            <path d={path} fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" />
-          </svg>
-          <div className="mt-1.5 flex items-baseline justify-between text-[11px] text-ink-3">
+          {/* The shared sparkline, not a fourth hand-rolled one. It brings
+              the zero baseline, the area fill that makes a trend legible
+              at 64px, and the marker on the last point - all three of
+              which this tile was missing. */}
+          <Sparkline
+            values={points.map((p) => p.logged_hours)}
+            labels={points.map((p) => p.observed_at)}
+            ariaLabel={`Cumulative hours logged, ${first.logged_hours}h on ${first.observed_at} rising to ${last.logged_hours}h on ${last.observed_at}`}
+          />
+          <div className="mt-1.5 flex items-baseline justify-between text-label text-ink-3">
             <span>{first.observed_at}</span>
-            <span className="font-semibold text-ink">
+            <span className="font-semibold text-ink tabular-nums">
               {last.logged_hours}h logged
             </span>
             <span>{last.observed_at}</span>
           </div>
         </>
       ) : (
-        <p className="m-0 text-[12.5px] text-ink-3">Not enough logged history yet.</p>
+        <ChartEmpty
+          kind="absent"
+          reason="No worklog has been ingested for this project, so there is no history to draw."
+        />
       )}
       {bundle && (
-        <div className="mt-2.5 grid grid-cols-2 gap-2 border-t border-rule pt-2 text-[11px] text-ink-3">
+        <div className="mt-2.5 grid grid-cols-2 gap-2 border-t border-rule pt-2 text-label text-ink-3 tabular-nums">
           <span>planned {bundle.burn.planned_hours}h</span>
           <span className="text-right">remaining {bundle.burn.remaining_hours}h</span>
         </div>
@@ -1076,7 +1009,7 @@ const TeamEffortTile: ComponentType<TileProps> = ({ scopeId }) => {
         <div className="grid gap-2">
           {members.map((m) => (
             <div key={m.name} className="flex items-center gap-2">
-              <span className="w-[84px] shrink-0 truncate text-[11.5px] text-ink-2" title={m.name}>
+              <span className="w-[84px] shrink-0 truncate text-body text-ink-2" title={m.name}>
                 {m.name}
               </span>
               <div className="relative h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
@@ -1092,15 +1025,15 @@ const TeamEffortTile: ComponentType<TileProps> = ({ scopeId }) => {
                   />
                 )}
               </div>
-              <span className="w-[70px] shrink-0 text-right text-[11px] text-ink-3">
+              <span className="w-[70px] shrink-0 text-right text-label text-ink-3">
                 {m.hours_logged}h / {m.hours_planned}h
               </span>
             </div>
           ))}
-          <p className="m-0 text-[10.5px] text-ink-3">bar = logged, tick = planned</p>
+          <p className="m-0 text-label text-ink-3">bar = logged, tick = planned</p>
         </div>
       ) : (
-        <p className="m-0 text-[12.5px] text-ink-3">No logged hours yet.</p>
+        <p className="m-0 text-body text-ink-3">No logged hours yet.</p>
       )}
     </TileShell>
   );
@@ -1144,7 +1077,7 @@ const ProgramTimeline: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       {rows.length > 0 ? (
         <div className="grid gap-2">
-          <div className="flex justify-between text-[10.5px] text-ink-3">
+          <div className="flex justify-between text-label text-ink-3">
             <span>{iso(min)}</span>
             <span>{iso(max)}</span>
           </div>
@@ -1161,7 +1094,7 @@ const ProgramTimeline: ComponentType<TileProps> = ({ scopeId }) => {
                 } - open its schedule`}
                 className="flex items-center gap-2 rounded px-1 py-0.5 no-underline hover:bg-bg"
               >
-                <span className="w-[84px] shrink-0 truncate text-[11.5px] text-ink-2">
+                <span className="w-[84px] shrink-0 truncate text-body text-ink-2">
                   {row.name}
                 </span>
                 <span className="relative h-[14px] flex-1 rounded-sm bg-rule-2">
@@ -1184,7 +1117,7 @@ const ProgramTimeline: ComponentType<TileProps> = ({ scopeId }) => {
                   />
                 </span>
                 <span
-                  className={`w-[46px] shrink-0 text-right text-[11px] ${
+                  className={`w-[46px] shrink-0 text-right text-label ${
                     late ? "text-red" : "text-ink-3"
                   }`}
                 >
@@ -1193,7 +1126,7 @@ const ProgramTimeline: ComponentType<TileProps> = ({ scopeId }) => {
               </a>
             );
           })}
-          <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             Tick = committed finish, bar = overrun the chain implies. Each
             project's own critical chain is on its Schedule page - there is no
             shared one to draw here.
@@ -1201,7 +1134,7 @@ const ProgramTimeline: ComponentType<TileProps> = ({ scopeId }) => {
         </div>
       ) : (
         bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             No project in this program has a committed finish date yet.
           </p>
         )
@@ -1241,19 +1174,19 @@ const ProjectSummary: ComponentType<TileProps> = ({ scopeId }) => {
       {row ? (
         <>
           <div className="flex items-baseline justify-between gap-2">
-            <span className="min-w-0 truncate text-[13px] font-semibold text-ink">{row.name}</span>
+            <span className="min-w-0 truncate text-body font-semibold text-ink">{row.name}</span>
             <span
-              className={`shrink-0 rounded px-2 py-0.5 text-[10.5px] font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[row.band]}`}
+              className={`shrink-0 rounded px-2 py-0.5 text-label font-extrabold tracking-[0.04em] uppercase ${BAND_STYLE[row.band]}`}
             >
               {row.band.replace("_", " ")}
             </span>
           </div>
           {row.worst_severity && (
-            <p className="mt-1 mb-0 text-[11px] text-ink-3">
+            <p className="mt-1 mb-0 text-label text-ink-3">
               set by a {row.worst_severity} finding, of {row.findings}
             </p>
           )}
-          <div className="mt-2 grid gap-1 border-t border-rule pt-2 text-[11.5px] text-ink-2">
+          <div className="mt-2 grid gap-1 border-t border-rule pt-2 text-body text-ink-2">
             <div className="flex justify-between gap-2">
               <span className="text-ink-3">committed</span>
               <span>{row.committed_end ?? "-"}</span>
@@ -1282,14 +1215,14 @@ const ProjectSummary: ComponentType<TileProps> = ({ scopeId }) => {
               date resting on edges we inferred is a weaker claim than one
               resting on stated ones. */}
           {row.depends_on_inferred_edges && (
-            <p className="mt-2 mb-0 text-[11px] text-amber">
+            <p className="mt-2 mb-0 text-label text-amber">
               The projected date rests partly on inferred dependency edges.
             </p>
           )}
         </>
       ) : (
         bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             This project is not in the portfolio - nothing has been ingested for
             it yet.
           </p>
@@ -1361,12 +1294,12 @@ const ProgramContext: ComponentType<TileProps> = ({ scopeId }) => {
             <>
               <a
                 href={programLink("/programs/dashboard", programId)}
-                className="text-[13px] font-semibold text-ink no-underline hover:underline"
+                className="text-body font-semibold text-ink no-underline hover:underline"
                 title="Open this program's dashboard"
               >
                 {entry.program_name || programId}
               </a>
-              <p className="mt-1 mb-0 text-[11.5px] text-ink-3">
+              <p className="mt-1 mb-0 text-body text-ink-3">
                 {siblings.length === 0
                   ? "The only project in this program."
                   : `Shares this program with ${siblings.map((s) => s.name).join(", ")}.`}
@@ -1374,15 +1307,15 @@ const ProgramContext: ComponentType<TileProps> = ({ scopeId }) => {
             </>
           ) : (
             <>
-              <span className="text-[13px] font-semibold text-ink">No program</span>
-              <p className="mt-1 mb-0 text-[11.5px] text-ink-3">
+              <span className="text-body font-semibold text-ink">No program</span>
+              <p className="mt-1 mb-0 text-body text-ink-3">
                 Nobody has assigned this project to a program yet. It is not
                 filed under a default one, so it has no cross-project rollup.
               </p>
             </>
           )}
 
-          <div className="mt-2 border-t border-rule pt-2 text-[11.5px] text-ink-2">
+          <div className="mt-2 border-t border-rule pt-2 text-body text-ink-2">
             {entry.also.length > 0 ? (
               <>
                 Tracked in {entry.also.length + 1} source systems, analysed as one
@@ -1400,12 +1333,12 @@ const ProgramContext: ComponentType<TileProps> = ({ scopeId }) => {
 
           {mine.length > 0 && (
             <div className="mt-2 border-t border-rule pt-2">
-              <p className="m-0 text-[11.5px] text-ink-2">
+              <p className="m-0 text-body text-ink-2">
                 <b className="font-semibold text-orange">{owed.toFixed(2)} effort-days</b> of
                 this project's demand is lost to people a sibling also needs:
               </p>
               {mine.map(([person, m]) => (
-                <div key={person} className="text-[11px] text-ink-3">
+                <div key={person} className="text-label text-ink-3">
                   {person}: {m.effortDays.toFixed(2)}d over {m.windows} contended month
                   {m.windows === 1 ? "" : "s"}
                 </div>
@@ -1415,7 +1348,7 @@ const ProgramContext: ComponentType<TileProps> = ({ scopeId }) => {
         </>
       ) : (
         config && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             This project id is not declared in the project registry, so its
             program cannot be resolved.
           </p>
@@ -1446,27 +1379,27 @@ const ScheduleVariance: ComponentType<TileProps> = ({ scopeId }) => {
         <>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <b className="block text-[22px] leading-none font-bold text-ink">
+              <b className="block text-heading leading-none font-bold text-ink">
                 {worstRecorded > 0 ? `+${worstRecorded}d` : "0d"}
               </b>
-              <span className="mt-1 block text-[10.5px] text-ink-3">
+              <span className="mt-1 block text-label text-ink-3">
                 recorded against baseline &middot; {recorded.length} task(s)
               </span>
             </div>
             <div>
               <b
-                className={`block text-[22px] leading-none font-bold ${
+                className={`block text-heading leading-none font-bold ${
                   worstPropagated > 0 ? "text-orange" : "text-ink"
                 }`}
               >
                 {worstPropagated > 0 ? `+${worstPropagated}d` : "0d"}
               </b>
-              <span className="mt-1 block text-[10.5px] text-ink-3">
+              <span className="mt-1 block text-label text-ink-3">
                 implied, not written down &middot; {propagated.length} task(s)
               </span>
             </div>
           </div>
-          <div className="mt-2 grid gap-1 border-t border-rule pt-2 text-[11.5px] text-ink-2">
+          <div className="mt-2 grid gap-1 border-t border-rule pt-2 text-body text-ink-2">
             <div className="flex justify-between gap-2">
               <span className="text-ink-3">project end, planned</span>
               <span>{bundle.project_end_planned ?? "-"}</span>
@@ -1478,7 +1411,7 @@ const ScheduleVariance: ComponentType<TileProps> = ({ scopeId }) => {
           </div>
           {/* Worst task, not a total: the two columns are per-task maxima and
               adding slips along a chain would double-count the same delay. */}
-          <p className="mt-2 mb-0 text-[10.5px] text-ink-3">
+          <p className="mt-2 mb-0 text-label text-ink-3">
             Worst single task in each column, never a sum.
           </p>
         </>
@@ -1504,19 +1437,19 @@ const DelayedTasks: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       <div className="grid gap-1.5">
         {late.slice(0, 10).map((row) => (
-          <div key={row.entity_id} className="flex items-baseline gap-2 text-[12.5px]">
+          <div key={row.entity_id} className="flex items-baseline gap-2 text-body">
             <span className="min-w-0 flex-1 truncate text-ink" title={row.title ?? row.label}>
               {row.title ?? row.label}
               {row.on_driving_path && (
                 <span
-                  className="ml-1.5 rounded bg-navy/15 px-1 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.05em] text-navy"
+                  className="ml-1.5 rounded bg-navy/15 px-1 py-0.5 text-label font-extrabold uppercase tracking-[0.05em] text-navy"
                   title="On the chain that sets this project's finish date"
                 >
                   driving
                 </span>
               )}
             </span>
-            <span className="shrink-0 text-[11px] text-ink-3">
+            <span className="shrink-0 text-label text-ink-3">
               {(row.recorded_slip_days ?? 0) > 0 && <span>+{row.recorded_slip_days}d recorded</span>}
               {(row.recorded_slip_days ?? 0) > 0 && (row.propagated_days ?? 0) > 0 && " · "}
               {(row.propagated_days ?? 0) > 0 && (
@@ -1533,7 +1466,7 @@ const DelayedTasks: ComponentType<TileProps> = ({ scopeId }) => {
              late" then sits next to an Insight finding saying several are
              past their due date. Both are true and they look contradictory,
              so the empty state says which lateness it is reporting. */
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             {(bundle.rows ?? []).some((r) => r.baseline_end) ||
             (bundle.rows ?? []).some((r) => r.depends_on.length > 0)
               ? "No task is late on either measure."
@@ -1541,7 +1474,7 @@ const DelayedTasks: ComponentType<TileProps> = ({ scopeId }) => {
           </p>
         )}
         {late.length > 10 && (
-          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             {late.length - 10} more, worst first - the full list is on Schedule.
           </p>
         )}
@@ -1565,7 +1498,7 @@ const UpcomingMilestones: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       <div className="grid gap-1.5">
         {milestones.map((m) => (
-          <div key={m.id} className="flex items-baseline gap-2 text-[12.5px]">
+          <div key={m.id} className="flex items-baseline gap-2 text-body">
             <span
               className={`mt-[1px] h-2 w-2 shrink-0 rounded-full ${m.at_risk ? "bg-red" : "bg-green"}`}
               title={m.at_risk ? "At risk" : "On track"}
@@ -1573,7 +1506,7 @@ const UpcomingMilestones: ComponentType<TileProps> = ({ scopeId }) => {
             <span className="min-w-0 flex-1 truncate text-ink" title={m.name}>
               {m.name}
             </span>
-            <span className="shrink-0 text-[11px] text-ink-3">
+            <span className="shrink-0 text-label text-ink-3">
               {m.planned_date ?? "undated"}
               {!!m.slipped_days && m.slipped_days > 0 && (
                 <span className="text-orange"> +{m.slipped_days}d vs {m.baseline_date}</span>
@@ -1582,7 +1515,7 @@ const UpcomingMilestones: ComponentType<TileProps> = ({ scopeId }) => {
           </div>
         ))}
         {milestones.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">No milestones in this project's schedule.</p>
+          <p className="m-0 text-body text-ink-3">No milestones in this project's schedule.</p>
         )}
       </div>
     </TileShell>
@@ -1610,9 +1543,9 @@ const RiskRegister: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       <div className="grid gap-1.5">
         {risks.map((r) => (
-          <div key={r.id} className="flex items-baseline gap-2 text-[12.5px]">
+          <div key={r.id} className="flex items-baseline gap-2 text-body">
             <span
-              className={`w-[62px] shrink-0 text-[11px] font-semibold ${RATING_STYLE[r.pre_rating ?? ""] ?? "text-ink-3"}`}
+              className={`w-[62px] shrink-0 text-label font-semibold ${RATING_STYLE[r.pre_rating ?? ""] ?? "text-ink-3"}`}
             >
               {r.pre_rating ?? "not assessed"}
             </span>
@@ -1620,14 +1553,14 @@ const RiskRegister: ComponentType<TileProps> = ({ scopeId }) => {
               {r.risk_no ? <span className="text-ink-3">{r.risk_no} </span> : null}
               {r.title}
             </span>
-            <span className="shrink-0 text-[11px] text-ink-3">
+            <span className="shrink-0 text-label text-ink-3">
               {r.status}
               {r.responsible ? ` · ${r.responsible}` : ""}
             </span>
           </div>
         ))}
         {risks.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">No risks logged for this project yet.</p>
+          <p className="m-0 text-body text-ink-3">No risks logged for this project yet.</p>
         )}
       </div>
     </TileShell>
@@ -1722,11 +1655,11 @@ const DataReadiness: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       {bundle && (
         <div className="grid gap-1.5">
-          <p className="m-0 text-[11px] text-ink-3">
+          <p className="m-0 text-label text-ink-3">
             {ready} of {rows.length} inputs present
           </p>
           {rows.map((row) => (
-            <div key={row.label} className="flex items-start gap-2 text-[12px]">
+            <div key={row.label} className="flex items-start gap-2 text-body">
               <span
                 className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${
                   row.ready ? "bg-green" : "bg-rule"
@@ -1735,12 +1668,12 @@ const DataReadiness: ComponentType<TileProps> = ({ scopeId }) => {
               />
               <span className="min-w-0 flex-1">
                 <span className={row.ready ? "text-ink" : "text-ink-2"}>{row.label}</span>
-                <span className="block text-[10.5px] text-ink-3">{row.detail}</span>
+                <span className="block text-label text-ink-3">{row.detail}</span>
                 {/* Only for what is absent: naming what a *present* input
                     unlocks is noise, since the tiles that use it are already
                     on the page showing it. */}
                 {!row.ready && (
-                  <span className="block text-[10.5px] text-ink-3 italic">
+                  <span className="block text-label text-ink-3 italic">
                     would unlock {row.unlocks}
                   </span>
                 )}
@@ -1777,12 +1710,12 @@ const MitigationEffect: ComponentType<TileProps> = ({ scopeId }) => {
               ? `${r.pre_delay_days}d → ${r.post_delay_days}d`
               : null;
           return (
-            <div key={r.id} className="text-[12.5px]">
+            <div key={r.id} className="text-body">
               <div className="flex items-baseline gap-2">
                 <span className="min-w-0 flex-1 truncate text-ink" title={r.title}>
                   {r.title}
                 </span>
-                <span className="shrink-0 text-[11px]">
+                <span className="shrink-0 text-label">
                   <span className={RATING_STYLE[r.pre_rating ?? ""] ?? "text-ink-3"}>
                     {r.pre_rating}
                   </span>
@@ -1792,7 +1725,7 @@ const MitigationEffect: ComponentType<TileProps> = ({ scopeId }) => {
                   </span>
                 </span>
               </div>
-              <div className="text-[11px] text-ink-3">
+              <div className="text-label text-ink-3">
                 {moved ? "mitigation moves the rating" : "mitigation does not move the rating"}
                 {days ? ` · delay exposure ${days}` : ""}
               </div>
@@ -1800,12 +1733,12 @@ const MitigationEffect: ComponentType<TileProps> = ({ scopeId }) => {
           );
         })}
         {treated.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             No risk here carries both a pre- and a post-mitigation assessment yet.
           </p>
         )}
         {untreated > 0 && treated.length > 0 && (
-          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             {untreated} more risk(s) have no post-mitigation assessment, so they
             are absent rather than shown as unchanged.
           </p>
@@ -1833,23 +1766,23 @@ const AiRecommendedActions: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       <div className="grid gap-2">
         {actionable.map((f, i) => (
-          <div key={f.id} className="flex gap-2 text-[12.5px]">
-            <span className="shrink-0 text-[11px] font-bold text-ink-3">{i + 1}</span>
+          <div key={f.id} className="flex gap-2 text-body">
+            <span className="shrink-0 text-label font-bold text-ink-3">{i + 1}</span>
             <span className="min-w-0 flex-1">
               <span className="text-ink">{f.recommendation}</span>
-              <span className="block text-[11px] text-ink-3">
+              <span className="block text-label text-ink-3">
                 <span className="font-semibold uppercase">{f.severity}</span> · {f.headline}
               </span>
             </span>
           </div>
         ))}
         {actionable.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             No finding here carries a recommended action.
           </p>
         )}
         {silent > 0 && actionable.length > 0 && (
-          <p className="m-0 border-t border-rule pt-1.5 text-[11px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             {silent} further finding(s) have no recommendation attached.
           </p>
         )}
@@ -1948,18 +1881,18 @@ const SourceDisagreements: ComponentType<TileProps> = ({ scopeId }) => {
       {bundle && (
         <div className="grid gap-2">
           {total === 0 ? (
-            <p className="m-0 text-[12.5px] text-ink-3">
+            <p className="m-0 text-body text-ink-3">
               The tracker, the documents and the code agree everywhere they
               were compared.
             </p>
           ) : (
             <>
-              <div className="text-[12.5px]">
+              <div className="text-body">
                 <b className="font-semibold text-orange">{total}</b>
                 <span className="text-ink"> disagreements between the tracker, the documents and the code</span>
               </div>
               {shown.map(([kind, v]) => (
-                <div key={kind} className="text-[12px]">
+                <div key={kind} className="text-body">
                   <span className="inline-flex items-baseline gap-1.5">
                     <b
                       className={`font-semibold ${
@@ -1971,14 +1904,14 @@ const SourceDisagreements: ComponentType<TileProps> = ({ scopeId }) => {
                     <span className="text-ink">{v.says}</span>
                   </span>
                   {!v.sure && (
-                    <span className="ml-1 text-[10.5px] text-ink-3 italic">
+                    <span className="ml-1 text-label text-ink-3 italic">
                       · check which is newer first
                     </span>
                   )}
                 </div>
               ))}
               {soft && (
-                <p className="m-0 text-[11px] text-ink-3">
+                <p className="m-0 text-label text-ink-3">
                   The amber rows compare documents to a checkout. Before
                   blaming anyone, confirm the two describe the same version.
                 </p>
@@ -2017,7 +1950,7 @@ const ManagementVsDelivery: ComponentType<TileProps> = ({ scopeId }) => {
       {bundle && (
         <div className="grid gap-3">
           {groups.length < 2 && (
-            <p className="m-0 text-[12.5px] text-ink-3">
+            <p className="m-0 text-body text-ink-3">
               Every row is one kind of work, so there is nothing to split.
             </p>
           )}
@@ -2032,13 +1965,13 @@ const ManagementVsDelivery: ComponentType<TileProps> = ({ scopeId }) => {
             return (
               <div key={g.key}>
                 <div className="flex items-baseline justify-between">
-                  <b className="text-[12.5px] font-semibold">{g.key}</b>
-                  <span className="text-[11px] text-ink-3">{n} tasks</span>
+                  <b className="text-body font-semibold">{g.key}</b>
+                  <span className="text-label text-ink-3">{n} tasks</span>
                 </div>
                 <div className="mt-1 flex h-[9px] overflow-hidden rounded-sm bg-rule-2">
                   <span style={{ width: `${pct}%`, background: "var(--viz-plan)" }} />
                 </div>
-                <div className="mt-1 text-[11.5px]">
+                <div className="mt-1 text-body">
                   <b className={pct === 0 ? "text-orange" : "text-ink"}>{pct}% done</b>
                   <span className="text-ink-3">
                     {" "}
@@ -2049,7 +1982,7 @@ const ManagementVsDelivery: ComponentType<TileProps> = ({ scopeId }) => {
               </div>
             );
           })}
-          <p className="m-0 text-[11px] text-ink-3">
+          <p className="m-0 text-label text-ink-3">
             Issue type as the tracker records it - not a judgement about whose
             fault anything is.
           </p>
@@ -2106,7 +2039,7 @@ const WhatTheTrackerRecords: ComponentType<TileProps> = ({ scopeId }) => {
             const pct = Math.round((f.have / total) * 100);
             return (
               <div key={f.label}>
-                <div className="flex items-baseline justify-between text-[12px]">
+                <div className="flex items-baseline justify-between text-body">
                   <span className="text-ink">{f.label}</span>
                   <span className={f.have === 0 ? "text-orange" : "text-ink-3"}>
                     {f.have} of {total}
@@ -2121,7 +2054,7 @@ const WhatTheTrackerRecords: ComponentType<TileProps> = ({ scopeId }) => {
                   />
                 </div>
                 {f.have === 0 && (
-                  <div className="text-[10.5px] text-ink-3 italic">
+                  <div className="text-label text-ink-3 italic">
                     nothing here can show {f.enables}
                   </div>
                 )}
@@ -2150,11 +2083,11 @@ const OverdueAndDueSoon: ComponentType<TileProps> = ({ scopeId }) => {
     .sort((a, b) => a.planned_end!.localeCompare(b.planned_end!));
 
   const line = (row: (typeof open)[number], late: boolean) => (
-    <div key={row.entity_id} className="flex items-baseline gap-2 text-[12px]">
+    <div key={row.entity_id} className="flex items-baseline gap-2 text-body">
       <span className="min-w-0 flex-1 truncate text-ink" title={row.title ?? row.label}>
         {row.title ?? row.label}
       </span>
-      <span className={`shrink-0 text-[11px] ${late ? "text-red" : "text-ink-3"}`}>
+      <span className={`shrink-0 text-label ${late ? "text-red" : "text-ink-3"}`}>
         {row.planned_end}
       </span>
     </div>
@@ -2164,24 +2097,24 @@ const OverdueAndDueSoon: ComponentType<TileProps> = ({ scopeId }) => {
     <TileShell loading={!bundle && !problem} problem={problem}>
       <div className="grid gap-1.5">
         {overdue.length > 0 && (
-          <p className="m-0 text-[10.5px] font-bold tracking-[0.05em] text-red uppercase">
+          <p className="m-0 text-label font-bold tracking-[0.05em] text-red uppercase">
             Overdue &middot; {overdue.length}
           </p>
         )}
         {overdue.slice(0, 6).map((r) => line(r, true))}
         {dueSoon.length > 0 && (
-          <p className="m-0 mt-1 text-[10.5px] font-bold tracking-[0.05em] text-ink-3 uppercase">
+          <p className="m-0 mt-1 text-label font-bold tracking-[0.05em] text-ink-3 uppercase">
             Due within a fortnight &middot; {dueSoon.length}
           </p>
         )}
         {dueSoon.slice(0, 6).map((r) => line(r, false))}
         {overdue.length + dueSoon.length === 0 && bundle && (
-          <p className="m-0 text-[12.5px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             Nothing open is past its due date or falls due inside a fortnight.
           </p>
         )}
         {bundle && (
-          <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             Measured against {asOf}, the scan this analysis reflects.
           </p>
         )}
@@ -2209,23 +2142,23 @@ const DeadlineLoad: ComponentType<TileProps> = ({ scopeId }) => {
         <div className="grid gap-1">
           {days.map(([day, n]) => (
             <div key={day} className="flex items-center gap-2">
-              <span className="w-[74px] shrink-0 text-[11px] text-ink-3">{day}</span>
+              <span className="w-[74px] shrink-0 text-label text-ink-3">{day}</span>
               <div className="h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
                 <div
                   className={`h-full rounded-sm ${n === worst && n > 2 ? "bg-orange" : "bg-navy"}`}
                   style={{ width: `${(n / worst) * 100}%` }}
                 />
               </div>
-              <span className="w-[18px] shrink-0 text-right text-[11px] text-ink-2">{n}</span>
+              <span className="w-[18px] shrink-0 text-right text-label text-ink-2">{n}</span>
             </div>
           ))}
-          <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+          <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
             Open tasks only - a date everything has already met is a delivered
             milestone, not a pile-up.
           </p>
         </div>
       ) : (
-        bundle && <p className="m-0 text-[12.5px] text-ink-3">No open task carries a due date.</p>
+        bundle && <p className="m-0 text-body text-ink-3">No open task carries a due date.</p>
       )}
     </TileShell>
   );
@@ -2253,7 +2186,7 @@ const WorkByOwner: ComponentType<TileProps> = ({ scopeId }) => {
         <div className="grid gap-1.5">
           {people.map(([who, v]) => (
             <div key={who} className="flex items-center gap-2">
-              <span className="w-[74px] shrink-0 truncate text-[11.5px] text-ink-2" title={who}>
+              <span className="w-[74px] shrink-0 truncate text-body text-ink-2" title={who}>
                 {who}
               </span>
               <div className="relative h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
@@ -2271,16 +2204,16 @@ const WorkByOwner: ComponentType<TileProps> = ({ scopeId }) => {
                   />
                 )}
               </div>
-              <span className="w-[46px] shrink-0 text-right text-[11px] text-ink-3">
+              <span className="w-[46px] shrink-0 text-right text-label text-ink-3">
                 {v.open}
                 {v.late > 0 ? ` / ${v.late}` : ""}
               </span>
             </div>
           ))}
-          <p className="m-0 text-[10.5px] text-ink-3">open tasks / of those, overdue</p>
+          <p className="m-0 text-label text-ink-3">open tasks / of those, overdue</p>
         </div>
       ) : (
-        bundle && <p className="m-0 text-[12.5px] text-ink-3">No open tasks.</p>
+        bundle && <p className="m-0 text-body text-ink-3">No open tasks.</p>
       )}
     </TileShell>
   );
@@ -2329,7 +2262,7 @@ const StatusBreakdown: ComponentType<TileProps> = ({ scopeId }) => {
         <div className="grid gap-1.5">
           {rows.map(([key, n]) => (
             <div key={key} className="flex items-center gap-2">
-              <span className="w-[80px] shrink-0 text-[11.5px] text-ink-2">
+              <span className="w-[80px] shrink-0 text-body text-ink-2">
                 {LABEL[key] ?? key}
               </span>
               <div className="h-[10px] flex-1 overflow-hidden rounded-sm bg-rule-2">
@@ -2338,20 +2271,20 @@ const StatusBreakdown: ComponentType<TileProps> = ({ scopeId }) => {
                   style={{ width: `${(n / total) * 100}%` }}
                 />
               </div>
-              <span className="w-[22px] shrink-0 text-right text-[11px] text-ink-3">{n}</span>
+              <span className="w-[22px] shrink-0 text-right text-label text-ink-3">{n}</span>
             </div>
           ))}
           {/* "Unrecognised" is a real answer, not a rendering gap: the tracker
               used a status this app has no mapping for, and guessing which of
               to-do / in-progress / done it meant would be worse. */}
           {counts.has("other") && (
-            <p className="m-0 border-t border-rule pt-1.5 text-[10.5px] text-ink-3">
+            <p className="m-0 border-t border-rule pt-1.5 text-label text-ink-3">
               Unrecognised statuses are counted as open and never as complete.
             </p>
           )}
         </div>
       ) : (
-        bundle && <p className="m-0 text-[12.5px] text-ink-3">No tasks.</p>
+        bundle && <p className="m-0 text-body text-ink-3">No tasks.</p>
       )}
     </TileShell>
   );
@@ -2374,19 +2307,19 @@ export const CustomChartTile: ComponentType<TileProps> = ({ tileKey }) => {
         <>
           <MiniChart chartType={bundle.chart_type} labels={bundle.labels} values={bundle.values} />
           <div className="mt-2 flex items-center gap-1.5">
-            <span className="rounded bg-purple/15 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.05em] text-purple">
+            <span className="rounded bg-purple/15 px-1.5 py-0.5 text-label font-extrabold uppercase tracking-[0.05em] text-purple">
               Custom
             </span>
             {bundle.live_source && (
               <span
-                className="rounded bg-green/15 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.05em] text-green"
+                className="rounded bg-green/15 px-1.5 py-0.5 text-label font-extrabold uppercase tracking-[0.05em] text-green"
                 title="Refreshes from the project's own data every time this tile is viewed"
               >
                 Live
               </span>
             )}
             {bundle.source_note && (
-              <span className="min-w-0 flex-1 truncate text-[10.5px] text-ink-3" title={bundle.source_note}>
+              <span className="min-w-0 flex-1 truncate text-label text-ink-3" title={bundle.source_note}>
                 {bundle.source_note}
               </span>
             )}

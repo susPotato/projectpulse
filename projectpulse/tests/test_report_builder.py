@@ -385,9 +385,9 @@ def test_the_kinds_keep_the_order_the_digest_ranked_them_in():
                          sections=["traceability"])
     headings = [b.text for b in doc.section("traceability").blocks
                 if b.kind == "heading"]
-    assert headings[0] == "The code says otherwise"
-    assert headings.index("A gate this team set, failing") < \
-        headings.index("Marked done in the documents, absent from the code")
+    assert headings[0] == "Code Contradicts Ticket"
+    assert headings.index("Team Quality Checks Failing") < \
+        headings.index("Marked Done, No Code Found")
 
 
 def test_an_empty_run_says_so_rather_than_rendering_nothing():
@@ -410,5 +410,5 @@ def test_the_section_renders_in_every_format():
     doc = build_document(_bundle(), traceability=_Trace(_TRACE_ROWS),
                          sections=["traceability"])
     md = render_markdown(doc)
-    assert "Checked against the code" in md
+    assert "Delivery Verification" in md
     assert "Holiday calendar" in md

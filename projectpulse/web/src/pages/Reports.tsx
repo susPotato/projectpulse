@@ -44,15 +44,15 @@ function query(sections: string[]): string {
 function Block({ block }: { block: ReportBlock }) {
   if (block.kind === "heading") {
     return block.level <= 1 ? (
-      <h3 className="mt-5 mb-2 text-[15px] font-bold">{block.text}</h3>
+      <h3 className="mt-5 mb-2 text-emph font-bold">{block.text}</h3>
     ) : (
-      <h4 className="mt-4 mb-1.5 text-[13px] font-bold">{block.text}</h4>
+      <h4 className="mt-4 mb-1.5 text-body font-bold">{block.text}</h4>
     );
   }
 
   if (block.kind === "paragraph") {
     return (
-      <p className="mb-2 text-[12.5px] leading-[1.65] text-ink-2">
+      <p className="mb-2 text-body leading-[1.65] text-ink-2">
         {block.label && <b className="text-ink">{block.label}</b>}
         {block.text}
       </p>
@@ -61,7 +61,7 @@ function Block({ block }: { block: ReportBlock }) {
 
   if (block.kind === "note") {
     return (
-      <p className="mb-2 border-l-2 border-rule pl-3 text-[12px] leading-[1.6] text-ink-3 italic">
+      <p className="mb-2 border-l-2 border-rule pl-3 text-body leading-[1.6] text-ink-3 italic">
         {block.text}
       </p>
     );
@@ -69,7 +69,12 @@ function Block({ block }: { block: ReportBlock }) {
 
   if (block.kind === "bullets") {
     return (
-      <ul className="mb-2 ml-4 list-disc text-[12.5px] leading-[1.65] text-ink-2">
+      /* `break-words`, because a bullet in this preview is very often a
+         raw Jira REST URL - one unbreakable 200-character token with no
+         space in it. A word that cannot wrap makes its list wider than the
+         panel, the panel wider than the column, and the whole page scroll
+         sideways, which the table below already takes care not to do. */
+      <ul className="mb-2 ml-4 list-disc break-words text-body leading-[1.65] text-ink-2">
         {block.items.map((item, index) => (
           <li key={index}>{item}</li>
         ))}
@@ -82,7 +87,7 @@ function Block({ block }: { block: ReportBlock }) {
       // Wide tables scroll inside the panel. A projection of forty tasks must
       // not make the whole page scroll sideways.
       <div className="mb-3 overflow-x-auto">
-        <table className="w-full border-collapse text-[11.5px]">
+        <table className="w-full border-collapse text-body">
           <thead>
             <tr>
               {block.columns.map((column) => (
@@ -120,14 +125,14 @@ function Block({ block }: { block: ReportBlock }) {
 function Preview({ preview }: { preview: ReportPreview }) {
   return (
     <div>
-      <h2 className="text-[19px] font-bold">{preview.title}</h2>
+      <h2 className="text-title font-bold">{preview.title}</h2>
       {preview.preamble.map((block, index) => (
         <Block key={index} block={block} />
       ))}
 
       {preview.sections.map((section) => (
         <section key={section.id}>
-          <h3 className="mt-6 mb-2 border-b border-rule pb-1 text-[15px] font-bold">
+          <h3 className="mt-6 mb-2 border-b border-rule pb-1 text-emph font-bold">
             {section.title}
           </h3>
           {section.blocks.map((block, index) => (
@@ -212,15 +217,15 @@ export function ReportsView({
                     : "border-rule bg-bg hover:border-rule-2")
                 }
               >
-                <div className="text-[12.5px] font-semibold">{preset.label}</div>
-                <div className="mt-0.5 text-[11.5px] leading-[1.5] text-ink-3">
+                <div className="text-body font-semibold">{preset.label}</div>
+                <div className="mt-0.5 text-body leading-[1.5] text-ink-3">
                   {preset.description}
                 </div>
               </button>
             ))}
           </div>
 
-          <div className="mt-4 mb-2 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+          <div className="mt-4 mb-2 text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
             Sections
           </div>
           <div className="grid gap-1.5">
@@ -263,7 +268,7 @@ export function ReportsView({
                     onChange={() => toggle(section.id)}
                   />
                   <span className="min-w-0">
-                    <span className="block text-[12.5px] font-semibold">
+                    <span className="block text-body font-semibold">
                       {section.title}
                       {section.id === "evidence" && (
                         <span className="ml-1.5 font-normal text-ink-3">
@@ -271,7 +276,7 @@ export function ReportsView({
                         </span>
                       )}
                     </span>
-                    <span className="block text-[11.5px] leading-[1.5] text-ink-3">
+                    <span className="block text-body leading-[1.5] text-ink-3">
                       {empty
                         ? "Nothing to show for this project - left out of the file."
                         : section.description}
@@ -286,10 +291,10 @@ export function ReportsView({
               files back and forth. The routes existed for a long time with
               nothing in the app pointing at them. */}
           <div className="mt-5 border-t border-rule pt-3.5">
-            <div className="mb-2 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+            <div className="mb-2 text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
               Blank input templates
             </div>
-            <p className="mb-2 text-[11.5px] leading-[1.5] text-ink-3">
+            <p className="mb-2 text-body leading-[1.5] text-ink-3">
               Generated from the sheet contract itself, so the file we hand out
               is the file we know how to read. No example rows - one would come
               back as a real task.
@@ -311,11 +316,11 @@ export function ReportsView({
               <Preview preview={preview} />
             </div>
           ) : (
-            <p className="text-[12.5px] text-ink-3">Building the preview...</p>
+            <p className="text-body text-ink-3">Building the preview...</p>
           )}
 
           {chosen.length === 0 && (
-            <p className="mt-3 text-[12.5px] text-ink-3 italic">
+            <p className="mt-3 text-body text-ink-3 italic">
               Nothing selected. The report still carries its own date and where
               the summary came from - those are never optional.
             </p>

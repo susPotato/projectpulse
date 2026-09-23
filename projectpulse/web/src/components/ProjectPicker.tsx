@@ -130,7 +130,7 @@ export function ProjectPicker({
         aria-expanded={open}
         aria-label={label}
         title={selected ? `${label}: ${selected.name}` : label}
-        className="flex w-full max-w-[240px] cursor-pointer items-center gap-1.5 rounded-md border border-rule bg-surface px-2 py-1 text-left text-[12px] text-ink hover:bg-bg"
+        className="flex w-full max-w-[240px] cursor-pointer items-center gap-1.5 rounded-md border border-rule bg-surface px-2 py-1 text-left text-body text-ink hover:bg-bg"
       >
         <span
           className={`h-2 w-2 shrink-0 rounded-full ${BAND_DOT[selected?.band ?? "no_data"]}`}
@@ -155,7 +155,7 @@ export function ProjectPicker({
               }}
               onKeyDown={onKeyDown}
               placeholder={placeholder}
-              className="w-full rounded-md border border-rule bg-bg px-2 py-1 text-[12.5px] text-ink outline-none focus:border-navy"
+              className="w-full rounded-md border border-rule bg-bg px-2 py-1 text-body text-ink outline-none focus:border-navy"
             />
           </div>
           <ul role="listbox" className="m-0 max-h-[280px] list-none overflow-y-auto p-1">
@@ -167,7 +167,7 @@ export function ProjectPicker({
                   aria-selected={project.id === value}
                   onMouseEnter={() => setActive(index)}
                   onClick={() => choose(project)}
-                  className={`flex w-full cursor-pointer items-center gap-2 rounded border-0 px-2 py-1.5 text-left text-[12.5px] ${
+                  className={`flex w-full cursor-pointer items-center gap-2 rounded border-0 px-2 py-1.5 text-left text-body ${
                     index === active ? "bg-bg" : "bg-transparent"
                   }`}
                 >
@@ -177,19 +177,19 @@ export function ProjectPicker({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-ink">{project.name}</span>
                     {project.hint && (
-                      <span className="block truncate text-[11px] text-ink-3">
+                      <span className="block truncate text-label text-ink-3">
                         {project.hint}
                       </span>
                     )}
                   </span>
                   {project.id === value && (
-                    <span className="shrink-0 text-[11px] font-semibold text-navy">current</span>
+                    <span className="shrink-0 text-label font-semibold text-navy">current</span>
                   )}
                 </button>
               </li>
             ))}
             {matches.length === 0 && (
-              <li className="px-2 py-3 text-[12.5px] text-ink-3">
+              <li className="px-2 py-3 text-body text-ink-3">
                 No project matches "{query}".
               </li>
             )}

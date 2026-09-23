@@ -44,13 +44,13 @@ function Legend() {
   return (
     <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-rule pt-3">
       {(["critical", "watch", "healthy", "no_data"] as const).map((band) => (
-        <span key={band} className="flex items-center gap-1.5 text-[11px] text-ink-3">
+        <span key={band} className="flex items-center gap-1.5 text-label text-ink-3">
           <span className={`h-3 w-3 rounded-sm ${CELL[band]}`} />
           {band === "no_data" ? "no sheet ingested" : band}
         </span>
       ))}
       <span className="flex-1" />
-      <span className="text-[11px] text-ink-3 italic">
+      <span className="text-label text-ink-3 italic">
         Grey is deliberate: a project with no data gets no colour rather than a green one.
       </span>
     </div>
@@ -65,11 +65,11 @@ function Row({ row }: { row: ProjectRow }) {
       <div className="min-w-0">
         <a
           href={projectLink("/insight", row)}
-          className="block truncate text-[13px] font-semibold no-underline hover:underline"
+          className="block truncate text-body font-semibold no-underline hover:underline"
         >
           {row.name}
         </a>
-        <div className="mt-0.5 truncate text-[11px] text-ink-3">
+        <div className="mt-0.5 truncate text-label text-ink-3">
           {known
             ? `${row.source_ids.length} source(s) · ${row.findings} finding(s)`
             : "no sheet ingested"}
@@ -84,9 +84,9 @@ function Row({ row }: { row: ProjectRow }) {
       ))}
       <div className="text-right">
         {known && row.days_late > 0 ? (
-          <span className="text-[13px] font-semibold text-orange">+{row.days_late}d</span>
+          <span className="text-body font-semibold text-orange">+{row.days_late}d</span>
         ) : (
-          <span className="text-[12px] text-ink-3">{known ? "on plan" : "no data"}</span>
+          <span className="text-body text-ink-3">{known ? "on plan" : "no data"}</span>
         )}
       </div>
     </>
@@ -122,12 +122,12 @@ export function PortfolioView({ bundle }: { bundle: PortfolioBundle }) {
         <Panel caption="Program status" span={4} className="content-start">
           <div className="flex items-start gap-3">
             <span
-              className={`rounded px-3 py-1 text-[13px] font-extrabold tracking-[0.04em] uppercase ${CELL[program]} text-surface`}
+              className={`rounded px-3 py-1 text-body font-extrabold tracking-[0.04em] uppercase ${CELL[program]} text-surface`}
             >
               {BAND_LABEL[program]}
             </span>
           </div>
-          <p className="mt-3 mb-0 text-[12.5px] text-ink-2">
+          <p className="mt-3 mb-0 text-body text-ink-2">
             The worst of its projects, not an average. A program with one critical project
             and nine healthy ones is not ninety per cent healthy; it has a critical
             project.
@@ -138,18 +138,18 @@ export function PortfolioView({ bundle }: { bundle: PortfolioBundle }) {
           {worst > 0 ? (
             <>
               <div className="flex items-baseline gap-2.5">
-                <span className="text-[32px] leading-none font-bold text-orange">
+                <span className="text-kpi leading-none font-bold text-orange">
                   +{worst}
                 </span>
-                <span className="text-[13px] text-ink-2">days · {late?.name}</span>
+                <span className="text-body text-ink-2">days · {late?.name}</span>
               </div>
-              <p className="mt-2 mb-0 text-[12px] text-ink-3">
+              <p className="mt-2 mb-0 text-body text-ink-3">
                 Implied by the dependency chain and absent from the plan.{" "}
                 {late?.committed_end} &rarr; {late?.projected_end}.
               </p>
             </>
           ) : (
-            <p className="m-0 text-[12.5px] text-ink-2">
+            <p className="m-0 text-body text-ink-2">
               No project carries slip its own dependencies imply.
             </p>
           )}
@@ -157,17 +157,17 @@ export function PortfolioView({ bundle }: { bundle: PortfolioBundle }) {
 
         <Panel caption="Needing attention today" span={4} className="content-start">
           {attention.length === 0 ? (
-            <p className="m-0 text-[12.5px] text-ink-2">Nothing breaches a threshold.</p>
+            <p className="m-0 text-body text-ink-2">Nothing breaches a threshold.</p>
           ) : (
             <div className="grid gap-2">
               {attention.map((row) => (
                 <div key={row.project_id} className="flex items-start gap-2.5">
                   <span
-                    className={`mt-px min-w-[54px] rounded px-1.5 py-px text-center text-[10px] font-extrabold tracking-[0.04em] uppercase ${CELL[row.band]} text-surface`}
+                    className={`mt-px min-w-[54px] rounded px-1.5 py-px text-center text-label font-extrabold tracking-[0.04em] uppercase ${CELL[row.band]} text-surface`}
                   >
                     {row.worst_severity ?? row.band}
                   </span>
-                  <span className="min-w-0 flex-1 text-[12.5px] text-ink-2">
+                  <span className="min-w-0 flex-1 text-body text-ink-2">
                     <b className="font-semibold text-ink">{row.name}</b> &mdash;{" "}
                     {row.headline}
                   </span>
@@ -179,16 +179,16 @@ export function PortfolioView({ bundle }: { bundle: PortfolioBundle }) {
 
         <Panel caption="Project portfolio" span={12}>
           <div className="grid items-center gap-2 [grid-template-columns:minmax(0,1.7fr)_repeat(4,minmax(0,1fr))_minmax(0,1fr)]">
-            <div className="text-[10.5px] tracking-[0.06em] text-ink-3 uppercase" />
+            <div className="text-label tracking-[0.06em] text-ink-3 uppercase" />
             {DIMENSIONS.map((dimension) => (
               <div
                 key={dimension}
-                className="text-center text-[10.5px] tracking-[0.06em] text-ink-3 uppercase"
+                className="text-center text-label tracking-[0.06em] text-ink-3 uppercase"
               >
                 {dimension}
               </div>
             ))}
-            <div className="text-right text-[10.5px] tracking-[0.06em] text-ink-3 uppercase">
+            <div className="text-right text-label tracking-[0.06em] text-ink-3 uppercase">
               slip
             </div>
 

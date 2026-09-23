@@ -387,7 +387,7 @@
      State lives here rather than in the URL. It is a view preference, not a
      thing to link somebody to - and the project *is* in the URL, so a
      reloaded page comes back to the same data with a clean view. */
-  var view = { q: "", sort: "due" };
+  var view = { q: "", sort: "due", group: "milestone" };
 
   /* What each ordering is for, in the order somebody reaches for them.
      `due` first because the question is almost always "what is next". */
@@ -442,6 +442,9 @@
     }
     rows.sort(ORDER[view.sort] || ORDER.due);
     var out = {};
+    out.__undated = rows.filter(function (r) {
+      return !(r.start || r.planned_end);
+    }).length;
     for (var k in bundle) if (bundle.hasOwnProperty(k)) out[k] = bundle[k];
     out.rows = rows;
     return out;
@@ -466,18 +469,55 @@
       order.appendChild(option);
     });
 
+    /* Grouping is a separate question from ordering, and conflating them
+       is what made the sort look broken. */
+    var group = document.createElement("select");
+    group.setAttribute("aria-label", "Group tasks");
+    [["milestone", "by feature"], ["none", "none - one ranked list"]]
+      .forEach(function (pair) {
+        var option = document.createElement("option");
+        option.value = pair[0];
+        option.textContent = "Group: " + pair[1];
+        if (pair[0] === view.group) option.selected = true;
+        group.appendChild(option);
+      });
+
     var count = $("span", "g-count");
+
+    /* What is on the chart, and what is not.
+
+       The old line counted every row the search matched and the chart drew
+       only the ones with a date, so "14 of 190 tasks" sat above ten bars.
+       A count beside a chart has to be the count of the chart. */
+    function tally(shown) {
+      var matched = shown.rows.length;
+      var undated = shown.__undated || 0;
+      var drawn = matched - undated;
+      var text = matched === bundle.rows.length
+        ? drawn + " tasks"
+        : drawn + " of " + bundle.rows.length + " tasks";
+      if (undated > 0) {
+        text += " \u00b7 " + undated + " undated, not on the chart";
+      }
+      if (view.group === "milestone" && view.sort !== "due") {
+        // Say it rather than let the reader conclude the sort is broken.
+        text += " \u00b7 ordered within each feature";
+      }
+      return text;
+    }
 
     function redraw() {
       var shown = narrow(bundle);
-      count.textContent = shown.rows.length === bundle.rows.length
-        ? bundle.rows.length + " tasks"
-        : shown.rows.length + " of " + bundle.rows.length + " tasks";
+      count.textContent = tally(shown);
       /* Replace only the chart. Rebuilding the whole card would rebuild the
          search box too, and an input that is recreated on every keystroke
          loses focus after the first character. */
       var old = card.querySelector(".gantt");
-      if (old) card.replaceChild(PulseGantt.render(shown), old);
+      if (old) {
+        card.replaceChild(
+          PulseGantt.render(shown, { group: view.group }), old
+        );
+      }
     }
 
     var typing = null;
@@ -492,11 +532,16 @@
       view.sort = order.value;
       redraw();
     });
+    group.addEventListener("change", function () {
+      view.group = group.value;
+      redraw();
+    });
 
     bar.appendChild(search);
     bar.appendChild(order);
+    bar.appendChild(group);
     bar.appendChild(count);
-    count.textContent = bundle.rows.length + " tasks";
+    count.textContent = tally(narrow(bundle));
     return bar;
   }
 

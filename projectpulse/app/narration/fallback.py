@@ -33,6 +33,38 @@ QUESTION_HEADINGS = (
     "What this analysis could not use",
 )
 
+#: What a reader sees where a heading above is *shown*. The keys are the
+#: wire format and never change; only these labels do.
+#:
+#: Split deliberately from `QUESTION_HEADINGS` rather than renamed. Those five
+#: strings are load-bearing in four places at once - the LLM prompt asks for
+#: them by name, the fallback renderer emits them, the Word export parses the
+#: narrative back apart on them, and the Insight page splits the stored string
+#: on them. Narratives already sitting in the database were written with the
+#: old wording, so a rename would not retitle those sections, it would fail to
+#: find them and silently render an empty summary.
+#:
+#: The wording itself is the reviewer's, and the reason is worth keeping: a PM
+#: manages from an executive noun phrase ("Key Risks"), not from a question
+#: the analysis asked itself.
+DISPLAY_HEADINGS = {
+    "What is at risk": "Key Risks",
+    "Why it is happening": "Likely Drivers",
+    "What it will impact": "Potential Impact",
+    "What to do next": "Recommended Actions",
+    "What this analysis could not use": "Data Limitations",
+}
+
+
+def display_heading(heading: str) -> str:
+    """The label for a heading, or the heading itself if it has no label.
+
+    Falling through rather than raising: a narrative retrieved from the
+    database may contain a heading this build has never heard of, and showing
+    it verbatim is better than losing the section it introduces.
+    """
+    return DISPLAY_HEADINGS.get(heading, heading)
+
 #: Categories that answer each question, in the order they should be read.
 _AT_RISK = ("schedule_risk", "milestone_risk", "quality_risk", "resource_risk")
 _QUALITY = ("data_quality", "evidence_quality")

@@ -176,19 +176,19 @@ export function SavedTiles({
   return (
     <div className="overflow-y-auto p-4">
       <div className="grid gap-2.5 sm:grid-cols-2">
-        {problem && <p className="m-0 text-[12.5px] text-red">{problem.title}</p>}
+        {problem && <p className="m-0 text-body text-red">{problem.title}</p>}
         {saved && saved.length === 0 && (
-          <p className="m-0 text-[12.5px] text-ink-3">No custom tiles saved yet.</p>
+          <p className="m-0 text-body text-ink-3">No custom tiles saved yet.</p>
         )}
         {saved?.map((tile) => (
           <div key={tile.id} className="rounded-lg border border-rule p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-ink">
+              <span className="min-w-0 flex-1 truncate text-body font-semibold text-ink">
                 {tile.name}
               </span>
               {tile.live_source && (
                 <span
-                  className="shrink-0 rounded bg-green/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] text-green uppercase"
+                  className="shrink-0 rounded bg-green/15 px-1.5 py-0.5 text-label font-extrabold tracking-[0.05em] text-green uppercase"
                   title="Refreshes from the project's own data every time this tile is viewed"
                 >
                   Live
@@ -197,7 +197,7 @@ export function SavedTiles({
               <button
                 type="button"
                 onClick={() => deleteSaved(tile.id)}
-                className="shrink-0 cursor-pointer rounded border-0 bg-transparent text-[11.5px] text-ink-3 hover:text-red"
+                className="shrink-0 cursor-pointer rounded border-0 bg-transparent text-body text-ink-3 hover:text-red"
               >
                 Delete
               </button>
@@ -207,7 +207,7 @@ export function SavedTiles({
               <button
                 type="button"
                 onClick={() => addSaved(tile)}
-                className="mt-2.5 w-full cursor-pointer rounded-md border border-rule bg-bg px-2.5 py-1 text-[11.5px] font-semibold text-ink hover:bg-rule/40"
+                className="mt-2.5 w-full cursor-pointer rounded-md border border-rule bg-bg px-2.5 py-1 text-body font-semibold text-ink hover:bg-rule/40"
               >
                 + Add to Dashboard
               </button>
@@ -268,14 +268,14 @@ function TileStage({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+        <span className="text-label font-bold tracking-[0.06em] text-ink-3 uppercase">
           {isCurrent ? "Preview" : `Version ${version}`}
         </span>
         {!isCurrent && (
           <button
             type="button"
             onClick={onBackToCurrent}
-            className="cursor-pointer rounded border-0 bg-transparent p-0 text-[11.5px] font-semibold text-navy hover:underline"
+            className="cursor-pointer rounded border-0 bg-transparent p-0 text-body font-semibold text-navy hover:underline"
           >
             Back to current
           </button>
@@ -290,26 +290,26 @@ function TileStage({
             <span className="h-2 w-2 rounded-full bg-rule" />
             <span className="h-2 w-2 rounded-full bg-rule" />
           </span>
-          <span className="min-w-0 flex-1 truncate text-[10px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+          <span className="min-w-0 flex-1 truncate text-label font-bold tracking-[0.06em] text-ink-3 uppercase">
             On your dashboard
           </span>
           {draft.live_source && (
             <span
-              className="shrink-0 rounded bg-green/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] text-green uppercase"
+              className="shrink-0 rounded bg-green/15 px-1.5 py-0.5 text-label font-extrabold tracking-[0.05em] text-green uppercase"
               title="Read straight from the project's own data - refreshes every time this tile is viewed, not frozen at save"
             >
               Live
             </span>
           )}
           <span
-            className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] uppercase ${badge.tone}`}
+            className={`shrink-0 rounded px-1.5 py-0.5 text-label font-extrabold tracking-[0.05em] uppercase ${badge.tone}`}
           >
             {badge.label}
           </span>
         </div>
 
         <div className="p-3">
-          <div className="mb-2 truncate text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+          <div className="mb-2 truncate text-label font-bold tracking-[0.06em] text-ink-3 uppercase">
             {draft.title}
           </div>
           <div className={chartBox(draft.chart_type, "h-[132px]")}>
@@ -321,7 +321,7 @@ function TileStage({
               forecast panel prints its sample beside its percentiles. */}
           <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 border-t border-rule pt-2">
             {draft.labels.map((label, i) => (
-              <span key={i} className="text-[11px] text-ink-3">
+              <span key={i} className="text-label text-ink-3">
                 {label}{" "}
                 <span className="font-semibold text-ink-2">
                   {NUMBER.format(draft.values[i] ?? 0)}
@@ -331,11 +331,11 @@ function TileStage({
           </div>
           {/* Exactly what the canvas will render under the chart. */}
           <div className="mt-2.5 flex items-center gap-1.5 border-t border-rule pt-2">
-            <span className="rounded bg-purple/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.05em] text-purple uppercase">
+            <span className="rounded bg-purple/15 px-1.5 py-0.5 text-label font-extrabold tracking-[0.05em] text-purple uppercase">
               Custom
             </span>
             {note && (
-              <span className="min-w-0 flex-1 truncate text-[10.5px] text-ink-3" title={note}>
+              <span className="min-w-0 flex-1 truncate text-label text-ink-3" title={note}>
                 {note}
               </span>
             )}
@@ -344,7 +344,7 @@ function TileStage({
       </div>
 
       {changes && changes.length > 0 && (
-        <p className="mt-2 mb-0 text-[11px] text-ink-3">
+        <p className="mt-2 mb-0 text-label text-ink-3">
           <span className="font-bold tracking-[0.06em] uppercase">Changed</span>{" "}
           {changes.map((c) => c.summary).join("; ")}
         </p>
@@ -558,7 +558,7 @@ export function TileBuilder({
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {!draft && turns.length === 0 && (
             <>
-              <label className="mb-1 block text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+              <label className="mb-1 block text-label font-bold tracking-[0.06em] text-ink-3 uppercase">
                 Paste your data (optional)
               </label>
               <textarea
@@ -566,9 +566,9 @@ export function TileBuilder({
                 onChange={(e) => setRawData(e.target.value)}
                 placeholder={"Jan, 12000\nFeb, 15500\nMar, 14200\n\nor any table, list, or a sentence with numbers in it"}
                 rows={5}
-                className="w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-[12px] text-ink"
+                className="w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-body text-ink"
               />
-              <p className="mt-2 mb-0 text-[11.5px] text-ink-3">
+              <p className="mt-2 mb-0 text-body text-ink-3">
                 Then say what you want below. The tile appears beside this
                 conversation and changes as you refine it, so you can see what
                 each instruction did before you keep going. The numbers stay
@@ -584,14 +584,14 @@ export function TileBuilder({
                 turn.role === "user" ? (
                   <div
                     key={i}
-                    className="max-w-[85%] justify-self-end rounded-lg rounded-br-sm border border-navy/40 bg-navy/10 px-2.5 py-1.5 text-[12.5px] text-ink"
+                    className="max-w-[85%] justify-self-end rounded-lg rounded-br-sm border border-navy/40 bg-navy/10 px-2.5 py-1.5 text-body text-ink"
                   >
                     {turn.content}
                   </div>
                 ) : (
                   <Fragment key={i}>
                     <div
-                      className={`max-w-[85%] justify-self-start rounded-lg rounded-bl-sm border px-2.5 py-1.5 text-[12.5px] ${
+                      className={`max-w-[85%] justify-self-start rounded-lg rounded-bl-sm border px-2.5 py-1.5 text-body ${
                         turn.ok === false
                           ? "border-amber/40 bg-amber/10 text-ink-2"
                           : "border-rule bg-bg text-ink-2"
@@ -615,7 +615,7 @@ export function TileBuilder({
                             : "border-rule bg-bg hover:border-navy/40"
                         }`}
                       >
-                        <span className="shrink-0 text-[10px] font-extrabold tracking-[0.05em] text-navy uppercase">
+                        <span className="shrink-0 text-label font-extrabold tracking-[0.05em] text-navy uppercase">
                           v{turn.version}
                         </span>
                         <span className="w-[64px] shrink-0">
@@ -631,7 +631,7 @@ export function TileBuilder({
                             />
                           </span>
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-[10.5px] text-ink-3">
+                        <span className="min-w-0 flex-1 truncate text-label text-ink-3">
                           {turn.changes && turn.changes.length > 0
                             ? turn.changes.map((c) => c.summary).join("; ")
                             : turn.draft.title}
@@ -645,12 +645,12 @@ export function TileBuilder({
             </div>
           )}
 
-          {sending && <p className="mt-2 mb-0 text-[11.5px] text-ink-3">Working on it...</p>}
+          {sending && <p className="mt-2 mb-0 text-body text-ink-3">Working on it...</p>}
         </div>
 
         {/* The composer. */}
         <div className="shrink-0 border-t border-rule p-4">
-          {turnError && <p className="mt-0 mb-2 text-[11.5px] text-amber">{turnError}</p>}
+          {turnError && <p className="mt-0 mb-2 text-body text-amber">{turnError}</p>}
           {draft && (
             <div className="mb-2 flex flex-wrap gap-1.5">
               {REFINEMENTS.map((preset) => (
@@ -658,7 +658,7 @@ export function TileBuilder({
                   key={preset}
                   type="button"
                   onClick={() => setInput(preset)}
-                  className="cursor-pointer rounded-full border border-rule bg-bg px-2 py-0.5 text-[11px] text-ink-2 hover:text-ink"
+                  className="cursor-pointer rounded-full border border-rule bg-bg px-2 py-0.5 text-label text-ink-2 hover:text-ink"
                 >
                   {preset.trim()}
                 </button>
@@ -676,13 +676,13 @@ export function TileBuilder({
                 }
               }}
               placeholder={draft ? "What should change?" : "e.g. monthly spend as a bar chart"}
-              className="min-w-0 flex-1 rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[12.5px] text-ink"
+              className="min-w-0 flex-1 rounded-md border border-rule bg-bg px-2.5 py-1.5 text-body text-ink"
             />
             <button
               type="button"
               disabled={sending || !input.trim()}
               onClick={() => sendTurn(input)}
-              className="cursor-pointer rounded-md border border-purple/60 bg-purple/15 px-3 py-1.5 text-[12.5px] font-semibold text-purple disabled:opacity-50"
+              className="cursor-pointer rounded-md border border-purple/60 bg-purple/15 px-3 py-1.5 text-body font-semibold text-purple disabled:opacity-50"
             >
               {sending ? "..." : draft ? "Send" : "Draft it"}
             </button>
@@ -709,33 +709,33 @@ export function TileBuilder({
             <button
               type="button"
               onClick={() => setShowRows((v) => !v)}
-              className="cursor-pointer rounded border-0 bg-transparent p-0 text-[11.5px] font-semibold text-navy hover:underline"
+              className="cursor-pointer rounded border-0 bg-transparent p-0 text-body font-semibold text-navy hover:underline"
             >
               {showRows ? "Hide" : "Edit"} title, type and rows by hand
             </button>
             {showRows && (
               <div className="mt-2.5">
-                <label className="mb-1 block text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+                <label className="mb-1 block text-label font-bold tracking-[0.06em] text-ink-3 uppercase">
                   Title
                 </label>
                 <input
                   value={draft.title}
                   onChange={(e) => patchDraft({ title: e.target.value })}
-                  className="mb-2.5 w-full rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[12.5px] text-ink"
+                  className="mb-2.5 w-full rounded-md border border-rule bg-bg px-2.5 py-1.5 text-body text-ink"
                 />
-                <label className="mb-1 block text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+                <label className="mb-1 block text-label font-bold tracking-[0.06em] text-ink-3 uppercase">
                   Chart type
                 </label>
                 <select
                   value={draft.chart_type}
                   onChange={(e) => patchDraft({ chart_type: e.target.value as ChartType })}
-                  className="mb-2.5 w-full cursor-pointer rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[12.5px] text-ink"
+                  className="mb-2.5 w-full cursor-pointer rounded-md border border-rule bg-bg px-2.5 py-1.5 text-body text-ink"
                 >
                   <option value="bar">Bar</option>
                   <option value="line">Line</option>
                   <option value="pie">Pie</option>
                 </select>
-                <label className="mb-1 block text-[11px] font-bold tracking-[0.06em] text-ink-3 uppercase">
+                <label className="mb-1 block text-label font-bold tracking-[0.06em] text-ink-3 uppercase">
                   Data
                 </label>
                 <div className="grid gap-1.5">
@@ -744,18 +744,18 @@ export function TileBuilder({
                       <input
                         value={label}
                         onChange={(e) => updateRow(i, "label", e.target.value)}
-                        className="min-w-0 flex-1 rounded-md border border-rule bg-bg px-2 py-1 text-[12px] text-ink"
+                        className="min-w-0 flex-1 rounded-md border border-rule bg-bg px-2 py-1 text-body text-ink"
                       />
                       <input
                         type="number"
                         value={draft.values[i]}
                         onChange={(e) => updateRow(i, "value", e.target.value)}
-                        className="w-[80px] rounded-md border border-rule bg-bg px-2 py-1 text-[12px] text-ink"
+                        className="w-[80px] rounded-md border border-rule bg-bg px-2 py-1 text-body text-ink"
                       />
                       <button
                         type="button"
                         onClick={() => removeRow(i)}
-                        className="cursor-pointer rounded border-0 bg-transparent px-1.5 text-[13px] text-ink-3 hover:text-red"
+                        className="cursor-pointer rounded border-0 bg-transparent px-1.5 text-body text-ink-3 hover:text-red"
                         aria-label="Remove row"
                       >
                         &times;
@@ -766,7 +766,7 @@ export function TileBuilder({
                 <button
                   type="button"
                   onClick={addRow}
-                  className="mt-2 cursor-pointer rounded border-0 bg-transparent p-0 text-[11.5px] font-semibold text-navy hover:underline"
+                  className="mt-2 cursor-pointer rounded border-0 bg-transparent p-0 text-body font-semibold text-navy hover:underline"
                 >
                   + Add row
                 </button>
@@ -776,7 +776,7 @@ export function TileBuilder({
 
           <div className="mt-3 grid gap-2 border-t border-rule pt-3">
             {savedMessage && (
-              <p className="m-0 rounded-md border border-green/40 bg-green/10 px-2.5 py-1.5 text-[11.5px] text-green">
+              <p className="m-0 rounded-md border border-green/40 bg-green/10 px-2.5 py-1.5 text-body text-green">
                 {savedMessage}
               </p>
             )}
@@ -785,7 +785,7 @@ export function TileBuilder({
                 type="button"
                 disabled={saving || draft.labels.length === 0}
                 onClick={save}
-                className="w-full cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-surface disabled:opacity-50"
+                className="w-full cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-body font-semibold text-surface disabled:opacity-50"
               >
                 {saving ? "Saving..." : saveLabel}
               </button>
@@ -793,7 +793,7 @@ export function TileBuilder({
               <button
                 type="button"
                 onClick={useThisVersion}
-                className="w-full cursor-pointer rounded-md border border-navy bg-navy/15 px-3 py-1.5 text-[12.5px] font-semibold text-navy"
+                className="w-full cursor-pointer rounded-md border border-navy bg-navy/15 px-3 py-1.5 text-body font-semibold text-navy"
               >
                 Use version {viewing}
               </button>
@@ -802,14 +802,14 @@ export function TileBuilder({
               <button
                 type="button"
                 onClick={startOver}
-                className="flex-1 cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
+                className="flex-1 cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-body font-semibold text-ink hover:bg-bg"
               >
                 Start over
               </button>
               <button
                 type="button"
                 onClick={() => setShowData((v) => !v)}
-                className="flex-1 cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
+                className="flex-1 cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-body font-semibold text-ink hover:bg-bg"
               >
                 {showData ? "Hide data" : "Source data"}
               </button>
@@ -820,7 +820,7 @@ export function TileBuilder({
                 onChange={(e) => setRawData(e.target.value)}
                 placeholder="The data this chart was built from - every later turn is held to it."
                 rows={4}
-                className="w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-[12px] text-ink"
+                className="w-full resize-none rounded-md border border-rule bg-bg p-2 font-mono text-body text-ink"
               />
             )}
           </div>

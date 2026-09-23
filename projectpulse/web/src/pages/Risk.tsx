@@ -41,11 +41,11 @@ const CELL_STYLE: Record<string, string> = {
 
 function RatingBadge({ rating }: { rating: string | null | undefined }) {
   if (!rating) {
-    return <span className="text-[11.5px] text-ink-3">not assessed</span>;
+    return <span className="text-body text-ink-3">not assessed</span>;
   }
   return (
     <span
-      className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-bold ${
+      className={`inline-block rounded-full border px-2 py-0.5 text-label font-bold ${
         RATING_STYLE[rating] ?? "border-rule bg-bg text-ink-3"
       }`}
     >
@@ -76,7 +76,7 @@ function Matrix({ bundle }: { bundle: RiskBundle }) {
               {bundle.impacts.map((impact) => (
                 <th
                   key={impact}
-                  className="pb-1.5 text-center text-[11px] font-medium text-ink-3"
+                  className="pb-1.5 text-center text-label font-medium text-ink-3"
                 >
                   {impact}
                 </th>
@@ -86,7 +86,7 @@ function Matrix({ bundle }: { bundle: RiskBundle }) {
           <tbody>
             {bundle.likelihoods.map((likelihood) => (
               <tr key={likelihood}>
-                <td className="pr-2.5 text-right text-[11.5px] font-medium whitespace-nowrap text-ink-3">
+                <td className="pr-2.5 text-right text-body font-medium whitespace-nowrap text-ink-3">
                   {likelihood}
                 </td>
                 {bundle.impacts.map((impact) => {
@@ -98,11 +98,11 @@ function Matrix({ bundle }: { bundle: RiskBundle }) {
                         cell ? CELL_STYLE[cell.rating] ?? "" : ""
                       }`}
                     >
-                      <div className="text-[10.5px] font-semibold text-ink-2">
+                      <div className="text-label font-semibold text-ink-2">
                         {cell?.rating}
                       </div>
                       {!!cell?.risk_count && (
-                        <div className="text-[11px] font-bold text-ink">
+                        <div className="text-label font-bold text-ink">
                           {cell.risk_count} risk{cell.risk_count === 1 ? "" : "s"}
                         </div>
                       )}
@@ -131,14 +131,14 @@ function Field({
 }) {
   return (
     <label className={`grid gap-1 ${span === 2 ? "sm:col-span-2" : ""}`}>
-      <span className="text-[11px] font-medium tracking-[0.02em] text-ink-3">{label}</span>
+      <span className="text-label font-medium tracking-[0.02em] text-ink-3">{label}</span>
       {children}
     </label>
   );
 }
 
 const inputClass =
-  "w-full rounded-md border border-rule bg-bg px-2.5 py-1.5 text-[13px] text-ink outline-none focus:border-blue";
+  "w-full rounded-md border border-rule bg-bg px-2.5 py-1.5 text-body text-ink outline-none focus:border-blue";
 
 const LIKELIHOOD_OPTIONS = ["", "Almost Certain", "Likely", "Possible", "Unlikely", "Rare"];
 const IMPACT_OPTIONS = ["", "Insignificant", "Minor", "Moderate", "Major", "Severe"];
@@ -233,20 +233,20 @@ function RiskForm({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between">
-          <h2 className="m-0 text-[16px] font-semibold">
+          <h2 className="m-0 text-emph font-semibold">
             {initial ? "Edit risk" : "Add risk"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded border-0 bg-transparent text-lg text-ink-3 hover:text-ink"
+            className="cursor-pointer rounded border-0 bg-transparent text-emph text-ink-3 hover:text-ink"
           >
             ✕
           </button>
         </div>
 
         {error && (
-          <div className="mb-3 rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[12.5px] text-red">
+          <div className="mb-3 rounded-md border border-red/40 bg-red/10 px-3 py-2 text-body text-red">
             {error}
           </div>
         )}
@@ -320,7 +320,7 @@ function RiskForm({
                 ))}
               </select>
             </Field>
-            <label className="flex items-center gap-2 pt-5 text-[13px]">
+            <label className="flex items-center gap-2 pt-5 text-body">
               <input
                 type="checkbox"
                 checked={draft.key_risk ?? false}
@@ -344,7 +344,7 @@ function RiskForm({
             </Field>
           </div>
 
-          <div className="border-t border-rule pt-3.5 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+          <div className="border-t border-rule pt-3.5 text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
             Pre-treatment
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -394,7 +394,7 @@ function RiskForm({
             </Field>
           </div>
 
-          <div className="border-t border-rule pt-3.5 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+          <div className="border-t border-rule pt-3.5 text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
             Post-treatment
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -446,7 +446,7 @@ function RiskForm({
             </Field>
           </div>
 
-          <div className="border-t border-rule pt-3.5 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+          <div className="border-t border-rule pt-3.5 text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
             Cause &amp; treatment
           </div>
           <div className="grid gap-3">
@@ -471,7 +471,7 @@ function RiskForm({
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-md border border-rule bg-bg px-4 py-1.5 text-[13px] font-medium"
+            className="cursor-pointer rounded-md border border-rule bg-bg px-4 py-1.5 text-body font-medium"
           >
             Cancel
           </button>
@@ -479,7 +479,7 @@ function RiskForm({
             type="button"
             disabled={saving}
             onClick={save}
-            className="cursor-pointer rounded-md border border-blue bg-blue px-4 py-1.5 text-[13px] font-semibold text-white disabled:opacity-60"
+            className="cursor-pointer rounded-md border border-blue bg-blue px-4 py-1.5 text-body font-semibold text-white disabled:opacity-60"
           >
             {saving ? "Saving..." : "Save"}
           </button>
@@ -515,22 +515,22 @@ function RiskRow({
 
   return (
     <tr className="border-b border-rule/60 hover:bg-bg">
-      <td className="py-2 pr-2.5 text-[11.5px] text-ink-3">{dash(risk.risk_no)}</td>
+      <td className="py-2 pr-2.5 text-body text-ink-3">{dash(risk.risk_no)}</td>
       <td className="py-2 pr-2.5">
-        <div className="font-semibold text-[13px]">{risk.title}</div>
+        <div className="font-semibold text-body">{risk.title}</div>
         {/* The project's name, with the id behind it as a tooltip. A register
             that lists several projects has to say which one each row is on in
             terms a reader recognises - a raw source id is why a risk filed
             against the wrong project read as correct. */}
-        <div className="text-[11.5px] text-ink-3" title={risk.project_id}>
+        <div className="text-body text-ink-3" title={risk.project_id}>
           {projectName ?? `${risk.project_id} (unknown project)`}
         </div>
       </td>
-      <td className="py-2 pr-2.5 text-[11.5px]">{dash(risk.category)}</td>
+      <td className="py-2 pr-2.5 text-body">{dash(risk.category)}</td>
       <td className="py-2 pr-2.5">
         <span
           className={
-            "inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold " +
+            "inline-block rounded-full px-2 py-0.5 text-label font-semibold " +
             (risk.status === "Active" ? "bg-green/15 text-green" : "bg-ink-3/15 text-ink-3")
           }
         >
@@ -540,21 +540,21 @@ function RiskRow({
       <td className="py-2 pr-2.5">
         <RatingBadge rating={risk.pre_rating} />
       </td>
-      <td className="py-2 pr-2.5 text-right text-[12px] whitespace-nowrap">
+      <td className="py-2 pr-2.5 text-right text-body whitespace-nowrap">
         {money(risk.pre_cost)}
       </td>
       <td className="py-2 pr-2.5">
         <RatingBadge rating={risk.post_rating} />
       </td>
-      <td className="py-2 pr-2.5 text-right text-[12px] whitespace-nowrap">
+      <td className="py-2 pr-2.5 text-right text-body whitespace-nowrap">
         {money(risk.post_cost)}
       </td>
-      <td className="py-2 pr-2.5 text-[11.5px] whitespace-nowrap">{dash(risk.responsible)}</td>
+      <td className="py-2 pr-2.5 text-body whitespace-nowrap">{dash(risk.responsible)}</td>
       <td className="py-2 text-right whitespace-nowrap">
         <button
           type="button"
           onClick={onEdit}
-          className="cursor-pointer rounded border-0 bg-transparent px-1.5 text-[12px] text-blue hover:underline"
+          className="cursor-pointer rounded border-0 bg-transparent px-1.5 text-body text-blue hover:underline"
         >
           Edit
         </button>
@@ -562,7 +562,7 @@ function RiskRow({
           type="button"
           disabled={deleting}
           onClick={remove}
-          className="cursor-pointer rounded border-0 bg-transparent px-1.5 text-[12px] text-red hover:underline disabled:opacity-50"
+          className="cursor-pointer rounded border-0 bg-transparent px-1.5 text-body text-red hover:underline disabled:opacity-50"
         >
           Delete
         </button>
@@ -590,7 +590,7 @@ function RiskTable({ bundle, risks, nameOf, onEdit, onChanged }: {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="border-b border-rule text-[11px] font-bold tracking-[0.05em] text-ink-3 uppercase">
+            <tr className="border-b border-rule text-label font-bold tracking-[0.05em] text-ink-3 uppercase">
               <th className="pb-2 pr-2.5">No.</th>
               <th className="pb-2 pr-2.5">Title / Project</th>
               <th className="pb-2 pr-2.5">Category</th>
@@ -710,7 +710,7 @@ function DraftsPanel({
   return (
     <div>
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <div className="text-[12px] text-ink-2">
+        <div className="text-body text-ink-2">
           {bundle?.reason ?? `${bundle?.drafts.length ?? 0} proposal(s) waiting`}
         </div>
         <button
@@ -728,13 +728,13 @@ function DraftsPanel({
 
       {(bundle?.drafts ?? []).map((draft) => (
         <Card key={draft.id} className="mb-2.5">
-          <div className="mb-1 text-[13px] font-semibold">{draft.title}</div>
+          <div className="mb-1 text-body font-semibold">{draft.title}</div>
           {draft.description && (
-            <div className="mb-2 text-[12.5px] leading-relaxed text-ink-2">
+            <div className="mb-2 text-body leading-relaxed text-ink-2">
               {draft.description}
             </div>
           )}
-          <div className="mb-2 text-[11.5px] text-ink-3">
+          <div className="mb-2 text-body text-ink-3">
             {draft.category ?? "no category"} ·{" "}
             <RatingBadge rating={draft.pre_rating} /> · read from{" "}
             <span className="font-mono">{labelsFor(draft, bundle?.cited_tasks ?? [])}</span>
@@ -751,7 +751,7 @@ function DraftsPanel({
             <button
               type="button"
               onClick={() => dismiss(draft.id)}
-              className="cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-[12px] text-ink-2"
+              className="cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-body text-ink-2"
             >
               Dismiss
             </button>
@@ -829,13 +829,13 @@ export function Risk() {
         </Note>
       </Section>
 
-      <div className="mb-3.5 flex items-center gap-2 text-[12px] text-ink-2">
+      <div className="mb-3.5 flex items-center gap-2 text-body text-ink-2">
         <label htmlFor="risk-project-filter">Project</label>
         <select
           id="risk-project-filter"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-[12px] text-ink"
+          className="cursor-pointer rounded-md border border-rule bg-surface px-2 py-1 text-body text-ink"
         >
           <option value="">All projects</option>
           {bundle.projects.map((option) => (

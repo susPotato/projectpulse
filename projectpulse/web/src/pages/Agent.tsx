@@ -81,7 +81,7 @@ function Bubble({ message }: { message: ChatMessage }) {
     <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
       <div
         className={
-          "max-w-[75%] rounded-lg px-3.5 py-2.5 text-[13.5px] whitespace-pre-wrap " +
+          "max-w-[75%] rounded-lg px-3.5 py-2.5 text-body whitespace-pre-wrap " +
           (mine ? "bg-blue text-white" : "border border-rule bg-surface text-ink")
         }
       >
@@ -198,7 +198,7 @@ export function Agent() {
             key={id}
             type="button"
             onClick={() => setMode(id)}
-            className={`cursor-pointer rounded-full border px-3 py-1 text-[12.5px] font-semibold ${
+            className={`cursor-pointer rounded-full border px-3 py-1 text-body font-semibold ${
               mode === id
                 ? "border-blue bg-blue/15 text-blue"
                 : "border-rule bg-surface text-ink-2 hover:text-ink"
@@ -234,7 +234,7 @@ export function Agent() {
 
           <Card className="mt-4 flex h-[60vh] flex-col gap-3 overflow-y-auto">
             {messages.length === 0 && (
-              <p className="m-0 text-[13px] text-ink-3">
+              <p className="m-0 text-body text-ink-3">
                 Ask anything - this conversation is not saved when you leave the page.
               </p>
             )}
@@ -243,7 +243,7 @@ export function Agent() {
             ))}
             {sending && (
               <div className="flex justify-start">
-                <div className="rounded-lg border border-rule bg-surface px-3.5 py-2.5 text-[13.5px] text-ink-3">
+                <div className="rounded-lg border border-rule bg-surface px-3.5 py-2.5 text-body text-ink-3">
                   Thinking&hellip;
                 </div>
               </div>
@@ -252,7 +252,7 @@ export function Agent() {
           </Card>
 
           {error && (
-            <div className="mt-3 rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[12.5px] text-red">
+            <div className="mt-3 rounded-md border border-red/40 bg-red/10 px-3 py-2 text-body text-red">
               {error}
             </div>
           )}
@@ -263,7 +263,7 @@ export function Agent() {
                 key={preset.label}
                 type="button"
                 onClick={() => usePreset(preset.prompt)}
-                className="cursor-pointer rounded-full border border-rule bg-surface px-3 py-1 text-[12px] text-ink-2 hover:border-blue hover:text-blue"
+                className="cursor-pointer rounded-full border border-rule bg-surface px-3 py-1 text-body text-ink-2 hover:border-blue hover:text-blue"
               >
                 {preset.label}
               </button>
@@ -273,7 +273,7 @@ export function Agent() {
           <div className="mt-2 flex gap-2">
             <textarea
               ref={inputRef}
-              className="min-h-[44px] flex-1 resize-none rounded-md border border-rule bg-bg px-3 py-2.5 text-[13.5px] text-ink outline-none focus:border-blue"
+              className="min-h-[44px] flex-1 resize-none rounded-md border border-rule bg-bg px-3 py-2.5 text-body text-ink outline-none focus:border-blue"
               placeholder="Message the agent, or paste a link to have it read - Enter to send, Shift+Enter for a new line"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -283,7 +283,7 @@ export function Agent() {
               type="button"
               disabled={sending || !draft.trim()}
               onClick={submit}
-              className="cursor-pointer rounded-md border border-blue bg-blue px-4 text-[13px] font-semibold text-white disabled:cursor-default disabled:opacity-50"
+              className="cursor-pointer rounded-md border border-blue bg-blue px-4 text-body font-semibold text-white disabled:cursor-default disabled:opacity-50"
             >
               Send
             </button>
@@ -328,7 +328,7 @@ export function Agent() {
                 key={id}
                 type="button"
                 onClick={() => setTileTab(id)}
-                className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2 text-[12.5px] ${
+                className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2 text-body ${
                   tileTab === id
                     ? "border-navy font-semibold text-ink"
                     : "border-transparent text-ink-2 hover:text-ink"

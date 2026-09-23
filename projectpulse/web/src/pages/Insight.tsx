@@ -4,7 +4,6 @@ import {
   load,
   type ApiProblem,
   type CausalLink,
-  type CitedTask,
   type DeliveryConfidence,
   type EvidenceRef,
   type ExplainBundle,
@@ -19,9 +18,12 @@ import {
   withProject,
 } from "../api";
 import {
+  AllClear,
   Board,
   Card,
+  MICRO_LABEL,
   Page,
+  PageSkeleton,
   Panel,
   Problem,
   Section,
@@ -29,6 +31,8 @@ import {
   Stats,
   SubTabs,
 } from "../components/Shell";
+import { BarRows, Meter, Split, type SplitPart } from "../components/charts";
+import { CountUp } from "../components/motion";
 
 /*
   Findings, each openable to the rule that fired, the chain behind it, and the
@@ -87,6 +91,10 @@ const CONFIDENCE_STYLE: Record<string, { label: string; className: string }> = {
   low: { label: "Low confidence", className: "border-red/45 bg-red/10 text-red" },
 };
 
+/* The strings the stored narrative is split on. These are the wire format -
+   `app/narration/fallback.py#QUESTION_HEADINGS` emits them, the LLM prompt
+   asks for them by name, and `tests/test_api.py` pins this array to that
+   tuple. Never reword one here. */
 const QUESTIONS = [
   "What is at risk",
   "Why it is happening",
@@ -95,12 +103,25 @@ const QUESTIONS = [
   "What this analysis could not use",
 ] as const;
 
+/* What a reader sees instead. Mirrors `narration.DISPLAY_HEADINGS`, which the
+   Word export uses for the same five sections, and exists for the same
+   reason: narratives already cached in the database carry the old wording, so
+   the split has to keep matching it while the page stops showing it. A PM
+   manages from "Key Risks", not from a question the analysis asked itself. */
+const DISPLAY_HEADINGS: Record<string, string> = {
+  "What is at risk": "Key Risks",
+  "Why it is happening": "Likely Drivers",
+  "What it will impact": "Potential Impact",
+  "What to do next": "Recommended Actions",
+  "What this analysis could not use": "Data Limitations",
+};
+
 function Basis({ basis }: { basis: string }) {
   const spec = BASIS[basis] ?? BASIS.none!;
   return (
     <span
       title={spec.title}
-      className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-bold ${spec.className}`}
+      className={`inline-block rounded-full border px-2 py-0.5 text-label font-bold ${spec.className}`}
     >
       {spec.label}
     </span>
@@ -128,7 +149,7 @@ function ConfidenceChip({ confidence }: { confidence: DeliveryConfidence }) {
   return (
     <span
       title={title}
-      className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-bold ${spec.className}`}
+      className={`inline-block rounded-full border px-2 py-0.5 text-label font-bold ${spec.className}`}
     >
       {spec.label}
     </span>
@@ -137,7 +158,7 @@ function ConfidenceChip({ confidence }: { confidence: DeliveryConfidence }) {
 
 function BlockLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-1.5 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+    <div className="mb-1.5 text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
       {children}
     </div>
   );
@@ -158,11 +179,13 @@ function Narrative({ bundle }: { bundle: InsightBundle }) {
   if (!blocks.length) return <Card>{text || "No narrative."}</Card>;
 
   return (
-    <Card className="grid gap-3.5">
+    <Card className="stagger grid gap-3.5">
       {blocks.map(({ question, body }) => (
         <div key={question}>
-          <div className="mb-0.5 font-semibold text-navy">{question}</div>
-          <p className="m-0 text-ink-2">{body}</p>
+          <div className="mb-0.5 text-emph font-semibold text-navy">
+            {DISPLAY_HEADINGS[question] ?? question}
+          </div>
+          <p className="m-0 text-body text-ink-2">{body}</p>
         </div>
       ))}
     </Card>
@@ -178,15 +201,15 @@ function Step({ step, role }: { step: CausalLink["cause"]; role: string }) {
   return (
     <div className="flex-1 basis-56 rounded-lg border border-rule bg-bg px-3 py-2.5">
       <div className="font-bold text-navy">{step.entity_label}</div>
-      <div className="mt-0.5 text-[12.5px] text-ink-2">
+      <div className="mt-0.5 text-body text-ink-2">
         {role} · {step.field}
       </div>
-      <div className="mt-1 text-[13px]">
+      <div className="mt-1 text-body">
         {dash(step.old_value)} → {dash(step.new_value)}
       </div>
       {/* An interval shown as an interval. A midpoint would invent precision
           the snapshot data never had. */}
-      <div className="mt-1 text-[11.5px] text-ink-3">
+      <div className="mt-1 text-body text-ink-3">
         {when} · {step.occurred.precision}
       </div>
     </div>
@@ -205,12 +228,12 @@ function Chain({ link }: { link: CausalLink }) {
       <div className="flex flex-wrap items-stretch gap-2.5">
         <Step step={link.cause} role="cause" />
         <div className="flex flex-col items-center self-center text-ink-3">
-          <div className="text-xl">→</div>
-          <div className="text-[10.5px] whitespace-nowrap">{lag}</div>
+          <div className="text-title">→</div>
+          <div className="text-label whitespace-nowrap">{lag}</div>
         </div>
         <Step step={link.effect} role="effect" />
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11.5px] text-ink-3">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-body text-ink-3">
         <Basis basis={link.evidence_basis} />
         <span>
           ordering:{" "}
@@ -229,12 +252,12 @@ function Trace({ trace }: { trace: RuleTrace }) {
       <BlockLabel>Rule — {trace.rule_id}</BlockLabel>
       <div className="rounded-lg bg-bg px-3 py-2.5">
         {trace.conditions.map((condition) => (
-          <code key={condition} className="block py-px font-mono text-xs text-navy">
+          <code key={condition} className="block py-px font-mono text-label text-navy">
             {condition}
           </code>
         ))}
         {trace.rationale && (
-          <div className="mt-1.5 text-[12.5px] italic text-ink-2">{trace.rationale}</div>
+          <div className="mt-1.5 text-body italic text-ink-2">{trace.rationale}</div>
         )}
       </div>
     </div>
@@ -254,7 +277,7 @@ function Evidence({ refs }: { refs: EvidenceRef[] }) {
           key={`${ref.raw_data_id}-${ref.url}`}
           href={ref.url ?? "#"}
           title={[ref.raw_table, ref.url].filter(Boolean).join(" — ")}
-          className="block truncate py-0.5 text-[12.5px] text-blue no-underline hover:underline"
+          className="block truncate py-0.5 text-body text-blue no-underline hover:underline"
         >
           <span className="font-mono text-ink-3">#{ref.raw_data_id} </span>
           {ref.remark ?? ref.url ?? ref.label ?? "source record"}
@@ -265,85 +288,14 @@ function Evidence({ refs }: { refs: EvidenceRef[] }) {
 }
 
 /*
-  What a model read out of the task text, and the rows it read it from.
+  The model's proposals, at the altitude the Risk tab reads at.
 
-  On the Evidence tab rather than beside the findings, and that placement is the
-  argument. A finding is a rule that fired on a number this app computed, and
-  its evidence is the source row the number came from. This is neither: nobody
-  computed it, and the only thing under it is prose somebody typed into Jira.
-  Putting it here says what it is - something to go and check - and keeps it out
-  of the list a reader is entitled to trust without checking.
-
-  Nothing here can become a risk by being looked at. Accepting one is on the
-  Risk page, because that is where the register lives and accepting is the act
-  that makes a suggestion into a record.
-*/
-function ModelRead({ bundle }: { bundle: RiskDraftBundle }) {
-  const byId = new Map<string, CitedTask>(bundle.cited_tasks.map((t) => [t.task_id, t]));
-
-  if (bundle.drafts.length === 0) {
-    return <Card>{bundle.reason ?? "Nothing proposed."}</Card>;
-  }
-
-  return (
-    <>
-      <Card className="mb-2.5 border-orange/40 bg-orange/5 text-[12.5px] leading-relaxed">
-        <strong>Read by a model from task text. Not computed, and not evidence.</strong>{" "}
-        Each item below is a suggestion drawn from what somebody wrote in the
-        tracker, shown with the rows it was drawn from so you can judge both.
-        None of it is in the risk register until you accept it there.
-      </Card>
-      {bundle.drafts.map((draft) => {
-        const cites = (draft.cited_task_ids ?? "")
-          .split(",")
-          .map((id) => id.trim())
-          .filter(Boolean);
-        return (
-          <Card key={draft.id} className="mb-2.5">
-            <div className="mb-1 text-[13px] font-semibold">{draft.title}</div>
-            {draft.description && (
-              <div className="mb-2 text-[12.5px] leading-relaxed text-ink-2">
-                {draft.description}
-              </div>
-            )}
-            <div className="mb-2 flex flex-wrap gap-1.5 text-[11.5px] text-ink-3">
-              {draft.category && <span>{draft.category}</span>}
-              {draft.pre_rating && <span>· suggested {draft.pre_rating}</span>}
-            </div>
-            <BlockLabel>Read from — {cites.length} task(s)</BlockLabel>
-            {cites.map((id) => {
-              const task = byId.get(id);
-              return (
-                <div key={id} className="border-t border-rule py-1.5 text-[12.5px]">
-                  {/* The label, never the id. A citation is matched on the full
-                      domain id and *read* as the key the sheet carried - showing
-                      `excel:Task:1:excel%3AProject...:NOKEY-179826e5` puts 60
-                      characters of internal shape in front of a sentence a
-                      person is meant to judge. */}
-                  <span className="font-mono text-ink-3">{task?.label ?? id} </span>
-                  {task?.title ?? "(task not found)"}
-                  {task?.status && <span className="text-ink-3"> · {task.status}</span>}
-                  {task?.text && (
-                    <div className="mt-1 leading-relaxed text-ink-2">{task.text}</div>
-                  )}
-                </div>
-              );
-            })}
-          </Card>
-        );
-      })}
-    </>
-  );
-}
-
-/*
-  The same proposals as `ModelRead`, at the altitude the Risk tab reads at.
-
-  Two renderings rather than one shared component, because the tabs ask
-  different questions. Risk asks "what might bite" - the claim, how it was
-  graded, how much it rests on. Evidence asks "should I believe it" - and that
-  needs the task text, which is exactly what makes it too long to sit in a list
-  of risks. Linking one to the other beats showing half of each.
+  There used to be a second, longer rendering of these on an Evidence tab,
+  with the cited task text under each. That tab is gone and the longer
+  version went with it: the Risk *page* is where a draft is accepted or
+  dismissed, so the full text a reader needs in order to judge one belongs
+  there, beside the act of judging it - not on a third screen that only
+  displays it.
 */
 function ModelReadBrief({ bundle }: { bundle: RiskDraftBundle }) {
   if (bundle.drafts.length === 0) {
@@ -351,24 +303,24 @@ function ModelReadBrief({ bundle }: { bundle: RiskDraftBundle }) {
   }
   return (
     <>
-      <Card className="mb-2.5 border-orange/40 bg-orange/5 text-[12.5px] leading-relaxed">
-        <strong>Read by a model from task text, not computed.</strong> These are
-        not findings and none is in the risk register. The Evidence tab shows
-        the task text each was read from; the Risk page is where they are
-        accepted or dismissed.
+      <Card className="mb-2.5 border-orange/40 bg-orange/5 text-body leading-relaxed">
+        <strong>Read by a model from task text, not computed.</strong> These
+        are not findings and none is in the risk register. The Risk page shows
+        the task text each was read from, and is where they are accepted or
+        dismissed.
       </Card>
       {bundle.drafts.map((draft) => {
         const cites = (draft.cited_task_ids ?? "").split(",").filter((s) => s.trim());
         return (
           <Card key={draft.id} className="mb-2 flex items-start gap-3">
             <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-semibold">{draft.title}</div>
-              <div className="mt-0.5 text-[11.5px] text-ink-3">
+              <div className="text-body font-semibold">{draft.title}</div>
+              <div className="mt-0.5 text-body text-ink-3">
                 {draft.category ?? "no category"} · read from {cites.length} task(s)
               </div>
             </div>
             {draft.pre_rating && (
-              <span className="whitespace-nowrap rounded-full border border-rule px-2 py-0.5 text-[11px] text-ink-2">
+              <span className="whitespace-nowrap rounded-full border border-rule px-2 py-0.5 text-label text-ink-2">
                 {draft.pre_rating}
               </span>
             )}
@@ -387,28 +339,79 @@ function ModelReadBrief({ bundle }: { bundle: RiskDraftBundle }) {
 function AtAGlance({ bundle }: { bundle: InsightBundle }) {
   const c = bundle.context;
   const n = (key: string) => Number(c[key] ?? 0);
+  const total = n("task_count");
+  const done = n("tasks_done");
+  const inFlight = n("tasks_in_progress");
+  const overdue = n("tasks_overdue");
+  const owners = n("distinct_owners");
+
   return (
-    <Stats>
-      <Stat value={`${n("tasks_done")} / ${n("task_count")}`} label="complete" />
-      <Stat value={String(n("tasks_in_progress"))} label="in progress" />
-      <Stat
-        value={String(n("tasks_overdue"))}
-        label="past due, still open"
-        bad={n("tasks_overdue") > 0}
-      />
-      <Stat value={String(n("tasks_due_soon"))} label="due within a fortnight" />
-      <Stat
-        value={String(n("distinct_owners"))}
-        label={n("distinct_owners") === 1 ? "owner - no distribution" : "distinct owners"}
-        bad={n("distinct_owners") === 1 && n("task_count") > 5}
-      />
-      {n("tasks_stale") > 0 && (
+    <>
+      {/* The whole backlog in one bar.
+
+          "129 / 190" made a reader do the division, and the three counts
+          that follow it - done, running, not started - were three separate
+          tiles they then had to add back together to check the first one.
+          One bar is the division and the addition at once, and the reader
+          can see at a glance that the untouched segment is the big one.
+
+          Not coloured by status beyond the one status that is a status:
+          finished is green, running is the neutral "in flight" blue, and
+          not-started is the same unsaturated fill this app uses everywhere
+          for "nothing has happened here". Past due is deliberately *not* a
+          segment - an overdue item is also in one of these three, and
+          double-counting it in a bar whose whole point is that it sums
+          would be the one thing this panel must not do. It is a tile. */}
+      <Card className="mb-3 flex flex-wrap items-center gap-x-8 gap-y-4">
+        <div className="min-w-[150px]">
+          <div className={MICRO_LABEL}>Complete</div>
+          <b className="mt-1 block text-kpi font-bold text-ink">
+            <CountUp value={total > 0 ? Math.round((done / total) * 100) : 0} suffix="%" />
+          </b>
+        </div>
+        <div className="min-w-[260px] flex-1">
+          <Split
+            total={total}
+            ariaLabel={
+              `Of ${total} work items: ${done} finished, ${inFlight} in progress, ` +
+              `${Math.max(0, total - done - inFlight)} not started`
+            }
+            parts={[
+              { key: "done", label: "finished", value: done, tone: "good" },
+              { key: "wip", label: "in progress", value: inFlight, tone: "info" },
+              {
+                key: "todo",
+                label: "not started",
+                value: Math.max(0, total - done - inFlight),
+                tone: "unknown",
+              },
+            ]}
+          />
+        </div>
+      </Card>
+
+      <Stats>
+        <Stat value={inFlight} label="in progress" />
         <Stat
-          value={String(n("tasks_stale"))}
-          label={`untouched a week+ (worst ${n("stalest_task_days")}d)`}
+          value={overdue}
+          label="past due, still open"
+          tone={overdue > 0 ? "bad" : "good"}
         />
-      )}
-    </Stats>
+        <Stat value={n("tasks_due_soon")} label="due within a fortnight" />
+        <Stat
+          value={owners}
+          label={owners === 1 ? "owner - no distribution" : "distinct owners"}
+          tone={owners === 1 && total > 5 ? "bad" : "plain"}
+        />
+        {n("tasks_stale") > 0 && (
+          <Stat
+            value={n("tasks_stale")}
+            label="untouched a week or more"
+            foot={`worst ${n("stalest_task_days")}d`}
+          />
+        )}
+      </Stats>
+    </>
   );
 }
 
@@ -439,24 +442,54 @@ function PastDue({ tasks, asOf }: { tasks: GanttBundle; asOf: string }) {
 
   if (!late.length) return null;
 
+  /* Capped, like the cluster panel beside it and for the same reason. On
+     this backlog the list ran to thirty-four rows, which made the first
+     panel on Overview four times the height of every other one and pushed
+     Delivery Verification below two screenfuls of ticket titles. Twelve is
+     enough to see the shape of it; the rest are one click away on the page
+     that exists to list them. */
+  const SHOWN = 12;
+  const rest = late.length - SHOWN;
+
   return (
-    <Panel caption={`Past due — ${late.length} open`} span={7} className="content-start min-w-0">
-      <div className="grid min-w-0 gap-1.5">
-        {late.map((row) => (
+    <Panel
+      caption={`Past due — ${late.length} open`}
+      span={7}
+      className="content-start min-w-0"
+      action={
+        rest > 0 ? (
+          <a
+            className="text-label text-navy no-underline hover:underline"
+            href={withProject("/gantt")}
+          >
+            All {late.length} on the schedule &rarr;
+          </a>
+        ) : undefined
+      }
+    >
+      <div className="stagger grid min-w-0 gap-1.5">
+        {late.slice(0, SHOWN).map((row) => (
           <div
             key={row.entity_id}
-            className="flex min-w-0 items-baseline gap-3 text-[12.5px]"
+            className="flex min-w-0 items-baseline gap-3 text-body"
           >
-            <span className="w-[112px] shrink-0 truncate font-mono text-[11.5px] text-ink-3">
+            <span className="w-[112px] shrink-0 truncate font-mono text-label text-ink-3">
               {row.label}
             </span>
-            <span className="min-w-0 flex-1 truncate text-ink">{row.title ?? ""}</span>
-            <span className="shrink-0 text-[11.5px] text-ink-3">{row.planned_end}</span>
-            <span className="w-[62px] shrink-0 text-right font-bold text-red">
+            <span className="min-w-0 flex-1 truncate text-ink" title={row.title ?? ""}>
+              {row.title ?? ""}
+            </span>
+            <span className="shrink-0 text-label text-ink-3">{row.planned_end}</span>
+            <span className="w-[62px] shrink-0 text-right font-bold text-red tabular-nums">
               {row.days}d late
             </span>
           </div>
         ))}
+        {rest > 0 && (
+          <div className="pt-1 text-label text-ink-3">
+            and {rest} more, none worse than {late[SHOWN]?.days}d late
+          </div>
+        )}
       </div>
     </Panel>
   );
@@ -479,16 +512,16 @@ function Cluster({ tasks, bundle }: { tasks: GanttBundle; bundle: InsightBundle 
         {rows.slice(0, 10).map((row) => (
           <div
             key={row.entity_id}
-            className="flex min-w-0 items-baseline gap-2.5 text-[12.5px]"
+            className="flex min-w-0 items-baseline gap-2.5 text-body"
           >
-            <span className="w-[112px] shrink-0 truncate font-mono text-[11.5px] text-ink-3">
+            <span className="w-[112px] shrink-0 truncate font-mono text-body text-ink-3">
               {row.label}
             </span>
             <span className="min-w-0 flex-1 truncate text-ink">{row.title ?? ""}</span>
           </div>
         ))}
         {rows.length > 10 && (
-          <div className="text-[11.5px] text-ink-3">and {rows.length - 10} more</div>
+          <div className="text-body text-ink-3">and {rows.length - 10} more</div>
         )}
       </div>
     </Panel>
@@ -503,7 +536,7 @@ function FindingCard({ finding }: { finding: Finding }) {
     <details className="mb-2.5 rounded-lg border border-rule bg-surface">
       <summary className="flex cursor-pointer list-none items-start gap-3 p-3.5 hover:bg-rule-2/60">
         <span
-          className={`mt-px min-w-[62px] rounded px-2 py-0.5 text-center text-[10.5px] font-extrabold tracking-[0.05em] text-white uppercase ${
+          className={`mt-px min-w-[62px] rounded px-2 py-0.5 text-center text-label font-extrabold tracking-[0.05em] text-white uppercase ${
             SEVERITY_STYLE[finding.severity] ?? "bg-ink-3"
           }`}
         >
@@ -512,7 +545,7 @@ function FindingCard({ finding }: { finding: Finding }) {
         <span className="flex-1">
           <span className="block font-semibold">{finding.headline}</span>
           {finding.recommendation && (
-            <span className="mt-0.5 block text-[13px] text-ink-2">
+            <span className="mt-0.5 block text-body text-ink-2">
               {finding.recommendation}
             </span>
           )}
@@ -542,54 +575,85 @@ function SeverityBreakdown({ findings }: { findings: Finding[] }) {
   })).filter((row) => row.count > 0);
 
   if (counts.length === 0) return null;
-  const max = Math.max(...counts.map((row) => row.count));
 
   return (
     <Panel caption="Findings by severity" span={4} className="content-start">
-      <div className="grid gap-2.5">
-        {counts.map((row) => (
-          <div key={row.severity} className="flex items-center gap-2.5">
-            <span className="w-14 shrink-0 text-[11px] font-semibold text-ink-2 uppercase">
-              {row.severity}
-            </span>
-            <div className="h-3.5 min-w-0 flex-1 rounded bg-rule-2">
-              <div
-                className={`h-full rounded ${SEVERITY_STYLE[row.severity] ?? "bg-ink-3"}`}
-                style={{ width: `${Math.max((row.count / max) * 100, 8)}%` }}
-              />
-            </div>
-            <span className="w-5 shrink-0 text-right text-[12.5px] font-semibold tabular-nums text-ink">
-              {row.count}
-            </span>
-          </div>
-        ))}
-      </div>
+      <BarRows
+        ariaLabel={`Findings by severity: ${counts
+          .map((row) => `${row.count} ${row.severity}`)
+          .join(", ")}`}
+        labelWidth="w-[72px]"
+        rows={counts.map((row) => ({
+          key: row.severity,
+          label: row.severity,
+          value: row.count,
+        }))}
+        /* The one place in this app a magnitude series is coloured, and it
+           is legitimate: the "measure" here *is* severity, and the colour a
+           bar carries is the same colour that finding wears on its own card
+           further down the page. The word is on the bar either way. */
+        tone={(row) => SEVERITY_TONE[row.key]}
+      />
     </Panel>
   );
 }
 
+/* The severity palette, as chart tones. Kept beside `SEVERITY_STYLE` above,
+   which is the same decision expressed as a pill background. */
+const SEVERITY_TONE: Record<string, "bad" | "warn" | "info" | "unknown"> = {
+  critical: "bad",
+  high: "bad",
+  medium: "warn",
+  low: "info",
+  info: "unknown",
+};
+
 function Quality({ bundle }: { bundle: InsightBundle }) {
   const q = bundle.data_quality;
+  const tasks = Number(bundle.context?.task_count ?? 0) || 1;
   const tiles: [React.ReactNode, string][] = [
     [q.rows_rejected, "rows quarantined"],
-    [`${q.changes_low_confidence} / ${q.changes_total}`, "changes low-confidence"],
-    [`${Math.round(q.baseline_coverage * 100)}%`, "tasks with a baseline"],
     [q.edges_stated, "dependencies stated"],
     [q.edges_inferred, "dependencies inferred"],
   ];
 
   return (
     <Card>
-      <div className="flex flex-wrap gap-6">
+      {/* The two figures that are ratios are drawn as ratios. Both are
+          coverage questions - how much of the data supports the analysis -
+          and "0%" written as a word next to "190" made a reader work out
+          which of the two numbers was the denominator. */}
+      <div className="mb-4 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+        <Meter
+          /* Against the task count, not the change count. Those are two
+             different denominators - 190 work items and 351 recorded
+             changes - and the first draft of this meter divided coverage
+             by the wrong one, which read as "0 of 351" beside a finding
+             saying "0 of 190". On a page whose whole argument is that
+             every figure comes from the data it describes, a denominator
+             nobody supplied is the one mistake it cannot make. */
+          value={Math.round(q.baseline_coverage * tasks)}
+          of={tasks}
+          label="Work items with a dated baseline"
+          tone={q.baseline_coverage < 0.5 ? "warn" : "good"}
+        />
+        <Meter
+          value={q.changes_total - q.changes_low_confidence}
+          of={q.changes_total || 1}
+          label="Changes with a confident timestamp"
+          tone={q.changes_low_confidence > 0 ? "warn" : "good"}
+        />
+      </div>
+      <div className="stagger flex flex-wrap gap-6">
         {tiles.map(([value, label]) => (
           <div key={label}>
-            <div className="text-xl font-bold text-navy">{value}</div>
-            <div className="text-[11.5px] text-ink-2">{label}</div>
+            <div className="text-title font-bold text-navy tabular-nums">{value}</div>
+            <div className="text-body text-ink-2">{label}</div>
           </div>
         ))}
       </div>
       {q.depends_on_inferred_edges && (
-        <div className="mt-3 rounded-md border border-amber/40 bg-amber/10 px-3 py-2 text-[12.5px]">
+        <div className="mt-3 rounded-md border border-amber/40 bg-amber/10 px-3 py-2 text-body">
           The schedule conclusion changes if inferred dependencies are removed. It is a
           derived claim, not a stated one — confirm before quoting it externally.
         </div>
@@ -621,27 +685,42 @@ function Outlook({
     <Panel caption="Delivery outlook" span={7} className="grid gap-4 content-start">
       <div className="flex flex-wrap items-end gap-x-7 gap-y-4">
         <div>
-          <div className="text-[11.5px] text-ink-3">The sheet says</div>
-          <div className="text-[25px] leading-tight font-light text-ink-2 line-through decoration-1">
+          <div className={MICRO_LABEL}>The plan says</div>
+          <div className="text-heading leading-tight font-light text-ink-2 line-through decoration-1">
             {planned}
           </div>
         </div>
-        <div aria-hidden="true" className="mb-1.5 text-lg text-ink-3">
+        <div aria-hidden="true" className="mb-1.5 text-emph text-ink-3">
           →
         </div>
         <div>
-          <div className="text-[11.5px] text-ink-3">Its dependencies imply</div>
-          <div className="text-[25px] leading-tight font-semibold text-orange">
+          <div className={MICRO_LABEL}>Its dependencies imply</div>
+          <div className="text-heading leading-tight font-semibold text-orange">
             {projected}
           </div>
         </div>
         <div className="flex-1" />
         <div className="text-right">
-          <div className="text-[34px] leading-none font-bold text-orange">+{slip}</div>
-          <div className="mt-1 text-[11.5px] text-ink-3">days already in the plan</div>
+          <div className="text-kpi font-bold text-orange">
+            <CountUp value={slip} prefix="+" />
+          </div>
+          <div className="mt-1 text-body text-ink-3">days already in the plan</div>
         </div>
       </div>
-      <div className="border-t border-rule pt-3 text-[12.5px] text-ink-2">
+
+      {/* The slip, drawn. Two dates and a number left a reader doing the
+          subtraction that is the whole point of the panel; the overrun bar
+          is that subtraction, at the scale of the plan it eats into. The
+          bar grows from the committed date, which is the direction the
+          slip actually travels. */}
+      <div aria-hidden="true" className="flex items-center gap-2">
+        <span className="h-1.5 flex-1 rounded-full bg-blue/35" />
+        <span
+          className="grow-x h-1.5 rounded-full bg-orange"
+          style={{ width: `${Math.min(40, Math.max(6, slip))}%` }}
+        />
+      </div>
+      <div className="border-t border-rule pt-3 text-body text-ink-2">
         Nobody recorded this slip. It is arithmetic over the dates in the sheet and the
         dependencies between them &mdash; every step is on the{" "}
         <a href="/explain">Calculation</a> tab.
@@ -649,7 +728,7 @@ function Outlook({
       {confidence && (
         <div className="flex items-center gap-2">
           <ConfidenceChip confidence={confidence} />
-          <span className="text-[11.5px] text-ink-3">
+          <span className="text-body text-ink-3">
             in this figure &mdash; coverage of dated tasks × freshness of the last sync
           </span>
         </div>
@@ -675,11 +754,11 @@ function DrivingPath({ explain }: { explain: ExplainBundle }) {
       <div className="grid gap-2">
         {steps.map((step) => (
           <div key={step.entity_id} className="flex items-center gap-3">
-            <span className="w-[68px] font-mono text-[12px] text-navy">{step.label}</span>
-            <span className="flex-1 text-[12.5px] text-ink-2">{step.title ?? ""}</span>
+            <span className="w-[68px] font-mono text-body text-navy">{step.label}</span>
+            <span className="flex-1 text-body text-ink-2">{step.title ?? ""}</span>
             <span
               className={
-                "text-[12px] font-semibold " +
+                "text-body font-semibold " +
                 (step.propagated_days ? "text-orange" : "text-ink-3")
               }
             >
@@ -731,9 +810,9 @@ function AiAnalysis({ finding }: { finding: Finding }) {
     <Panel caption="AI analysis" span={12} className="grid gap-4">
       <div>
         <BlockLabel>Detected</BlockLabel>
-        <div className="text-[13.5px] font-semibold">{finding.headline}</div>
+        <div className="text-body font-semibold">{finding.headline}</div>
         {finding.recommendation && (
-          <div className="mt-1 text-[13px] text-ink-2">{finding.recommendation}</div>
+          <div className="mt-1 text-body text-ink-2">{finding.recommendation}</div>
         )}
       </div>
 
@@ -744,7 +823,7 @@ function AiAnalysis({ finding }: { finding: Finding }) {
         {finding.rule_trace && <Trace trace={finding.rule_trace} />}
       </div>
 
-      <div className="border-t border-rule pt-3 text-[11.5px] text-ink-3">
+      <div className="border-t border-rule pt-3 text-body text-ink-3">
         The panel leads with the best-evidenced cause, not the loudest. Orderings that
         cannot be proved are dropped rather than hedged, so a pair missing from here is a
         pair we refused to claim.
@@ -770,8 +849,8 @@ function Forecast({ bundle }: { bundle: ForecastBundle }) {
   if (!bundle.available) {
     return (
       <Panel caption="Delivery forecast" span={12}>
-        <div className="text-[12.5px] leading-[1.65] text-ink-2">{bundle.reason}</div>
-        <div className="mt-2 text-[11.5px] text-ink-3 italic">
+        <div className="text-body leading-[1.65] text-ink-2">{bundle.reason}</div>
+        <div className="mt-2 text-body text-ink-3 italic">
           No range is shown because the data does not support one. That is the
           honest answer, not a missing feature.
         </div>
@@ -784,13 +863,13 @@ function Forecast({ bundle }: { bundle: ForecastBundle }) {
       <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
         {bundle.points.map((point) => (
           <div key={point.percentile}>
-            <div className="text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+            <div className="text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
               P{point.percentile}
             </div>
-            <div className="mt-0.5 text-[19px] leading-none font-bold tabular-nums">
+            <div className="mt-0.5 text-title leading-none font-bold tabular-nums">
               {point.finish}
             </div>
-            <div className="mt-1 text-[11.5px] text-ink-3 tabular-nums">
+            <div className="mt-1 text-body text-ink-3 tabular-nums">
               {point.days_late > 0
                 ? `+${point.days_late}d vs the commitment`
                 : "meets the commitment"}
@@ -798,7 +877,7 @@ function Forecast({ bundle }: { bundle: ForecastBundle }) {
           </div>
         ))}
 
-        <div className="ml-auto max-w-[300px] text-[11.5px] leading-[1.5] text-ink-3">
+        <div className="ml-auto max-w-[300px] text-body leading-[1.5] text-ink-3">
           In {bundle.trials.toLocaleString()} trials, resampling{" "}
           <b className="font-semibold text-ink-2">
             {bundle.observations} observed drift(s)
@@ -812,12 +891,12 @@ function Forecast({ bundle }: { bundle: ForecastBundle }) {
           Six observations is thin, and showing them is what lets a judge see
           that it is thin rather than take the percentiles on faith. */}
       <div className="mt-4 border-t border-rule pt-3">
-        <div className="mb-2 text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+        <div className="mb-2 text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
           What the range is built from
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {bundle.sample.map((observation) => (
-            <span key={observation.entity_id} className="text-[11.5px] text-ink-3">
+            <span key={observation.entity_id} className="text-body text-ink-3">
               {observation.label}{" "}
               <b className="font-semibold text-ink-2 tabular-nums">
                 {observation.days > 0 ? `+${observation.days}d` : `${observation.days}d`}
@@ -825,7 +904,7 @@ function Forecast({ bundle }: { bundle: ForecastBundle }) {
             </span>
           ))}
         </div>
-        <p className="mt-2.5 text-[11.5px] leading-[1.55] text-ink-3 italic">
+        <p className="mt-2.5 text-body leading-[1.55] text-ink-3 italic">
           {bundle.method} {bundle.assumption}
         </p>
       </div>
@@ -852,14 +931,14 @@ function ScenarioRow({ scenario, best }: { scenario: Scenario; best: boolean }) 
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[13.5px] font-semibold">{scenario.summary}</span>
+          <span className="text-body font-semibold">{scenario.summary}</span>
           {best && (
-            <span className="rounded bg-green px-1.5 py-px text-[10px] font-extrabold tracking-[0.05em] text-surface uppercase">
+            <span className="rounded bg-green px-1.5 py-px text-label font-extrabold tracking-[0.05em] text-surface uppercase">
               best available
             </span>
           )}
         </div>
-        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11.5px] text-ink-3">
+        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-body text-ink-3">
           {scenario.moves.map((move) => (
             <span key={`${move.kind}-${move.entity_id}`}>
               <span className="font-mono text-blue">{move.label}</span>{" "}
@@ -871,8 +950,8 @@ function ScenarioRow({ scenario, best }: { scenario: Scenario; best: boolean }) 
         </div>
       </div>
       <div className="text-right">
-        <div className="text-[15px] font-semibold text-green">{scenario.projected_end}</div>
-        <div className="mt-0.5 text-[11.5px] text-ink-3">
+        <div className="text-emph font-semibold text-green">{scenario.projected_end}</div>
+        <div className="mt-0.5 text-body text-ink-3">
           {scenario.days_earlier}d earlier ·{" "}
           {meets
             ? "meets the commitment"
@@ -890,14 +969,14 @@ function Scenarios({ bundle }: { bundle: ScenarioBundle }) {
     <Panel caption="Recovery scenarios" span={12} className="grid gap-3">
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-rule bg-bg px-3.5 py-3">
         <div>
-          <div className="text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+          <div className="text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
             Doing nothing
           </div>
-          <div className="mt-1 text-[17px] font-semibold text-orange">
+          <div className="mt-1 text-emph font-semibold text-orange">
             {bundle.projected_end}
           </div>
         </div>
-        <div className="min-w-0 flex-1 text-[12.5px] text-ink-2">
+        <div className="min-w-0 flex-1 text-body text-ink-2">
           Each option below is the same forward pass re-run over a changed plan &mdash;
           the date is computed, not estimated. Nothing is written to your spreadsheet.
         </div>
@@ -910,10 +989,10 @@ function Scenarios({ bundle }: { bundle: ScenarioBundle }) {
       {/* The panel that keeps this honest. Without it a reader takes a
           computed date for an achievable one. */}
       <div className="rounded-r-lg border-l-2 border-amber bg-bg px-3.5 py-3">
-        <div className="text-[11px] font-bold tracking-[0.07em] text-amber uppercase">
+        <div className="text-label font-bold tracking-[0.07em] text-amber uppercase">
           What this cannot tell you
         </div>
-        <p className="mt-1.5 mb-0 text-[12.5px] text-ink-2">
+        <p className="mt-1.5 mb-0 text-body text-ink-2">
           These are schedule arithmetic only. Whether the team can absorb a compression is
           a resource question and no allocation data has been ingested, so no option here
           claims to be achievable &mdash; only to be what the dependency graph would do.
@@ -948,16 +1027,74 @@ function Scenarios({ bundle }: { bundle: ScenarioBundle }) {
    product evaluated against rows it imported and can defend line by line;
    these were decided by a model reading a document and by citations checked
    against files. Same page, different standing, and the panel says which. */
+/* Which Traceability view and filter each number opens.
+
+   The link is the feature. Before this the section ended in one "open the
+   full trace" link, so a PM who read "95 could not be verified" and wanted
+   to know which 95 arrived on an unfiltered list of a hundred and seventy
+   three rows and had to rebuild the filter by hand. Every count here is now
+   a door into exactly the rows it counts.
+
+   The values are the Traceability page's own filter values, not new ones -
+   `fVerdict` on that page reads `corroborated`, `unverified`,
+   `contradicted`, and `conflict` for the status-conflict set. */
+function traceLink(projectId: string, params: Record<string, string>): string {
+  const query = new URLSearchParams({ project: projectId, ...params });
+  return `/traceability?${query.toString()}`;
+}
+
+/* Field names as a person says them. The export wrote these inside
+   description prose as `key: value`, so they arrive spelled however the team
+   spelled them - `PO`, `Developer` - and printing that verbatim in a sentence
+   reads as a column name rather than as a role. */
+const ROLE_WORDS: Record<string, string> = {
+  developer: "developer",
+  dev: "developer",
+  po: "product owner",
+  pm: "project manager",
+  ba: "business analyst",
+  qa: "tester",
+  tester: "tester",
+  reviewer: "reviewer",
+};
+
+function roleWord(field: string): string {
+  return ROLE_WORDS[field.trim().toLowerCase()] ?? field.toLowerCase();
+}
+
+/*
+  What the code says about work the tracker calls done.
+
+  This is the second reading of the same project and it disagrees with the
+  first on the most basic question there is: how much work exists. The
+  tracker exports keyed rows and this screen counts those; the run reads the
+  unkeyed sub-rows out of the same export and there are an order of magnitude
+  more of them. Both numbers are correct about what they measured, and a
+  reader shown only the smaller one has no way to learn the larger exists.
+
+  Kept visually apart from `FindingCard` on purpose. Those are rules this
+  product evaluated against rows it imported and can defend line by line;
+  these were decided by a model reading a document and by citations checked
+  against files. Same page, different standing, and the panel says which.
+
+  The wording rule the reviewer set, applied here: say what it means for
+  delivery, not how it was computed. "A separate pass read this project's own
+  repository and documents and checked 173 of these 190 rows" is method. "173
+  of 190 work items were eligible for code verification" is the fact, and the
+  method survives in the tooltip for whoever wants it.
+*/
 function CodeCheck({
   check,
   tracked,
+  projectId,
 }: {
   check: NonNullable<InsightBundle["code_check"]>;
-  /* How many rows *this* screen counted, passed in rather than written down.
-     The first draft of this sentence had the number typed into it, which on a
-     page built to prove that every figure comes from the data it describes is
-     the one mistake it cannot afford. */
+  /* How many work items *this* screen counted, passed in rather than written
+     down. The first draft of this sentence had the number typed into it,
+     which on a page built to prove that every figure comes from the data it
+     describes is the one mistake it cannot afford. */
   tracked: number;
+  projectId: string;
 }) {
   const rows = Number(check.rows ?? 0);
   if (!rows) return null;
@@ -973,89 +1110,148 @@ function CodeCheck({
     by_status: { status: string; n: number }[];
   }[];
 
+  /* One shared vocabulary with the Traceability page and the Word export.
+     `corroborated` stays the wire value everywhere; `Confirmed` is the only
+     thing anybody reads. */
+  const parts: SplitPart[] = [
+    {
+      key: "corroborated",
+      label: "Confirmed",
+      value: corroborated,
+      tone: "good",
+      href: traceLink(projectId, { view: "tickets", verdict: "corroborated" }),
+      title: "Open these work items on the Traceability page",
+    },
+    {
+      key: "unverified",
+      label: "Need Review",
+      value: unverified,
+      /* Not amber. These are not at risk, they are unmeasured, and colouring
+         absence of evidence as warning tells a PM ninety-five items are in
+         trouble when what is true is that nobody has looked. */
+      tone: "unknown",
+      href: traceLink(projectId, { view: "tickets", verdict: "unverified" }),
+      title: "Open these work items on the Traceability page",
+    },
+    {
+      key: "contradicted",
+      label: "Conflicts",
+      value: contradicted,
+      tone: "bad",
+      href: traceLink(projectId, { view: "tickets", verdict: "contradicted" }),
+      title: "Open these work items on the Traceability page",
+    },
+  ];
+  if (conflicts > 0) {
+    parts.push({
+      key: "conflict",
+      label: "Status Concerns",
+      value: conflicts,
+      tone: "warn",
+      href: traceLink(projectId, { view: "tickets", verdict: "conflict" }),
+      title: "Work items the code says are built while the tracker has them open",
+    });
+  }
+
   return (
-    <Section title="Checked against the code">
+    <Section
+      title="Delivery Verification"
+      action={
+        <a
+          className="text-body text-navy no-underline hover:underline"
+          href={traceLink(projectId, { view: "findings" })}
+        >
+          View Evidence Analysis &rarr;
+        </a>
+      }
+    >
       <Card>
-        {/* Written twice. The first version said the run found 173 rows "in
-            the same export this screen reads 17 tasks from", which was true of
-            a product that had only ever ingested a hand-made eighteen-row
-            summary. Once the real export went in, this screen reads 190 and
-            the sentence implied the 173 were *extra* rather than a subset of
-            what is already on the page. The relationship is the point, so it
-            is stated rather than left to the reader to infer from two
-            numbers. */}
-        <p className="m-0 text-[12.5px] leading-relaxed text-ink-2">
-          A separate pass read this project's own repository and documents and
-          checked <b className="text-ink tabular-nums">{rows}</b> of these{" "}
-          <b className="text-ink tabular-nums">{tracked}</b> rows against the
-          code. The rest are planning tasks, which name no feature to look for.
+        <p
+          className="m-0 mb-3 text-body text-ink-2"
+          title={
+            `A separate pass read this project's repository and documents and checked ` +
+            `${rows} of these ${tracked} work items against the code. The rest are ` +
+            `planning tasks, which name no feature to look for.`
+          }
+        >
+          <b className="text-ink tabular-nums">{rows}</b> of{" "}
+          <b className="text-ink tabular-nums">{tracked}</b> work items were
+          eligible for code verification.
         </p>
-        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-[12.5px]">
-          <span>
-            <b className="text-ink tabular-nums">{corroborated}</b>{" "}
-            <span className="text-ink-2">backed by code</span>
-          </span>
-          <span>
-            <b className="text-ink tabular-nums">{unverified}</b>{" "}
-            <span className="text-ink-2">could not be verified</span>
-          </span>
-          <span>
-            <b className="text-ink tabular-nums">{contradicted}</b>{" "}
-            <span className="text-ink-2">contradicted</span>
-          </span>
-          {conflicts > 0 && (
-            <span>
-              <b className="text-ink tabular-nums">{conflicts}</b>{" "}
-              <span className="text-ink-2">status conflicts</span>
-            </span>
-          )}
-        </div>
+
+        {/* The mix, as one bar rather than four numbers in a row. Same
+            total, same counts, one comparison instead of four - and every
+            segment's count is the link into its own rows. */}
+        <Split
+          parts={parts}
+          total={rows}
+          ariaLabel={
+            `Of ${rows} work items checked against the code: ${corroborated} confirmed, ` +
+            `${unverified} need review, ${contradicted} conflict with the code` +
+            (conflicts ? `, ${conflicts} status concerns` : "")
+          }
+        />
 
         {/* The answer to "does anyone own this". The export has no assignee
             column at all - these fields were written as `key: value` inside
-            the description prose and recovered from there, which is why they
-            are named by whatever the team called them rather than by a word
-            this product chose. */}
+            the description prose and recovered from there. */}
         {gaps.length > 0 && (
           <div className="mt-4 border-t border-rule pt-3">
-            <div className="mb-2 text-[11px] font-semibold tracking-wide text-ink-3 uppercase">
-              Rows naming nobody
+            <div className={`mb-2 ${MICRO_LABEL}`}>Ownership Gaps</div>
+            <div className="stagger grid gap-1">
+              {gaps.map((gap) => (
+                <p key={gap.field} className="m-0 text-body text-ink-2">
+                  <a
+                    /* No filter on the Traceability ticket list isolates a
+                       missing role - the roles are prose inside a
+                       description, not a column anything can filter on - so
+                       this opens the finding that reports the same thing:
+                       One Person Holds Every Role, on Priority Issues. */
+                    href={traceLink(projectId, {
+                      view: "findings",
+                      focus: "roles-concentrated",
+                    })}
+                    title={
+                      gap.by_status.length > 0
+                        ? gap.by_status.map((e) => `${e.n} ${e.status}`).join(", ")
+                        : undefined
+                    }
+                    className="font-bold text-navy tabular-nums no-underline hover:underline"
+                  >
+                    {gap.missing}
+                  </a>{" "}
+                  work items have no {roleWord(gap.field)} assigned.
+                </p>
+              ))}
             </div>
-            {gaps.map((gap) => (
-              <p key={gap.field} className="mt-1 mb-0 text-[12.5px] text-ink-2">
-                <b className="text-ink tabular-nums">{gap.missing}</b> of {rows}{" "}
-                rows carry no <b className="text-ink">{gap.field}</b>
-                {gap.by_status.length > 0 && (
-                  <>
-                    {" — "}
-                    {gap.by_status
-                      .map((entry) => `${entry.n} ${entry.status}`)
-                      .join(", ")}
-                  </>
-                )}
-                .
-              </p>
-            ))}
-            <p className="mt-2 mb-0 text-[11.5px] text-ink-3">
-              Statuses are this sheet's own words, not ranked — whether a row
-              without a name is a problem depends on which of them it is in.
-            </p>
           </div>
         )}
-
-        <a
-          className="mt-4 inline-block text-[12.5px] text-navy"
-          href="/traceability"
-        >
-          Open the full trace &rarr;
-        </a>
       </Card>
     </Section>
   );
 }
 
 
-const VIEWS = ["Overview", "Risk", "Evidence"] as const;
+/* Two views, not three.
+
+   `Evidence` was the third, and it was deleted rather than filled. What it
+   held was a data-quality panel, the model's readings of task text, and a
+   list of "what stands behind each finding" - and that last one was the
+   tell: every finding card on the two remaining tabs already opens onto its
+   own rule trace and source rows, so the section was a second rendering of
+   something a reader reaches by clicking the finding itself.
+
+   The other two moved rather than vanished. `Quality` is the caveat on
+   everything above it, so it sits at the foot of Overview where the reader
+   has just finished reading what it qualifies. The model's proposals were
+   already on Risk in the shape that tab reads at, and the longer rendering
+   here duplicated them with the task text attached - the Risk page is where
+   a draft is accepted, so that is where its full text belongs.
+
+   Code verification stays on Traceability, which is its own screen in the
+   rail. Overview links into it by the number. A tab that was a thin copy of
+   another page is worse than a link to that page. */
+const VIEWS = ["Overview", "Risk"] as const;
 
 export function InsightView({
   bundle,
@@ -1161,7 +1357,10 @@ export function InsightView({
               first question is "what do I do", is backwards. */}
           <Section title="Findings">
             {findings.length === 0 ? (
-              <Card>Nothing breaches a delivery threshold.</Card>
+              <AllClear>
+                Every delivery threshold was evaluated and none of them
+                breached.
+              </AllClear>
             ) : (
               findings.map((finding) => (
                 <FindingCard key={finding.id} finding={finding} />
@@ -1173,6 +1372,7 @@ export function InsightView({
             <CodeCheck
               check={bundle.code_check}
               tracked={Number(bundle.context?.task_count ?? 0)}
+              projectId={bundle.project_id}
             />
           )}
 
@@ -1182,13 +1382,22 @@ export function InsightView({
               not by default. */}
           <Section title={`Summary — ${bundle.narration_source}`}>
             <details className="rounded-lg border border-rule bg-surface px-3.5 py-2.5">
-              <summary className="cursor-pointer text-[12.5px] text-ink-2">
+              <summary className="cursor-pointer text-body text-ink-2">
                 Read the written summary
               </summary>
               <div className="mt-3">
                 <Narrative bundle={bundle} />
               </div>
             </details>
+          </Section>
+
+          {/* Last, because it qualifies everything above it. This is the
+              section that says which rows were refused, how much of the
+              plan carries a baseline, and how many dependencies were
+              inferred rather than stated - and a page that reports figures
+              without it is a page asking to be trusted. */}
+          <Section title="Data Limitations">
+            <Quality bundle={bundle} />
           </Section>
         </>
       )}
@@ -1206,7 +1415,7 @@ export function InsightView({
               takes their place is what this data *can* say - past due, not yet
               started, no date at all. A panel called "where the pressure is"
               has to name pressure, not decline to. */}
-          <Section title="Where the pressure is">
+          <Section title="Where The Pressure Is">
             <Stats>
               <Stat
                 value={String(bundle.context.tasks_overdue ?? 0)}
@@ -1247,7 +1456,10 @@ export function InsightView({
 
           <Section title="Findings">
             {findings.length === 0 ? (
-              <Card>Nothing breaches a delivery threshold.</Card>
+              <AllClear>
+                Every delivery threshold was evaluated and none of them
+                breached.
+              </AllClear>
             ) : (
               <>
                 <Board className="mb-3.5">
@@ -1265,58 +1477,8 @@ export function InsightView({
               model's reading of prose. Interleaving them by severity would put
               the two on one footing, and the severity on these is the model's
               own suggestion. */}
-          <Section title="Proposed from task text">
+          <Section title="AI-Proposed Risks">
             {drafts ? <ModelReadBrief bundle={drafts} /> : <Card>Not loaded.</Card>}
-          </Section>
-        </>
-      )}
-
-      {view === "Evidence" && (
-        <>
-          <Section title="What this analysis could not use">
-            <Quality bundle={bundle} />
-          </Section>
-
-          <Section title="Read from task text by a model">
-            {drafts ? (
-              <ModelRead bundle={drafts} />
-            ) : (
-              <Card>Not loaded.</Card>
-            )}
-          </Section>
-
-          {/* What stands behind each finding - a source row where there is
-              one, the rule that fired where there is not.
-
-              This listed only findings with `evidence.length > 0` and said
-              "No finding carries a source row" otherwise, which on a project
-              whose findings are all aggregate rules is every finding. The
-              page then read as "nothing here is checkable" about an analysis
-              that was entirely checkable: `tasks_in_progress >= 5 (was 16)`
-              is the whole argument, and it was already in the payload.
-
-              `_evidence_for_rule` only attaches source rows to schedule and
-              milestone findings with a causal chain behind them. Everything
-              else is defensible through its trace instead - which is why
-              `Finding.is_defensible` accepts either, and why showing only one
-              of the two was the bug. */}
-          <Section title="What stands behind each finding">
-            {findings.filter((f) => f.evidence.length > 0 || f.rule_trace).length === 0 ? (
-              <Card>No finding carries a source row or a rule trace.</Card>
-            ) : (
-              findings
-                .filter((f) => f.evidence.length > 0 || f.rule_trace)
-                .map((finding) => (
-                  <Card key={finding.id} className="mb-2.5">
-                    <div className="mb-2 text-[13px] font-semibold">{finding.headline}</div>
-                    {finding.evidence.length > 0 ? (
-                      <Evidence refs={finding.evidence} />
-                    ) : (
-                      finding.rule_trace && <Trace trace={finding.rule_trace} />
-                    )}
-                  </Card>
-                ))
-            )}
           </Section>
         </>
       )}
@@ -1360,7 +1522,14 @@ export function Insight() {
     );
   }
   if (!bundle) {
-    return <Page current="/insight" title="Insight" subtitle="Loading..." children={null} />;
+    // The shape of the page that is coming, not the word "Loading". Rule 7:
+    // the placeholder is the same size as the content so nothing jumps when
+    // it lands, and it is visibly *waiting* rather than visibly empty.
+    return (
+      <Page current="/insight" title="Insight" subtitle="Reading this project's findings…">
+        <PageSkeleton />
+      </Page>
+    );
   }
   return (
     <InsightView

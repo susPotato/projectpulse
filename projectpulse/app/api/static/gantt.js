@@ -225,9 +225,29 @@
     return out;
   }
 
-  function grouped(bundle) {
+  /* Grouped by milestone, or not grouped at all.
+
+     Not grouping is the fix to a real complaint: the chart offers six
+     orderings and every one of them looked broken. They were not - rows were
+     sorted, then bucketed under twenty-nine milestone headings, so "most
+     overdue" put the *milestone containing* the worst row first and then
+     listed that milestone's other fifteen rows before the second-worst row
+     anywhere. The ordering was applied and then hidden by the grouping.
+
+     Grouping still earns its place as the default: a schedule is read by
+     feature far more often than it is ranked. But a ranking that cannot be
+     seen is not a ranking, so "none" exists and the control says so. */
+  function grouped(bundle, flat) {
+    var rows = bundle.rows.filter(datable);
+    if (flat) {
+      return [{
+        name: "All tasks, in the chosen order",
+        rows: collapse(rows),
+        milestone: null,
+      }];
+    }
     var order = [], byName = {};
-    bundle.rows.filter(datable).forEach(function (row) {
+    rows.forEach(function (row) {
       var name = row.milestone_name || "Not under a milestone";
       if (!byName[name]) { byName[name] = []; order.push(name); }
       byName[name].push(row);
@@ -659,7 +679,7 @@
      directly beneath them. */
   function render(bundle, opts) {
     opts = opts || {};
-    var groups = grouped(bundle);
+    var groups = grouped(bundle, opts.group === "none");
     var body = plot(bundle, groups);
 
     var wrap = el("div", "gantt viz");

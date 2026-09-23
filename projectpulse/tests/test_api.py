@@ -24,7 +24,13 @@ from app.api.schemas.insight import InsightBundle
 from app.intelligence.assembler import build_bundle
 from app.intelligence.context import DeliveryContext
 from app.intelligence.rules.engine import RuleHit
-from app.narration.fallback import QUESTION_HEADINGS, render_narrative
+from app.narration.fallback import (
+    DISPLAY_HEADINGS,
+    QUESTION_HEADINGS,
+    display_heading,
+    render_narrative,
+)
+from app.tracelabels import FINDING_LABELS, finding_title
 
 REPO = Path(__file__).resolve().parent.parent
 STATIC = REPO / "app" / "api" / "static"
@@ -238,6 +244,75 @@ def test_every_narrative_heading_the_app_splits_on_is_emitted():
     assert in_app == set(QUESTION_HEADINGS)
     for heading in QUESTION_HEADINGS[:4]:
         assert f"{heading}\n" in text
+
+
+def test_every_stored_heading_has_something_to_show_for_it():
+    """The five sections are relabelled for display, not renamed.
+
+    `QUESTION_HEADINGS` is the wire format - the LLM prompt asks for those
+    exact strings, the fallback emits them, the Word export and the Insight
+    page split on them, and narratives already sitting in the database
+    contain them. So the reviewer's executive wording is a lookup on top,
+    and the thing that can break is a heading with no entry in it: the
+    section would still render, titled with the question the analysis asked
+    itself. That is the regression this pins.
+    """
+    for heading in QUESTION_HEADINGS:
+        assert heading in DISPLAY_HEADINGS, heading
+        assert display_heading(heading) != heading, heading
+
+    # The other direction too: a label left behind after its heading was
+    # dropped is dead wording nobody will notice is unused.
+    assert set(DISPLAY_HEADINGS) == set(QUESTION_HEADINGS)
+
+    # An unknown heading falls through rather than raising - a narrative
+    # from a newer build must not empty the panel.
+    assert display_heading("Something else entirely") == "Something else entirely"
+
+
+def test_the_insight_page_shows_the_same_labels_the_export_prints():
+    """One vocabulary across the page and the .docx.
+
+    Pinned the same way `QUESTIONS` is, and for the same reason: these are
+    two copies of one list in two languages, and the last time they drifted
+    a reader holding both documents had no way to tell that "What is at
+    risk" and "Key Risks" were the same section.
+    """
+    source = (WEB / "src" / "pages" / "Insight.tsx").read_text(encoding="utf-8")
+    block = re.search(
+        r"const DISPLAY_HEADINGS: Record<string, string> = \{(.*?)\n\};",
+        source,
+        re.S,
+    )
+    assert block, "DISPLAY_HEADINGS not found in Insight.tsx"
+    in_app = dict(re.findall(r'"([^"]+)":\s*"([^"]+)"', block.group(1)))
+
+    assert in_app == DISPLAY_HEADINGS
+
+
+def test_the_traceability_page_and_the_export_name_findings_the_same_way():
+    """Ten categories, one list.
+
+    `app/tracelabels.py` is the source; `/api/traceability` serves it to the
+    hand-written page and `exports/document.py` imports it. The page keeps a
+    fallback copy for an older server, and a fallback that has drifted from
+    the real list is worse than none - it would show one vocabulary against
+    one deployment and another against the next.
+    """
+    page = (STATIC / "traceability.html").read_text(encoding="utf-8")
+
+    for kind, (title, why) in FINDING_LABELS.items():
+        assert title in page, f"{kind}: fallback title missing from the page"
+        assert finding_title(kind) == title
+
+    # Every kind the page can be sent has a title and an action sentence.
+    for kind, (title, why) in FINDING_LABELS.items():
+        assert 2 <= len(title.split()) <= 5, f"{kind}: {title!r} is not a heading"
+        assert why.endswith("."), f"{kind}: guidance is not a sentence"
+        assert ";" in why, f"{kind}: guidance names no action"
+
+    # An unknown kind prints its key rather than vanishing.
+    assert finding_title("something-new") == "something-new"
 
 
 # --------------------------------------------------------------------------

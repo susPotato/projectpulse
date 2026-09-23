@@ -31,7 +31,8 @@ from typing import Literal, Sequence
 from app.api.schemas.explain import ExplainBundle
 from app.api.schemas.insight import Finding, InsightBundle
 from app.intelligence.assembler import format_fact
-from app.narration.fallback import QUESTION_HEADINGS
+from app.narration.fallback import QUESTION_HEADINGS, display_heading
+from app.tracelabels import finding_title
 
 #: How many source rows to list per finding. The evidence panel on screen caps
 #: at the same number, and for the same reason: enough to show the claim is
@@ -171,7 +172,7 @@ SECTIONS: tuple[SectionSpec, ...] = (
     ),
     SectionSpec(
         "traceability",
-        "Checked against the code",
+        "Delivery Verification",
         "What the repository says about tickets the tracker calls done, and "
         "what the team's own documents claim was built. Every row names where "
         "to look and how strong its evidence is.",
@@ -179,7 +180,7 @@ SECTIONS: tuple[SectionSpec, ...] = (
     ),
     SectionSpec(
         "data_quality",
-        "What this analysis could not use",
+        "Data Limitations",
         "Rejected rows, uncertain identities and inferred dependencies. Kept in "
         "every preset on purpose.",
     ),
@@ -298,7 +299,10 @@ def _summary_blocks(bundle: InsightBundle) -> tuple[Block, ...]:
     for chunk in bundle.narrative.split("\n\n"):
         lines = chunk.strip().split("\n", 1)
         if len(lines) == 2 and lines[0] in QUESTION_HEADINGS:
-            blocks.append(Block("heading", lines[0], level=2))
+            # Split on the stored heading, print the display label. The two
+            # are separate for the reason `DISPLAY_HEADINGS` documents: a
+            # narrative cached before the relabelling still splits here.
+            blocks.append(Block("heading", display_heading(lines[0]), level=2))
             blocks.append(Block("paragraph", lines[1]))
         elif chunk.strip():
             blocks.append(Block("paragraph", chunk.strip()))
@@ -670,15 +674,6 @@ _EVIDENCE_WORDS = {
     "failed check": "cited something that is not there",
 }
 
-_KIND_WORDS = {
-    "contradicted": "The code says otherwise",
-    "status-conflict": "Built, but not tracked as done",
-    "gate-failing": "A gate this team set, failing",
-    "missing-test": "A test a finished task says it wrote",
-    "documented-not-built": "Marked done in the documents, absent from the code",
-    "unsupported-citation": "A verdict resting on something that is not there",
-    "unclaimed-code": "Code no ticket accounts for",
-}
 
 
 def _traceability_blocks(trace) -> tuple[Block, ...]:
@@ -726,7 +721,7 @@ def _traceability_blocks(trace) -> tuple[Block, ...]:
 
     for kind in seen:
         group = [r for r in rows if r.get("kind") == kind]
-        blocks.append(Block("heading", _KIND_WORDS.get(kind, kind), level=2))
+        blocks.append(Block("heading", finding_title(kind), level=2))
         blocks.append(Block(
             "table",
             columns=("What", "Where", "How it was established"),

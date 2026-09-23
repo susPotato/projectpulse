@@ -65,7 +65,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import tracelink_view
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import bindparam, func, select, text
 
 from app.api.schemas.explain import ExplainBundle
 from app.api.schemas.gantt import GanttBundle
@@ -1634,6 +1634,35 @@ def read_jira_issues(project_key: str | None = None, limit: int = 500) -> dict:
     if problem is not None:
         raise HTTPException(status_code=503, detail=problem)
 
+    def note_of(raw: bytes | str | None) -> str | None:
+        """The issue's description, out of the raw payload we already kept.
+
+        `ToolJiraIssue` has no description column, and adding one would mean a
+        migration plus a re-collection from a Jira this server cannot reach.
+        It does not need one: `_raw_jira_issues.data` is the response body
+        exactly as Jira sent it, and `_raw_data_id` on the tool row is the
+        pointer to it - the same pointer the evidence panel follows. Reading
+        it here costs one join and invents nothing.
+
+        Jira returns this field as a plain string on some instances and as an
+        Atlassian Document Format tree on others. Only the string case is
+        rendered; an ADF body is reported as present rather than flattened,
+        because a lossy flatten printed in a table reads as the note itself.
+        """
+        if raw is None:
+            return None
+        try:
+            body = json.loads(raw)
+        except (ValueError, TypeError):
+            return None
+        description = (body.get("fields") or {}).get("description")
+        if isinstance(description, str):
+            text = description.strip()
+            return text or None
+        if isinstance(description, dict):
+            return "(rich text - open in Jira)"
+        return None
+
     with session_scope() as session:
         query = select(ToolJiraIssue)
         if project_key:
@@ -1644,6 +1673,20 @@ def read_jira_issues(project_key: str | None = None, limit: int = 500) -> dict:
         rows = session.scalars(query).all()
         keys = sorted({r.project_key for r in session.scalars(
             select(ToolJiraIssue)).all() if r.project_key})
+
+        # One query for the payloads these rows point at, rather than one per
+        # row. The table is the raw response bodies and they are large.
+        raw_ids = [r.raw_data_id for r in rows if r.raw_data_id is not None]
+        notes: dict[int, str | None] = {}
+        if raw_ids:
+            found = session.execute(
+                text(
+                    "SELECT id, data FROM _raw_jira_issues WHERE id IN :ids"
+                ).bindparams(bindparam("ids", expanding=True)),
+                {"ids": raw_ids},
+            ).all()
+            notes = {int(rid): note_of(data) for rid, data in found}
+
         return {
             "project_keys": keys,
             "issues": [
@@ -1658,6 +1701,10 @@ def read_jira_issues(project_key: str | None = None, limit: int = 500) -> dict:
                     "updated": r.updated_at_src.isoformat() if r.updated_at_src else None,
                     "due_date": r.due_date,
                     "story_points": r.story_points,
+                    # What the team wrote on the ticket. Empty on most rows in
+                    # a backlog imported from a spreadsheet, which is itself
+                    # worth seeing: the page says how many carry one.
+                    "note": notes.get(r.raw_data_id) if r.raw_data_id else None,
                 }
                 for r in rows
             ],

@@ -35,8 +35,104 @@
     .tiles { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
     .tile { background: var(--surface); border: 1px solid var(--rule);
             border-radius: 8px; padding: 9px 13px; min-width: 96px; }
-    .tile b { display: block; font-size: 19px; font-weight: 650; }
+    .tile b { display: block; font-size: var(--text-title); font-weight: 650;
+              font-variant-numeric: tabular-nums; }
     .tile .lbl { margin-top: 1px; }
+
+    /* The verification mix, as one bar rather than four tiles in a row.
+       Same four counts, one comparison instead of four, and the whole
+       width is the whole set - which is the figure a reader was otherwise
+       assembling in their head out of "76" and "173".
+
+       Every segment is a link into exactly the work items it counts. That
+       is the point of drawing it: a proportion you can open. */
+    .mix { background: var(--surface); border: 1px solid var(--rule);
+           border-radius: 8px; padding: 13px 15px; margin-bottom: 14px; }
+    .mix-head { display: flex; align-items: baseline; gap: 10px;
+                flex-wrap: wrap; margin-bottom: 10px; }
+    .mix-head h2 { font-size: var(--text-emph); font-weight: 650; margin: 0; }
+    .mix-head .muted { font-size: var(--text-body); }
+    .mix-bar { display: flex; height: 10px; width: 100%; overflow: hidden;
+               border-radius: 999px; background: var(--rule-2);
+               transform-origin: left center; }
+    .mix-bar span { height: 100%; display: block; }
+    .mix-legend { display: flex; flex-wrap: wrap; gap: 6px 20px;
+                  margin-top: 11px; }
+    .mix-legend a, .mix-legend span.leg { display: inline-flex;
+      align-items: baseline; gap: 6px; text-decoration: none; color: inherit; }
+    .mix-legend i { width: 8px; height: 8px; border-radius: 999px;
+                    align-self: center; flex: 0 0 8px; }
+    .mix-legend b { font-size: var(--text-emph); font-weight: 650;
+                    font-variant-numeric: tabular-nums; }
+    .mix-legend a b { text-decoration: underline;
+                      text-decoration-color: var(--rule);
+                      text-underline-offset: 2px; }
+    .mix-legend a:hover b { text-decoration-color: currentColor; }
+    .mix-legend em { font-style: normal; color: var(--ink-2);
+                     font-size: var(--text-body); }
+    /* Confirmed is green, conflicts are red, status concerns are amber -
+       the three status meanings this product reserves those hues for.
+       "Need review" gets none of them: it is absence of evidence, not a
+       warning, and painting 95 unmeasured items amber would tell a PM they
+       are in trouble when what is true is that nobody has looked yet. */
+    .f-good { background: var(--green); } .c-good { color: var(--green); }
+    .f-unknown { background: color-mix(in oklab, var(--ink-3) 45%, transparent); }
+    .c-unknown { color: var(--ink-2); }
+    .f-bad { background: var(--red); } .c-bad { color: var(--red); }
+    .f-warn { background: var(--amber); } .c-warn { color: var(--amber); }
+
+    /* Why this list is shorter than the last one. Shown whenever a filter
+       is set, whether the reader set it or a link from the Insight page
+       did - arriving at a pre-filtered list with nothing saying so is how
+       a filtered view gets read as a total. */
+    .chip-row { display: flex; align-items: center; gap: 8px;
+                flex-wrap: wrap; margin: -4px 0 12px; }
+    .chip { display: inline-flex; align-items: center; gap: 7px;
+            font-size: var(--text-body); border: 1px solid var(--rule);
+            background: var(--surface); border-radius: 999px;
+            padding: 3px 5px 3px 11px; color: var(--ink-2); }
+    .chip b { color: var(--ink); font-weight: 600; }
+    .chip button { font: inherit; font-size: var(--text-label);
+                   border: 0; background: var(--rule-2); color: var(--ink-2);
+                   border-radius: 999px; padding: 3px 9px; cursor: pointer;
+                   transition: background-color var(--dur-tap) var(--ease-out),
+                               color var(--dur-tap) var(--ease-out); }
+    .chip button:hover { background: var(--red); color: var(--surface); }
+
+    /* Collapsed by default. Two sentences about what the export cannot
+       support are worth having and are not worth the top of the page. */
+    details.notes { background: var(--surface); border: 1px solid var(--rule);
+                    border-radius: 8px; margin-bottom: 14px; }
+    details.notes > summary { cursor: pointer; list-style: none;
+      padding: 9px 13px; font-size: var(--text-body); color: var(--ink-2);
+      display: flex; align-items: center; gap: 8px; }
+    details.notes > summary::-webkit-details-marker { display: none; }
+    details.notes > summary::before { content: "\25B8"; color: var(--ink-3);
+      transition: transform var(--dur-tap) var(--ease-out); }
+    details.notes[open] > summary::before { transform: rotate(90deg); }
+    details.notes .note-line { padding: 3px 13px; font-size: var(--text-body);
+      color: var(--ink-2); border-left: 3px solid var(--rule);
+      margin: 0 13px 8px; }
+    details.notes .note-line:first-of-type { margin-top: 2px; }
+    details.notes .lv-blocker { border-left-color: var(--red); }
+    details.notes .lv-warning { border-left-color: var(--amber); }
+
+    /* A finding group the Insight page can link straight to. The offset
+       keeps the heading clear of the sticky nothing above it and, more to
+       the point, gives `scrollIntoView` somewhere to land that is not the
+       very top of the heading's own text. */
+    .kind { scroll-margin-top: 16px; }
+    .kind-focus { animation: kind-flash 1.6s var(--ease-out) 1; }
+    @keyframes kind-flash {
+      0%, 12% { background: color-mix(in oklab, var(--navy) 14%, transparent); }
+      100% { background: transparent; }
+    }
+
+    details.card { transition: border-color var(--dur-tap) var(--ease-out),
+                               box-shadow var(--dur-tap) var(--ease-out); }
+    details.card:hover { border-color: color-mix(in oklab, var(--navy) 35%,
+                                                 var(--rule)); }
+    details.card > summary::-webkit-details-marker { display: none; }
 
     .subtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule);
                margin-bottom: 16px; }
@@ -124,7 +220,12 @@
 <main>
 <div class="wrap">
   <h1>Traceability</h1>
-  <div class="sub" id="sub">Loading&hellip;</div>
+  <!-- What the page is for, in the reader's terms. The run path and the
+       symbol and file counts used to be this line; they are facts about
+       the pipeline, not about the delivery, so they moved into the tooltip
+       and into the Files Scanned tile where a number belongs. -->
+  <div class="sub" id="sub">Checks reported progress against the project&rsquo;s
+    code and documents.</div>
 
   <!-- Which project this page shows. Same rule as /gantt, and deliberately
        the same localStorage key: picking a project here and then clicking
@@ -136,16 +237,19 @@
   </div>
 
   <div id="gaps"></div>
+  <div id="mix"></div>
   <div class="tiles" id="tiles"></div>
 
   <nav class="subtabs" id="subtabs">
-    <button type="button" data-view="findings" aria-current="page">What to look at</button>
+    <button type="button" data-view="findings" aria-current="page">Priority Issues</button>
     <button type="button" data-view="tickets">Tickets</button>
     <button type="button" data-view="code">Code</button>
-    <button type="button" data-view="shadow">Shadow scope</button>
+    <button type="button" data-view="shadow">Untracked Code</button>
     <button type="button" data-view="delivery">Delivery</button>
     <button type="button" data-view="backlog">Backlog</button>
   </nav>
+
+  <div id="chips"></div>
 
   <div id="main"><div class="empty">Loading&hellip;</div></div>
 </div>
@@ -157,7 +261,59 @@
   "use strict";
 
   var D = null, view = "findings", q = "", fVerdict = "", fStatus = "",
-      fSort = "";
+      fSort = "", focusKind = "";
+
+  /* The filter state lives in the URL.
+
+     Two things needed this. A link from the Insight page has to be able to
+     say "open Traceability showing the 95 that need review" - the count on
+     that page is now a door, and a door needs an address. And a reader who
+     has narrowed this list to something worth discussing has to be able to
+     send it: before this, copying the address bar sent a colleague the
+     unfiltered page and the sentence "scroll down and pick unverified".
+
+     `view`, `verdict` and `status` are read before the first render and
+     written back on every change, alongside the `project` the picker
+     already kept there. The search box deliberately stays out of it: it
+     changes on every keystroke, and a history entry per character is not
+     navigation. */
+  var STATE_KEYS = ["view", "verdict", "status", "focus"];
+  var VIEWS = ["findings", "tickets", "code", "shadow", "delivery", "backlog"];
+
+  function readUrl() {
+    var params = new URLSearchParams(location.search);
+    var wanted = params.get("view");
+    if (wanted && VIEWS.indexOf(wanted) !== -1) view = wanted;
+    fVerdict = params.get("verdict") || "";
+    fStatus = params.get("status") || "";
+    focusKind = params.get("focus") || "";
+  }
+
+  /* `push` for something the reader did, so Back undoes it; `replace` for
+     state the page derived for itself, which should not become a step in
+     anybody's history. */
+  function writeUrl(push) {
+    var params = new URLSearchParams(location.search);
+    var values = { view: view, verdict: fVerdict, status: fStatus,
+                   focus: focusKind };
+    STATE_KEYS.forEach(function (k) {
+      if (values[k]) params.set(k, values[k]);
+      else params.delete(k);
+    });
+    var url = location.pathname + "?" + params.toString();
+    if (push) history.pushState(null, "", url);
+    else history.replaceState(null, "", url);
+  }
+
+  /* The address of this page in a given state, for a link on it. */
+  function filterHref(over) {
+    var params = new URLSearchParams(location.search);
+    STATE_KEYS.forEach(function (k) { params.delete(k); });
+    Object.keys(over).forEach(function (k) {
+      if (over[k]) params.set(k, over[k]);
+    });
+    return location.pathname + "?" + params.toString();
+  }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
@@ -165,23 +321,130 @@
     });
   }
 
+  /* Every figure in this product reads the same way, so the word for a
+     verdict has to be the same on Insight, here, and in the Word export.
+     The keys are the pipeline's and never change; only these labels do. */
+  var VERDICT_WORD = {
+    corroborated: "Confirmed",
+    unverified: "Need Review",
+    contradicted: "Conflicts",
+    conflict: "Status Concerns",
+    none: "Not Analysed"
+  };
+  var VERDICT_TONE = {
+    corroborated: "good", unverified: "unknown",
+    contradicted: "bad", conflict: "warn", none: "unknown"
+  };
+
+  /* Counts up to its value on first paint, and animates the *change* on
+     every later one - so a figure that moves when you switch project reads
+     as having moved rather than as a different page. Skipped entirely when
+     the reader has asked their OS for less motion; the element already
+     holds the answer, so skipping costs nothing. */
+  function countTo(el, value) {
+    var target = Number(value);
+    if (!isFinite(target) || reducedMotion()) { el.textContent = value; return; }
+    var from = Number(String(el.dataset.at || 0)) || 0;
+    el.dataset.at = target;
+    var began = 0;
+    function frame(now) {
+      if (!began) began = now;
+      var t = Math.min(1, (now - began) / 760);
+      var eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = String(Math.round(from + (target - from) * eased));
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function reducedMotion() {
+    try {
+      return window.matchMedia &&
+        matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch (e) { return false; }
+  }
+
+  /* The four verdicts as one bar over the set they divide.
+
+     Each segment and each legend entry is a link that pre-filters this
+     page's own ticket list - which is the same contract the Insight page's
+     Delivery Verification numbers now have, and it is served by the same
+     URL parameters, so the two cannot disagree about what "Need Review"
+     selects. */
+  function mix() {
+    var t = D.totals;
+    var whole = t.tickets || 1;
+    var parts = [
+      ["corroborated", t.corroborated],
+      ["unverified", t.unverified],
+      ["contradicted", t.contradicted],
+      ["conflict", t.conflicts]
+    ].filter(function (kv) { return kv[1] > 0; });
+
+    var bar = parts.map(function (kv) {
+      return '<span class="f-' + VERDICT_TONE[kv[0]] + '" style="width:' +
+        ((kv[1] / whole) * 100).toFixed(2) + '%" title="' +
+        esc(VERDICT_WORD[kv[0]]) + ": " + kv[1] + " of " + whole + '"></span>';
+    }).join("");
+
+    var legend = parts.map(function (kv) {
+      return '<a href="' + esc(filterHref({ view: "tickets", verdict: kv[0] })) +
+        '" title="Open these work items"><i class="f-' + VERDICT_TONE[kv[0]] +
+        '"></i><b class="c-' + VERDICT_TONE[kv[0]] + '">' + kv[1] +
+        "</b><em>" + esc(VERDICT_WORD[kv[0]]) + "</em></a>";
+    }).join("");
+
+    document.getElementById("mix").innerHTML =
+      '<div class="mix rise"><div class="mix-head"><h2>Delivery Verification</h2>' +
+      '<span class="muted">' + t.adjudicated + " of " + t.tickets +
+      " work items were eligible for code verification.</span></div>" +
+      '<div class="mix-bar' + (reducedMotion() ? "" : " grow-x") +
+      '" role="img" aria-label="' +
+      esc(parts.map(function (kv) {
+        return kv[1] + " " + VERDICT_WORD[kv[0]];
+      }).join(", ")) + '">' + bar + "</div>" +
+      '<div class="mix-legend' + (reducedMotion() ? "" : " stagger") + '">' +
+      legend + "</div></div>";
+  }
+
   function tiles() {
     var t = D.totals, c = D.corpus;
+    /* Renamed, not recomputed. "SYMBOLS/FILES" and "RUN COST" described the
+       pipeline; "Files Scanned" and "Analysis Cost" describe the same two
+       numbers to the person paying for them. The four verdict counts left
+       this row entirely - they are the bar above, where they can be
+       compared against each other and against the whole. */
     var items = [
-      ["tickets", t.tickets], ["with candidates", t.with_candidates],
-      ["adjudicated", t.adjudicated], ["status conflicts", t.conflicts],
-      ["corroborated", t.corroborated], ["contradicted", t.contradicted],
-      ["unverified", t.unverified], ["files", c ? c.files : "—"],
-      ["verified in source", D.has_grounding ? (t.grounded + "/" + t.corroborated) : "—"],
-      ["inferred links", (D.links || []).length], ["run cost", "$" + t.cost]
+      ["work items", t.tickets, "Rows this run read out of the export"],
+      ["analysed", t.adjudicated, "Work items a verdict was reached on"],
+      ["with candidates", t.with_candidates,
+       "Work items the matcher proposed at least one file for"],
+      ["files scanned", c ? c.files : "\u2014",
+       c ? (c.symbols + " symbols across " + c.files + " files, via " +
+            c.analyzer) : "No code corpus was read for this run"],
+      ["citations checked",
+       D.has_grounding ? (t.grounded + "/" + t.corroborated) : "\u2014",
+       "Confirmed work items whose cited files and functions were looked up " +
+       "in the source and found"],
+      ["inferred links", (D.links || []).length,
+       "Relationships between work items that the code implies and the " +
+       "tracker never recorded"],
+      ["analysis cost", "$" + t.cost, "What this run cost to produce"]
     ];
-    document.getElementById("tiles").innerHTML = items.map(function (kv) {
-      return '<div class="tile"><b>' + esc(kv[1]) + '</b><div class="lbl">' +
-             esc(kv[0]) + "</div></div>";
-    }).join("");
-    document.getElementById("sub").textContent =
-      D.run + (c ? " · " + c.symbols + " symbols across " + c.files +
-                   " files, via " + c.analyzer : "");
+    document.getElementById("tiles").innerHTML =
+      '<div class="tiles' + (reducedMotion() ? "" : " stagger") + '">' +
+      items.map(function (kv) {
+        var numeric = typeof kv[1] === "number";
+        return '<div class="tile lift" title="' + esc(kv[2]) + '"><b' +
+          (numeric ? ' data-count="' + kv[1] + '"' : "") + ">" +
+          esc(kv[1]) + '</b><div class="lbl">' + esc(kv[0]) + "</div></div>";
+      }).join("") + "</div>";
+    Array.prototype.forEach.call(
+      document.querySelectorAll("#tiles b[data-count]"), function (b) {
+        countTo(b, Number(b.dataset.count));
+      });
+
+    document.getElementById("runinfo").title = D.run;
     document.getElementById("gaps").innerHTML =
       (D.gaps.length
         ? '<div class="note"><b>Not produced yet.</b> ' +
@@ -191,23 +454,61 @@
 
   /* What the source export can and cannot support.
 
-     Shown at the top rather than buried in a report, because it governs how
-     everything below should be read: on an export with no recorded links,
-     "related work" is an inference and a reader has to know that before
-     they act on one. Blockers and warnings only - the notes are detail for
-     whoever runs the diagnostic. */
+     Collapsed, and rewritten. The old version opened with "173 rows, 4 of
+     31 columns carry anything" and then printed the diagnostic's own
+     sentences - which are written for whoever runs the pipeline. A PM needs
+     one line per point saying what it means for what they are reading, and
+     needs it out of the way until they want it.
+
+     The mapping below is by finding code where there is one, so a new
+     diagnostic finding still shows up (in its own words) rather than
+     silently vanishing because nobody added a translation for it. */
+  var NOTE_WORDS = {
+    "no-dependencies":
+      "Dependencies aren\u2019t recorded in this export, so any links " +
+      "between items are inferred.",
+    "raw-dates":
+      "Some dates in Description are raw spreadsheet numbers and can\u2019t " +
+      "be read as dates.",
+    "no-assignee":
+      "There is no assignee column, so ownership is read out of the " +
+      "description text and may be incomplete.",
+    "unkeyed-rows":
+      "Most work items carry no tracker key, so they are identified by " +
+      "their row in the sheet."
+  };
+
+  function noteWords(f) {
+    if (NOTE_WORDS[f.code]) return NOTE_WORDS[f.code];
+    var d = String(f.detail || "");
+    // The diagnostic words this one as "every relationship field is empty
+    // (Epic Link, Epic Name, Linked Issues, Parent Link)". What that means
+    // for a reader is that nothing here states a dependency.
+    if (/depend|relationship|epic link|linked issue|parent link/i.test(d)) {
+      return NOTE_WORDS["no-dependencies"];
+    }
+    if (/date/i.test(d) && /(serial|raw|number)/i.test(d)) {
+      return NOTE_WORDS["raw-dates"];
+    }
+    if (/assignee/i.test(d)) return NOTE_WORDS["no-assignee"];
+    return d;
+  }
+
   function sourceNotes() {
     var d = D.diagnosis || {};
     var findings = (d.findings || []).filter(function (f) {
       return f.level === "blocker" || f.level === "warning";
     });
     if (!findings.length) return "";
-    return '<div class="note"><b>About the source export</b> — ' +
-      d.rows + " rows, " + (d.populated || []).length + " of " + d.columns +
-      " columns carry anything." +
+    return '<details class="notes"><summary>Data notes (' + findings.length +
+      ")</summary>" +
       findings.map(function (f) {
-        return "<br><b>" + esc(f.level) + ":</b> " + esc(f.detail);
-      }).join("") + "</div>";
+        return '<p class="note-line lv-' + esc(f.level) + '">' +
+          esc(noteWords(f)) + "</p>";
+      }).join("") +
+      '<p class="note-line" style="border-left-color:var(--rule)">' +
+      "This export has " + d.rows + " rows; " + (d.populated || []).length +
+      " of its " + d.columns + " columns carry anything.</p></details>";
   }
 
   /* How to find this ticket again in the source.
@@ -313,9 +614,13 @@
     return "";
   }
 
+  /* The reader's word, the pipeline's class. `t-corroborated` still keys
+     the colour, because that is what the stylesheet and every other tag on
+     this page agree on; what changed is only the word inside it. */
   function verdictTag(v) {
-    if (!v) return '<span class="tag">not adjudicated</span>';
-    return '<span class="tag t-' + v.verdict + '">' + esc(v.verdict) +
+    if (!v) return '<span class="tag">not analysed</span>';
+    return '<span class="tag t-' + v.verdict + '" title="' +
+           esc(v.verdict) + '">' + esc(VERDICT_WORD[v.verdict] || v.verdict) +
            " · " + esc(v.confidence) + "</span>";
   }
 
@@ -378,7 +683,9 @@
            "verdict here would be a guess.</p>";
     }
     return "<details class=\"card\"" + (open ? " open" : "") + "><summary>" +
-      (v && v.status_conflict ? '<span class="tag t-conflict">status conflict</span>' : "") +
+      (v && v.status_conflict
+        ? '<span class="tag t-conflict" title="The code looks finished and ' +
+          'the tracker still has this open">Status Concern</span>' : "") +
       '<span class="tag" title="' +
         (r.key ? "Tracker key" : "No tracker key — row position in the export") +
         '">' + esc(r.key || ("row " + (r.source_row || "?"))) + "</span>" +
@@ -400,75 +707,62 @@
   // finding keeps where to look and how strong the evidence is, because the
   // strengths genuinely differ and flattening them is the one thing this
   // pipeline keeps refusing to do.
-  var FINDING_LABEL = {
-    "contradicted": "The code says otherwise",
-    "status-conflict": "Built, but not tracked as done",
-    "gate-failing": "A gate the team set, failing",
-    "acceptance-unanswered": "A sign-off form nobody has filled in",
-    "process-undelegated": "Process work that was never handed out",
-    "roles-concentrated": "One person doing every job",
-    "missing-test": "A test a finished task says it wrote",
-    "documented-not-built": "Marked done in the documents, absent from the code",
-    "unsupported-citation": "The reason given points at nothing",
-    "unclaimed-code": "Code no ticket accounts for"
+  /* The ten categories, titled and explained.
+
+     The list itself now comes from the server (`labels` on
+     `/api/traceability`, built from `app/tracelabels.py`), because the Word
+     export prints the same ten headings and the two had already drifted -
+     the report called one of them "A verdict resting on something that is
+     not there" while this page called it "The reason given points at
+     nothing", and a reader holding both had no way to know they were the
+     same category. What is left here is a fallback for a server that
+     predates that, kept deliberately short.
+
+     The sentence under each title says what it means for delivery and what
+     to do about it, in that order. The method - which model read what, and
+     how strong that makes it - is on each row's own tag, where a reader who
+     wants it can find it without everyone else having to read past it. */
+  var FALLBACK_LABELS = {
+    "contradicted": ["Code Contradicts Ticket",
+      "The code does something different from what the ticket claims; check " +
+      "with the developer and correct whichever one is wrong."],
+    "status-conflict": ["Built But Still Open",
+      "The code for this looks finished while the ticket is still open; " +
+      "confirm with the team and update the tracker."],
+    "gate-failing": ["Team Quality Checks Failing",
+      "A rule this team wrote for itself is broken in the code; assign a fix " +
+      "before the next release."],
+    "acceptance-unanswered": ["Acceptance Not Signed Off",
+      "The sign-off form on these tickets is still blank; chase the reviewer " +
+      "before anyone calls them done."],
+    "process-undelegated": ["Process Tasks Not Assigned",
+      "The written procedure names roles nobody has been given; hand the " +
+      "steps out or this work has no owner."],
+    "roles-concentrated": ["One Person Holds Every Role",
+      "The same person requests, specifies and builds nearly every item; add " +
+      "a second reviewer before this becomes a single point of failure."],
+    "missing-test": ["Promised Tests Missing",
+      "A task marked finished says it wrote a test that is not in the code; " +
+      "ask for the test or reopen the task."],
+    "documented-not-built": ["Marked Done, No Code Found",
+      "The documents call this done and no matching code exists; check " +
+      "whether the code you have is older than the documents first."],
+    "unsupported-citation": ["Unsupported AI Verdicts",
+      "The reason given for this verdict points at a file or function that " +
+      "is not there; treat the item as unjudged and review it by hand."],
+    "unclaimed-code": ["Code Without a Ticket",
+      "Code in the repository that no backlog item accounts for; raise a " +
+      "ticket for it or confirm it is out of scope."]
   };
 
-  /* What each heading actually means, in a sentence.
-     
-     The labels are short because they are headings, and short was being paid
-     for in comprehension: "A verdict resting on something that is not there"
-     is accurate and tells a reader nothing about what to do with the rows
-     under it. Each sentence says what was compared against what, and - where
-     it is not obvious - what the finding does *not* prove, because the
-     failure this whole pipeline is built against is a weak result read as a
-     strong one. */
-  var FINDING_WHY = {
-    "contradicted":
-      "A model read the ticket and the code it points at, and found the code " +
-      "doing something different from what the ticket claims. Strong when the " +
-      "citation checks out - the tag on each row says whether it did.",
-    "status-conflict":
-      "The code for this looks present and the tracker still has the row open. " +
-      "One of the two is out of date, and which one is a question only the " +
-      "team can settle.",
-    "acceptance-unanswered":
-      "Every process ticket carries a QA sign-off form with its own " +
-      "questions. On all of them the answer boxes still show the choices " +
-      "(“yes/no”) instead of an answer, which is what an untouched " +
-      "form looks like. Nothing was compared to the code to work this out, " +
-      "so it is true whichever version of the code you hold.",
-    "process-undelegated":
-      "The written procedures say who should do each step — the PM " +
-      "assigns, QA reviews, IT provisions. The tracker has every one of " +
-      "these tickets against a single person, and none of them started.",
-    "roles-concentrated":
-      "This export has no assignee column — the names are written inside " +
-      "the description text instead. Reading them shows the same person " +
-      "listed as the one who asks for the work, the one who specifies it " +
-      "and the one who builds it, on nearly every ticket. Nobody is " +
-      "checking anybody.",
-    "gate-failing":
-      "Your team wrote a rule for this project in its own checklist — things " +
-      "like “no passwords in config files”. Nobody ever ran the check. We " +
-      "ran it, and the code breaks the rule.",
-    "missing-test":
-      "Your documents tick this task off as finished, and the task says it " +
-      "wrote a test file. That file is not in the code we were given.",
-    "documented-not-built":
-      "Your documents tick this task off as finished, and we cannot find any " +
-      "code for it. Before blaming the team: this can equally mean the " +
-      "documents describe a newer version of the code than the copy we were " +
-      "given. Check which is out of date first.",
-    "unsupported-citation":
-      "To justify its answer the model named a file or a symbol. That file or " +
-      "name was looked up and is not there. This does not make the verdict " +
-      "wrong - it means the reason offered for it is not evidence, so treat " +
-      "the row as unjudged rather than as settled.",
-    "unclaimed-code":
-      "These files are in the repository and no backlog row claims them. " +
-      "Either work happened off the tracker, or the row that covers it never " +
-      "names the code."
-  };
+  function findingLabel(kind, part) {
+    var served = (D && D.labels && D.labels[kind]) || null;
+    if (served && served[part]) return served[part];
+    var pair = FALLBACK_LABELS[kind];
+    if (!pair) return part === "title" ? kind : "";
+    return part === "title" ? pair[0] : pair[1];
+  }
+
   /* Written for whoever opens this page, which is usually not the person
      who built the pipeline. Each line says how the finding was arrived at
      and how much to trust it, in words that need no knowledge of how any
@@ -510,22 +804,27 @@
       "partly-grounded": "t-unverified", "uncited": "t-unverified"
     };
 
-    var h = '<div class="note">Ranked by what it costs to be wrong, times how ' +
-      "well evidenced it is — so a deterministic check outranks a model " +
-      "verdict, and volume earns nothing. Every row says where to look.</div>";
+    var h = '<p class="kind-why" style="margin:0 0 14px" title="Impact is ' +
+      "what it costs to be wrong; strength of evidence is how the finding " +
+      "was established, so a deterministic check outranks a model verdict " +
+      'and volume earns nothing.">Ordered by impact and strength of ' +
+      "evidence. Each item says where to look.</p>";
 
     var kind = null;
     f.forEach(function (x) {
       if (x.kind !== kind) {
         kind = x.kind;
         var n = f.filter(function (y) { return y.kind === kind; }).length;
-        h += '<div class="kind"><b>' + esc(FINDING_LABEL[kind] || kind) +
-          "</b><span>" + n + "</span></div>" +
-          (FINDING_WHY[kind]
-            ? '<p class="kind-why">' + esc(FINDING_WHY[kind]) + "</p>" : "");
+        // `data-kind` is the anchor the Insight page links to - see
+        // `focus` in the URL state above.
+        h += '<div class="kind" data-kind="' + esc(kind) + '"><b>' +
+          esc(findingLabel(kind, "title")) + "</b><span>" + n + "</span></div>" +
+          '<p class="kind-why" data-why="' + esc(kind) + '">' +
+          esc(findingLabel(kind, "why")) + "</p>";
       }
       h += '<details class="card"><summary>' +
-        '<span class="tag ' + (TAG[x.evidence] || "") + '">' +
+        '<span class="tag ' + (TAG[x.evidence] || "") + '" title="' +
+        esc(EVIDENCE_NOTE[x.evidence] || "") + '">' +
         esc(x.evidence) + "</span>" +
         '<span class="sum">' + esc(x.title) + "</span>" +
         (x.confidence ? '<span class="tag">' + esc(x.confidence) + "</span>" : "") +
@@ -538,6 +837,23 @@
         "</p></div></details>";
     });
     el.innerHTML = h;
+    highlightFocus(el);
+  }
+
+  /* A reader who arrived by clicking a number on the Insight page lands on
+     a list of ten categories, one of which is the one they asked for.
+     Scrolling to it and flashing it once is the whole of the answer to
+     "which of these did I click". */
+  function highlightFocus(el) {
+    if (!focusKind) return;
+    var head = el.querySelector('[data-kind="' + focusKind + '"]');
+    if (!head) return;
+    head.scrollIntoView({
+      behavior: reducedMotion() ? "auto" : "smooth", block: "start"
+    });
+    head.classList.add("kind-focus");
+    var why = el.querySelector('[data-why="' + focusKind + '"]');
+    if (why) why.classList.add("kind-focus");
   }
 
   /* Is this one backlog, or several appended into one sheet?
@@ -796,19 +1112,26 @@
     }
     var c = s.counts;
     var h = '<div class="tiles">' +
-      '<div class="tile"><b>' + c.cited + '</b><div class="lbl">cited by a verdict</div></div>' +
-      '<div class="tile"><b>' + c.retrieved_only + '</b><div class="lbl">retrieved, never cited</div></div>' +
-      '<div class="tile"><b>' + c.unclaimed + '</b><div class="lbl">never retrieved</div></div>' +
+      '<div class="tile lift"><b>' + c.cited + '</b><div class="lbl">accounted for by a work item</div></div>' +
+      '<div class="tile lift"><b>' + c.retrieved_only + '</b><div class="lbl">proposed, never relied on</div></div>' +
+      '<div class="tile lift"><b>' + c.unclaimed + '</b><div class="lbl">no work item at all</div></div>' +
       "</div>" +
-      '<p class="muted">Of ' + c.eligible_files + " eligible files. " +
-      "&ldquo;Retrieved but never cited&rdquo; is deliberately neither side: the " +
-      "matcher proposed the file and no verdict relied on it.</p>";
+      '<p class="muted" title="A file the matcher proposed is not evidence ' +
+      "of anything until a verdict actually rests on it - which is why the " +
+      'middle column is neither claimed nor unclaimed.">Of ' +
+      c.eligible_files + " files in scope. The middle figure is neither " +
+      "side of the question: the matcher put the file forward and no " +
+      "verdict ended up resting on it.</p>";
 
     var desc = s.described;
     if (desc && desc.length) {
       var scope = desc.filter(function (d) { return d.user_facing; }).length;
-      h += "<h3>" + scope + " of " + desc.length +
-           " untracked areas look like real scope</h3>";
+      h += "<h3>Untracked Code</h3>" +
+        '<p class="muted">' + desc.length + " area" +
+        (desc.length === 1 ? "" : "s") + " of code no work item accounts " +
+        "for; " + scope + " look" + (scope === 1 ? "s" : "") +
+        " like delivered scope rather than plumbing. Raise a ticket for " +
+        "those or confirm they are out of scope.</p>";
       h += desc.slice().sort(function (a, b) {
         return (b.user_facing ? 1 : 0) - (a.user_facing ? 1 : 0);
       }).map(function (d) {
@@ -826,9 +1149,10 @@
           }).join("") + "</ul></div></details>";
       }).join("");
     } else {
-      h += "<h3>Unclaimed areas by symbol count</h3>" +
-        '<p class="muted">Run <code>tracelink shadow --describe</code> to have the ' +
-        "model name each capability.</p>" +
+      h += "<h3>Untracked Code</h3>" +
+        '<p class="muted">Areas of code no work item accounts for, largest ' +
+        "first. Run <code>tracelink shadow --describe</code> to have each " +
+        "one named in plain language.</p>" +
         (s.groups || []).map(function (g) {
           return '<details class="card"><summary><span class="tag">' + g.n_symbols +
             ' symbols</span><span class="sum"><code>' + esc(g.directory) +
@@ -892,8 +1216,13 @@
              a.localeCompare(b);
     });
 
+    var areaCount = Object.keys(groups).length;
+    // "29 of 29 areas" read as a shortfall in a page full of real
+    // shortfalls. It is a shortfall only when the search has narrowed it.
     document.getElementById("count").textContent =
-      names.length + " of " + Object.keys(groups).length + " areas";
+      names.length === areaCount
+        ? areaCount + " functional areas"
+        : names.length + " of " + areaCount + " functional areas";
 
     var anchored = 0;
     Object.keys(groups).forEach(function (n) {
@@ -905,11 +1234,19 @@
     var said = {};
     (D.explain || []).forEach(function (e) { said[e.component] = e; });
 
-    var html = '<p class="muted">' + Object.keys(groups).length +
-      " areas in this backlog, " + anchored +
-      " of them anchored in code by at least one verdict. " +
-      "Code areas below count <b>cited</b> evidence only \u2014 a keyword " +
-      "match that no verdict relied on is not a mapping.</p>";
+    /* What the reader is looking at, in one sentence, with the rule that
+       governs it in the tooltip. The old version led with the rule -
+       "count cited evidence only, a keyword match that no verdict relied
+       on is not a mapping" - which is the correct rule and is not what
+       somebody opening this tab wants first. */
+    var html = "<h3>Implementation Coverage</h3>" +
+      '<p class="muted" title="Only evidence a verdict actually cited ' +
+      "counts toward coverage. A keyword match no verdict relied on is not " +
+      'a mapping.">' + areaCount +
+      " functional area" + (areaCount === 1 ? "" : "s") +
+      " " + (areaCount === 1 ? "was" : "were") +
+      " analyzed against available code; " + anchored +
+      " ha" + (anchored === 1 ? "s" : "ve") + " code evidence.</p>";
     if (!D.explain || !D.explain.length) {
       html += '<p class="muted">Run <code>tracelink explain</code> to add a ' +
         "plain-language summary to each area.</p>";
@@ -936,11 +1273,12 @@
           esc(said[n].headline.split(/[;.]\s/)[0]).slice(0, 96) + "</span>" : "") +
         "</span>" +
         '<span class="tag">' + g.tickets.length + " tickets</span>" +
-        (g.built ? '<span class="tag t-corroborated">' + g.built + " built</span>" : "") +
+        (g.built ? '<span class="tag t-corroborated">' + g.built +
+          " Confirmed</span>" : "") +
         (g.unverified ? '<span class="tag t-unverified">' + g.unverified +
-          " unverified</span>" : "") +
+          " Need Review</span>" : "") +
         (g.conflicts ? '<span class="tag t-conflict">' + g.conflicts +
-          " conflict</span>" : "") +
+          " Status Concern" + (g.conflicts === 1 ? "" : "s") + "</span>" : "") +
         "</summary><div class=\"body\">";
 
       /* The plain-language summary goes first and gets the most room: it is
@@ -986,13 +1324,15 @@
           : "";
         return '<div style="margin:9px 0">' +
           (v && v.status_conflict
-            ? '<span class="tag t-conflict">status conflict</span> ' : "") +
+            ? '<span class="tag t-conflict" title="The code looks finished ' +
+              'and the tracker still has this open">Status Concern</span> ' : "") +
           '<span class="tag" title="' +
             (t.key ? "Tracker key" : "No tracker key \u2014 row in the export") +
             '">' + esc(t.key || ("row " + (t.source_row || "?"))) + "</span> " +
           '<span class="tag">' + esc(t.status || "\u2014") + "</span> " +
           esc(t.summary) +
-          (v ? ' <span class="tag t-' + v.verdict + '">' + v.verdict + "</span>" : "") +
+          (v ? ' <span class="tag t-' + v.verdict + '" title="' + esc(v.verdict) +
+            '">' + esc(VERDICT_WORD[v.verdict] || v.verdict) + "</span>" : "") +
           (cited
             ? '<div class="why" style="padding-left:2px;margin-top:2px">' +
               cited + "</div>"
@@ -1011,14 +1351,68 @@
     el.innerHTML = html;
   }
 
+  /* Why this list is shorter than the whole.
+
+     Rendered whenever a filter is set, and set by a link as often as by a
+     control now - which is exactly why it has to exist. Arriving from
+     Insight on "the 95 that need review" and seeing 95 rows with nothing
+     saying why is how a filtered list gets quoted as a total. */
+  function renderChips() {
+    var host = document.getElementById("chips");
+    if (!host) return;
+    var active = [];
+    if (fVerdict) {
+      active.push(VERDICT_WORD[fVerdict] || fVerdict);
+    }
+    if (fStatus) active.push(fStatus);
+    if (!active.length || (view !== "tickets" && view !== "code")) {
+      host.innerHTML = "";
+      return;
+    }
+    host.innerHTML =
+      '<div class="chip-row fade-in"><span class="chip">Filtered: <b>' +
+      esc(active.join(" \u00b7 ")) +
+      '</b><button type="button" id="clearf">Clear filter</button></span></div>';
+    document.getElementById("clearf").addEventListener("click", function () {
+      fVerdict = "";
+      fStatus = "";
+      var fv = document.getElementById("fv"), fs = document.getElementById("fs");
+      if (fv) fv.value = "";
+      if (fs) fs.value = "";
+      writeUrl(true);
+      render();
+    });
+  }
+
+  /* One settle per render, rather than per card.
+
+     A list of a hundred and seventy-three rows each fading in on its own
+     schedule is a page that looks like it is still loading for most of a
+     second. Replaying one short fade over the whole list says the same
+     thing - this is new content, in answer to what you just clicked - and
+     says it once. Re-triggered by removing the class and forcing a reflow,
+     because an animation does not restart just because the element's
+     children changed. */
+  function settle(el) {
+    if (reducedMotion()) return;
+    el.classList.remove("fade-in");
+    void el.offsetWidth;
+    el.classList.add("fade-in");
+  }
+
   function render() {
     var el = document.getElementById("main");
+    renderChips();
     Array.prototype.forEach.call(
       document.querySelectorAll("#subtabs button"), function (b) {
         if (b.dataset.view === view) b.setAttribute("aria-current", "page");
         else b.removeAttribute("aria-current");
       });
+    renderBody(el);
+    settle(el);
+  }
 
+  function renderBody(el) {
     if (view === "findings") { renderFindings(el); return; }
     if (view === "delivery") { renderDelivery(el); return; }
     if (view === "backlog") { renderBacklog(el); return; }
@@ -1036,7 +1430,13 @@
     rows = rows.filter(function (r) {
       if (fStatus && r.status !== fStatus) return false;
       if (fVerdict === "none" && r.verdict) return false;
-      if (fVerdict && fVerdict !== "none" &&
+      // The status-conflict set had no filter of its own - it was a sort
+      // key only - so the "Status Concerns" count on Insight had nothing
+      // to link to. It is a filter now, over the same predicate the sort
+      // and the tile already use, so the three cannot disagree.
+      if (fVerdict === "conflict" &&
+          !(r.verdict && r.verdict.status_conflict)) return false;
+      if (fVerdict && fVerdict !== "none" && fVerdict !== "conflict" &&
           (!r.verdict || r.verdict.verdict !== fVerdict)) return false;
       if (!needle) return true;
       return (r.summary + " " + r.component + " " + r.candidates.join(" "))
@@ -1054,7 +1454,8 @@
     }).length;
     document.getElementById("count").textContent =
       rows.length + " of " + D.tickets.length +
-      (conflicts ? " · " + conflicts + " with a status conflict" : "");
+      (conflicts ? " · " + conflicts + " Status Concern" +
+       (conflicts === 1 ? "" : "s") : "");
   }
 
   /* How the ticket list can be ordered.
@@ -1074,7 +1475,7 @@
     /* The four rows where the code looks built and the tracker still has the
        row open. This was a tab of its own once; it is a sort key now, which
        keeps the rows in one list with everything else about them. */
-    { id: "conflict", label: "status conflicts first",
+    { id: "conflict", label: "Status Concerns first",
       key: function (r) { return r.verdict && r.verdict.status_conflict ? 0 : 1; } },
     { id: "verdict", label: "contradicted first",
       key: function (r) {
@@ -1113,9 +1514,16 @@
     bar.id = "bar";
     bar.innerHTML =
       '<input type="search" id="q" placeholder="search summary, component, file…">' +
-      '<select id="fv"><option value="">any verdict</option>' +
-        ["corroborated", "contradicted", "unverified", "none"].map(function (v) {
-          return "<option>" + v + "</option>"; }).join("") + "</select>" +
+      '<select id="fv"><option value="">any result</option>' +
+        /* The value is the pipeline's, the text is the reader's - so a URL
+           carrying `verdict=corroborated` and a menu reading "Confirmed"
+           are the same selection. `conflict` is new: the status-conflict
+           set was reachable only by sorting. */
+        ["corroborated", "unverified", "contradicted", "conflict", "none"]
+          .map(function (v) {
+            return '<option value="' + esc(v) + '">' +
+              esc(VERDICT_WORD[v] || v) + "</option>";
+          }).join("") + "</select>" +
       '<select id="fs"><option value="">any status</option>' +
         statuses.map(function (s) {
           return "<option>" + esc(s) + "</option>"; }).join("") + "</select>" +
@@ -1137,14 +1545,26 @@
       q = e.target.value; render();
     });
     document.getElementById("fv").addEventListener("change", function (e) {
-      fVerdict = e.target.value; render();
+      fVerdict = e.target.value; writeUrl(true); render();
     });
     document.getElementById("fs").addEventListener("change", function (e) {
-      fStatus = e.target.value; render();
+      fStatus = e.target.value; writeUrl(true); render();
     });
     document.getElementById("fo").addEventListener("change", function (e) {
       fSort = e.target.value; render();
     });
+  }
+
+  function syncBar() {
+    var fv = document.getElementById("fv"), fs = document.getElementById("fs");
+    if (fv) fv.value = fVerdict;
+    /* A status carried in from a link may not be one this run has. Falling
+       back to "any status" rather than leaving the menu blank keeps the
+       control honest about what it is actually filtering on. */
+    if (fs) {
+      fs.value = fStatus;
+      if (fs.value !== fStatus) { fStatus = ""; fs.value = ""; }
+    }
   }
 
   function showBar(which) {
@@ -1174,10 +1594,25 @@
     document.querySelectorAll("#subtabs button"), function (b) {
       b.addEventListener("click", function () {
         view = b.dataset.view;
+        // Changing tab drops a focus that belonged to the tab you left.
+        focusKind = "";
+        writeUrl(true);
         showBar(view);
         render();
       });
     });
+
+  /* Back really goes back. Every filter change pushes an entry, so the
+     browser's own button undoes the last narrowing instead of leaving the
+     page and taking the reader off it entirely - which is what it did when
+     the state lived only in these variables. */
+  window.addEventListener("popstate", function () {
+    readUrl();
+    if (!D) return;
+    syncBar();
+    showBar(view);
+    render();
+  });
 
   /* Which project this page shows.
 
@@ -1242,7 +1677,8 @@
         traced.length + (traced.length === 1 ? " run available" : " runs available");
 
       if (!data.run) {
-        document.getElementById("sub").textContent = "";
+        document.getElementById("mix").innerHTML = "";
+        document.getElementById("chips").innerHTML = "";
         document.getElementById("tiles").innerHTML = "";
         document.getElementById("gaps").innerHTML = "";
         showBar(null);
@@ -1254,9 +1690,12 @@
         return;
       }
       D = data;
+      mix();
       tiles();
       if (!document.getElementById("bar")) mountBar();
+      syncBar();
       showBar(view);
+      writeUrl(false);
       render();
     }).catch(function (err) {
       document.getElementById("main").innerHTML =
@@ -1265,6 +1704,15 @@
     });
   }
 
+  /* The URL decides the view and the filters before anything renders, so
+     a link never flashes the default tab on its way to the one it asked
+     for. */
+  readUrl();
+  Array.prototype.forEach.call(
+    document.querySelectorAll("#subtabs button"), function (b) {
+      if (b.dataset.view === view) b.setAttribute("aria-current", "page");
+      else b.removeAttribute("aria-current");
+    });
   load(wantedProject());
 })();
 </script>

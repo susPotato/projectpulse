@@ -121,7 +121,7 @@ export function AddTilesModal({
           <button
             type="button"
             onClick={() => setCategory("All")}
-            className={`mb-1 block w-full cursor-pointer rounded border-0 px-2.5 py-1.5 text-left text-[12.5px] ${
+            className={`mb-1 block w-full cursor-pointer rounded border-0 px-2.5 py-1.5 text-left text-body ${
               category === "All" ? "bg-navy font-semibold text-surface" : "bg-transparent text-ink hover:bg-bg"
             }`}
           >
@@ -132,7 +132,7 @@ export function AddTilesModal({
               key={c}
               type="button"
               onClick={() => setCategory(c)}
-              className={`mb-1 block w-full cursor-pointer rounded border-0 px-2.5 py-1.5 text-left text-[12.5px] ${
+              className={`mb-1 block w-full cursor-pointer rounded border-0 px-2.5 py-1.5 text-left text-body ${
                 category === c ? "bg-navy font-semibold text-surface" : "bg-transparent text-ink hover:bg-bg"
               }`}
             >
@@ -142,11 +142,11 @@ export function AddTilesModal({
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="m-0 text-[15px] font-semibold">Add Tiles</h2>
+            <h2 className="m-0 text-emph font-semibold">Add Tiles</h2>
             <button
               type="button"
               onClick={onClose}
-              className="cursor-pointer rounded border-0 bg-transparent text-[18px] leading-none text-ink-3 hover:text-ink"
+              className="cursor-pointer rounded border-0 bg-transparent text-title leading-none text-ink-3 hover:text-ink"
               aria-label="Close"
             >
               &times;
@@ -156,13 +156,13 @@ export function AddTilesModal({
             {shown.map((tile) => (
               <div key={tile.key} className="rounded-lg border border-rule p-3">
                 <TilePreview kind={tile.preview} />
-                <div className="mb-1 text-[12.5px] font-semibold text-ink">{tile.label}</div>
-                <p className="m-0 mb-2.5 text-[11.5px] text-ink-3">{tile.description}</p>
+                <div className="mb-1 text-body font-semibold text-ink">{tile.label}</div>
+                <p className="m-0 mb-2.5 text-body text-ink-3">{tile.description}</p>
                 <button
                   type="button"
                   disabled={adding === tile.key}
                   onClick={() => addTile(tile.key, tile.default_w, tile.default_h)}
-                  className="cursor-pointer rounded-md border border-rule bg-bg px-2.5 py-1 text-[11.5px] font-semibold text-ink hover:bg-rule/40 disabled:opacity-50"
+                  className="cursor-pointer rounded-md border border-rule bg-bg px-2.5 py-1 text-body font-semibold text-ink hover:bg-rule/40 disabled:opacity-50"
                 >
                   {adding === tile.key ? "Adding..." : "+ Add Tile"}
                 </button>

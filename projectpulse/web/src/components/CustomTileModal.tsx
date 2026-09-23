@@ -37,11 +37,11 @@ export function CustomTileModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-rule p-4 pb-0">
-          <h2 className="m-0 mb-3 text-[15px] font-semibold">Custom Tile</h2>
+          <h2 className="m-0 mb-3 text-emph font-semibold">Custom Tile</h2>
           <button
             type="button"
             onClick={onClose}
-            className="mb-3 cursor-pointer rounded border-0 bg-transparent text-[18px] leading-none text-ink-3 hover:text-ink"
+            className="mb-3 cursor-pointer rounded border-0 bg-transparent text-title leading-none text-ink-3 hover:text-ink"
             aria-label="Close"
           >
             &times;
@@ -56,7 +56,7 @@ export function CustomTileModal({
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2 text-[12.5px] ${
+              className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2 text-body ${
                 tab === id ? "border-navy font-semibold text-ink" : "border-transparent text-ink-2 hover:text-ink"
               }`}
             >

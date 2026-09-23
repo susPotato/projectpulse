@@ -1585,10 +1585,22 @@ def gantt_project(
         ).all()
     }
 
+    # The same lateness rule the Team bundle and the agent brief use, imported
+    # rather than restated for the reason stated at both of those call sites.
+    from app.agent.brief import CLOSED
+
+    scan_day = date.today()
+
     rows: list[GanttRow] = []
     for task in tasks:
         projection = impact.projections[task.entity_id]
         milestone = names.get(task.milestone_id) if task.milestone_id else None
+        still_open = (task.status or "").upper() not in CLOSED
+        past_due = (
+            (scan_day - task.planned_end).days
+            if still_open and task.planned_end and task.planned_end < scan_day
+            else None
+        )
         rows.append(
             GanttRow(
                 entity_id=task.entity_id,
@@ -1605,6 +1617,7 @@ def gantt_project(
                 propagated_days=projection.propagated_days,
                 recorded_slip_days=projection.recorded_slip_days,
                 is_inconsistent=projection.is_inconsistent,
+                days_past_due=past_due,
                 milestone_id=task.milestone_id,
                 milestone_name=milestone.name if milestone else None,
                 depends_on=schedule.predecessors(task.entity_id),

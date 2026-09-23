@@ -31,6 +31,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from app.tracelabels import as_payload as finding_label_payload
+
 # Which stage writes each artifact, and the command that produces it. Used to
 # tell a reader what to run rather than just that a file was not there.
 PRODUCED_BY = {
@@ -869,6 +871,10 @@ def collect(run: Path) -> dict[str, Any]:
     return {
         "delivery": delivery,
         "findings": _findings(rows, files, delivery, governance, cohorts),
+        # The titles and the one-line guidance for each finding kind, served
+        # rather than duplicated into the page's JavaScript. `app/tracelabels`
+        # is the single list; the Word export imports the same one.
+        "labels": finding_label_payload(),
         "run": str(run),
         "project_id": manifest.get("project_id"),
         "project_name": manifest.get("project_name"),

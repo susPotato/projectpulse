@@ -58,7 +58,7 @@ function ProjectSubNav() {
             key={link.href}
             href={withProject(link.href)}
             aria-current={active ? "page" : undefined}
-            className={`rounded-md border px-2.5 py-1 text-[12px] font-semibold no-underline ${
+            className={`rounded-md border px-2.5 py-1 text-body font-semibold no-underline ${
               active
                 ? "border-navy bg-navy text-surface"
                 : "border-rule bg-surface text-ink hover:bg-bg"
@@ -87,7 +87,7 @@ function TileMenu({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="cursor-pointer rounded border-0 bg-transparent px-1.5 py-0.5 text-[14px] leading-none text-ink-3 hover:text-ink"
+        className="cursor-pointer rounded border-0 bg-transparent px-1.5 py-0.5 text-emph leading-none text-ink-3 hover:text-ink"
         aria-label="Tile options"
       >
         &#8942;
@@ -103,7 +103,7 @@ function TileMenu({
               setOpen(false);
               onEdit();
             }}
-            className="block w-full cursor-pointer border-0 bg-transparent px-3 py-1.5 text-left text-[12.5px] text-ink hover:bg-bg"
+            className="block w-full cursor-pointer border-0 bg-transparent px-3 py-1.5 text-left text-body text-ink hover:bg-bg"
           >
             Edit Title
           </button>
@@ -113,7 +113,7 @@ function TileMenu({
               setOpen(false);
               onDuplicate();
             }}
-            className="block w-full cursor-pointer border-0 bg-transparent px-3 py-1.5 text-left text-[12.5px] text-ink hover:bg-bg"
+            className="block w-full cursor-pointer border-0 bg-transparent px-3 py-1.5 text-left text-body text-ink hover:bg-bg"
           >
             Duplicate Tile
           </button>
@@ -123,7 +123,7 @@ function TileMenu({
               setOpen(false);
               onDelete();
             }}
-            className="block w-full cursor-pointer border-0 bg-transparent px-3 py-1.5 text-left text-[12.5px] text-red hover:bg-bg"
+            className="block w-full cursor-pointer border-0 bg-transparent px-3 py-1.5 text-left text-body text-red hover:bg-bg"
           >
             Delete Tile
           </button>
@@ -270,28 +270,28 @@ export function DashboardCanvas({
                 ? "Fill this dashboard with the standard tiles for this level"
                 : "Replace this dashboard with the standard tiles for this level"
             }
-            className="cursor-pointer rounded-md border border-navy bg-navy px-2.5 py-1 text-[12px] font-semibold text-surface hover:opacity-90 disabled:opacity-50"
+            className="cursor-pointer rounded-md border border-navy bg-navy px-2.5 py-1 text-body font-semibold text-surface hover:opacity-90 disabled:opacity-50"
           >
             {seeding ? "Setting up..." : "Default setup"}
           </button>
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
+            className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-body font-semibold text-ink hover:bg-bg"
           >
             + Add Tiles
           </button>
           <button
             type="button"
             onClick={() => setNewOpen(true)}
-            className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-bg"
+            className="cursor-pointer rounded-md border border-rule bg-surface px-2.5 py-1 text-body font-semibold text-ink hover:bg-bg"
           >
             New Dashboard
           </button>
           <button
             type="button"
             onClick={() => setCustomOpen(true)}
-            className="cursor-pointer rounded-md border border-purple/50 bg-purple/10 px-2.5 py-1 text-[12px] font-semibold text-purple hover:bg-purple/20"
+            className="cursor-pointer rounded-md border border-purple/50 bg-purple/10 px-2.5 py-1 text-body font-semibold text-purple hover:bg-purple/20"
           >
             Custom Tile
           </button>
@@ -299,7 +299,7 @@ export function DashboardCanvas({
             type="button"
             onClick={() => setDragMode((d) => !d)}
             title={dragMode ? "Tiles can be dragged and resized" : "Layout is locked"}
-            className={`cursor-pointer rounded-md border px-2.5 py-1 text-[12px] font-semibold ${
+            className={`cursor-pointer rounded-md border px-2.5 py-1 text-body font-semibold ${
               dragMode ? "border-navy bg-navy text-surface" : "border-rule bg-surface text-ink hover:bg-bg"
             }`}
           >
@@ -311,7 +311,7 @@ export function DashboardCanvas({
       {scopeType === "project" && <ProjectSubNav />}
       {dashboard.tiles.length === 0 ? (
         <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-rule px-6 text-center">
-          <p className="m-0 text-[13px] text-ink-3">
+          <p className="m-0 text-body text-ink-3">
             This dashboard is empty. Start from the default {scopeType} setup, or
             add tiles yourself.
           </p>
@@ -320,14 +320,14 @@ export function DashboardCanvas({
               type="button"
               onClick={applyDefault}
               disabled={seeding}
-              className="cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-[12.5px] font-semibold text-surface hover:opacity-90 disabled:opacity-50"
+              className="cursor-pointer rounded-md border border-navy bg-navy px-3 py-1.5 text-body font-semibold text-surface hover:opacity-90 disabled:opacity-50"
             >
               {seeding ? "Setting up..." : `Default ${scopeType} setup`}
             </button>
             <button
               type="button"
               onClick={() => setAddOpen(true)}
-              className="cursor-pointer rounded-md border border-rule bg-surface px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:bg-bg"
+              className="cursor-pointer rounded-md border border-rule bg-surface px-3 py-1.5 text-body font-semibold text-ink hover:bg-bg"
             >
               + Add Tiles
             </button>
@@ -355,12 +355,12 @@ export function DashboardCanvas({
                 className={`group rounded-lg border border-rule bg-surface p-3.5 ${dragMode ? "cursor-move" : ""}`}
               >
                 <div className="mb-2.5 flex items-start justify-between gap-2">
-                  <div className="text-[11px] font-bold tracking-[0.07em] text-ink-3 uppercase">
+                  <div className="text-label font-bold tracking-[0.07em] text-ink-3 uppercase">
                     {tile.settings?.title ? String(tile.settings.title) : labelFor(tile.tile_key)}
                   </div>
                   {dragMode && (
                     <span
-                      className="mr-auto ml-2 text-[10px] tracking-[0.06em] text-ink-3 opacity-0 group-hover:opacity-100"
+                      className="mr-auto ml-2 text-label tracking-[0.06em] text-ink-3 opacity-0 group-hover:opacity-100"
                       aria-hidden
                     >
                       &#10021; drag
@@ -383,7 +383,7 @@ export function DashboardCanvas({
                       settings={tile.settings}
                     />
                   ) : (
-                    <p className="m-0 text-[12px] text-ink-3">Unknown tile: {tile.tile_key}</p>
+                    <p className="m-0 text-body text-ink-3">Unknown tile: {tile.tile_key}</p>
                   )}
                 </div>
               </div>

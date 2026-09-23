@@ -281,14 +281,33 @@
   .shell { flex-direction: column; }
   .rail {
     width: auto;
+    /* `max-width` and `min-width: 0` are what make the `overflow-x` below
+       mean anything. `flex: 0 0 auto` sizes this row to its own content -
+       eleven 54px entries plus the brand, about 712px - and a flex item
+       that wide in a column layout pushes the *document* sideways rather
+       than scrolling inside itself. Every page scrolled horizontally on a
+       phone because of it, which is the one thing the house rules say a
+       page must never do. */
+    max-width: 100%;
+    min-width: 0;
+    /* The hand-written pages carry no CSS reset, so `max-width: 100%` on a
+       padded box still measures 100% + 16px of padding and overflows by
+       exactly that. The bundle gets this from Tailwind's preflight; these
+       pages have to be told. */
+    box-sizing: border-box;
     flex: 0 0 auto;
     flex-direction: row;
     justify-content: flex-start;
     overflow-x: auto;
+    /* A sideways-scrolling rail with no visible edge looks like a rail
+       that has simply lost its last three entries. */
+    overscroll-behavior-x: contain;
     border-right: none;
     border-bottom: 1px solid var(--rule);
     padding: 6px 8px;
   }
+  /* Sized to content inside the scroller, not squeezed to fit it. */
+  .rail a:not(.brand) { flex: 0 0 auto; }
   .rail .brand { margin-bottom: 0; margin-right: 6px; }
   .theme-toggle { margin-bottom: 0; margin-left: auto; }
 }
@@ -562,4 +581,245 @@
   color: var(--ink);
   font-weight: 650;
   border-bottom-color: var(--navy);
+}
+
+/* --- motion ------------------------------------------------------------
+
+  The same motion vocabulary the bundle declares in `web/src/index.css`.
+  Two copies because the hand-written pages never load Tailwind; keep the
+  numbers and the curve names identical, the way the colour tokens above
+  already are.
+
+  Motion here is explanatory, never decorative: a thing moves because it
+  arrived, because it changed, or because you are pointing at it. Every
+  animated value is in the DOM at its final state before the animation
+  plays over it, so nobody waits on a transition to read a number.
+*/
+:root {
+  --dur-tap: 110ms;
+  --dur-move: 210ms;
+  --dur-draw: 480ms;
+  --dur-count: 760ms;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.25, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emph: cubic-bezier(0.34, 1.26, 0.5, 1);
+
+  --stagger: 45ms;
+
+  /* The six sizes, matching `@theme` in web/src/index.css. Written as
+     variables because these pages have no utility layer - a rule here says
+     `font-size: var(--text-body)` rather than carrying its own number. */
+  --text-label: 11px;
+  --text-body: 13px;
+  --text-emph: 15px;
+  --text-title: 18px;
+  --text-heading: 24px;
+  --text-kpi: 32px;
+}
+
+@keyframes pulse-rise {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes pulse-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse-grow-x {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes pulse-draw {
+  from { stroke-dashoffset: var(--len, 1000); }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes pulse-shimmer {
+  from { background-position: -180% 0; }
+  to   { background-position: 180% 0; }
+}
+
+.rise { animation: pulse-rise var(--dur-move) var(--ease-out) both; }
+.fade-in { animation: pulse-fade var(--dur-move) var(--ease-out) both; }
+
+/* Children arrive in reading order, capped at ten steps so the eleventh
+   card does not wait half a second to say the same thing. */
+.stagger > * { animation: pulse-rise var(--dur-move) var(--ease-out) both; }
+.stagger > *:nth-child(1) { animation-delay: calc(var(--stagger) * 0); }
+.stagger > *:nth-child(2) { animation-delay: calc(var(--stagger) * 1); }
+.stagger > *:nth-child(3) { animation-delay: calc(var(--stagger) * 2); }
+.stagger > *:nth-child(4) { animation-delay: calc(var(--stagger) * 3); }
+.stagger > *:nth-child(5) { animation-delay: calc(var(--stagger) * 4); }
+.stagger > *:nth-child(6) { animation-delay: calc(var(--stagger) * 5); }
+.stagger > *:nth-child(7) { animation-delay: calc(var(--stagger) * 6); }
+.stagger > *:nth-child(8) { animation-delay: calc(var(--stagger) * 7); }
+.stagger > *:nth-child(9) { animation-delay: calc(var(--stagger) * 8); }
+.stagger > *:nth-child(n+10) { animation-delay: calc(var(--stagger) * 9); }
+
+.grow-x {
+  transform-origin: left center;
+  animation: pulse-grow-x var(--dur-draw) var(--ease-out) both;
+}
+
+.draw {
+  stroke-dasharray: var(--len, 1000);
+  animation: pulse-draw var(--dur-draw) var(--ease-out) both;
+}
+
+.lift {
+  transition:
+    border-color var(--dur-tap) var(--ease-out),
+    box-shadow var(--dur-tap) var(--ease-out),
+    transform var(--dur-tap) var(--ease-out);
+}
+.lift:hover {
+  border-color: color-mix(in oklab, var(--navy) 40%, var(--rule));
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 7%, transparent);
+  transform: translate3d(0, -1px, 0);
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--rule-2) 0%,
+    color-mix(in oklab, var(--rule) 65%, var(--surface)) 50%,
+    var(--rule-2) 100%
+  );
+  background-size: 180% 100%;
+  animation: pulse-shimmer 1.35s linear infinite;
+  border-radius: 4px;
+  color: transparent;
+}
+
+/* --- chrome that now moves --------------------------------------------- */
+
+/* The rail. The active entry grows a marker on its left edge rather than
+   only changing colour, so which section you are in survives a greyscale
+   printout and a colour-blind reader - and the marker scales in, which is
+   what makes a page change read as a move rather than a repaint. */
+.rail a:not(.brand) {
+  position: relative;
+  transition:
+    color var(--dur-tap) var(--ease-out),
+    background-color var(--dur-tap) var(--ease-out);
+}
+
+.rail a:not(.brand)::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 50%;
+  width: 3px;
+  height: 22px;
+  margin-top: -11px;
+  border-radius: 3px;
+  /* Blue, not navy. The rail paints itself near-black in both themes, so
+     the darkest token in the set is a marker nobody can see - which is
+     exactly what it was until somebody looked for it in a screenshot. */
+  background: var(--blue);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--dur-move) var(--ease-emph);
+}
+
+.rail a[aria-current="page"]::before { transform: scaleY(1); }
+
+.rail a:not(.brand) svg {
+  transition: transform var(--dur-tap) var(--ease-out);
+}
+.rail a:not(.brand):hover svg { transform: translate3d(0, -1px, 0); }
+
+.rail .brand,
+.theme-toggle {
+  transition:
+    background-color var(--dur-tap) var(--ease-out),
+    color var(--dur-tap) var(--ease-out),
+    transform var(--dur-tap) var(--ease-out);
+}
+.theme-toggle:hover { transform: rotate(-12deg); }
+.theme-toggle:active { transform: scale(0.94); }
+
+@media (max-width: 700px) {
+  /* Sideways rail: the marker moves to the bottom edge, or it points at
+     nothing. */
+  .rail a:not(.brand)::before {
+    left: 6px;
+    right: 6px;
+    top: auto;
+    bottom: 2px;
+    width: auto;
+    height: 3px;
+    margin-top: 0;
+    border-radius: 3px 3px 0 0;
+    transform: scaleX(0);
+  }
+  .rail a[aria-current="page"]::before { transform: scaleX(1); }
+}
+
+/* Within-page tabs: the underline slides between tabs instead of blinking
+   from one to the next, so the eye follows the selection it just made. */
+.subtabs,
+.tabs {
+  position: relative;
+}
+
+.subtabs button,
+.subtabs a,
+.tabs a {
+  transition: color var(--dur-tap) var(--ease-out);
+}
+
+.subtabs button::after,
+.subtabs a::after,
+.tabs a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: var(--navy);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--dur-move) var(--ease-emph);
+}
+
+.subtabs button,
+.subtabs a,
+.tabs a { position: relative; }
+
+.subtabs button[aria-current="page"]::after,
+.subtabs a[aria-current="page"]::after,
+.tabs a[aria-current="page"]::after { transform: scaleX(1); }
+
+/* The underline is the indicator now, so the static border would draw it
+   twice - one of them a pixel off. */
+.subtabs button[aria-current="page"],
+.subtabs a[aria-current="page"],
+.tabs a[aria-current="page"] { border-bottom-color: transparent; }
+
+.panel,
+.action { transition: border-color var(--dur-tap) var(--ease-out),
+                      background-color var(--dur-tap) var(--ease-out),
+                      box-shadow var(--dur-tap) var(--ease-out); }
+
+.action:hover { border-color: var(--blue); }
+.action:active { transform: scale(0.98); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover,
+  .theme-toggle:hover { transform: none; }
+  .skeleton { animation: none; }
 }
