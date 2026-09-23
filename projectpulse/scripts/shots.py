@@ -85,7 +85,41 @@ PAGES = (
     #: check that looks at Settings was photographing the upload form and
     #: reporting success.
     ("/settings", "settings", 3600),
+    #: The sign-in screen, and the one entry deliberately photographed with no
+    #: credential - see SIGNED_OUT below. Every other page in this list only
+    #: exists behind it now, so a login form that has collapsed would be a
+    #: picture of a broken product on every shot in the directory and no
+    #: picture of the thing that broke.
+    ("/?screen=login", "login", 900),
 )
+
+#: Paths photographed as a visitor who is NOT signed in. Everything else gets
+#: `?signin=` appended - see `sign_in_url`.
+#:
+#: Matched on the whole entry path rather than on the bare route, because "/"
+#: signed in is the Programs list and "/" signed out is the login form: the
+#: same URL is two screens and this list is what tells them apart. The
+#: `screen=login` parameter is inert - nothing reads it - and is here so the
+#: two entries are distinguishable to a human reading the list, and to
+#: `--page`.
+SIGNED_OUT = frozenset({"/?screen=login"})
+
+#: The demo credential, the same pair `web/src/auth.ts` checks.
+#:
+#: Headless Chrome gets a throwaway profile per shot (see `shoot`), so there is
+#: no `localStorage` to seed and without this every picture below would be of
+#: the login form. This is not a bypass: the bundle runs the same check on it
+#: that the form runs, and strips it from the address bar before painting, so
+#: it does not appear in the screenshot either.
+CREDENTIAL = "admin:1234"
+
+
+def sign_in_url(path: str) -> str:
+    """`path` with the demo credential attached, unless it is a signed-out shot."""
+    if path in SIGNED_OUT:
+        return path
+    return f"{path}{'&' if '?' in path else '?'}signin={CREDENTIAL}"
+
 
 WIDTH = 1400
 DEFAULT_HEIGHT = 1400
@@ -259,7 +293,7 @@ def main(argv: list[str] | None = None) -> int:
 
             ok = shoot(
                 browser,
-                f"http://{HOST}:{PORT}{path}",
+                f"http://{HOST}:{PORT}{sign_in_url(path)}",
                 target,
                 dark=not args.light,
                 height=args.height or page_height,

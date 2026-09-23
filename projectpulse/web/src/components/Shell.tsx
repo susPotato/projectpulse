@@ -5,7 +5,7 @@
   differ in body and agree on everything around it - and the tab bar must agree
   across the *static* pages too, so its links are spelled out here once.
 */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   currentProject,
   load,
@@ -15,6 +15,7 @@ import {
   type PortfolioBundle,
   type ProjectRow,
 } from "../api";
+import { initials, session, signOut } from "../auth";
 import { ProjectPicker } from "./ProjectPicker";
 import { CountUp, Skeleton } from "./motion";
 
@@ -303,6 +304,85 @@ function ProjectSwitcher() {
   );
 }
 
+/* Who is signed in, at the right-hand end of the app bar.
+
+   Styled by `shell.css` rather than Tailwind, for the same reason `.appbar`
+   and `.theme-toggle` are: the hand-written pages draw this same control from
+   `auth.js`, and two implementations of one piece of chrome drift. The initials
+   are `auth.ts`'s, so the avatar here and the one on Schedule cannot disagree
+   about how a name becomes two letters.
+
+   A menu rather than a bare sign-out button: the avatar's job is to say *who*,
+   and a control that logs you out when you click it to check your own name is
+   a trap. */
+function Avatar() {
+  const user = session();
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  /* Pointer down, not click: a `click` listener fires after the button's own
+     handler has already re-opened the menu, so an outside click while open
+     would close and reopen in the same gesture. */
+  useEffect(() => {
+    if (!open) return;
+    function away(event: PointerEvent) {
+      if (!wrap.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
+
+  // The gate in `main.tsx` means this is never null in practice. Rendering
+  // nothing rather than an empty circle is still the right answer if some
+  // future page mounts the shell outside it.
+  if (!user) return null;
+
+  return (
+    <div className="avatar-wrap" ref={wrap}>
+      <button
+        type="button"
+        className="avatar"
+        onClick={() => setOpen((was) => !was)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Signed in as ${user.name}`}
+        title={`Signed in as ${user.name}`}
+      >
+        {initials(user.name)}
+      </button>
+      {open && (
+        <div className="avatar-menu" role="menu">
+          <div className="avatar-who">
+            <b>{user.name}</b>
+            <span>{user.role ? `${user.role} · ${user.id}` : user.id}</span>
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              signOut();
+              /* A full navigation, not a state change. Signing out has to
+                 clear whatever the current page has already fetched about a
+                 project, and `location.replace` keeps the signed-in page out
+                 of the back history. */
+              window.location.replace("/");
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Page({
   current,
   title,
@@ -356,6 +436,9 @@ export function Page({
         <ProjectSwitcher />
         {asof && <span className="asof">{asof}</span>}
         {action}
+        {/* Last in the bar, after the page's own action. Identity is chrome,
+            not a thing this page does. */}
+        <Avatar />
       </div>
       {subtitle && <p className="mt-0 mb-4 text-body text-ink-2">{subtitle}</p>}
       {/* The body arrives as one block rather than per-panel. A page whose

@@ -6,6 +6,10 @@
      system dark preference does not flash light first. Kept identical
      across all four rail copies - see theme.js. -->
 <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<!-- The sign-in gate. Not deferred, and ahead of the stylesheets and the
+     rest of the scripts: everything below is work on a page this visitor
+     may not be allowed to see, and a deferred redirect paints it first. -->
+<script src="/static/auth.js"></script>
 <link rel="stylesheet" href="/static/shell.css">
 <link rel="stylesheet" href="/static/gantt.css">
 <script src="/static/gantt.js" defer></script>
@@ -269,19 +273,36 @@
 
   function d(v) { return v === null || v === undefined ? "-" : v; }
 
-  /* Resolve once the document is parsed.
+  /* Resolve once the deferred scripts have actually run.
 
      `gantt.js` is deferred, so it runs after parsing; this inline script runs
      during it. Without this gate a cached API response can arrive before the
      chart component exists - which is exactly how `PulseGantt is not defined`
-     happened. */
+     happened.
+
+     The gate used to treat any readyState other than "loading" as ready, and
+     that is half a document too early: the spec sets readyState to
+     "interactive" BEFORE the deferred scripts execute, and only then fires
+     DOMContentLoaded. So on a load where `/api/gantt` answers inside that
+     window this resolved while `gantt.js` was still pending, and the page
+     reported "chart component did not load" about a script that loaded a
+     moment later. A real, reproducible defect, not a flaky screenshot: it
+     showed up every time on a page arrived at by redirect, which is now the
+     ordinary way in (the sign-in gate in `auth.js` bounces you through the
+     login screen and back).
+
+     `load` is a safety net rather than a duplicate: if DOMContentLoaded has
+     already fired, readyState sits at "interactive" until the page finishes
+     loading, so listening for DOMContentLoaded alone would wait for an event
+     that is never coming again. Resolving twice is harmless. */
   function documentReady() {
     return new Promise(function (resolve) {
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", function () { resolve(); });
-      } else {
+      if (document.readyState === "complete") {
         resolve();
+        return;
       }
+      document.addEventListener("DOMContentLoaded", function () { resolve(); });
+      window.addEventListener("load", function () { resolve(); });
     });
   }
 

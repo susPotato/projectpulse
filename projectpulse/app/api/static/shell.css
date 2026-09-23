@@ -508,6 +508,105 @@
   stroke-linecap: round;
 }
 
+/* Who is signed in, at the right-hand end of the app bar.
+
+   One definition for both halves of the app: `Shell.tsx`'s `Avatar` renders
+   these class names and so does `auth.js` on the hand-written pages, the same
+   arrangement `.appbar` and `.theme-toggle` already use. A Tailwind copy in
+   the bundle would be a second avatar that drifts a pixel at a time from the
+   one on Schedule.
+
+   Scoped to `.avatar` alone rather than `.appbar .avatar`, for the reason
+   `.action` above gives: the built pages compose their bar from utilities and
+   an unsized control renders as a default-size blob. */
+.avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  /* The brand navy, not a status colour. Rule 4: green, amber and red mean
+     on-track, at-risk and late, and an avatar is none of those - borrowing
+     one would have somebody's initials reading as a delivery verdict. */
+  background: var(--navy);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.avatar:hover { filter: brightness(1.12); }
+.avatar:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.avatar-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  min-width: 190px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  /* `color-mix` off `--ink`, the way `.lift` does it, rather than a literal
+     rgba: a fixed dark shadow is invisible on the dark surface. */
+  box-shadow: 0 8px 24px color-mix(in oklab, var(--ink) 16%, transparent);
+  padding: 4px;
+  animation: pulse-rise var(--dur-move) var(--ease-out) both;
+}
+
+.avatar-who {
+  padding: 8px 10px 9px;
+  border-bottom: 1px solid var(--rule-2);
+  margin-bottom: 4px;
+}
+
+.avatar-who b {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.avatar-who span {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.avatar-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-2);
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.avatar-menu button:hover {
+  background: var(--rule-2);
+  color: var(--ink);
+}
+
 /* The snapshot's freeze note lives here now: with the rail carrying navigation,
    a note appended inside `</nav>` would land in a 64px column. */
 .appbar .tab-note {

@@ -17,6 +17,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Imports - Settings - ProjectPulse</title>
   <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <!-- The sign-in gate. Not deferred, and ahead of the stylesheets and the
+       rest of the scripts: everything below is work on a page this visitor
+       may not be allowed to see, and a deferred redirect paints it first. -->
+  <script src="/static/auth.js"></script>
   <link rel="stylesheet" href="/static/shell.css">
   <script src="/static/theme.js" defer></script>
 <script src="/static/rail.js" defer></script>
