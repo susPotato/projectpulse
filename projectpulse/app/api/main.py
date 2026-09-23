@@ -2299,11 +2299,27 @@ def download_jira_sync_tool(request: Request, project_key: str) -> Response:
               .replace("__JIRA_SITE__", site)
               .replace("__PROJECT_KEY__", key)
               .replace("__PUSH_TOKEN__", os.environ.get(admin.TOKEN_ENV, "").strip()))
+
+    # CRLF, normalised here rather than trusted from the file on disk.
+    #
+    # This is a batch file before it is anything else, and `cmd.exe` parses
+    # batch line by line with carriage returns in mind: a LF-only `.cmd` is
+    # read in ways that range from working to silently skipping lines. The
+    # template is edited on whichever machine last touched it and served from
+    # an image built on Linux, so its endings are not something to assume -
+    # the measured download had LF throughout.
+    script = script.replace("\r\n", "\n").replace("\n", "\r\n")
+
+    # `.cmd`, not `.ps1`. Windows refuses to run a downloaded `.ps1` on a
+    # default install - twice over, for the execution policy and for the mark
+    # of the web - and the window closes before either message can be read.
+    # The person this is built for has a browser and a work laptop, and may
+    # not be allowed to change the policy on it. A `.cmd` double-clicks.
     return Response(
         content=script,
         media_type="text/plain; charset=utf-8",
         headers={"Content-Disposition":
-                 f'attachment; filename="sync-{key.lower()}.ps1"'},
+                 f'attachment; filename="sync-{key.lower()}.cmd"'},
     )
 
 

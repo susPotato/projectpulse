@@ -120,7 +120,23 @@ def test_the_watermark_needs_no_admin_token(client):
 # The script
 # --------------------------------------------------------------------------
 
-def test_the_template_is_valid_powershell():
+MARKER = "#__PS__"
+
+
+def _powershell_section() -> str:
+    """Everything the batch header hands to PowerShell.
+
+    The file is a `.cmd` first: the head is batch, and `@echo off` is a parse
+    error to PowerShell. Only the part after the marker is PowerShell, and it
+    is the only part worth parsing - it is also exactly the substring the
+    header's `Invoke-Expression` receives.
+    """
+    text = TEMPLATE.read_text(encoding="utf-8")
+    index = text.index(MARKER)
+    return text[index:]
+
+
+def test_the_powershell_section_is_valid_powershell(tmp_path):
     """Parsed, not eyeballed. Nobody runs this file in CI and a syntax error
     would reach the person it was generated for."""
     import shutil
@@ -130,15 +146,73 @@ def test_the_template_is_valid_powershell():
     if not powershell:
         pytest.skip("no PowerShell on this machine")
 
+    section = tmp_path / "section.ps1"
+    section.write_text(_powershell_section(), encoding="utf-8")
+
     check = (
         "$e=$null;$t=$null;"
-        f"[System.Management.Automation.Language.Parser]::ParseFile('{TEMPLATE}',"
+        f"[System.Management.Automation.Language.Parser]::ParseFile('{section}',"
         "[ref]$t,[ref]$e)|Out-Null;"
         "if($e){$e|%{Write-Output $_.Message};exit 1}else{exit 0}"
     )
     done = subprocess.run([powershell, "-NoProfile", "-Command", check],
                           capture_output=True, text=True)
-    assert done.returncode == 0, f"the template does not parse:\n{done.stdout}"
+    assert done.returncode == 0, (
+        f"the PowerShell section does not parse:\n{done.stdout}"
+    )
+
+
+def test_the_file_starts_as_a_batch_script():
+    """Why it is a `.cmd` at all.
+
+    A default Windows install refuses a downloaded `.ps1` twice over - the
+    execution policy, then the mark of the web - and the window closes before
+    either message can be read, so the script cannot report its own failure.
+    Reproduced: `cannot be loaded because running scripts is disabled on this
+    system`. A `.cmd` double-clicks, and hands the PowerShell to an
+    interpreter allowed to run it.
+    """
+    text = TEMPLATE.read_text(encoding="utf-8")
+    assert text.startswith("@echo off"), (
+        "the batch header is gone, so this is a .ps1 again and will not run "
+        "by double-click on a default Windows install"
+    )
+    assert "-ExecutionPolicy Bypass" in text
+    assert MARKER in text
+
+
+def test_the_marker_appears_exactly_once():
+    """`IndexOf` takes the first hit, so a second spelling anywhere breaks it.
+
+    Caught exactly this: a `rem` line added to the header to explain the
+    marker wrote it out whole, so the header found its own comment and handed
+    PowerShell the tail of the batch script - `if errorlevel 1 pause`,
+    `endlocal`, `exit /b` - which is a syntax error with no obvious source.
+
+    Counting is the test rather than "not in the head", because slicing at
+    the first hit is the same flawed lookup and passes vacuously.
+    """
+    text = TEMPLATE.read_text(encoding="utf-8")
+    assert text.count(MARKER) == 1, (
+        f"the marker {MARKER!r} appears {text.count(MARKER)} times. It must "
+        f"appear once - the batch header's IndexOf takes the first, and "
+        f"anything before the real marker sends PowerShell batch commands. "
+        f"Spell it in two halves anywhere it has to be mentioned."
+    )
+
+
+def test_the_script_finds_itself_without_psscriptroot():
+    """`$PSScriptRoot` is empty under `Invoke-Expression`.
+
+    Which is how the header runs it. Without the environment variable the
+    saved-token path becomes `Join-Path $null` - a terminating error under
+    `ErrorActionPreference = Stop`, before the first pause, so the window
+    would close instantly with nothing on it.
+    """
+    section = _powershell_section()
+    assert "$env:PULSE_TOOL_PATH" in section
+    assert "Join-Path $Here" in section
+    assert "Join-Path $PSScriptRoot" not in section
 
 
 def test_the_script_asks_for_the_watermark_and_bounds_its_jql():
@@ -232,6 +306,57 @@ def test_every_placeholder_the_route_fills_is_present():
     for token in ("__SERVER__", "__JIRA_SITE__", "__PROJECT_KEY__",
                   "__PUSH_TOKEN__"):
         assert token in text, f"{token} is no longer in the template"
+
+
+def test_the_page_and_the_route_agree_on_the_extension():
+    """The page's `download` attribute overrides `Content-Disposition`.
+
+    So the server can serve `sync-x.cmd` and the browser still save
+    `sync-x.ps1`, which Windows will not double-click - the exact failure
+    this change exists to remove, reintroduced by a one-word mismatch in a
+    different file.
+    """
+    page = (Path(__file__).resolve().parent.parent / "app" / "api" / "static"
+            / "settings.html").read_text(encoding="utf-8")
+    route = (Path(__file__).resolve().parent.parent / "app" / "api"
+             / "main.py").read_text(encoding="utf-8")
+
+    assert 'a.download = "sync-" + key.toLowerCase() + ".cmd"' in page, (
+        "the page still saves the download as .ps1"
+    )
+    assert 'filename="sync-{key.lower()}.cmd"' in route, (
+        "the route still names the attachment .ps1"
+    )
+
+
+def test_the_download_is_served_with_crlf(client, monkeypatch):
+    """`cmd.exe` parses batch with carriage returns in mind.
+
+    A LF-only `.cmd` ranges from working to silently skipping lines, and the
+    template's endings depend on whichever machine last edited it - the
+    measured download had LF throughout before this was normalised.
+    """
+    from app import admin
+    from app.models.jira import JiraConnection
+
+    monkeypatch.setenv(admin.TOKEN_ENV, "test-admin-token")
+    with session_scope() as session:
+        session.merge(JiraConnection(
+            id=9992, project_id="excel:Project:1:CRLF",
+            site="https://jira.example.com", email="", project_key="CRLFTEST",
+            ciphertext="", hint="",
+        ))
+
+    raw = client.get("/api/jira/sync-tool",
+                     params={"project_key": "CRLFTEST"}).content
+    assert raw.count(b"\r\n") > 100
+    assert raw.count(b"\n") == raw.count(b"\r\n"), "a bare LF survived"
+    assert raw.startswith(b"@echo off")
+
+    with session_scope() as session:
+        row = session.get(JiraConnection, 9992)
+        if row is not None:
+            session.delete(row)
 
 
 def test_the_generated_script_has_no_placeholders_left(client, monkeypatch):

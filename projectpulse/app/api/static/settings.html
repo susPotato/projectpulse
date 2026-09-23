@@ -652,9 +652,9 @@
       btn.addEventListener("click", function () {
         var key = btn.getAttribute("data-tool");
         if (!confirm("Download the sync tool for " + key + "?\n\n" +
-                     "It is a PowerShell script that reads Jira on whichever " +
-                     "computer runs it and sends the result here - for a " +
-                     "machine that Jira accepts but this server does not.\n\n" +
+                     "It reads Jira on whichever computer runs it and sends " +
+                     "the result here - for a machine that Jira accepts but " +
+                     "this server does not. Save it and double-click it.\n\n" +
                      "Keep it and run it again whenever you want an update: " +
                      "it asks what is already here and reads only what " +
                      "changed, and if Jira cuts it off part way it carries " +
@@ -668,7 +668,14 @@
             return r.blob().then(function (blob) {
               var a = document.createElement("a");
               a.href = URL.createObjectURL(blob);
-              a.download = "sync-" + key.toLowerCase() + ".ps1";
+              /* `.cmd`, and it must stay in step with the extension the
+                 route sets in `Content-Disposition` - this attribute wins
+                 over it, so a stale value here is a file Windows will not
+                 double-click no matter what the server said. A `.ps1` is
+                 refused on a default install for the execution policy and
+                 again for having been downloaded, and the window closes
+                 before either message can be read. */
+              a.download = "sync-" + key.toLowerCase() + ".cmd";
               document.body.appendChild(a);
               a.click();
               a.remove();

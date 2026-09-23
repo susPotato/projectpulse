@@ -1,6 +1,34 @@
+@echo off
+rem  ProjectPulse - Jira sync.  Double-click this file.
+rem
+rem  A Windows command file on purpose, and not a .ps1. A default Windows
+rem  install refuses to run a .ps1 at all - "running scripts is disabled on
+rem  this system" - and refuses it again for having been downloaded, and the
+rem  window closes before either message can be read. That is not something
+rem  the script can fix from the inside, because it never starts.
+rem
+rem  A .cmd has no such restriction. This header hands the PowerShell below
+rem  to an interpreter that is allowed to run it.
+rem
+rem  Note that the file as a whole is no longer valid PowerShell - these
+rem  first lines are batch, and `@echo off` is a parse error to PowerShell.
+rem  Everything from the marker line onward is, and that is the part the
+rem  line below runs. To read or run it as PowerShell, take it from there.
+rem
+rem  The marker must appear exactly once in this file, which is why it is
+rem  never written whole above it - not here, and not in the command below.
+rem  Written whole, the search finds that line instead and PowerShell is
+rem  handed the tail of this batch header: a syntax error nobody can place.
+setlocal
+set "PULSE_TOOL_PATH=%~f0"
+rem  The marker is spelled in two halves here so that searching for the whole
+rem  of it finds the real one further down, and not this line.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$t = Get-Content -LiteralPath $env:PULSE_TOOL_PATH -Raw; Invoke-Expression $t.Substring($t.IndexOf('#__PS' + '__'))"
+if errorlevel 1 pause
+endlocal
+exit /b
+#__PS__
 # ProjectPulse - Jira sync
-#
-# Right-click this file and choose "Run with PowerShell".
 #
 # It reads issues from Jira and sends them to ProjectPulse. It runs on this
 # computer on purpose: Jira refuses requests from the server but accepts
@@ -76,7 +104,17 @@ Write-Host ""
 # Remembered next to this script so a second run asks nothing. It is your
 # own Jira token; anyone who can read that file can use it, so the script
 # asks before writing it down.
-$TokenFile = Join-Path $PSScriptRoot ".jira-token"
+# Where this file is. `$PSScriptRoot` is empty when the batch header above
+# runs the script through `Invoke-Expression` rather than as a file, so the
+# header passes the path in an environment variable and this prefers it.
+# The other two branches keep the file working when it is run as a plain
+# .ps1, and when it is pasted into a console with no file at all.
+$SelfPath = if ($env:PULSE_TOOL_PATH) { $env:PULSE_TOOL_PATH }
+            elseif ($PSCommandPath)   { $PSCommandPath }
+            else                      { $null }
+$Here = if ($SelfPath) { Split-Path -Parent $SelfPath } else { (Get-Location).Path }
+
+$TokenFile = Join-Path $Here ".jira-token"
 if (Test-Path $TokenFile) {
     $JiraToken = (Get-Content $TokenFile -Raw).Trim()
     Write-Note "using the token saved beside this script"

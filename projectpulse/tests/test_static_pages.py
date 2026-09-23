@@ -253,7 +253,15 @@ def test_a_rail_does_not_offer_a_page_that_is_not_served(page: Path):
 def test_the_sync_tool_template_parses_as_powershell():
     """It is downloaded and run by somebody who cannot debug it - the PM,
     on a laptop, during a demo. A syntax error there is discovered in the
-    worst possible room."""
+    worst possible room.
+
+    Only the PowerShell half is parsed. The file is a `.cmd` now, because a
+    default Windows install refuses to run a downloaded `.ps1` at all and
+    closes the window before the reason can be read; the head is batch and
+    `@echo off` is a parse error to PowerShell. Everything after the marker
+    is PowerShell, and it is exactly the substring the batch header hands to
+    `Invoke-Expression` - so parsing that is parsing what actually runs.
+    """
     import shutil
     import subprocess
     import tempfile
@@ -265,13 +273,17 @@ def test_the_sync_tool_template_parses_as_powershell():
     if powershell is None:
         pytest.skip("no PowerShell to parse with")
 
-    filled = (template.read_text(encoding="utf-8")
+    text = template.read_text(encoding="utf-8")
+    marker = "#__PS" + "__"          # spelled in halves, as the file does
+    assert text.count(marker) == 1, "the PowerShell marker is not unique"
+    filled = (text[text.index(marker):]
               .replace("__SERVER__", "https://example.test")
               .replace("__JIRA_SITE__", "https://jira.example.test/jiradc")
               .replace("__PROJECT_KEY__", "ABC")
               .replace("__PUSH_TOKEN__", "t0ken"))
-    assert "__" not in re.sub(r"__[A-Z_]+__", "", filled) or True
-    assert not re.findall(r"__[A-Z_]+__", filled), "a placeholder went unreplaced"
+    # The marker itself is shaped like a placeholder and is not one.
+    leftover = [m for m in re.findall(r"__[A-Z_]+__", filled) if m != "__PS__"]
+    assert not leftover, f"a placeholder went unreplaced: {leftover}"
 
     with tempfile.NamedTemporaryFile("w", suffix=".ps1", delete=False,
                                      encoding="utf-8") as handle:
