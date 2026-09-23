@@ -46,22 +46,46 @@ def _drain(record, timeout=30.0):
 def _record():
     from collections import deque
 
-    return {"status": "running", "log": deque(maxlen=TR.LOG_LINES), "stage": ""}
+    return {"status": "running", "log": deque(maxlen=TR.LOG_LINES), "stage": "",
+            "command": ""}
+
+
+def _work(record, *argv):
+    """Drive `_worker` with a single command, named the way a run names it.
+
+    The worker takes a list of (name, argv) pairs because a run is the free
+    pipeline followed, optionally, by the stages that call a model. Every test
+    below is about one command's behaviour, so the list shape is noise in them
+    and lives here instead.
+    """
+    TR._worker([("pipeline", list(argv))], {}, record)
 
 
 # --------------------------------------------------------------------------
 # The command
 # --------------------------------------------------------------------------
 
-def _argv(**over):
+def _commands(**over):
     from pathlib import Path
 
     args = dict(run_dir=Path("/runs/x"), export=Path("/tmp/e.xlsx"),
                 repo=Path("/tmp/repo"), docs=Path("/tmp/repo/docs"),
                 project_id="excel:Project:1:HRMS", project_filter="",
-                done_status="")
+                done_status="", verdicts=False)
     args.update(over)
-    return TR._argv(**args)
+    return TR._commands(**args)
+
+
+def _argv(**over):
+    """The free pipeline's own command line.
+
+    A run is a list of commands now - the free pipeline, then optionally the
+    stages that call a model - and every assertion below is about the first
+    of them, which is the one that exists unconditionally.
+    """
+    commands = _commands(**over)
+    assert commands[0][0] == "pipeline"
+    return commands[0][1]
 
 
 def test_the_command_carries_the_project_id():
@@ -107,6 +131,88 @@ def test_optional_arguments_are_omitted_when_empty():
     assert filled[filled.index("--done-status") + 1] == "Done,Closed"
 
 
+def test_the_stages_that_cost_money_are_off_unless_asked_for():
+    """The default is the free pipeline and nothing else.
+
+    `translate`, `adjudicate` and `explain` call a model once per ticket.
+    Reaching one of them from a button nobody warned about is how a person
+    finds out what this costs by being billed for it, so the flag is opt-in
+    and `build_plan` upstream stays free-only.
+    """
+    assert [name for name, _ in _commands()] == ["pipeline"]
+
+
+def test_asking_for_verdicts_adds_them_after_the_pipeline_in_order():
+    """`adjudicate` reads what `pipeline` wrote, so the order is a dependency."""
+    names = [name for name, _ in _commands(verdicts=True)]
+    assert names == ["pipeline", "adjudicate", "explain", "verify"]
+
+
+def test_adjudication_covers_every_ticket_not_the_first_twelve():
+    """The CLI defaults to `--limit 12`, which is right at a prompt and wrong
+    here: a page reporting twelve verdicts and 161 unanalysed tickets is a
+    worse answer than the cache already holds."""
+    argv = dict(_commands(verdicts=True))["adjudicate"]
+    assert "--all" in argv
+    assert "--limit" not in argv
+    # The prose fallback for a ticket whose candidate set comes back empty.
+    # Compared as a `Path`, because the separator differs by platform and this
+    # is an assertion about which directory, not about how it is spelled.
+    from pathlib import Path
+
+    assert Path(argv[argv.index("--docs") + 1]) == Path("/tmp/repo/docs")
+
+
+def test_every_command_names_the_run_before_its_subcommand():
+    """`--run` is a global option. After the subcommand argparse hands it to
+    the wrong parser, which is a run written somewhere nobody reads."""
+    for name, argv in _commands(verdicts=True):
+        assert "--run" in argv, name
+        subcommand = argv.index(name)
+        assert argv.index("--run") < subcommand, name
+
+
+def test_the_verdict_flag_is_read_from_the_environment(monkeypatch):
+    monkeypatch.delenv(TR.VERDICTS_ENV, raising=False)
+    assert TR.verdict_stages_enabled() is False
+    for truthy in ("1", "true", "YES", "on"):
+        monkeypatch.setenv(TR.VERDICTS_ENV, truthy)
+        assert TR.verdict_stages_enabled() is True, truthy
+    monkeypatch.setenv(TR.VERDICTS_ENV, "0")
+    assert TR.verdict_stages_enabled() is False
+
+
+def test_a_failing_command_stops_the_ones_after_it():
+    """Carrying on would report a later stage's complaint about a missing
+    artifact instead of the real failure, which is the harder to act on."""
+    record = _record()
+    TR._worker(
+        [("pipeline", [sys.executable, "-c", "import sys; sys.exit(2)"]),
+         ("adjudicate", [sys.executable, "-c", "print('should not run')"])],
+        {}, record,
+    )
+    assert record["status"] == "failed"
+    assert record["exit_code"] == 2
+    assert not any("should not run" in line for line in record["log"])
+    # Names the command that stopped, not just "the pipeline" - with four of
+    # them a bare exit code does not say which.
+    assert "pipeline" in record["error"]
+
+
+def test_every_command_runs_when_each_one_succeeds():
+    record = _record()
+    TR._worker(
+        [("pipeline", [sys.executable, "-c", "print('one')"]),
+         ("adjudicate", [sys.executable, "-c", "print('two')"])],
+        {}, record,
+    )
+    assert record["status"] == "done"
+    assert record["exit_code"] == 0
+    assert {"one", "two"} <= set(record["log"])
+    # Cleared at the end: a finished run still naming a command reads as stuck.
+    assert record["command"] == ""
+
+
 @pytest.mark.parametrize("project_id,expected", [
     ("excel:Project:1:HRMS", "excel-project-1-hrms"),
     ("excel:Project:upload:工数管理", "excel-project-upload"),
@@ -127,10 +233,7 @@ def test_run_directories_are_named_without_path_metacharacters(project_id, expec
 
 def test_the_worker_keeps_output_and_reports_success():
     record = _record()
-    TR._worker(
-        [sys.executable, "-c", "print('=== corpus'); print('172 files')"],
-        {}, record,
-    )
+    _work(record, sys.executable, "-c", "print('=== corpus'); print('172 files')")
     assert record["status"] == "done"
     assert record["exit_code"] == 0
     assert "172 files" in list(record["log"])
@@ -142,11 +245,8 @@ def test_the_worker_keeps_output_and_reports_success():
 def test_a_failing_stage_is_reported_with_its_output():
     """The exit code alone does not say which stage stopped or what it wanted."""
     record = _record()
-    TR._worker(
-        [sys.executable, "-c",
-         "import sys; print('no docs tree at docs/'); sys.exit(3)"],
-        {}, record,
-    )
+    _work(record, sys.executable, "-c",
+          "import sys; print('no docs tree at docs/'); sys.exit(3)")
     assert record["status"] == "failed"
     assert record["exit_code"] == 3
     assert "no docs tree at docs/" in list(record["log"])
@@ -156,12 +256,9 @@ def test_a_failing_stage_is_reported_with_its_output():
 def test_stderr_is_kept_too():
     """A stage that dies writes to stderr, and that is the useful half."""
     record = _record()
-    TR._worker(
-        [sys.executable, "-c",
-         "import sys; print('Traceback (most recent call last)', file=sys.stderr); "
-         "sys.exit(1)"],
-        {}, record,
-    )
+    _work(record, sys.executable, "-c",
+          "import sys; print('Traceback (most recent call last)', file=sys.stderr); "
+          "sys.exit(1)")
     assert any("Traceback" in line for line in record["log"])
 
 
@@ -172,7 +269,7 @@ def test_a_command_that_cannot_start_is_a_failure_not_an_exception():
     this is by polling for it.
     """
     record = _record()
-    TR._worker(["definitely-not-a-real-binary-93f2"], {}, record)
+    _work(record, "definitely-not-a-real-binary-93f2")
     assert record["status"] == "failed"
     assert "could not start" in record["error"]
 
@@ -180,10 +277,8 @@ def test_a_command_that_cannot_start_is_a_failure_not_an_exception():
 def test_only_the_tail_of_a_long_run_is_kept():
     """Twelve stages on a real backlog produce far more than a page wants."""
     record = _record()
-    TR._worker(
-        [sys.executable, "-c", f"[print(i) for i in range({TR.LOG_LINES + 500})]"],
-        {}, record,
-    )
+    _work(record, sys.executable, "-c",
+          f"[print(i) for i in range({TR.LOG_LINES + 500})]")
     log = list(record["log"])
     assert len(log) == TR.LOG_LINES
     # The tail, not the head: a failing stage names what it wanted at the end.
@@ -206,8 +301,9 @@ def test_a_second_run_is_refused_while_one_is_in_flight(tmp_path, monkeypatch):
     # A command that outlives the assertion, so the first run is genuinely
     # still running when the second is attempted.
     monkeypatch.setattr(
-        TR, "_argv",
-        lambda **kw: [sys.executable, "-c", "import time; time.sleep(5)"],
+        TR, "_commands",
+        lambda **kw: [("pipeline",
+                      [sys.executable, "-c", "import time; time.sleep(5)"])],
     )
 
     first = TR.start(project_id="a", repo_tree=tmp_path, docs_dir=tmp_path,
@@ -223,7 +319,8 @@ def test_a_second_run_is_refused_while_one_is_in_flight(tmp_path, monkeypatch):
 def test_state_reports_a_finished_run(tmp_path, monkeypatch):
     monkeypatch.setenv("TRACELINK_RUNS", str(tmp_path / "runs"))
     monkeypatch.setattr(
-        TR, "_argv", lambda **kw: [sys.executable, "-c", "print('done')"],
+        TR, "_commands",
+        lambda **kw: [("pipeline", [sys.executable, "-c", "print('done')"])],
     )
 
     TR.start(project_id="excel:Project:1:HRMS", repo_tree=tmp_path,
@@ -250,9 +347,9 @@ def test_the_export_is_cleaned_up_after_the_run(tmp_path, monkeypatch):
 
     def _capture(**kw):
         seen.append(str(kw["export"]))
-        return [sys.executable, "-c", "print('ok')"]
+        return [("pipeline", [sys.executable, "-c", "print('ok')"])]
 
-    monkeypatch.setattr(TR, "_argv", _capture)
+    monkeypatch.setattr(TR, "_commands", _capture)
 
     TR.start(project_id="p", repo_tree=tmp_path, docs_dir=tmp_path,
              export_bytes=b"x")
@@ -267,7 +364,8 @@ def test_the_run_directory_is_created_under_the_runs_root(tmp_path, monkeypatch)
     root = tmp_path / "runs"
     monkeypatch.setenv("TRACELINK_RUNS", str(root))
     monkeypatch.setattr(
-        TR, "_argv", lambda **kw: [sys.executable, "-c", "print('ok')"],
+        TR, "_commands",
+        lambda **kw: [("pipeline", [sys.executable, "-c", "print('ok')"])],
     )
 
     started = TR.start(project_id="excel:Project:1:HRMS", repo_tree=tmp_path,

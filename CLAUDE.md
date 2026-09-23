@@ -4,6 +4,119 @@ Read this first. It is the handoff between sessions.
 
 ---
 
+## 🔁 Traceability has two buttons now — 2026-09-24. **Local only; not deployed.**
+
+**New trace** starts the analysis over; **Sync** updates the run the project
+already has. Same pipeline either way — what differs is what survives.
+
+| | |
+|---|---|
+| `mode` on `POST /api/traceability/run` | `"new"`, `"sync"`, or empty |
+| empty (the default) | **new** if the project has no run, **sync** if it does |
+| `"sync"` with no prior run | 400, naming the other button |
+
+Both fixed defaults are wrong for somebody: `sync` refuses a first run, `new`
+silently discards the run an old caller meant to update. The refusal is checked
+**after** the repository and export checks — a project with no repository has
+also never been traced, and "register a repository" is the one you act on.
+
+**New trace clears the artifacts and never the `cache/`.** The verdict cache is
+content-addressed, so an entry whose inputs changed is unreachable rather than
+wrong; deleting it would re-bill every ticket to gain nothing. Start over means
+the conclusions, not the receipts.
+
+### The stages that cost money are reachable now, behind a flag
+
+`PULSE_TRACELINK_VERDICTS=1` adds `adjudicate → explain → verify` after the free
+pipeline. **Off by default and it should stay that way** — `build_plan` upstream
+is deliberately free-only. `GET /api/traceability/run` reports `verdicts` so the
+page describes *this* server rather than asserting a general truth.
+
+### What a day of measuring the cache actually established
+
+Do not redo this. Every number below was run, not reasoned about, and **nothing
+was ever billed** — verified at 477 cache entries in, 477 out, zero new writes.
+
+- **Re-running adjudicate over a run's own inputs is free and real.** 169
+  verdicts (74 corroborated, 2 contradicted, 93 unverified) with no credentials
+  at all. The CLI says so and serves cache only.
+- **Copying just `cache/` into a fresh run is useless: 7 of 173.** The key is a
+  hash of the exact prompt, and the prompt is ticket text plus candidate files.
+- **It was not translations** (7 → 8 after copying `translations.json`) and **not
+  line endings** (8 against `pimsathon-main` itself, LF and all). It is the code:
+  the committed run analysed `../pimsathon-main` at `f242760`, and that tree has
+  moved on — `pimsathon-main` is not its own repo, it sits inside this one, and
+  its `docs/` was not even tracked then. **The misses are the cache working.**
+- `tracelink adjudicate --dry-run` now counts hits instead of quoting the whole
+  backlog every time: `170 already cached, 3 would be sent → $0.13` against
+  `7 cached, 166 would be sent → $7.41`. The preview is exact — it predicted 7
+  on the cold directory and the run produced exactly 7.
+
+⚠️ **`translate` is a paid stage, and the adjudicator is shown the translation.**
+Skip it on a non-English backlog and every prompt changes, so the whole verdict
+cache misses. "Skip translate to save money" inverts the saving.
+
+⚠️ `projectpulse/tracelink/` is a **vendored copy** of `traceability/tracelink/`.
+Edit upstream, then `python -m scripts.vendor_tracelink --apply`. A test fails if
+they drift. Editing the vendored side first is how this session wasted a cycle.
+
+`scripts/seed_trace_cache.py` copies one run's cache onto another (dry-run by
+default). Given the above it is of limited use — kept because the next person
+will have the same idea and should find the measurement rather than repeat it.
+
+**1347 tests pass.**
+
+---
+
+## 🔑 There is a sign-in screen now — 2026-09-24. **Local only; not deployed.**
+
+`admin` / `1234`. Every page is behind it, and the app bar carries an avatar
+with a Sign out item.
+
+**It is a doorway, not a lock, and the code says so in three places.** The
+credential is checked in the browser (`web/src/auth.ts`) and the session is a
+`localStorage` entry under `pulse.session`. **Every API route is exactly as
+open as it was before** — `curl https://projectpulse.fly.dev/api/portfolio`
+still answers. Do not describe this as securing anything. Real auth is a
+server-side session plus a dependency on every route, and that work would
+*replace* `auth.ts`, not build on it.
+
+How the two halves fit together, because it is not obvious:
+
+- The React bundle owns the form and is the **only** thing that knows the
+  password. `main.tsx` gates on it before rendering a page.
+- The six hand-written pages cannot show a form, so `static/auth.js` bounces a
+  signed-out visitor to `/?next=/gantt` and the bundle comes back. That file
+  deliberately knows no password — it only reads a session.
+- `?signin=admin:1234` signs in from a URL. **Not a bypass** — same check, same
+  password, and the parameter is stripped from the address bar either way. It
+  exists because headless Chrome gets a throwaway profile per shot, so without
+  it every picture `scripts.shots` takes would be of the login form.
+  `scripts.shots` appends it to every page except its new `login` entry.
+
+### It exposed a real defect in `/gantt`, a page nobody had touched
+
+`documentReady()` resolved on any readyState other than `"loading"`. The spec
+sets readyState to `"interactive"` **before** deferred scripts run, so that gate
+was half a document too early: `gantt.js` had not executed and the page reported
+**"Chart component did not load"** about a script that loaded a moment later.
+
+Latent for as long as the page has existed and rare enough to look flaky — the
+docstring in `scripts.shots` already blames the screenshot tool for this exact
+symptom. Adding a redirect to the way in made it fire **every single time**, on
+a fresh profile, which is how it got diagnosed instead of shrugged at. Server
+log settled it: `gantt.js` was fetched `200` on the failing loads. Fixed by
+waiting for `complete` or for `DOMContentLoaded`/`load`, with `load` as the
+safety net for the window where DOMContentLoaded has already gone by.
+
+`traceability.html` gained an `.appbar` — it was the one page in the rail with
+no heading row, so it was also the one with nowhere for the avatar to sit.
+
+**1332 tests pass.** Verified by photographing all 15 pages in dark and the
+login screen in both themes, not by reading the diff.
+
+---
+
 ## ✅ Done — the product runs on real Jira data, live 2026-09-23
 
 **Nothing is owed. Production is current with `main` and holds the real backlog.**

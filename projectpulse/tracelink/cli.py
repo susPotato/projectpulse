@@ -939,17 +939,39 @@ def cmd_adjudicate(args) -> int:
         n_with = sum(1 for t in chosen if candidates.get(t.uid, None)
                      and candidates[t.uid].strong_paths())
         print(f"  {n_with} have candidates, {len(chosen) - n_with} do not")
-        sizes = []
+
+        # The estimate is over the tickets that would actually be *called*,
+        # not over every ticket. Anything already in the cache is answered
+        # from disk and costs nothing, so counting it here would quote a
+        # first-run price for a re-run - which is the number that decides
+        # whether somebody presses the button at all.
+        #
+        # The key is computed exactly as `Adjudicator.call` computes it, from
+        # the prompt `run()` would build for this ticket. A preview derived
+        # from anything else is a preview that can disagree with the run it is
+        # previewing, and this one is read as a promise about money.
+        empty = A.TicketCandidates(uid="", candidates=[])
+        sizes, cached = [], 0
         for t in chosen:
-            tc = candidates.get(t.uid)
-            if tc and tc.candidates:
-                sizes.append(len(AD.build_prompt(t, bundle.describe_all(tc, corpus))))
+            tc = candidates.get(t.uid, empty)
+            descriptions = bundle.describe_all(tc, corpus) if tc.candidates else []
+            prompt = AD.build_prompt(t, descriptions)
+            key = AD.cache_key(args.model, AD.SYSTEM, prompt)
+            if (paths["cache"] / f"{key}.json").exists():
+                cached += 1
+            else:
+                sizes.append(len(prompt))
+
+        to_call = len(chosen) - cached
+        print(f"  {cached} already cached, {to_call} would be sent")
         if sizes:
             # ~4 chars per token is close enough to warn before spending.
             avg_in = sum(sizes) / len(sizes) / 4
-            est = len(chosen) * (avg_in / 1e6 * pin + 700 / 1e6 * pout)
+            est = len(sizes) * (avg_in / 1e6 * pin + 700 / 1e6 * pout)
             print(f"  mean prompt ~{avg_in:,.0f} input tokens")
-            print(f"  rough estimate for {len(chosen)} tickets: ${est:.2f}")
+            print(f"  rough estimate for {to_call} tickets: ${est:.2f}")
+        else:
+            print("  rough estimate: $0.00 — every ticket is cached")
         print("  dry run — no API calls made")
         return 0
 

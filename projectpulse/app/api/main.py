@@ -573,6 +573,12 @@ def traceability_run_status() -> dict:
     ok, why = _pipeline_ready()
     payload["available"] = ok
     payload["detail"] = why
+    # Whether a run here reaches the stages that call a model. The page says
+    # so either way, and it has to ask rather than assume: the same build
+    # answers differently depending on one environment variable, and
+    # "verdicts are not produced here" printed on a server that does produce
+    # them is the kind of stale caveat people learn to ignore.
+    payload["verdicts"] = traceability_run.verdict_stages_enabled()
     return payload
 
 
@@ -600,6 +606,19 @@ class TraceabilityRunIn(BaseModel):
     """
 
     project_id: str = ""
+    #: `"new"` starts the analysis over; `"sync"` updates the run this project
+    #: already has. The pipeline is the same either way - the difference is
+    #: what survives from last time, and the two are separate buttons because
+    #: they answer different questions ("what does this code say?" against
+    #: "what changed since I last looked?").
+    #:
+    #: Empty means "decide from what this project has": a first trace where
+    #: there is no run, a sync where there is. That is the default rather than
+    #: either word, because both are wrong for somebody - `"sync"` refuses a
+    #: project's first run, and `"new"` would silently throw away the run a
+    #: caller meant to update. A caller that predates this field gets the
+    #: behaviour it had either way.
+    mode: str = ""
 
 
 @app.post("/api/traceability/run")
@@ -633,6 +652,14 @@ def start_traceability_run(request: Request, body: TraceabilityRunIn) -> dict:
         raise HTTPException(
             status_code=400,
             detail="Choose which delivery project to trace.",
+        )
+
+    mode = (body.mode or "").strip().lower()
+    if mode not in {"", "new", "sync"}:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown mode {body.mode!r}. Use 'new' to analyse from "
+                   f"scratch, or 'sync' to update the run this project has.",
         )
 
     ready, why = _pipeline_ready()
@@ -673,6 +700,25 @@ def start_traceability_run(request: Request, body: TraceabilityRunIn) -> dict:
         project_filter = export.project_filter
         done_status = export.done_status
 
+    # Resolved here, after the registration and the export have been checked.
+    # Ordering rather than taste: "you asked to sync a project that has never
+    # been traced" is true of a project with no repository too, and it is the
+    # less useful of the two things to say - the missing registration is what
+    # they have to go and fix either way.
+    traced = traceability_run.has_run(project_id)
+    if not mode:
+        mode = "sync" if traced else "new"
+    elif mode == "sync" and not traced:
+        # Refused rather than quietly promoted to a `new` run. A sync reports
+        # what changed since last time, and with no last time there is nothing
+        # to compare against - so running the full analysis and calling it a
+        # sync would answer a question nobody asked, at first-run cost.
+        raise HTTPException(
+            status_code=400,
+            detail=("this project has never been traced, so there is nothing "
+                    "to sync against. Use New trace for the first run."),
+        )
+
     # Fetched here rather than inside the run so a failure is *this* request's
     # 400, with the message `tracelink.source` wrote, instead of a line buried
     # in a log the caller has to go and poll for.
@@ -698,6 +744,7 @@ def start_traceability_run(request: Request, body: TraceabilityRunIn) -> dict:
             project_filter=project_filter,
             done_status=done_status,
             actor=actor,
+            mode=mode,
         )
     except traceability_run.RunBusy as exc:
         # 409, not 400: the request is fine and will succeed later, which is a

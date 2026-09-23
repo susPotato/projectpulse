@@ -101,6 +101,62 @@ def runs_root() -> Path:
     return root
 
 
+def run_dir_for(project_id: str) -> Path:
+    """Where this project's run lives. One directory per project, reused.
+
+    Not one per timestamp, and that is load-bearing rather than tidy: the
+    verdict cache sits inside the run directory, so a second run of the same
+    project reads the first one's answers and pays only for what changed.
+    Naming directories by the clock would make every run a first run.
+    """
+    return runs_root() / _slug(project_id)
+
+
+def has_run(project_id: str) -> bool:
+    """Whether this project has a run to sync against.
+
+    `tickets.json` rather than the directory: `run_dir_for` creates the
+    directory before the pipeline writes anything, and a seeded cache with no
+    artifacts is not a run. `tracelink_view.available_runs` uses the same file
+    as its test for the same reason, so the page and this agree about what
+    counts as traced.
+    """
+    return (run_dir_for(project_id) / "tickets.json").exists()
+
+
+#: Cleared by a `new` run, in the order a reader would look for them. The
+#: verdict cache is deliberately NOT here: it is content-addressed, so an
+#: entry whose inputs have changed is unreachable rather than wrong, and
+#: deleting it would re-bill every ticket to gain nothing. "Start over" means
+#: the conclusions, not the receipts.
+ARTIFACT_GLOB = "*.json"
+
+
+def reset_artifacts(run_dir: Path) -> int:
+    """Delete a previous run's artifacts, keeping its cache. Returns the count.
+
+    Without this a `new` run is indistinguishable from a sync: the pipeline
+    overwrites the stages it runs, so a stage that is skipped this time - or
+    fails - leaves the previous run's file in place, and the page reads the
+    two together as one result. That is the "accepted and silently empty"
+    failure the upload path already learned to refuse, wearing a different
+    hat.
+    """
+    if not run_dir.is_dir():
+        return 0
+    removed = 0
+    for path in sorted(run_dir.glob(ARTIFACT_GLOB)):
+        if path.is_file():
+            path.unlink()
+            removed += 1
+    # `adjudicate.log` is the one non-JSON artifact a run leaves behind.
+    stale_log = run_dir / "adjudicate.log"
+    if stale_log.is_file():
+        stale_log.unlink()
+        removed += 1
+    return removed
+
+
 def state() -> dict[str, Any]:
     """The run in flight, or the last one to finish, or an empty answer."""
     with _LOCK:
@@ -114,15 +170,43 @@ def state() -> dict[str, Any]:
     return {"running": snapshot.get("status") == "running", "run": snapshot}
 
 
-def _argv(*, run_dir: Path, export: Path, repo: Path, docs: Path,
-          project_id: str, project_filter: str, done_status: str) -> list[str]:
-    """The command, as the CLI would be typed by hand.
+#: Whether to run the stages that call a model. Off unless set, because the
+#: cost is per ticket and a button nobody warned about is the wrong place to
+#: discover that.
+#:
+#: **Setting it is not the same as agreeing to spend.** `adjudicate` caches
+#: every response on disk by the exact content that produced it
+#: (`tracelink/adjudicate.py#cache_key`), and the run directory is named after
+#: the project rather than the clock - so the second run of a project reads
+#: the first one's cache and bills nothing. With no vendor credentials set at
+#: all the CLI says so and serves only what is cached, failing uncached calls
+#: individually rather than aborting the run. That combination is what makes a
+#: live demo of a real run free: the verdicts on screen were genuinely
+#: computed, just not today.
+VERDICTS_ENV = "PULSE_TRACELINK_VERDICTS"
+
+
+def verdict_stages_enabled() -> bool:
+    return os.environ.get(VERDICTS_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _commands(*, run_dir: Path, export: Path, repo: Path, docs: Path,
+              project_id: str, project_filter: str, done_status: str,
+              verdicts: bool) -> list[tuple[str, list[str]]]:
+    """The commands to run in order, as they would be typed by hand.
 
     `-m tracelink` rather than a console script: the package is source on the
     path in the image (`PULSE_TRACELINK_HOME=/app`), not an installed
     distribution, so there is no entry point to call.
+
+    A list rather than one command, because the free pipeline and the stages
+    that call a model are separate subcommands upstream and should stay that
+    way here: `build_plan` deliberately contains no paid stage, and teaching
+    it one would put the cost decision inside a function whose whole job is
+    "every free stage, in dependency order".
     """
-    argv = [sys.executable, "-m", "tracelink", "--run", str(run_dir), "pipeline",
+    base = [sys.executable, "-m", "tracelink", "--run", str(run_dir)]
+    argv = [*base, "pipeline",
             "--export", str(export), "--repo", str(repo), "--docs", str(docs),
             # Without this the run's manifest carries no project id and
             # `tracelink_view.run_for_project` cannot match it to anything -
@@ -135,11 +219,49 @@ def _argv(*, run_dir: Path, export: Path, repo: Path, docs: Path,
         argv += ["--project", project_filter]
     if done_status:
         argv += ["--done-status", done_status]
-    return argv
+
+    commands = [("pipeline", argv)]
+    if verdicts:
+        # `--all`, not the default `--limit 12`: a demo that adjudicates the
+        # first twelve tickets and reports the rest as unanalysed is a worse
+        # answer than the cache already holds. `--docs` is the prose fallback
+        # for a ticket whose candidate set comes back empty.
+        commands.append(("adjudicate", [*base, "adjudicate", "--all",
+                                        "--docs", str(docs)]))
+        # Reads the verdicts that were just written; cheap, and it is what
+        # turns a feature area into the sentence the page shows.
+        commands.append(("explain", [*base, "explain"]))
+        # Not a model call: it re-checks every citation against the source, so
+        # a cached verdict that quotes a file which has since changed is
+        # caught rather than shown.
+        commands.append(("verify", [*base, "verify"]))
+    return commands
 
 
-def _worker(argv: list[str], env: dict[str, str], record: dict[str, Any]) -> None:
-    """Run the pipeline and keep the tail of its output. Never raises."""
+def _worker(commands: list[tuple[str, list[str]]], env: dict[str, str],
+            record: dict[str, Any]) -> None:
+    """Run each command in order, keeping the tail of the output. Never raises.
+
+    Stops at the first failure. The commands are ordered by dependency -
+    `adjudicate` reads what `pipeline` wrote - so carrying on past a failure
+    would produce a later stage's error about a missing artifact instead of
+    the real one, which is the harder of the two to act on.
+    """
+    for name, argv in commands:
+        with _LOCK:
+            record["command"] = name
+        if not _one(argv, env, record):
+            return
+    with _LOCK:
+        record["status"] = "done"
+        record["exit_code"] = 0
+        record["finished_at"] = utcnow().isoformat()
+        record["stage"] = ""
+        record["command"] = ""
+
+
+def _one(argv: list[str], env: dict[str, str], record: dict[str, Any]) -> bool:
+    """One subprocess. Returns whether it succeeded."""
     try:
         proc = subprocess.Popen(
             argv,
@@ -159,7 +281,7 @@ def _worker(argv: list[str], env: dict[str, str], record: dict[str, Any]) -> Non
             record["status"] = "failed"
             record["error"] = f"could not start the pipeline: {exc}"
             record["finished_at"] = utcnow().isoformat()
-        return
+        return False
 
     with _LOCK:
         record["pid"] = proc.pid
@@ -174,23 +296,25 @@ def _worker(argv: list[str], env: dict[str, str], record: dict[str, Any]) -> Non
             if line.startswith("=== "):
                 record["stage"] = line.strip("= ").strip()
     code = proc.wait()
+    if code == 0:
+        return True
 
     with _LOCK:
         record["exit_code"] = code
-        record["status"] = "done" if code == 0 else "failed"
+        record["status"] = "failed"
         record["finished_at"] = utcnow().isoformat()
         record["stage"] = ""
-        if code != 0:
-            record["error"] = (
-                f"the pipeline exited {code}. The last lines of its output say "
-                f"which stage stopped and what it wanted."
-            )
+        record["error"] = (
+            f"{record.get('command') or 'the pipeline'} exited {code}. The last "
+            f"lines of its output say which stage stopped and what it wanted."
+        )
+    return False
 
 
 def start(*, project_id: str, repo_tree: Path, docs_dir: Path,
           export_bytes: bytes, export_name: str = "",
           project_filter: str = "", done_status: str = "",
-          actor: str = "") -> dict[str, Any]:
+          actor: str = "", mode: str = "sync") -> dict[str, Any]:
     """Begin a run. Returns the record immediately; it completes in a thread.
 
     The export is written to a temp file rather than passed as bytes because
@@ -218,8 +342,12 @@ def start(*, project_id: str, repo_tree: Path, docs_dir: Path,
             "would pass to `tracelink tickets`."
         )
 
-    run_dir = runs_root() / _slug(project_id)
+    run_dir = run_dir_for(project_id)
     run_dir.mkdir(parents=True, exist_ok=True)
+    # Before the temp file and before the thread: a `new` run that cleared the
+    # old artifacts only once the subprocess reached them would leave the page
+    # reading last week's numbers under this run's progress bar.
+    cleared = reset_artifacts(run_dir) if mode == "new" else 0
 
     # Kept for the life of the run rather than a `with` block: the subprocess
     # outlives this call, and deleting the export out from under the stage
@@ -238,15 +366,35 @@ def start(*, project_id: str, repo_tree: Path, docs_dir: Path,
         [home, env["PYTHONPATH"]] if env.get("PYTHONPATH") else [home]
     )
 
-    argv = _argv(run_dir=run_dir, export=export_path, repo=repo_tree,
-                 docs=docs_dir, project_id=project_id,
-                 project_filter=project_filter, done_status=done_status)
+    verdicts = verdict_stages_enabled()
+    commands = _commands(run_dir=run_dir, export=export_path, repo=repo_tree,
+                         docs=docs_dir, project_id=project_id,
+                         project_filter=project_filter, done_status=done_status,
+                         verdicts=verdicts)
 
     record: dict[str, Any] = {
         "project_id": project_id,
         "run": str(run_dir),
         "status": "running",
         "stage": "",
+        #: Which subcommand is in flight. The page already shows `stage` from
+        #: the CLI's own banners; this says which of them it belongs to, so
+        #: "adjudicate" is distinguishable from a pipeline stage of the same
+        #: name in a log somebody is reading after the fact.
+        "command": "",
+        "mode": mode,
+        #: How many of the previous run's artifacts a `new` run removed. Zero
+        #: on a sync, and zero on the first trace of a project - which is the
+        #: honest way to say "there was nothing here before" without the page
+        #: having to guess from a timestamp.
+        "cleared": cleared,
+        "verdicts": verdicts,
+        #: How many cached verdicts were sitting in this run directory before
+        #: it started. The honest version of "will this cost anything": a run
+        #: over the same tickets with a full cache spends nothing, and a
+        #: number here of zero is the warning that it will.
+        "cached_verdicts": len(list((run_dir / "cache").glob("*.json")))
+        if (run_dir / "cache").is_dir() else 0,
         "started_at": utcnow().isoformat(),
         "finished_at": None,
         "exit_code": None,
@@ -262,7 +410,7 @@ def start(*, project_id: str, repo_tree: Path, docs_dir: Path,
 
     def _run_and_clean() -> None:
         try:
-            _worker(argv, env, record)
+            _worker(commands, env, record)
         finally:
             export_path.unlink(missing_ok=True)
 

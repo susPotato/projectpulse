@@ -20,6 +20,10 @@
        system dark preference does not flash light first. Kept identical
        across all rail copies - see theme.js. -->
   <script>(function(){try{var t=localStorage.getItem("pulse-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <!-- The sign-in gate. Not deferred, and ahead of the stylesheets and the
+       rest of the scripts: everything below is work on a page this visitor
+       may not be allowed to see, and a deferred redirect paints it first. -->
+  <script src="/static/auth.js"></script>
   <link rel="stylesheet" href="/static/shell.css">
   <script src="/static/theme.js" defer></script>
 <script src="/static/rail.js" defer></script>
@@ -109,6 +113,13 @@
                  transition: opacity var(--dur-tap) var(--ease-out); }
     button.run:hover { opacity: .88; }
     button.run:disabled { opacity: .55; cursor: default; }
+    /* The second of the two. Outlined rather than filled: rule 8 allows one
+       primary action per screen, and which of these is primary depends on
+       whether the project has been traced yet - so neither is filled
+       permanently and `.secondary` moves between them in `paintRunInfo`. */
+    button.run.secondary { background: none; color: var(--blue); }
+    button.run.secondary:hover { background: color-mix(in srgb, var(--blue) 10%, transparent);
+                                 opacity: 1; }
     /* The stage the pipeline is on. `tabular-nums` because the elapsed
        seconds tick beside it and digits of different widths make the whole
        line jitter once a second. */
@@ -248,7 +259,14 @@
 </nav>
 <main>
 <div class="wrap">
-  <h1>Traceability</h1>
+  <!-- The one page in the rail with no app bar of its own, which meant it was
+       also the one page with nowhere for the signed-in avatar to sit. Same
+       shape as /jira's, so the heading row is one thing across the product
+       rather than ten. `.appbar h1` in shell.css already zeroes the heading's
+       own margin and sets its size, so nothing is needed here. -->
+  <div class="appbar">
+    <h1>Traceability</h1>
+  </div>
   <!-- What the page is for, in the reader's terms. The run path and the
        symbol and file counts used to be this line; they are facts about
        the pipeline, not about the delivery, so they moved into the tooltip
@@ -263,8 +281,19 @@
     <label for="project" class="lbl" style="align-self:center">Project</label>
     <select id="project"></select>
     <span class="muted" id="runinfo"></span>
-    <button type="button" class="run" id="run-btn" style="margin-left:auto"
-            disabled>Run traceability</button>
+    <!-- Two buttons, because they answer different questions. "New trace" is
+         "what does this code say about this backlog?" and starts the analysis
+         over; "Sync" is "what changed since I last looked?" and updates the
+         run this project already has. One button doing both would have to
+         pick for you, and the two are not interchangeable: a sync against
+         nothing is a first run wearing the wrong label.
+
+         Sync stays disabled until the project has a run - see `paintRunInfo`.
+         New trace is the primary of the two only when there is no run yet. -->
+    <button type="button" class="run" id="run-new" style="margin-left:auto"
+            disabled>New trace</button>
+    <button type="button" class="run secondary" id="run-sync"
+            disabled>Sync</button>
     <span class="run-state" id="run-state"></span>
   </div>
   <div id="run-detail"></div>
@@ -1726,17 +1755,45 @@
     return " · " + Math.round((Date.now() - runStartedAt) / 1000) + "s";
   }
 
+  /* Both run buttons, and whether each one is offered.
+
+     `traced` is whether this project has a run to update. It decides two
+     things: that Sync is pressable at all, and which of the two is the
+     screen's one primary action - a project with nothing to compare against
+     should be led to New trace, and one already traced to Sync. */
+  var hasRun = false;
+  /* Whether this server runs the stages that call a model. Null until the
+     first poll answers - the empty state simply omits the sentence until
+     then rather than guessing at it. */
+  var verdictStages = null;
+
+  function runButtons() {
+    return [document.getElementById("run-new"),
+            document.getElementById("run-sync")];
+  }
+
+  function setRunEnabled(on) {
+    var pair = runButtons();
+    pair[0].disabled = !on;
+    // Never pressable without a run behind it: the server refuses that with
+    // a sentence, and a button whose only outcome is that sentence is a
+    // button that should not have been offered.
+    pair[1].disabled = !on || !hasRun;
+    pair[0].classList.toggle("secondary", hasRun);
+    pair[1].classList.toggle("secondary", !hasRun);
+  }
+
   function paintRun(j) {
-    var btn = document.getElementById("run-btn");
     var state = document.getElementById("run-state");
     var detail = document.getElementById("run-detail");
     var run = j.run;
+    if (typeof j.verdicts === "boolean") verdictStages = j.verdicts;
 
     /* State 3 of the four: this deployment cannot do it at all. Disabled
        with the reason beside it, rather than a button that fails when
        pressed. */
     if (j.available === false) {
-      btn.disabled = true;
+      setRunEnabled(false);
       state.className = "run-state";
       state.textContent = j.detail || "This server cannot run the pipeline.";
       detail.innerHTML = "";
@@ -1744,7 +1801,7 @@
     }
 
     if (j.running && run) {
-      btn.disabled = true;
+      setRunEnabled(false);
       state.className = "run-state";
       /* The stage, paired with the word "Running" - motion and colour never
          carry the meaning alone. */
@@ -1754,7 +1811,7 @@
       return true;
     }
 
-    btn.disabled = false;
+    setRunEnabled(true);
     if (!run) {
       state.className = "run-state";
       state.textContent = "";
@@ -1807,8 +1864,9 @@
     }, 2000);
   }
 
-  function startRun() {
-    var btn = document.getElementById("run-btn");
+  /* `mode` is "new" or "sync", and the server takes the same two words -
+     one vocabulary, so a log line and a button agree about what happened. */
+  function startRun(mode) {
     var state = document.getElementById("run-state");
     var project = wantedProject();
     if (!project) {
@@ -1817,11 +1875,15 @@
       return;
     }
 
-    btn.disabled = true;
+    setRunEnabled(false);
     state.className = "run-state";
     /* The clone happens inside this request, so the first press is slow.
-       Saying so beats a button that looks stuck. */
-    state.textContent = "Reading the repository…";
+       Saying so beats a button that looks stuck. Named per mode because the
+       two take visibly different amounts of time and a person who pressed
+       Sync should not be left wondering whether they hit the wrong one. */
+    state.textContent = mode === "new"
+      ? "Starting a new trace: reading the repository…"
+      : "Syncing: reading the repository…";
     document.getElementById("run-detail").innerHTML = "";
 
     var headers = adminTokenOnly();
@@ -1829,7 +1891,7 @@
 
     fetch("/api/traceability/run", {
       method: "POST", headers: headers,
-      body: JSON.stringify({ project_id: project })
+      body: JSON.stringify({ project_id: project, mode: mode })
     })
       .then(function (r) {
         return r.text().then(function (text) {
@@ -1848,7 +1910,7 @@
         return refreshRun();
       })
       .catch(function (e) {
-        btn.disabled = false;
+        setRunEnabled(true);
         state.className = "run-state bad";
         state.textContent = e.message;
       });
@@ -1862,6 +1924,12 @@
       document.getElementById("runinfo").textContent =
         traced.length + (traced.length === 1 ? " run available" : " runs available");
 
+      /* Whether THIS project has a run, not whether the server has any.
+         `available` lists every run on disk, and a project with none of them
+         still has nothing for Sync to compare against. */
+      hasRun = !!data.run;
+      setRunEnabled(true);
+
       if (!data.run) {
         document.getElementById("mix").innerHTML = "";
         document.getElementById("chips").innerHTML = "";
@@ -1870,14 +1938,24 @@
         showBar(null);
         document.getElementById("main").innerHTML =
           '<div class="empty"><p><b>Not traced.</b></p><p>' + esc(data.detail) +
-          '</p><p>Press <b>Run traceability</b> above to produce one. It ' +
+          '</p><p>Press <b>New trace</b> above to produce one. It ' +
           "needs two things registered for this project on " +
           '<a href="/settings">Settings &rsaquo; Sources</a>: the ' +
           "<b>code repository</b> it is traced against, and the <b>backlog " +
           "export</b> its tickets are read from.</p>" +
-          "<p class=\"muted\">Only the free stages run. The ones that call a " +
-          "model &mdash; translate, adjudicate, explain &mdash; cost money per " +
-          "ticket and are run from the command line deliberately.</p></div>";
+          "<p class=\"muted\">Once a project has a run, <b>Sync</b> updates " +
+          "it against the current code and backlog instead of starting " +
+          "over.</p>" +
+          /* Restored rather than dropped: it is still true on a server that
+             has not enabled them, and it is the difference between a board
+             with verdicts on it and one without. Asked of the server, so it
+             cannot describe the wrong deployment. */
+          (verdictStages === false
+            ? "<p class=\"muted\">Only the free stages run here. The ones that " +
+              "call a model &mdash; translate, adjudicate, explain &mdash; cost " +
+              "money per ticket and are off on this server.</p>"
+            : "") +
+          "</div>";
         return;
       }
       D = data;
@@ -1906,7 +1984,10 @@
     });
   load(wantedProject());
 
-  document.getElementById("run-btn").addEventListener("click", startRun);
+  document.getElementById("run-new")
+          .addEventListener("click", function () { startRun("new"); });
+  document.getElementById("run-sync")
+          .addEventListener("click", function () { startRun("sync"); });
   /* Asked once on load, so the button knows whether this server can run at
      all before anybody presses it - and so a run somebody else started, or
      one still going after a reload, is picked up rather than invisible. */

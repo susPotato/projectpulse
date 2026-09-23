@@ -261,8 +261,9 @@ def test_a_run_starts_and_is_reported(client, registered, monkeypatch, tmp_path)
 
     monkeypatch.setenv("TRACELINK_RUNS", str(tmp_path / "runs"))
     monkeypatch.setattr(
-        traceability_run, "_argv",
-        lambda **kw: [sys.executable, "-c", "print('=== tickets'); print('ok')"],
+        traceability_run, "_commands",
+        lambda **kw: [("pipeline", [sys.executable, "-c",
+                                    "print('=== tickets'); print('ok')"])],
     )
 
     _upload(client)
@@ -280,6 +281,170 @@ def test_a_run_starts_and_is_reported(client, registered, monkeypatch, tmp_path)
     status = client.get("/api/traceability/run").json()
     assert status["run"]["project_id"] == PROJECT
     assert isinstance(status["run"]["log"], list)
+
+
+# --------------------------------------------------------------------------
+# New trace against sync
+# --------------------------------------------------------------------------
+
+def _stub_pipeline(monkeypatch, tmp_path):
+    """A run that succeeds instantly and writes the file `has_run` looks for."""
+    import sys
+
+    root = tmp_path / "runs"
+    monkeypatch.setenv("TRACELINK_RUNS", str(root))
+
+    def commands(**kw):
+        target = kw["run_dir"] / "tickets.json"
+        return [("pipeline", [
+            sys.executable, "-c",
+            f"import pathlib; pathlib.Path(r'{target}').write_text('{{}}')",
+        ])]
+
+    monkeypatch.setattr(traceability_run, "_commands", commands)
+    return root
+
+
+def _wait(client, timeout=30.0):
+    import time
+
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        body = client.get("/api/traceability/run").json()
+        if not body["running"]:
+            return body
+        time.sleep(0.02)
+    raise AssertionError("the stubbed run did not finish")
+
+
+def test_syncing_a_project_that_has_never_been_traced_is_refused(
+        client, registered, monkeypatch, tmp_path):
+    """Promoting it to a first run would answer a question nobody asked.
+
+    A sync reports what changed since last time. With no last time there is
+    nothing to compare against, so the honest answer is the sentence naming
+    the other button - not a full first-run analysis labelled as an update.
+    """
+    _stub_pipeline(monkeypatch, tmp_path)
+    _upload(client)
+
+    response = client.post("/api/traceability/run",
+                           json={"project_id": PROJECT, "mode": "sync"})
+    assert response.status_code == 400
+    assert "never been traced" in response.json()["detail"]
+    assert "New trace" in response.json()["detail"]
+
+
+def test_a_missing_registration_is_reported_before_the_sync_complaint(
+        client, monkeypatch, tmp_path):
+    """Ordering, and it is the whole point of where that check sits.
+
+    A project with no repository has also never been traced, so both are
+    true - and "register a repository" is the one they have to act on. The
+    sync refusal arriving first would send them to press the other button,
+    which fails for the real reason a moment later.
+    """
+    _stub_pipeline(monkeypatch, tmp_path)
+    response = client.post("/api/traceability/run",
+                           json={"project_id": PROJECT, "mode": "sync"})
+    assert response.status_code == 400
+    assert "no repository is registered" in response.json()["detail"]
+
+
+def test_the_mode_defaults_to_new_then_sync(client, registered, monkeypatch,
+                                            tmp_path):
+    """No mode means "decide from what this project has".
+
+    Both fixed defaults are wrong for somebody: `sync` refuses a first run,
+    and `new` throws away the run an old caller meant to update.
+    """
+    _stub_pipeline(monkeypatch, tmp_path)
+    _upload(client)
+
+    first = client.post("/api/traceability/run", json={"project_id": PROJECT})
+    assert first.status_code == 200, first.text
+    assert first.json()["run"]["mode"] == "new"
+    _wait(client)
+
+    second = client.post("/api/traceability/run", json={"project_id": PROJECT})
+    assert second.status_code == 200, second.text
+    assert second.json()["run"]["mode"] == "sync"
+
+
+def test_an_unknown_mode_is_refused_by_name(client, registered, monkeypatch,
+                                            tmp_path):
+    _stub_pipeline(monkeypatch, tmp_path)
+    _upload(client)
+    response = client.post("/api/traceability/run",
+                           json={"project_id": PROJECT, "mode": "refresh"})
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "refresh" in detail and "'new'" in detail and "'sync'" in detail
+
+
+def test_a_new_trace_clears_the_previous_artifacts_but_keeps_the_cache(
+        client, registered, monkeypatch, tmp_path):
+    """"Start over" means the conclusions, not the receipts.
+
+    The verdict cache is content-addressed, so an entry whose inputs have
+    changed is unreachable rather than wrong. Deleting it would re-bill every
+    ticket to gain nothing, which is the opposite of what a person pressing
+    a button labelled "new" is asking for.
+    """
+    root = _stub_pipeline(monkeypatch, tmp_path)
+    _upload(client)
+
+    assert client.post("/api/traceability/run",
+                       json={"project_id": PROJECT}).status_code == 200
+    _wait(client)
+
+    run_dir = root / traceability_run._slug(PROJECT)
+    stale = run_dir / "verdicts.json"
+    stale.write_text('{"payload": []}', encoding="utf-8")
+    cache = run_dir / "cache"
+    cache.mkdir(exist_ok=True)
+    (cache / "deadbeef.json").write_text('{"verdict": "corroborated"}',
+                                         encoding="utf-8")
+
+    started = client.post("/api/traceability/run",
+                          json={"project_id": PROJECT, "mode": "new"})
+    assert started.status_code == 200, started.text
+    assert started.json()["run"]["cleared"] >= 2      # tickets + verdicts
+    _wait(client)
+
+    assert not stale.exists(), "a new trace kept the previous run's verdicts"
+    assert (cache / "deadbeef.json").exists(), "a new trace discarded the cache"
+
+
+def test_a_sync_keeps_what_the_previous_run_wrote(client, registered,
+                                                  monkeypatch, tmp_path):
+    root = _stub_pipeline(monkeypatch, tmp_path)
+    _upload(client)
+
+    assert client.post("/api/traceability/run",
+                       json={"project_id": PROJECT}).status_code == 200
+    _wait(client)
+
+    run_dir = root / traceability_run._slug(PROJECT)
+    kept = run_dir / "verdicts.json"
+    kept.write_text('{"payload": []}', encoding="utf-8")
+
+    started = client.post("/api/traceability/run",
+                          json={"project_id": PROJECT, "mode": "sync"})
+    assert started.status_code == 200, started.text
+    assert started.json()["run"]["cleared"] == 0
+    _wait(client)
+    assert kept.exists(), "a sync threw away the run it was meant to update"
+
+
+def test_the_status_route_says_whether_verdict_stages_run_here(client,
+                                                               monkeypatch):
+    """The page prints a caveat about cost, and the same build answers
+    differently depending on one environment variable."""
+    monkeypatch.delenv(traceability_run.VERDICTS_ENV, raising=False)
+    assert client.get("/api/traceability/run").json()["verdicts"] is False
+    monkeypatch.setenv(traceability_run.VERDICTS_ENV, "1")
+    assert client.get("/api/traceability/run").json()["verdicts"] is True
 
 
 def test_the_status_route_answers_before_any_run_has_happened(client):
