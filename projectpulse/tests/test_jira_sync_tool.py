@@ -265,6 +265,30 @@ def test_the_script_backs_off_rather_than_giving_up_on_one_refusal():
     assert "429" in text
 
 
+def test_a_refusal_with_no_retry_after_is_waited_out_once_and_then_left():
+    """Retrying into a throttle is how a short block becomes a long one.
+
+    A `Retry-After` is a limit with a stated end and is worth waiting out.
+    A WAF throttling an address usually sends none and usually does not mean
+    seconds - and requests made into it can restart the window. The old
+    behaviour spent four attempts over two minutes there and reported a
+    gateway problem; measured against a stand-in that always answers 429
+    with no header, the tool now makes exactly two.
+
+    Stopping is free: what was read is already sent, and the next run
+    resumes from the new watermark.
+    """
+    section = _powershell_section()
+    assert "$PatientWait" in section
+    assert "$BlindWaited" in section, "nothing caps the blind waits"
+    # The budget is the run, not the page - the next page is throttled too.
+    assert re.search(r"\$BlindWaited\s*=\s*\$false", section)
+    # And the stated-length path must still retry, since that limit ends.
+    stated = section.index("Jira asked for $wait s, waiting")
+    blind = section.index("no wait time given")
+    assert stated < blind
+
+
 def test_the_script_caps_its_paging():
     """A project far larger than expected must not walk for hours."""
     text = TEMPLATE.read_text(encoding="utf-8")

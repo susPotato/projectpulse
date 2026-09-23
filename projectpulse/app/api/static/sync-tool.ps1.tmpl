@@ -64,11 +64,18 @@ $Headers = @{
 $PageSize = 25
 $Pace     = 4
 
-# How many times to wait out a refusal before giving up on a page. The
-# first refusal is usually the limiter rather than a wall, and waiting is
-# what gets through it - but a genuinely blocked host should not be
-# hammered, so this is small and the waits get longer.
+# How many times to wait out a refusal that Jira has put a length on. A
+# `Retry-After` is a temporary limit with a stated end, so waiting it out
+# is exactly right and a few attempts are cheap.
 $MaxRetries = 3
+
+# The one blind wait, for a refusal with no `Retry-After`. A filter that is
+# throttling an address rarely says how long and rarely means seconds, and
+# requests made into it can restart the window rather than shorten it - so
+# this happens once per run and then the tool stops and lets a person
+# decide. Stopping costs nothing: everything read so far is already sent,
+# and the next run resumes from the new watermark.
+$PatientWait = 60
 
 # A ceiling, so a project far larger than expected cannot walk for hours.
 # 400 pages is 10,000 issues; reaching it is reported, not silent, and the
@@ -175,6 +182,9 @@ $read = 0
 $sent = 0
 $pages = 0
 $stoppedEarly = $false
+# Per run, not per page: a filter throttling this address is throttling the
+# next page too, so one patient wait is the budget for the whole run.
+$BlindWaited = $false
 
 function Send-Page($issues) {
     $body = @{ project_key = $ProjectKey; issues = $issues; url = "$JiraSite/rest/api/2/search" } |
@@ -252,21 +262,42 @@ while ($pages -lt $MaxPages) {
             }
 
             if ($code -eq 429 -or $code -eq 403 -or $code -eq 503) {
-                if ($try -ge $MaxRetries) {
-                    Write-Bad "Jira's gateway kept refusing ($code). Stopping here."
-                    $stoppedEarly = $true
-                    break
-                }
-                # Jira says how long to wait when it knows; otherwise back
-                # off further each time rather than guessing once.
                 $wait = 0
                 if ($response) {
                     $retryAfter = $response.Headers["Retry-After"]
                     if ($retryAfter) { [int]::TryParse($retryAfter, [ref]$wait) | Out-Null }
                 }
-                if ($wait -le 0) { $wait = 20 * ($try + 1) }
-                Write-Note "gateway refused ($code) - waiting $wait s, then trying this page again"
-                Start-Sleep -Seconds $wait
+
+                # Jira named a length. A limit with a stated end is worth
+                # waiting out, and it is telling us the truth about itself.
+                if ($wait -gt 0) {
+                    if ($try -ge $MaxRetries) {
+                        Write-Bad "Jira kept refusing ($code) after waiting as asked."
+                        $stoppedEarly = $true
+                        break
+                    }
+                    Write-Note "refused ($code) - Jira asked for $wait s, waiting"
+                    Start-Sleep -Seconds $wait
+                    continue
+                }
+
+                # No length given. Wait once, patiently, and then stop -
+                # requests made into a throttle can restart its window, so
+                # retrying is how a short block becomes a long one.
+                if ($BlindWaited) {
+                    Write-Bad "Still refused ($code). This address is being rate limited."
+                    Write-Note "Not the token and not the project - the same limit applies"
+                    Write-Note "to a browser on this machine."
+                    Write-Note ""
+                    Write-Note "Leave it a while and run this again. Nothing is lost:"
+                    Write-Note "$sent issue(s) are already saved and the next run picks up"
+                    Write-Note "from there. Running it repeatedly now will extend the block."
+                    $stoppedEarly = $true
+                    break
+                }
+                $BlindWaited = $true
+                Write-Note "refused ($code), no wait time given - waiting $PatientWait s"
+                Start-Sleep -Seconds $PatientWait
                 continue
             }
 
