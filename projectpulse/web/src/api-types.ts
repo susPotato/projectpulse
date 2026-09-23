@@ -886,6 +886,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Project Repos
+         * @description Every registered repository, or one project's. Never a credential.
+         *
+         *     Reports whether this server can fetch at all alongside the rows, so a
+         *     deployment missing git or the pipeline says so on the page instead of
+         *     only when somebody presses the button.
+         */
+        get: operations["list_project_repos_api_repos_get"];
+        put?: never;
+        /**
+         * Save Project Repo
+         * @description Register a repository against a project, after actually reading it.
+         *
+         *     The order is the whole point: clone, enforce the documentation tree,
+         *     and only then write the row. A registration therefore always names a
+         *     commit this server read and a documentation tree it walked - and a
+         *     repository that cannot be reached, or has no documents, leaves nothing
+         *     behind. That is the fifth defect in CLAUDE.md section 0a, which was a
+         *     refused import still leaving a project on the portfolio.
+         */
+        post: operations["save_project_repo_api_repos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repos/{project_id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Project Repo
+         * @description Re-read a registered repository at its ref.
+         *
+         *     A fetch rather than a clone - `tracelink.source.resolve` moves the
+         *     cached checkout instead of downloading it again. The interesting
+         *     answer is `moved`: whether the commit changed since the last read,
+         *     which is what tells somebody a run built from this repository is now
+         *     describing code that is no longer there.
+         */
+        post: operations["refresh_project_repo_api_repos__project_id__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repos/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Project Repo
+         * @description Forget one repository registration.
+         *
+         *     Anything already derived from it stays, the same rule `delete_import`
+         *     keeps: removing a source does not empty the pages built from it.
+         */
+        delete: operations["delete_project_repo_api_repos__project_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/jira": {
         parameters: {
             query?: never;
@@ -3286,6 +3370,42 @@ export interface components {
             name: string;
         };
         /**
+         * ProjectRepoIn
+         * @description Where one delivery project's code and documents come from.
+         */
+        ProjectRepoIn: {
+            /**
+             * Project Id
+             * @default
+             */
+            project_id: string;
+            /**
+             * Repo Url
+             * @default
+             */
+            repo_url: string;
+            /**
+             * Ref
+             * @default
+             */
+            ref: string;
+            /**
+             * Docs Path
+             * @default docs
+             */
+            docs_path: string;
+            /**
+             * Token
+             * @default
+             */
+            token: string;
+            /**
+             * Clear Token
+             * @default false
+             */
+            clear_token: boolean;
+        };
+        /**
          * ProjectRow
          * @description One delivery project, whatever number of sources fed it.
          */
@@ -5240,6 +5360,140 @@ export interface operations {
             header?: never;
             path: {
                 connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_project_repos_api_repos_get: {
+        parameters: {
+            query?: {
+                project?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_project_repo_api_repos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRepoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_project_repo_api_repos__project_id__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_project_repo_api_repos__project_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
             };
             cookie?: never;
         };

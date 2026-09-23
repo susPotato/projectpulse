@@ -1380,6 +1380,235 @@ def delete_jira_connection(request: Request, connection_id: int) -> dict:
     return {"deleted": connection_id}
 
 
+class ProjectRepoIn(BaseModel):
+    """Where one delivery project's code and documents come from."""
+
+    project_id: str = ""
+    #: A clone URL, or a path on this host for a local run.
+    repo_url: str = ""
+    #: Branch or tag. Blank takes the remote's default.
+    ref: str = ""
+    #: The documentation tree, relative to the repository root. The lock -
+    #: see `app/ingest/sources/git/source.py`.
+    docs_path: str = "docs"
+    #: Blank on an edit keeps the stored credential, as `JiraLinkIn` does.
+    token: str = ""
+    #: Explicitly drop the stored credential. Needed because blank means
+    #: keep: without this there is no way to say "this repository is public
+    #: now" and stop sending a token to a host that no longer needs one.
+    clear_token: bool = False
+
+
+@app.get("/api/repos")
+def list_project_repos(project: str | None = None) -> dict:
+    """Every registered repository, or one project's. Never a credential.
+
+    Reports whether this server can fetch at all alongside the rows, so a
+    deployment missing git or the pipeline says so on the page instead of
+    only when somebody presses the button.
+    """
+    from app.ingest.sources.git import source, store
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    ok, reason = source.available()
+    with session_scope() as session:
+        return {
+            "repos": store.listing(session, project),
+            "can_fetch": ok,
+            "reason": reason,
+        }
+
+
+@app.post("/api/repos")
+def save_project_repo(request: Request, body: ProjectRepoIn) -> dict:
+    """Register a repository against a project, after actually reading it.
+
+    The order is the whole point: clone, enforce the documentation tree,
+    and only then write the row. A registration therefore always names a
+    commit this server read and a documentation tree it walked - and a
+    repository that cannot be reached, or has no documents, leaves nothing
+    behind. That is the fifth defect in CLAUDE.md section 0a, which was a
+    refused import still leaving a project on the portfolio.
+    """
+    from app import admin
+    from app.ingest.sources.git import source, store
+    from app.llm.keys import KeyStoreUnavailable
+
+    actor = admin.require(request)
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    project_id = (body.project_id or "").strip()
+    if not project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Choose which delivery project this repository is for.",
+        )
+    if not (body.repo_url or "").strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Give a clone URL, such as https://github.com/org/repo.git",
+        )
+
+    docs_path = store.normalise_docs_path(body.docs_path)
+
+    # Blank keeps, `clear_token` drops. See `ProjectRepoIn`.
+    if body.clear_token:
+        token: str | None = ""
+    else:
+        token = body.token.strip() or None
+
+    # Which credential the fetch runs with: the one being saved, or the one
+    # already stored when this is an edit that left the field alone.
+    with session_scope() as session:
+        existing = store.for_project(session, project_id)
+        try:
+            if token:
+                secret = token
+            elif token == "" or existing is None:
+                secret = ""
+            else:
+                secret = store.token_for(existing)
+        except KeyStoreUnavailable as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from None
+
+    try:
+        fetched = source.fetch(
+            repo_url=body.repo_url.strip(), ref=body.ref.strip(),
+            docs_path=docs_path, token=secret,
+        )
+    except source.PipelineMissing as exc:
+        # A deployment that cannot do this at all, not a bad request.
+        raise HTTPException(status_code=503, detail=str(exc)) from None
+    except source.DocsMissing as exc:
+        # The lock. Names what it looked for and what is there.
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    except source.RepoUnavailable as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+    try:
+        with session_scope() as session:
+            row = store.save(
+                session, project_id=project_id,
+                repo_url=body.repo_url.strip(), ref=body.ref.strip(),
+                docs_path=docs_path, token=token, actor=actor,
+                fetched=fetched,
+            )
+            session.flush()
+            saved = {
+                "project_id": row.project_id,
+                "repo_url": row.repo_url,
+                "ref": row.ref,
+                "docs_path": row.docs_path,
+                "commit": row.commit,
+                "short_commit": row.commit[:12] if row.commit else "",
+                "dirty": row.dirty,
+                "doc_count": row.doc_count,
+                "private": bool(row.ciphertext),
+                "hint": row.hint,
+            }
+    except KeyStoreUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from None
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    return {"ok": True, **saved}
+
+
+@app.post("/api/repos/{project_id:path}/refresh")
+def refresh_project_repo(request: Request, project_id: str) -> dict:
+    """Re-read a registered repository at its ref.
+
+    A fetch rather than a clone - `tracelink.source.resolve` moves the
+    cached checkout instead of downloading it again. The interesting
+    answer is `moved`: whether the commit changed since the last read,
+    which is what tells somebody a run built from this repository is now
+    describing code that is no longer there.
+    """
+    from app import admin
+    from app.ingest.sources.git import source, store
+    from app.llm.keys import KeyStoreUnavailable
+
+    admin.require(request)
+
+    problem = check_connection()
+    if problem is not None:
+        raise HTTPException(status_code=503, detail=problem)
+
+    with session_scope() as session:
+        row = store.for_project(session, project_id)
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"no repository is registered for {project_id!r}",
+            )
+        before = row.commit
+        spec = {"repo_url": row.repo_url, "ref": row.ref,
+                "docs_path": row.docs_path}
+        try:
+            secret = store.token_for(row)
+        except KeyStoreUnavailable as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from None
+
+    try:
+        fetched = source.fetch(token=secret, **spec)
+    except (source.PipelineMissing, source.DocsMissing,
+            source.RepoUnavailable) as exc:
+        # The row survives a failed refresh and remembers why, which is
+        # the case `record_failure` exists for: the refresh that fails is
+        # usually the one nobody was watching.
+        with session_scope() as session:
+            store.record_failure(session, project_id, str(exc))
+        status = 503 if isinstance(exc, source.PipelineMissing) else 400
+        raise HTTPException(status_code=status, detail=str(exc)) from None
+
+    with session_scope() as session:
+        row = store.save(
+            session, project_id=project_id, repo_url=spec["repo_url"],
+            ref=spec["ref"], docs_path=spec["docs_path"], token=None,
+            fetched=fetched,
+        )
+        session.flush()
+        now = row.commit
+        docs = row.doc_count
+
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "commit": now,
+        "short_commit": now[:12] if now else "",
+        "moved": bool(before) and before != now,
+        "previous_commit": before,
+        "doc_count": docs,
+    }
+
+
+@app.delete("/api/repos/{project_id:path}")
+def delete_project_repo(request: Request, project_id: str) -> dict:
+    """Forget one repository registration.
+
+    Anything already derived from it stays, the same rule `delete_import`
+    keeps: removing a source does not empty the pages built from it.
+    """
+    from app import admin
+    from app.ingest.sources.git import store
+
+    admin.require(request)
+
+    with session_scope() as session:
+        if not store.delete(session, project_id):
+            raise HTTPException(
+                status_code=404,
+                detail=f"no repository is registered for {project_id!r}",
+            )
+    return {"deleted": project_id}
+
+
+
 @app.get("/jira")
 def jira_page() -> FileResponse:
     """What has been collected from Jira, as rows."""

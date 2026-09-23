@@ -205,6 +205,64 @@ Add the extra to the image first, or the SDK is not there to import - in
 `.[llm-openai]` / `.[llm-gemini]`). Without it the page still fills, with
 `narration_fallback_reason` saying the package is missing.
 
+### 5. Code repositories, and the documents they carry
+
+Settings > Sources has a **Code repository** card: register a git repository
+against a delivery project and the server clones it and reads its
+documentation tree. Two things have to be true on the host for that card to do
+anything, and it reports which one is missing rather than failing silently.
+
+**`git` is in the image.** The Dockerfile installs it. `tracelink.source`
+shells out to git; there is no pure-Python path.
+
+**The pipeline is in the image, as a committed copy.** `projectpulse/tracelink/`
+is a copy of the traceability pipeline, which lives in a different repository
+that this one cannot reach at build time. Keep it current when that pipeline
+changes:
+
+```bash
+python -m scripts.vendor_tracelink            # report what differs
+python -m scripts.vendor_tracelink --apply    # update it, then commit
+```
+
+`tests/test_vendored_tracelink.py` fails if the copy drifts, so a stale one is
+a red suite rather than a deployed image quietly running last month's
+pipeline. On a machine without that checkout the test skips and the committed
+copy is used as-is.
+
+**A private repository needs a token**, and it is a credential, so it is a
+secret rather than `[env]`:
+
+```bash
+fly secrets set PULSE_SECRET_KEY="..."   # if not already set - it seals the token
+```
+
+The token itself is typed into the card and sealed into `project_repos` with
+`PULSE_SECRET_KEY`, the same way a Jira token is. There is no
+`TRACELINK_GIT_TOKEN` to set on the host: the credential is per repository and
+comes from the row, lent to the pipeline for the length of one fetch. Leave a
+repository's token blank and it is treated as public - and an unrelated
+ambient token will not be sent to it.
+
+**What is stored, and what is not.** The registration - URL, ref, documents
+path, the commit that was read, the document count - is a row in Postgres, so
+it survives a deploy. The clone is not: it goes to `/app/.pulse/repos`, which
+is container-local and disposable, and a machine that loses it pays one
+shallow clone on the next refresh. That is the right split, because a clone
+can always be re-derived and an uploaded workbook cannot.
+
+⚠️ **The documentation tree is enforced, not assumed.** A repository with no
+`docs/` (or whatever the registration names) is refused with a 400 listing the
+directories it does have, and leaves no registration behind. This is
+deliberate: the documentation stages are most of what a repository is
+registered *for*, and a project registered without documents produces empty
+pages that read as a broken product rather than as a missing input.
+
+⚠️ **A large repository can exhaust a 512 MB machine.** The clone is shallow,
+but `[[vm]] memory` in `fly.toml` is 512 MB on a shared CPU, and nothing here
+caps repository size. Register a big one and expect the machine to be killed
+mid-clone. Raise the memory before pointing this at a monorepo.
+
 ---
 
 ## What the deployed app keeps, and where

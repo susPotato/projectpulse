@@ -73,6 +73,20 @@ class Settings:
     model_root: Path = Path(os.getenv("PULSE_MODEL_ROOT", REPO_ROOT / "models"))
     #: Full path to the duration classifier, if it is not in `model_root`.
     duration_model_path: str = os.getenv("PULSE_DURATION_MODEL", "")
+    #: Directory *containing* the `tracelink` package, when it is not
+    #: importable already. The image copies it to `/app`, so a plain import
+    #: works there and this stays empty; a developer with the pipeline
+    #: checked out beside this repository sets it rather than installing.
+    #: Its absence disables the git source with a named reason - the same
+    #: rule the model extras follow, never an ImportError at boot.
+    tracelink_home: str = os.getenv("PULSE_TRACELINK_HOME", "")
+    #: Where shallow clones are cached. Container-local and disposable on
+    #: purpose: `app/models/repo.py` explains why a clone is the one input
+    #: this app does not keep in Postgres. Under `state_dir` so the one
+    #: gitignored directory holds everything a run writes.
+    repo_cache: Path = Path(
+        os.getenv("PULSE_REPO_CACHE", REPO_ROOT / ".pulse" / "repos")
+    )
     echo_sql: bool = os.getenv("PULSE_ECHO_SQL", "").lower() in {"1", "true", "yes"}
 
 

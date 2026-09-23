@@ -21,6 +21,7 @@ from app.models import (  # noqa: F401
     narration,
     onedrive,
     raw,
+    repo,
     sync,
     tool,
     uploads,

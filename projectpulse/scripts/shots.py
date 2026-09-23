@@ -80,7 +80,11 @@ PAGES = (
     ("/team", "team", 1500),
     ("/reports", "reports", 1800),
     ("/agent", "agent", 1100),
-    ("/settings", "settings", 950),
+    #: Taller than it was: 950 predated the Jira connection list and the
+    #: code repository card, and cut the page off above both - so the one
+    #: check that looks at Settings was photographing the upload form and
+    #: reporting success.
+    ("/settings", "settings", 3600),
 )
 
 WIDTH = 1400

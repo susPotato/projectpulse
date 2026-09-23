@@ -62,6 +62,7 @@
     button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
     button:disabled { opacity: .55; cursor: default; }
     .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+    table.grid td.num { text-align: right; font-variant-numeric: tabular-nums; }
     .warn { border-left: 2px solid var(--amber); padding-left: 12px;
             font-size: 12.5px; color: var(--ink-2); margin-top: 14px; }
     .ok { color: var(--green); }
@@ -256,6 +257,36 @@
         '<button class="primary" id="jc-save">Save connection</button>' +
         '<span id="jc-status" class="hint" style="margin:0"></span>' +
       "</div></div></div>" +
+      '<div class="card"><div class="lbl">Code repository</div>' +
+      '<div class="hint" style="margin:6px 0 12px">The code a project is traced ' +
+      "against, and the documents that describe it. Documentation is read from " +
+      "<b>one directory in the repository</b> &mdash; <code>docs/</code> unless " +
+      "this says otherwise &mdash; and a repository without one is refused rather " +
+      "than registered empty, because every documentation stage would then report " +
+      "nothing and read as a broken page. The clone is shallow and disposable; what " +
+      "is stored is the registration and the commit that was read. A token for a " +
+      "private repository is sealed with <code>PULSE_SECRET_KEY</code>, and only a " +
+      "masked hint is shown.</div>" +
+      '<div class="hint warn" id="rp-blocked" style="display:none;margin:10px 0 14px"></div>' +
+      '<table class="grid" id="rp-table"><tr><th>Delivery project</th>' +
+      "<th>Repository</th><th>Ref</th><th>Documents from</th><th>Documents</th>" +
+      "<th>Commit</th><th>Token</th><th></th></tr></table>" +
+      '<div class="hint" id="rp-empty" style="margin:8px 0 0"></div>' +
+      '<div style="margin-top:14px">' +
+      '<label for="rp-project">Register a repository</label>' +
+      '<select id="rp-project">' + projectOptions + "</select>" +
+      '<label for="rp-url">Clone URL</label>' +
+      '<input type="text" id="rp-url" placeholder="https://github.com/org/repo.git" autocomplete="off">' +
+      '<label for="rp-ref">Branch or tag <span class="hint">(blank takes the remote default)</span></label>' +
+      '<input type="text" id="rp-ref" placeholder="main" autocomplete="off">' +
+      '<label for="rp-docs">Documents directory <span class="hint">(relative to the repository root)</span></label>' +
+      '<input type="text" id="rp-docs" value="docs" autocomplete="off">' +
+      '<label for="rp-token">Access token <span class="hint">(only for a private repository; blank keeps the stored one)</span></label>' +
+      '<input type="password" id="rp-token" autocomplete="off" spellcheck="false">' +
+      '<div class="row" style="margin-top:14px">' +
+        '<button class="primary" id="rp-save">Register &amp; read</button>' +
+        '<span id="rp-status" class="hint" style="margin:0"></span>' +
+      "</div></div></div>" +
       '<div class="card"><div class="lbl">Project pairing</div>' +
       '<div class="hint" style="margin:6px 0 12px">One delivery project can have several source ids. ' +
       "Jira and Excel each create their own row for the same work, and without this pairing a Jira event " +
@@ -276,6 +307,9 @@
     document.getElementById("jt-submit").addEventListener("click", testJira);
     document.getElementById("jc-save").addEventListener("click", saveConnection);
     loadConnections();
+
+    document.getElementById("rp-save").addEventListener("click", saveRepo);
+    loadRepos();
 
     /* Forgetting a source. Deliberately the same endpoint, the same wording
        and the same gate as the Imports page rather than a second way to do
@@ -608,6 +642,160 @@
           .catch(function (e) { alert("Could not forget it.\n\n" + e.message); });
       });
     });
+  }
+
+  /* The registered repositories.
+
+     Four states, and the third and fourth must not look alike: a server that
+     *cannot* clone (no git, no pipeline) reads differently from one that can
+     and has simply not been pointed at anything yet. A page that showed the
+     same empty table for both would send somebody to register a repository
+     that was never going to be read. */
+  function loadRepos() {
+    var table = document.getElementById("rp-table");
+    var empty = document.getElementById("rp-empty");
+    var blocked = document.getElementById("rp-blocked");
+    if (!table) return Promise.resolve();
+    empty.textContent = "Loading\u2026";
+
+    return fetch("/api/repos")
+      .then(function (r) {
+        if (!r.ok) throw new Error("the server could not list repositories");
+        return r.json();
+      })
+      .then(function (j) {
+        while (table.rows.length > 1) table.deleteRow(1);
+
+        /* State 3: this deployment cannot read a repository at all. The
+           reason names the missing piece, so it is shown rather than
+           summarised. */
+        if (j.can_fetch === false) {
+          blocked.style.display = "";
+          blocked.textContent = j.reason ||
+            "This server cannot read a repository.";
+        } else {
+          blocked.style.display = "none";
+        }
+
+        var rows = j.repos || [];
+        empty.textContent = rows.length ? ""
+          : "No repository is registered yet. Nothing is traced against code " +
+            "until one is.";
+
+        rows.forEach(function (c) {
+          var tr = table.insertRow();
+          /* A failed refresh is shown on the row rather than only in the
+             response of the request that failed - the refresh that breaks is
+             usually the one nobody was watching. Paired with the word
+             "Failed", never colour alone. */
+          var state = c.last_error
+            ? '<span class="bad">Failed</span> <span class="hint">' +
+              esc(c.last_error) + "</span>"
+            : '<code>' + esc(c.short_commit || "\u2014") + "</code>" +
+              (c.dirty ? ' <span class="hint">+ uncommitted</span>' : "");
+          tr.innerHTML =
+            "<td><b>" + esc(c.project_id) + "</b></td>" +
+            "<td><code>" + esc(c.repo_url) + "</code></td>" +
+            "<td>" + esc(c.ref || "default") + "</td>" +
+            "<td><code>" + esc(c.docs_path) + "</code></td>" +
+            '<td class="num">' + Number(c.doc_count || 0).toLocaleString() +
+            "</td>" +
+            "<td>" + state + "</td>" +
+            '<td><span class="hint">' +
+            (c.private ? esc(c.hint || "stored") : "public") + "</span></td>" +
+            '<td><button type="button" class="small" data-refetch="' +
+            esc(c.project_id) + '">Refresh</button> ' +
+            '<button type="button" class="small" data-forget-repo="' +
+            esc(c.project_id) + '">Forget</button></td>';
+        });
+        wireRepoButtons();
+      })
+      .catch(function (e) {
+        /* State 2: the request itself failed. Distinct from an empty list. */
+        while (table.rows.length > 1) table.deleteRow(1);
+        empty.className = "hint bad";
+        empty.textContent = e.message;
+      });
+  }
+
+  function wireRepoButtons() {
+    [].forEach.call(programBox.querySelectorAll("[data-refetch]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-refetch");
+        var was = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Reading\u2026";
+        fetch("/api/repos/" + encodeURIComponent(id) + "/refresh",
+              { method: "POST", headers: adminHeaders() })
+          .then(readBody)
+          .then(function (j) {
+            /* Whether the repository moved is the answer worth having: it is
+               what makes a run built from it knowably stale. */
+            alert(j.moved
+              ? "Moved to " + j.short_commit + " (was " +
+                String(j.previous_commit).slice(0, 12) + "). " +
+                j.doc_count + " documents."
+              : "Unchanged at " + (j.short_commit || "an unknown commit") +
+                ". " + j.doc_count + " documents.");
+          })
+          .catch(function (e) { alert("Could not read it.\n\n" + e.message); })
+          .then(function () {
+            btn.disabled = false;
+            btn.textContent = was;
+            return loadRepos();
+          });
+      });
+    });
+
+    [].forEach.call(programBox.querySelectorAll("[data-forget-repo]"), function (btn) {
+      btn.addEventListener("click", function () {
+        if (!confirm("Forget this repository?\n\nAnything already derived " +
+                     "from it stays; only the registration and its token go.")) return;
+        fetch("/api/repos/" +
+              encodeURIComponent(btn.getAttribute("data-forget-repo")),
+              { method: "DELETE", headers: adminHeaders() })
+          .then(readBody)
+          .then(loadRepos)
+          .catch(function (e) { alert("Could not forget it.\n\n" + e.message); });
+      });
+    });
+  }
+
+  function saveRepo() {
+    var statusEl = document.getElementById("rp-status");
+    var body = {
+      project_id: document.getElementById("rp-project").value,
+      repo_url: document.getElementById("rp-url").value.trim(),
+      ref: document.getElementById("rp-ref").value.trim(),
+      docs_path: document.getElementById("rp-docs").value.trim() || "docs",
+      token: document.getElementById("rp-token").value
+    };
+    if (body.project_id === "__new__") {
+      statusEl.className = "hint bad";
+      statusEl.textContent = "Pick an existing project - a repository is the " +
+        "code for one, not a way to create one.";
+      return;
+    }
+    statusEl.className = "hint";
+    /* The clone happens inside this request, so it is slow the first time.
+       Saying so beats a button that looks stuck. */
+    statusEl.textContent = "Reading the repository\u2026";
+
+    fetch("/api/repos",
+          { method: "POST", headers: adminHeaders(), body: JSON.stringify(body) })
+      .then(readBody)
+      .then(function (j) {
+        statusEl.className = "hint ok";
+        statusEl.textContent = "Registered at " + (j.short_commit || "this revision") +
+          " - " + j.doc_count + " document" + (j.doc_count === 1 ? "" : "s") +
+          " under " + j.docs_path + "/.";
+        document.getElementById("rp-token").value = "";
+        return loadRepos();
+      })
+      .catch(function (e) {
+        statusEl.className = "hint bad";
+        statusEl.textContent = e.message;
+      });
   }
 
   function saveConnection() {

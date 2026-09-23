@@ -70,7 +70,7 @@ Jira-based run lives at `traceability/runs/jira` on the laptop only. Putting it 
 | role field vs `assignee` disagree on 151 tickets | `QuanDh14` vs `Quan Do Hong`; FSG/FNS group codes |
 | one junk inline label survives: `a. TCV >= 500.000$` | cosmetic, on the Traceability page |
 | `diagnosis` and `translations` tabs are empty | both optional stages, never run for this project |
-| GitHub sync without crashing the server | **not started.** 512 MB, no volume, `source.resolve()` clones to local disk |
+| GitHub sync without crashing the server | **registration done, running stages not.** Settings > Sources registers a repo per project and enforces its `docs/` tree; `project_repos` holds the registration, the clone stays disposable on local disk. 512 MB is still uncapped - a large repo can kill the machine mid-clone. See DEPLOY.md section 5. |
 
 ⚠️ Still true: `fly ssh console` exits 1 with "Error: The handle is invalid" after every
 command on Windows/Git-Bash. Local pty artifact, not a remote failure — the command's own

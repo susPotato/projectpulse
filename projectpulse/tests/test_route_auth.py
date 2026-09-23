@@ -44,6 +44,10 @@ GUARDED = [
     ("POST", "/api/custom-tiles/chat", {"messages": [{"role": "user", "content": "hi"}]}),
     ("POST", "/api/agent/chat", {"messages": [{"role": "user", "content": "hi"}]}),
     ("DELETE", "/api/projects/excel:Project:upload:whatever", None),
+    # Makes this server clone a URL somebody typed, and the delete has
+    # no undo. Same two reasons as the entries above.
+    ("POST", "/api/repos", {"project_id": "x", "repo_url": ""}),
+    ("DELETE", "/api/repos/excel:Project:upload:whatever", None),
 ]
 
 
