@@ -83,6 +83,54 @@ def _auth_args(url: str) -> list[str]:
     return ["-c", f"http.extraHeader=Authorization: Basic {pair}"]
 
 
+#: How git reports "the remote would not serve this to you".
+#:
+#: Two spellings, and which one you get is about the *host*, not the
+#: repository. Where a credential helper is installed git authenticates,
+#: reaches GitHub, and is told `Repository not found` - GitHub deliberately
+#: answers a private repository and an absent one identically. Where there is
+#: no helper and no terminal, which is every container, git never gets that
+#: far: it asks for a username, finds prompts disabled, and dies with
+#: `could not read Username`.
+#:
+#: The hint used to key off the first spelling only, so the case it actually
+#: fires in on a deployment - a private repository registered from a browser,
+#: with the token box left empty - got git's plumbing and no explanation. A
+#: reader was handed "terminal prompts disabled" for a problem that has
+#: nothing to do with terminals.
+_NEEDS_CREDENTIAL = (
+    "not found",
+    "could not read username",
+    "could not read password",
+    "terminal prompts disabled",
+    "authentication failed",
+    "invalid username or password",
+    "403 forbidden",
+    "401 unauthorized",
+)
+
+
+def _credential_hint(stderr: str | None) -> str:
+    """What to do about a clone the remote refused, or "" for other failures.
+
+    Silent when a token was already supplied: "try a token" is the wrong
+    advice for somebody whose token is simply expired or too narrowly
+    scoped, and it reads as though the one they gave was ignored.
+    """
+    text = (stderr or "").lower()
+    if not any(mark in text for mark in _NEEDS_CREDENTIAL):
+        return ""
+    if _token():
+        return (" A token was supplied, so this is not a missing credential: "
+                "check that it has not expired and that its scope includes "
+                "this repository, or that the repository and branch exist.")
+    return (" The remote refused an anonymous request, and GitHub answers a "
+            "private repository and one that does not exist in exactly the "
+            "same way - so this is most likely private. Supply an access "
+            f"token that can read it (in the registration form, or as "
+            f"{TOKEN_ENV[0]}), or pass a local checkout instead.")
+
+
 class SourceError(RuntimeError):
     """The code source could not be resolved. Always says what to do next."""
 
@@ -231,15 +279,10 @@ def resolve(spec: str, *, ref: str = "", cache: Path | None = None
         args += [spec, str(target)]
         out = _git(*args, timeout=CLONE_TIMEOUT)
         if out.returncode != 0:
-            hint = ""
-            if not _token() and "not found" in (out.stderr or "").lower():
-                hint = (" GitHub answers the same way for a private "
-                        "repository and one that does not exist. If it is "
-                        f"private, set {TOKEN_ENV[0]} to a token that can "
-                        "read it, or pass a local checkout instead.")
             raise SourceError(
                 f"could not clone {spec!r}: "
-                f"{out.stderr.strip() or 'git clone failed'}.{hint}"
+                f"{out.stderr.strip() or 'git clone failed'}."
+                f"{_credential_hint(out.stderr)}"
             )
 
     rev = revision_of(target, origin=spec)
