@@ -51,7 +51,15 @@ $MaxPages = 400
 # site defines. A corporate Jira carries hundreds of custom fields and they
 # are most of the weight of a response that also expands the changelog -
 # which is the request the gateway refuses first.
+#
+# `customfield_10016` is story points *on Jira Cloud*. Data Center numbers
+# its custom fields differently, and Jira rejects the WHOLE request with a
+# 400 when `fields` names one that does not exist - so this list is an
+# optimisation that has to be allowed to fail. If it is refused the script
+# drops it and reads every field instead, which is what it did before this
+# list existed: slower, larger, and correct everywhere.
 $Fields = "project,summary,issuetype,status,assignee,created,updated,duedate,priority,labels,parent,description,customfield_10016"
+$UseFields = $true
 
 function Write-Step($text) { Write-Host $text -ForegroundColor Cyan }
 function Write-Note($text) { Write-Host "  $text" -ForegroundColor DarkGray }
@@ -139,10 +147,13 @@ function Send-Page($issues) {
 }
 
 while ($pages -lt $MaxPages) {
-    $url = "$JiraSite/rest/api/2/search?jql=$jql&startAt=$start&maxResults=$PageSize&fields=$Fields&expand=changelog"
-
     $page = $null
     for ($try = 0; $try -le $MaxRetries; $try++) {
+        # Rebuilt each attempt, because a 400 on the field list turns it off
+        # for the rest of the run and this is what picks that up.
+        $url = "$JiraSite/rest/api/2/search?jql=$jql&startAt=$start&maxResults=$PageSize&expand=changelog"
+        if ($UseFields) { $url += "&fields=$Fields" }
+
         try {
             $page = Invoke-RestMethod -Uri $url -Headers $JiraHeaders -TimeoutSec 60
             break
@@ -154,6 +165,19 @@ while ($pages -lt $MaxPages) {
             if ($code -eq 401) {
                 Write-Bad "Jira rejected the token (401). Check it has not expired."
                 Read-Host "Enter to close"; exit 1
+            }
+
+            # A 400 while asking for a named field list almost always means
+            # this site does not have one of those fields - most likely
+            # `customfield_10016`, which is story points on Cloud and
+            # something else entirely on Data Center. Jira refuses the whole
+            # request rather than the field, so drop the list and carry on
+            # reading everything. Costs a larger response, not a failed sync.
+            if ($code -eq 400 -and $UseFields) {
+                $UseFields = $false
+                Write-Note "this Jira refused the short field list - reading every field instead"
+                $try--   # not one of the retry attempts; the request changed
+                continue
             }
 
             if ($code -eq 429 -or $code -eq 403 -or $code -eq 503) {
@@ -175,7 +199,20 @@ while ($pages -lt $MaxPages) {
                 continue
             }
 
-            Write-Bad "Jira answered $code."
+            # Jira puts the reason in the body, and throwing it away is how
+            # "Jira answered 400" becomes a message nobody can act on. It is
+            # this site's own words about this site's own fields.
+            $detail = ""
+            if ($_.ErrorDetails -and $_.ErrorDetails.Message) {
+                $detail = $_.ErrorDetails.Message
+                try {
+                    $parsed = $detail | ConvertFrom-Json
+                    if ($parsed.errorMessages) { $detail = ($parsed.errorMessages -join "; ") }
+                } catch { }
+            }
+            if ($code) { Write-Bad "Jira answered $code." }
+            else { Write-Bad "Could not reach Jira: $($_.Exception.Message)" }
+            if ($detail) { Write-Note $detail }
             $stoppedEarly = $true
             break
         }

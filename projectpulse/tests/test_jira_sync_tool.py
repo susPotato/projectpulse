@@ -186,6 +186,44 @@ def test_the_script_names_a_field_list():
     )
 
 
+def test_the_field_list_is_allowed_to_fail():
+    """The regression that broke the tool on a real Data Center instance.
+
+    `customfield_10016` is story points *on Jira Cloud*. Data Center numbers
+    its custom fields differently, and Jira rejects the **whole request** with
+    a 400 when `fields` names one that does not exist - it does not just omit
+    the field. So naming a field list turned a working sync into one that
+    failed on page one, on the only instance this is pointed at. (194 of 194
+    issues already had an empty `story_points`, which is what that field id
+    not existing looks like from the other end.)
+
+    The list is an optimisation. It has to degrade to what the tool did
+    before it existed: read every field, slower and larger and correct.
+    """
+    text = TEMPLATE.read_text(encoding="utf-8")
+    assert "$UseFields" in text, "the field list cannot be turned off"
+    assert re.search(r"\$code\s+-eq\s+400\s+-and\s+\$UseFields", text), (
+        "nothing catches a 400 caused by the field list, so an instance "
+        "without one of these fields cannot sync at all"
+    )
+    # And the fallback must actually change the request, not just log.
+    assert re.search(r"if\s*\(\$UseFields\)\s*\{\s*\$url\s*\+=", text), (
+        "`fields` is still always appended, so turning it off changes nothing"
+    )
+
+
+def test_a_refusal_reports_what_jira_said():
+    """"Jira answered 400" is a message nobody can act on.
+
+    The reason is in the body, and it is this site's own words about this
+    site's own fields - which is exactly what the reader needs and exactly
+    what the first version threw away.
+    """
+    text = TEMPLATE.read_text(encoding="utf-8")
+    assert "ErrorDetails" in text
+    assert "errorMessages" in text
+
+
 def test_every_placeholder_the_route_fills_is_present():
     """A renamed placeholder leaves the literal `__SERVER__` in a script
     somebody then runs, and the failure is a DNS error about a hostname
