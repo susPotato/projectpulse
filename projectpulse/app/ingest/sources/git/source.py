@@ -229,13 +229,19 @@ def check_docs(tree: Path, docs_path: str) -> tuple[Path, int]:
 
 
 def fetch(*, repo_url: str, ref: str = "", docs_path: str = "docs",
-          token: str = "", cache: Path | None = None) -> dict[str, Any]:
+          token: str = "", cache: Path | None = None,
+          generate_missing_docs: bool = False) -> dict[str, Any]:
     """Clone or refresh a repository and validate its documentation tree.
 
     Returns what the registration needs to record: the working tree, the
     revision that was read, and the document count. Raises rather than
     returning a half answer - a row written from a failed fetch is a
     registration pointing at a commit nobody read.
+
+    `generate_missing_docs` turns a missing documentation tree from a refusal
+    into `docs_dir: None` with the refusal's text in `docs_missing` - the
+    caller has checked `app.codewiki_docs.unavailable()` and will generate the
+    tree instead. A repository that *has* documents is read as it always was.
     """
     src = _tracelink_source()
     if shutil.which("git") is None and src.looks_like_url(repo_url):
@@ -267,7 +273,17 @@ def fetch(*, repo_url: str, ref: str = "", docs_path: str = "docs",
     # so a repository with no documents leaves no registration behind -
     # the fifth defect in `CLAUDE.md` §0a, which is that a refused import
     # still left a project on the portfolio.
-    directory, count = check_docs(tree, docs_path)
+    # Containment first and outside the `try`: a path that leaves the
+    # repository is refused whatever the caller allows, or generating the
+    # "missing" documents would write them wherever it pointed.
+    docs_dir(tree, docs_path)
+    try:
+        directory, count = check_docs(tree, docs_path)
+        missing = ""
+    except DocsMissing as exc:
+        if not generate_missing_docs:
+            raise
+        directory, count, missing = None, 0, str(exc)
 
     log.info("fetched %s at %s, %d documents under %s",
              repo_url, revision.short or "unknown", count, docs_path)
@@ -275,6 +291,7 @@ def fetch(*, repo_url: str, ref: str = "", docs_path: str = "docs",
         "tree": tree,
         "docs_dir": directory,
         "doc_count": count,
+        "docs_missing": missing,
         "commit": revision.commit,
         "ref": revision.ref or ref,
         "dirty": revision.dirty,

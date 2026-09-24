@@ -198,7 +198,159 @@ def test_a_run_without_a_registration_is_refused(client):
 def test_a_run_without_a_backlog_is_refused(client, registered):
     response = client.post("/api/traceability/run", json={"project_id": PROJECT})
     assert response.status_code == 400
-    assert "no backlog export is stored" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert "no export is uploaded and no Jira issues are synced" in detail
+
+
+# --------------------------------------------------------------------------
+# The synced Jira issues as the backlog, when nothing was uploaded
+# --------------------------------------------------------------------------
+
+JIRA_KEY = "TRJ"
+
+
+CATEGORY = {"Done": "done", "Release": "done", "Cancelled": "done",
+            "In Progress": "indeterminate"}
+
+
+def _issue(n, summary, *, description=None, status="In Progress",
+           components=(), roles=None, template=None):
+    fields = {
+        "summary": summary,
+        "description": description,
+        "status": {"name": status,
+                   "statusCategory": {"key": CATEGORY.get(status, "new")}},
+        "issuetype": {"name": "Task"},
+        "assignee": {"displayName": "Lan Nguyen"},
+        "components": [{"name": c} for c in components],
+        # Per-issue prose in a custom field - kept.
+        "customfield_20001": roles,
+        # The same placeholder on every issue - template text, dropped.
+        "customfield_20002": template,
+    }
+    return {"id": str(9000 + n), "key": f"{JIRA_KEY}-{n}", "fields": fields}
+
+
+@pytest.fixture
+def jira_synced():
+    import json
+    from datetime import datetime, timezone
+
+    from app.models.jira import JiraConnection
+    from app.models.raw import RawJiraIssues
+
+    issues = [
+        _issue(1, "Export the cart as PDF", description="Users download a PDF.",
+               components=["Cart"], roles="PO: An / BA: Binh",
+               template="Fill in the acceptance criteria"),
+        _issue(2, "Sign in with SSO", status="Done",
+               roles="PO: Chi / Developer: Dung",
+               template="Fill in the acceptance criteria"),
+        # An older copy of issue 2, synced earlier: the newest one wins.
+        _issue(2, "Sign in (old title)"),
+        _issue(3, "Belongs to another Jira project"),
+    ]
+    issues[3]["key"] = "OTHER-3"
+    with session_scope() as session:
+        link = JiraConnection(project_id=PROJECT, site="https://jira.example",
+                              email="", project_key=JIRA_KEY, ciphertext="",
+                              hint="")
+        session.add(link)
+        now = datetime.now(timezone.utc)
+        # Oldest first, as the sync appends: issue 2's stale copy is added
+        # before its current one.
+        for issue in (issues[2], issues[0], issues[1], issues[3]):
+            session.add(RawJiraIssues(params="{}", data=json.dumps(issue).encode(),
+                                      url="", input=None, fetched_at=now))
+    yield
+    with session_scope() as session:
+        for row in session.scalars(select_all(JiraConnection)):
+            if row.project_id == PROJECT:
+                session.delete(row)
+        for row in session.scalars(select_all(RawJiraIssues)):
+            if json.loads(row.data).get("id", "").startswith("900"):
+                session.delete(row)
+
+
+def select_all(model):
+    from sqlalchemy import select
+
+    return select(model)
+
+
+def test_the_synced_jira_issues_become_a_backlog_the_reader_accepts(
+        jira_synced, tmp_path):
+    from tracelink.adapters.tickets_tabular import read_tickets
+
+    from app.ingest.sources.jira.backlog import backlog_for_project
+
+    with session_scope() as session:
+        backlog = backlog_for_project(session, PROJECT)
+    assert backlog["issues"] == 2
+    assert backlog["name"] == "jira-TRJ.csv"
+
+    path = tmp_path / backlog["name"]
+    path.write_bytes(backlog["content"])
+    text = path.read_text(encoding="utf-8-sig")
+    assert "Sign in with SSO" in text and "old title" not in text
+    assert "OTHER-3" not in text
+    # Per-issue custom prose is carried; the shared placeholder is not.
+    assert "BA: Binh" in text
+    assert "Fill in the acceptance criteria" not in text
+    # No components on issue 2, so it groups under its issue type.
+    assert ",Task," in text
+
+    tickets, shape = read_tickets(path)
+    assert {t.key for t in tickets} == {"TRJ-1", "TRJ-2"}
+    # From Jira's own status categories - the only done-category status here.
+    assert backlog["done_status"] == "Done"
+
+
+def test_a_cancelled_status_is_not_counted_as_delivered():
+    """Jira files Cancelled under the done category by default; delivered it
+    is not, and counting it would ask the code to prove unbuilt features."""
+    from app.ingest.sources.jira.backlog import done_statuses
+
+    issues = [_issue(1, "a", status="Release"), _issue(2, "b", status="Cancelled"),
+              _issue(3, "c", status="In Progress")]
+    assert done_statuses(issues) == ["Release"]
+
+
+def test_a_run_with_no_upload_traces_the_synced_jira_issues(
+        client, registered, jira_synced, monkeypatch, tmp_path):
+    seen = {}
+
+    def commands(**kw):
+        import sys
+
+        seen["export"] = kw["export"]
+        seen["text"] = kw["export"].read_text(encoding="utf-8-sig")
+        return [("pipeline", [sys.executable, "-c", "print('ok')"])]
+
+    monkeypatch.setenv("TRACELINK_RUNS", str(tmp_path / "runs"))
+    monkeypatch.setattr(traceability_run, "_commands", commands)
+
+    response = client.post("/api/traceability/run", json={"project_id": PROJECT})
+    assert response.status_code == 200, response.text
+    assert response.json()["run"]["export_name"] == "jira-TRJ.csv"
+    # Written with its own suffix, so the reader treats it as CSV.
+    assert seen["export"].suffix == ".csv"
+    assert "Export the cart as PDF" in seen["text"]
+    _wait(client)
+
+
+def test_an_uploaded_export_still_wins_over_jira(client, registered, jira_synced,
+                                                 monkeypatch, tmp_path):
+    import sys
+
+    monkeypatch.setenv("TRACELINK_RUNS", str(tmp_path / "runs"))
+    monkeypatch.setattr(traceability_run, "_commands",
+                        lambda **kw: [("pipeline", [sys.executable, "-c", "0"])])
+    _upload(client)
+    response = client.post("/api/traceability/run", json={"project_id": PROJECT})
+    assert response.status_code == 200, response.text
+    assert response.json()["run"]["export_name"] != "jira-TRJ.csv"
+    _wait(client)
 
 
 def test_a_run_without_a_project_is_refused(client):

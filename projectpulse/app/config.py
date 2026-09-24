@@ -87,6 +87,11 @@ class Settings:
     repo_cache: Path = Path(
         os.getenv("PULSE_REPO_CACHE", REPO_ROOT / ".pulse" / "repos")
     )
+    #: The interpreter that has CodeWiki's generator installed, for projects
+    #: whose repository has no `docs/` (see `app/codewiki_docs.py`). Empty
+    #: means this one, which is the image's arrangement; a host usually points
+    #: it at a separate venv, e.g. `../../.venv-codewiki/Scripts/python.exe`.
+    codewiki_python: str = os.getenv("PULSE_CODEWIKI_PYTHON", "")
     echo_sql: bool = os.getenv("PULSE_ECHO_SQL", "").lower() in {"1", "true", "yes"}
 
 

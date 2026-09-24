@@ -159,3 +159,29 @@ def test_render_says_so_when_everything_checks_out(tmp_path):
     root = _repo(tmp_path)
     got, stats = verify([_v("t1", ("app.py", "MainWindow"))], root)
     assert "No verdict rests on an anchor that does not exist" in render(got, stats)
+
+
+def test_a_document_cited_by_its_path_inside_the_docs_tree_is_found(tmp_path):
+    """`adjudicate --docs` shows documents by their path inside the docs tree.
+    Checked only against the repository root, `refactor/Checklist.md` read as
+    "file does not exist" and failed the run over a file that was there."""
+    root = _repo(tmp_path)
+    docs = root / "docs"
+    (docs / "refactor").mkdir(parents=True)
+    (docs / "refactor" / "Checklist.md").write_text("# Checklist\n", encoding="utf-8")
+    cited = [_v("t1", ("refactor/Checklist.md", ""))]
+
+    _, before = verify(cited, root)
+    assert before["no_file"] == 1
+
+    got, stats = verify(cited, root, [docs])
+    assert stats["no_file"] == 0
+    assert got[0].status != "ungrounded"
+
+
+def test_the_docs_tree_does_not_excuse_an_invented_file(tmp_path):
+    root = _repo(tmp_path)
+    (root / "docs").mkdir(exist_ok=True)
+    got, stats = verify([_v("t1", ("nowhere/ghost.md", ""))], root, [root / "docs"])
+    assert stats["no_file"] == 1
+    assert got[0].status == "ungrounded"

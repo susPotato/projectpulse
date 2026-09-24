@@ -39,6 +39,11 @@ FINDING_LABELS: dict[str, tuple[str, str]] = {
         "The code for this looks finished while the ticket is still open; "
         "confirm with the team and update the tracker.",
     ),
+    "built-cancelled": (
+        "Built Despite Cancellation",
+        "The ticket was cancelled but its code is in the repository; decide "
+        "whether it ships or should come out.",
+    ),
     "gate-failing": (
         "Team Quality Checks Failing",
         "A rule this team wrote for itself is broken in the code; assign a "

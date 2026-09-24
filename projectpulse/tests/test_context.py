@@ -243,3 +243,82 @@ def test_owners_naming_a_task_the_schedule_does_not_have_are_ignored():
 
     assert record["tasks_unowned"] == 1
     assert record["distinct_owners"] == 1
+
+
+# --- What a PM asks: who is late, how late, what is next -------------------
+
+
+def test_the_person_with_most_overdue_work_is_named_with_their_load():
+    """CoWorkLocal's shape: one person holds most of the project and every one
+    of their open tasks is late; another holds a few, also all late."""
+    rows = [
+        owned("q1", date(2026, 3, 1), "Quan"),
+        owned("q2", date(2026, 2, 20), "Quan"),
+        owned("q3", date(2026, 3, 10), "Quan"),
+        owned("q4", date(2026, 1, 1), "Quan", status="done"),
+        owned("k1", date(2026, 3, 5), "Kien"),
+        owned("k2", date(2026, 3, 6), "Kien"),
+        owned("k3", date(2026, 3, 7), "Kien"),
+        owned("h1", date(2026, 4, 1), "Hoach", status="todo"),
+    ]
+    record = context(
+        tasks=[t for t, _ in rows], owners={t.entity_id: o for t, o in rows},
+    ).as_record()
+
+    assert record["top_owner"] == "Quan"
+    assert record["top_owner_open"] == 3
+    assert record["top_owner_overdue"] == 3
+    assert record["busiest_owner"] == "Quan"
+    assert record["busiest_owner_tasks"] == 4
+    assert record["busiest_owner_share"] == 0.5
+    # Quan and Kien: three open each, every one past due. Hoach is on time.
+    assert record["owners_underwater"] == 2
+    # q2, due 2026-02-20, against AS_OF 2026-03-22.
+    assert record["worst_overdue_days"] == 30
+
+
+def test_due_soon_not_started_leaves_out_work_already_underway():
+    rows = [
+        owned("a", date(2026, 3, 25), "X", status="todo"),
+        owned("b", date(2026, 3, 30), "X", status="in progress"),
+        owned("c", date(2026, 5, 1), "X", status="todo"),
+    ]
+    record = context(
+        tasks=[t for t, _ in rows], owners={t.entity_id: o for t, o in rows},
+    ).as_record()
+
+    assert record["tasks_due_soon"] == 2
+    assert record["tasks_due_soon_not_started"] == 1
+
+
+def test_a_task_dated_backwards_is_not_dependency_slip():
+    """Start after its own due date, no edges: inconsistent with itself only."""
+    record = context([task("A", date(2026, 3, 20), date(2026, 3, 1))]).as_record()
+
+    assert record["tasks_dated_backwards"] == 1
+    assert record["worst_dated_backwards_days"] == 19
+    assert record["tasks_dependency_inconsistent"] == 0
+    assert record["max_dependency_slip_days"] == 0
+
+
+def test_dependency_slip_is_still_counted_as_dependency_slip():
+    tasks = [
+        task("A", date(2026, 2, 16), date(2026, 3, 16), date(2026, 3, 4)),
+        task("B", date(2026, 3, 5), date(2026, 3, 20), date(2026, 3, 20)),
+    ]
+    record = context(tasks, [EdgeRecord("A", "B")]).as_record()
+
+    assert record["max_dependency_slip_days"] == 11
+    assert record["tasks_dependency_inconsistent"] == 1
+    assert record["tasks_dated_backwards"] == 0
+
+
+def test_without_a_trace_the_code_facts_stay_silent_not_zero_clean():
+    record = context().as_record()
+    assert record["trace_available"] is False
+    record = context(trace={"available": True, "done_contradicted": 2,
+                            "worst_area": "core/chat",
+                            "worst_area_overdue": 4}).as_record()
+    assert record["trace_available"] is True
+    assert record["trace_done_contradicted"] == 2
+    assert record["worst_area"] == "core/chat"

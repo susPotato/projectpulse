@@ -110,6 +110,18 @@ RUN pip install --no-deps \
         "python-dotenv==1.2.3" \
         tiktoken
 
+# CodeWiki's *generator*, on top of the analyser above: what writes a docs/
+# tree into a registered repository that has none (app/codewiki_docs.py, the
+# "generate docs?" dialog on Settings > Sources). Off by default, so the Fly
+# image stays the 512 MB-sized one; docker-compose.yml turns it on for the
+# local demo. Two packages were enough - measured by importing the adapter in
+# a venv holding only the analyser list plus these (2026-09-24). Pinned to the
+# pydantic-ai the working CodeWiki venv runs.
+ARG PULSE_CODEWIKI_GENERATE=0
+RUN if [ "$PULSE_CODEWIKI_GENERATE" = "1" ]; then \
+        pip install "pydantic-ai-slim[openai]==2.31.1" "openai==2.54.0" "click>=8.1"; \
+    fi
+
 # Where `app/ingest/sources/git/source.py` looks for the pipeline. `/app` is on
 # the path anyway under `python -m`, so this is belt and braces - but the
 # alternative to being explicit is a feature that works or not depending on the

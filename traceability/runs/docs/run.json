@@ -3,7 +3,7 @@
  "produced_by": "run",
  "meta": {},
  "payload": {
-  "project_id": "excel:Project:upload:cowork-local",
+  "project_id": "excel:Project:upload:coworklocal",
   "project_name": "CoWorkLocal",
   "source": "../Jira Cowork Local_0913.xlsx",
   "tickets": 173

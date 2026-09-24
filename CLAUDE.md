@@ -4,6 +4,64 @@ Read this first. It is the handoff between sessions.
 
 ---
 
+## 📋 Reports answer the PM's questions now — 2026-09-24. **Local only.**
+
+The report used to say only things about the dates. New context scalars
+(`app/intelligence/context.py`) + rules (`rules/tables.py`), so the narrated
+summary covers them with no prompt change - the model still only sees tokens:
+
+- **People:** `owner_underwater` (named person, open/overdue), `owners_underwater`,
+  `owner_concentration` (share of all tasks). **Late:** `overdue_by_weeks` (oldest
+  days late), `due_soon_open`, `due_soon_not_started`.
+- **Tracker vs code** from the trace run (`app/intelligence/tracefacts.py`, joined
+  by Jira key, status from the task row): `done_but_contradicted`,
+  `done_but_unverified`, `open_but_built`, `area_behind` (area = leading dirs of
+  the cited/candidate file; root files skipped). Silent without a run.
+- **Fixed:** a start-after-due row was reported as "dated earlier than its
+  dependencies allow" (HIGH) on a project with 0 dependencies → now
+  `dates_backwards` (data_quality); dependency rules read
+  `max_dependency_slip_days`. `explain_project` had no owners (all "unowned") and
+  measured overdue against the projected end. Projection section no longer shows
+  a meaningless table when there are no dependencies and says the end date holds
+  only if the overdue work lands. Cancelled-but-built trace rows are
+  "Built Despite Cancellation", not "Built But Still Open".
+- Report sections `late_work` + `people` (from `team_project`), and
+  `traceability` is now in the weekly and steering presets.
+- Local compose keeps runs/clones on the `pulse-state` volume (`/data`), like Fly.
+  Before, `--build` deleted finished trace runs.
+
+1376 tests pass.
+
+---
+
+## 📝 A repository with no docs/ can have them generated — 2026-09-24. **Local Docker only; not on Fly.**
+
+Settings › Sources › *Register & read*: when the clone has no docs directory,
+`POST /api/repos` answers `docs_missing` + `generate` (an offer) instead of a
+400, and the page opens a dialog — model picker, **Not now** / **Generate
+docs**. Yes → `POST /api/repos/generate-docs` runs CodeWiki in the background
+(`app/codewiki_docs.py` → `scripts/codewiki_docs.py`), writes into the
+**clone's own** `docs/`, adds it to the clone's `.git/info/exclude` (so it
+never reads as dirty, and `checkout --force` on refresh leaves it alone), then
+writes the registration. The lock still holds: no row until documents exist.
+Poll `GET /api/repos/generate-docs`.
+
+- Model is the `/llm` feature **CodeWiki docs** (FPT, OpenAI-compatible
+  endpoint). **Default GLM-5.2, not DeepSeek-V4-Flash** — measured on a 3-file
+  repo: GLM 111s for all pages; DeepSeek 17 min for the *first* page. The
+  gateway queues DeepSeek at 1–90s per request and CodeWiki's agents make many.
+- Image: `ARG PULSE_CODEWIKI_GENERATE` (Dockerfile, default 0 → Fly unchanged);
+  `docker-compose.yml` sets it to 1. Adds only `pydantic-ai-slim[openai]`,
+  `openai==2.54.0`, `click` on top of the analyser.
+- Host (non-Docker) runs: `PULSE_CODEWIKI_PYTHON` → a venv with CodeWiki.
+  `PYTHONUTF8=1` is forced for the child — without it, on Windows, 2 of 4 pages
+  came out as mojibake.
+- Verified: full suite 1360 passed; driver end-to-end in the container (4 pages,
+  46s, GLM-5.2); live `docs_missing` answer. **Not yet clicked through in a
+  browser** against a real clone.
+
+---
+
 ## 🔁 Traceability has two buttons now — 2026-09-24. **Local only; not deployed.**
 
 **New trace** starts the analysis over; **Sync** updates the run the project

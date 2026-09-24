@@ -89,6 +89,16 @@
                     vertical-align: top; }
     .sev { font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
            border-radius: 4px; padding: 2px 7px; color: var(--surface); }
+    /* "This repository has no docs/ - generate them?" A native <dialog>, so
+       focus, Escape and the backdrop come from the browser rather than from
+       code here. */
+    dialog.gen { max-width: 520px; width: calc(100% - 32px); box-sizing: border-box;
+                 background: var(--surface); color: var(--ink); border: 1px solid var(--rule);
+                 border-radius: 8px; padding: 18px 20px; font-size: var(--text-body); }
+    dialog.gen::backdrop { background: color-mix(in oklab, var(--ink) 35%, transparent); }
+    dialog.gen h2 { font-size: var(--text-emph); margin: 0 0 6px; }
+    dialog.gen p { margin: 8px 0 0; color: var(--ink-2); }
+    dialog.gen .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
   </style>
 </head>
 <body>
@@ -118,6 +128,7 @@
   <nav class="subtabs" id="subtabs">
     <button type="button" data-view="sources" aria-current="page">Sources</button>
     <button type="button" data-view="rules">Rule table</button>
+    <button type="button" data-view="reset">Reset</button>
     <a href="/imports">Imports</a>
     <a href="/llm">Models &amp; keys</a>
     <a href="/usage">Usage</a>
@@ -140,7 +151,8 @@
      table needs a URL of its own, or a link to it from those pages has
      nowhere to point and the row disagrees with itself. */
   var params = new URLSearchParams(window.location.search);
-  var view = params.get("view") === "rules" ? "rules" : "sources";
+  var view = params.get("view") === "rules" ? "rules"
+    : params.get("view") === "reset" ? "reset" : "sources";
 
   function renderSources() {
     var rows = program.sources.map(function (src) {
@@ -344,6 +356,8 @@
     document.getElementById("tx-save").addEventListener("click", saveExport);
     loadRepos();
     loadExports();
+    /* A generation outlives the page that started it; pick it up again. */
+    watchDocs("");
 
     /* Forgetting a source. Deliberately the same endpoint, the same wording
        and the same gate as the Imports page rather than a second way to do
@@ -953,6 +967,14 @@
           { method: "POST", headers: adminHeaders(), body: JSON.stringify(body) })
       .then(readBody)
       .then(function (j) {
+        if (j.docs_missing) {
+          /* Nothing was registered: the lock still holds until documents
+             exist. The dialog offers to write them. */
+          statusEl.className = "hint bad";
+          statusEl.textContent = j.message;
+          offerDocs(body, j);
+          return;
+        }
         statusEl.className = "hint ok";
         statusEl.textContent = "Registered at " + (j.short_commit || "this revision") +
           " - " + j.doc_count + " document" + (j.doc_count === 1 ? "" : "s") +
@@ -964,6 +986,99 @@
         statusEl.className = "hint bad";
         statusEl.textContent = e.message;
       });
+  }
+
+  /* ---------------------------------------------- generated documentation */
+
+  function offerDocs(body, j) {
+    var dlg = document.getElementById("gen-dialog");
+    var gen = j.generate || {};
+    var yes = document.getElementById("gen-yes");
+    document.getElementById("gen-missing").textContent =
+      "Read at " + (j.short_commit || "this revision") + ".";
+    document.getElementById("gen-path").textContent = body.docs_path + "/";
+    document.getElementById("gen-model").innerHTML = (gen.models || []).map(function (m) {
+      return '<option value="' + esc(m.id) + '"' + (m.id === gen.model ? " selected" : "") +
+        ">" + esc(m.label || m.id) + "</option>";
+    }).join("");
+    document.getElementById("gen-provider").innerHTML = "On " + esc(gen.provider || "") +
+      '. The default is set on <a href="/llm">Models &amp; keys</a> (CodeWiki docs).';
+    var off = document.getElementById("gen-unavailable");
+    off.style.display = gen.available ? "none" : "";
+    off.textContent = gen.available ? "" : "Cannot generate here: " + gen.reason;
+    document.getElementById("gen-choose").style.display = gen.available ? "" : "none";
+    yes.style.display = gen.available ? "" : "none";
+
+    yes.onclick = function () {
+      var model = document.getElementById("gen-model").value;
+      dlg.close();
+      startDocs(body, model);
+    };
+    document.getElementById("gen-no").onclick = function () { dlg.close(); };
+    dlg.showModal();
+  }
+
+  function startDocs(body, model) {
+    var statusEl = document.getElementById("rp-status");
+    statusEl.className = "hint";
+    statusEl.textContent = "Starting CodeWiki\u2026";
+    var payload = {};
+    for (var k in body) payload[k] = body[k];
+    payload.model = model;
+    fetch("/api/repos/generate-docs",
+          { method: "POST", headers: adminHeaders(), body: JSON.stringify(payload) })
+      .then(readBody)
+      .then(function (j) {
+        document.getElementById("rp-token").value = "";
+        if (!j.generated) {
+          /* Documents appeared in the repository in the meantime. */
+          statusEl.className = "hint ok";
+          statusEl.textContent = "Registered - the repository has " + j.doc_count +
+            " documents of its own now.";
+          return loadRepos();
+        }
+        watchDocs(j.job.project_id);
+      })
+      .catch(function (e) {
+        statusEl.className = "hint bad";
+        statusEl.textContent = e.message;
+      });
+  }
+
+  var docsTimer = null;
+
+  /* Polls the one generation this server runs. The line under the button
+     says how far it is in pages written - the one number that moves. */
+  function watchDocs(projectId) {
+    var statusEl = document.getElementById("rp-status");
+    if (docsTimer) clearTimeout(docsTimer);
+    fetch("/api/repos/generate-docs?project_id=" + encodeURIComponent(projectId || ""))
+      .then(readBody)
+      .then(function (d) {
+        var job = d && d.job;
+        if (!job || !statusEl) return;
+        if (job.status === "running") {
+          var last = (job.log || []).filter(function (l) { return l.trim(); }).slice(-1)[0] || "";
+          statusEl.className = "hint";
+          statusEl.textContent = "Generating documents for " + job.project_id + " with " +
+            job.model + " - " + job.pages + " page" + (job.pages === 1 ? "" : "s") +
+            " written so far." + (last ? " " + last.slice(0, 140) : "");
+          docsTimer = setTimeout(function () { watchDocs(job.project_id); }, 5000);
+          return;
+        }
+        if (!projectId) return;  /* a finished job from before this visit */
+        if (job.status === "done") {
+          var r = job.registered || {};
+          statusEl.className = "hint ok";
+          statusEl.textContent = "Generated " + job.pages + " pages with " + job.model +
+            " and registered at " + (r.short_commit || "this revision") + " - " +
+            (r.doc_count || job.pages) + " documents under " + (r.docs_path || "docs") + "/.";
+          return loadRepos();
+        }
+        statusEl.className = "hint bad";
+        statusEl.textContent = job.error + " (" + job.pages + " pages written.)";
+      })
+      .catch(function () { /* the next save or reload shows the state */ });
   }
 
   function saveConnection() {
@@ -1111,10 +1226,148 @@
       "<th>Says, and why that threshold</th></tr>" + rows + "</table></div>";
   }
 
+  /* ------------------------------------------------------------ demo reset
+     Two buttons for between demos. Each card shows what its button would do
+     before it is pressed - the preview is the same function the button runs,
+     served without the delete - and asks once more in a confirm. */
+
+  var RESET_LABELS = {
+    projects: "Jira projects", tasks: "Tasks", qa_items: "QA items",
+    milestones: "Milestones", dependencies: "Dependencies", resources: "Resources",
+    risks: "Risks", raw_rejects: "Rejected rows", state_changes: "State changes",
+    dashboards: "Dashboards", raw_jira_issues: "Raw issues",
+    raw_jira_changelogs: "Raw changelogs", tool_jira_issues: "Staged issues",
+    tool_jira_changelogs: "Staged changelogs", sync_state: "Sync cursors",
+    sync_runs: "Sync history"
+  };
+
+  function hasToken() {
+    try { return !!sessionStorage.getItem("pulse-admin-token"); } catch (e) { return false; }
+  }
+
+  function renderReset(message) {
+    programBox.innerHTML = '<div class="card"><div class="hint">Reading what is there&hellip;</div></div>';
+    fetch("/api/demo/reset")
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)); })
+      .then(function (d) { drawReset(d, message); })
+      .catch(function (e) {
+        programBox.innerHTML = '<div class="card"><div class="lbl">Reset</div>' +
+          '<div class="hint bad">Could not read the current state: ' + esc(e.message) + "</div></div>";
+      });
+  }
+
+  function drawReset(d, message) {
+    var j = d.jira, t = d.traces;
+    var total = 0;
+    var rows = Object.keys(RESET_LABELS).map(function (k) {
+      var n = j.counts[k] || 0;
+      total += n;
+      return "<tr><td>" + esc(RESET_LABELS[k]) + '</td><td class="num">' +
+        n.toLocaleString() + "</td></tr>";
+    }).join("");
+    var conns = j.connections.length
+      ? j.connections.map(function (c) {
+          return "<code>" + esc(c.project_key) + "</code> on " + esc(c.site);
+        }).join("<br>")
+      : "none saved";
+
+    var runs = t.runs.length
+      ? t.runs.map(function (r) { return "<code>" + esc(r) + "</code>"; }).join(", ")
+      : "none visible";
+    var archives = t.archives.length
+      ? t.archives.map(function (a) {
+          return "<code>" + esc(a.name) + "</code> (" + a.runs.length + " run" +
+            (a.runs.length === 1 ? "" : "s") + ")";
+        }).join(", ")
+      : "none";
+
+    programBox.innerHTML =
+      (message ? '<div class="card"><div class="' + (message.bad ? "bad" : "ok") + '">' +
+        esc(message.text) + "</div></div>" : "") +
+      (hasToken() ? "" :
+        '<div class="card"><div class="lbl">Admin token</div>' +
+        '<div class="hint">These buttons change data, so from a browser they need the ' +
+        "<code>PULSE_ADMIN_TOKEN</code> from <code>.env</code>. Kept for this tab only.</div>" +
+        '<div class="row" style="margin-top:10px"><input type="password" id="rs-token" ' +
+        'placeholder="Paste the admin token"><button type="button" id="rs-token-save">Use</button></div></div>') +
+
+      '<div class="card"><div class="lbl">Jira data</div>' +
+      '<div class="hint" style="margin:6px 0 12px">Deletes everything the Jira collector ' +
+      "brought in, so the next collect starts from nothing. Built-in projects and " +
+      "uploaded sheets are not touched.</div>" +
+      '<table class="grid"><tr><th>What</th><th style="text-align:right">Rows</th></tr>' +
+      rows + "</table>" +
+      '<div class="hint" style="margin-top:10px">Saved connections: ' + conns + "</div>" +
+      '<label style="display:flex;gap:8px;align-items:center">' +
+      '<input type="checkbox" id="rs-forget"> Also delete the saved Jira connections</label>' +
+      '<div class="row" style="margin-top:12px"><button type="button" id="rs-jira"' +
+      (total || j.connections.length ? "" : " disabled") + ">Clear Jira data</button>" +
+      '<span class="hint" style="margin:0">' + (total ? total.toLocaleString() +
+        " rows would be deleted" : "Nothing to clear") + "</span></div></div>" +
+
+      '<div class="card"><div class="lbl">Traceability runs</div>' +
+      '<div class="hint" style="margin:6px 0 12px">Hides every run from the Trace page by ' +
+      "moving it into an archive folder. Nothing is deleted, and the cached verdicts " +
+      "come back with Restore.</div>" +
+      '<div class="hint">Visible now: ' + runs + "</div>" +
+      '<div class="hint">Archived: ' + archives + "</div>" +
+      '<div class="row" style="margin-top:12px">' +
+      '<button type="button" id="rs-hide"' + (t.runs.length ? "" : " disabled") +
+      ">Hide all runs</button>" +
+      '<button type="button" id="rs-restore"' + (t.archives.length ? "" : " disabled") +
+      ">Restore latest archive</button></div></div>";
+
+    var save = document.getElementById("rs-token-save");
+    if (save) save.addEventListener("click", function () {
+      var v = document.getElementById("rs-token").value.trim();
+      if (!v) return;
+      try { sessionStorage.setItem("pulse-admin-token", v); } catch (e) { /* refused on use */ }
+      renderReset();
+    });
+
+    document.getElementById("rs-jira").addEventListener("click", function () {
+      var forget = document.getElementById("rs-forget").checked;
+      if (!window.confirm("Delete all Jira data" +
+          (forget ? " and the saved connections" : "") + "? This cannot be undone.")) return;
+      resetCall("/api/demo/clear-jira", { forget_connections: forget }, function (r) {
+        var n = 0;
+        Object.keys(r.counts).forEach(function (k) { n += r.counts[k]; });
+        return "Cleared " + n.toLocaleString() + " Jira rows" +
+          (r.connections_removed ? " and " + r.connections_removed + " connection(s)" : "") + ".";
+      });
+    });
+    document.getElementById("rs-hide").addEventListener("click", function () {
+      if (!window.confirm("Hide every traceability run from the Trace page?")) return;
+      resetCall("/api/demo/archive-traces", {}, function (r) {
+        return r.archived.length
+          ? "Hid " + r.archived.length + " run(s) into archive " + r.archive + "."
+          : "There were no runs to hide.";
+      });
+    });
+    document.getElementById("rs-restore").addEventListener("click", function () {
+      resetCall("/api/demo/restore-traces", {}, function (r) {
+        return "Restored " + r.restored.length + " run(s)" +
+          (r.kept_archived.length ? "; kept archived because a newer run exists: " +
+            r.kept_archived.join(", ") : "") + ".";
+      });
+    });
+  }
+
+  function resetCall(url, body, describe) {
+    [].forEach.call(programBox.querySelectorAll("button"), function (b) { b.disabled = true; });
+    fetch(url, { method: "POST", headers: adminHeaders(), body: JSON.stringify(body) })
+      .then(readBody)
+      .then(function (j) { renderReset({ text: describe(j) }); })
+      .catch(function (e) { renderReset({ text: e.message, bad: true }); });
+  }
+
+
   var SCOPES = {
     sources: "watched sources, uploads and project pairing",
     rules: "the thresholds every finding is defended by",
+    reset: "clear Jira data and hide old trace runs between demos",
   };
+  var TITLES = { sources: "Sources", rules: "Rule table", reset: "Reset" };
 
   function show(next) {
     view = next;
@@ -1132,14 +1385,13 @@
 
     // The other four tabs are separate documents with their own <title>; these
     // two share one, so it has to be set rather than served.
-    document.title =
-      (view === "rules" ? "Rule table" : "Sources") + " - Settings - ProjectPulse";
+    document.title = (TITLES[view] || "Sources") + " - Settings - ProjectPulse";
 
     /* Keep the address bar honest. Without this, switching to the rule table
        and reloading - or sharing the URL - lands back on Sources, and the tab
        the other three pages link to would not be the one that opens. */
     try {
-      var url = view === "rules" ? "/settings?view=rules" : "/settings";
+      var url = view === "sources" ? "/settings" : "/settings?view=" + view;
       window.history.replaceState(null, "", url);
     } catch (e) {
       // Opened as a file, or history blocked. The tab still switched.
@@ -1147,6 +1399,7 @@
 
     if (view === "sources") renderSources();
     if (view === "rules") renderRules();
+    if (view === "reset") renderReset();
   }
 
   document.getElementById("subtabs").addEventListener("click", function (e) {
@@ -1174,6 +1427,27 @@
   loadProgram();
 })();
 </script>
+<dialog class="gen rise" id="gen-dialog" aria-labelledby="gen-title">
+  <h2 id="gen-title">This repository has no documents</h2>
+  <div class="hint" id="gen-missing" style="margin:0"></div>
+  <p>ProjectPulse can write them from the code with CodeWiki, into
+     <code id="gen-path">docs/</code> of the clone, and register the repository
+     when they are done. Generated documents describe what the code
+     <em>does</em>, not what the team intended - the trace then checks the
+     backlog against the code alone.</p>
+  <p>It takes tens of minutes on a real repository. You can leave this page;
+     the progress shows here when you come back.</p>
+  <div id="gen-choose">
+    <label for="gen-model">Model</label>
+    <select id="gen-model"></select>
+    <div class="hint" id="gen-provider"></div>
+  </div>
+  <div class="warn" id="gen-unavailable" style="display:none"></div>
+  <div class="actions">
+    <button type="button" id="gen-no">Not now</button>
+    <button type="button" class="primary" id="gen-yes">Generate docs</button>
+  </div>
+</dialog>
 </main>
 </div>
 </body>

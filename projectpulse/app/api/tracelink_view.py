@@ -335,6 +335,7 @@ def rollup_by_parent(run: Path) -> dict[str, Any]:
 FINDING_KINDS = [
     "contradicted",
     "status-conflict",
+    "built-cancelled",
     "gate-failing",
     # Both come from the export's own text and need no comparison to code,
     # so they are certain in a way the rows below are not: an unanswered
@@ -392,7 +393,14 @@ def _findings(rows: list[dict[str, Any]], files: list[dict[str, Any]],
                 "cited" if ground == "grounded" else (ground or "uncited"),
                 uid=r["uid"], confidence=v.get("confidence"))
         elif v.get("status_conflict"):
-            add("status-conflict",
+            # "Still open" is false about a cancelled ticket. The code being
+            # there is still worth a row - cancelled work that shipped anyway
+            # - but under its own name, or the table says Cancelled and "still
+            # open" on the same line.
+            from app.ingest.sources.jira.backlog import NOT_DELIVERED
+
+            add("built-cancelled" if NOT_DELIVERED.search(r.get("status") or "")
+                else "status-conflict",
                 f"[{r['status']}] {r['summary']}",
                 v.get("reasoning", ""), where,
                 "cited" if ground == "grounded" else (ground or "uncited"),

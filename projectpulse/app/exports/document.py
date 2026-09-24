@@ -25,7 +25,7 @@ testable without openpyxl, without python-docx and without a database.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Literal, Sequence
 
 from app.api.schemas.explain import ExplainBundle
@@ -123,6 +123,20 @@ SECTIONS: tuple[SectionSpec, ...] = (
         "what to do next.",
     ),
     SectionSpec(
+        "late_work",
+        "Late and at-risk work",
+        "The open tasks already past their due date, oldest first, and the ones "
+        "falling due in the next fortnight - each with its owner.",
+        requires="team",
+    ),
+    SectionSpec(
+        "people",
+        "People and load",
+        "Who holds how much open work and how much of it is late, and whether "
+        "the project leans on one person.",
+        requires="team",
+    ),
+    SectionSpec(
         "findings",
         "Findings",
         "Every finding with its recommendation, the rule that fired and the "
@@ -215,7 +229,17 @@ PRESETS: tuple[Preset, ...] = (
         "weekly",
         "Weekly status",
         "For the delivery team. Everything, including the source rows.",
-        ("summary", "findings", "evidence", "projection", "model_read", "data_quality"),
+        (
+            "summary",
+            "late_work",
+            "people",
+            "findings",
+            "evidence",
+            "projection",
+            "model_read",
+            "traceability",
+            "data_quality",
+        ),
     ),
     Preset(
         "steering",
@@ -224,12 +248,15 @@ PRESETS: tuple[Preset, ...] = (
         "record-level appendix.",
         (
             "summary",
+            "late_work",
+            "people",
             "findings",
             "projection",
             "forecast",
             "scenarios",
             "risks",
             "model_read",
+            "traceability",
             "data_quality",
         ),
     ),
@@ -413,15 +440,53 @@ def _projection_blocks(explain: ExplainBundle) -> tuple[Block, ...]:
     acts on - the rest is context for why those dates move.
     """
     blocks: list[Block] = []
+    scalars = explain.scalars or {}
+    # A chain exists if anything says so: counted edges, edges inferred from
+    # dates, a step some predecessor drove, or an end date that moved.
+    has_edges = bool(
+        explain.edges_stated
+        or explain.edges_inferred
+        or explain.depends_on_inferred_edges
+        or explain.project_slip_days
+        or any(step.driver for step in explain.steps)
+    )
 
     if explain.project_slip_days is not None:
         blocks.append(
             Block(
                 "paragraph",
                 f"{format_fact('project_slip_days', explain.project_slip_days)} days",
-                label="Projected slip against the plan: ",
+                label="Projected end-date slip: ",
             )
         )
+    # "0 days" read as "on track" on a project with thirty-five tasks weeks
+    # past their dates. The figure only compares the last planned finish with
+    # the last projected one; say what it leaves out, beside it.
+    overdue = int(scalars.get("tasks_overdue") or 0)
+    if overdue:
+        blocks.append(
+            Block(
+                "paragraph",
+                f"The end date holds only if the {overdue} open task(s) already "
+                f"past their own date finish before it - the oldest is "
+                f"{int(scalars.get('worst_overdue_days') or 0)} days late. "
+                f"See Late and at-risk work.",
+            )
+        )
+    if not has_edges:
+        # With no dependency links there is no chain: every task's projected
+        # finish is its own due date, so a table of them repeats the plan and
+        # shows open tasks "finishing" on dates already behind us.
+        blocks.append(
+            Block(
+                "note",
+                "This project records no dependencies between tasks, so the "
+                "projection has no chain to push dates along - each task is "
+                "projected to finish on its own due date. Add links in the "
+                "tracker for this section to show knock-on delay.",
+            )
+        )
+        return tuple(blocks)
 
     if explain.depends_on_inferred_edges:
         blocks.append(
@@ -449,7 +514,7 @@ def _projection_blocks(explain: ExplainBundle) -> tuple[Block, ...]:
                 "Task",
                 "Planned finish",
                 "Projected finish",
-                "Implied slip",
+                "Slip implied by dependencies",
                 "On driving path",
             ),
             rows=tuple(
@@ -894,6 +959,148 @@ def _data_quality_blocks(bundle: InsightBundle) -> tuple[Block, ...]:
     return tuple(blocks)
 
 
+#: Rows per table in the two team sections. Past this a report is an export,
+#: and the Excel format carries the whole list anyway.
+MAX_TEAM_ROWS = 25
+
+
+def _as_date(value) -> date | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except ValueError:
+        return None
+
+
+def _open_tasks(team) -> list[tuple[str, object]]:
+    """Every open task as (owner, task), from the Team page's own bundle."""
+    return [(m.name, t) for m in team.members for t in m.tasks if not t.closed]
+
+
+def _late_work_blocks(team, as_of) -> tuple[Block, ...]:
+    """Overdue work oldest first, then what falls due next - named, with owners.
+
+    Lateness is counted against the report's own "as at" date, not today's:
+    a report says what the data said when it was taken, and a table that
+    ages every time it is opened would disagree with its own summary.
+    """
+    day = _as_date(as_of)
+    if day is None:
+        return ()
+    horizon = day + timedelta(days=14)
+    rows = _open_tasks(team)
+    overdue = sorted(
+        ((who, t, (day - t.planned_end).days) for who, t in rows
+         if t.planned_end is not None and t.planned_end < day),
+        key=lambda r: (-r[2], r[1].label),
+    )
+    soon = sorted(
+        ((who, t) for who, t in rows
+         if t.planned_end is not None and day <= t.planned_end <= horizon),
+        key=lambda r: (r[1].planned_end, r[1].label),
+    )
+    undated = sum(1 for _, t in rows if t.planned_end is None)
+    if not (overdue or soon or undated):
+        return (Block("paragraph", "No open task is past its due date or due "
+                                   "in the next fortnight."),)
+
+    blocks: list[Block] = []
+    lead = []
+    if overdue:
+        lead.append(f"{len(overdue)} open task(s) are past their due date as at "
+                    f"{format_fact('as_of', day)}, the oldest by {overdue[0][2]} days.")
+    if soon:
+        lead.append(f"{len(soon)} more fall due by "
+                    f"{format_fact('planned_end', horizon)}.")
+    if undated:
+        lead.append(f"{undated} open task(s) have no due date at all, so "
+                    f"nothing here can say whether they are late.")
+    blocks.append(Block("paragraph", " ".join(lead)))
+
+    def title(t) -> str:
+        return (t.title or "")[:80]
+
+    if overdue:
+        blocks.append(Block(
+            "table",
+            text="Past due",
+            columns=("Task", "Title", "Owner", "Due", "Days late"),
+            rows=tuple(
+                (t.label, title(t), who, format_fact("planned_end", t.planned_end),
+                 str(late))
+                for who, t, late in overdue[:MAX_TEAM_ROWS]
+            ),
+        ))
+        if len(overdue) > MAX_TEAM_ROWS:
+            blocks.append(Block("note", f"And {len(overdue) - MAX_TEAM_ROWS} "
+                                        f"more - the Excel format lists them all."))
+    if soon:
+        blocks.append(Block(
+            "table",
+            text="Due in the next fortnight",
+            columns=("Task", "Title", "Owner", "Due"),
+            rows=tuple(
+                (t.label, title(t), who, format_fact("planned_end", t.planned_end))
+                for who, t in soon[:MAX_TEAM_ROWS]
+            ),
+        ))
+    return tuple(blocks)
+
+
+def _people_blocks(team, as_of) -> tuple[Block, ...]:
+    """Open, overdue and due-soon work per person, heaviest first."""
+    day = _as_date(as_of)
+    if day is None or not team.members:
+        return ()
+    horizon = day + timedelta(days=14)
+    total = sum(len(m.tasks) for m in team.members)
+
+    table = []
+    underwater = []
+    for m in team.members:
+        open_ = [t for t in m.tasks if not t.closed]
+        late = [(day - t.planned_end).days for t in open_
+                if t.planned_end is not None and t.planned_end < day]
+        soon = sum(1 for t in open_
+                   if t.planned_end is not None and day <= t.planned_end <= horizon)
+        if len(open_) >= 3 and len(late) == len(open_):
+            underwater.append(m.name)
+        table.append((m.name, len(open_), len(late), soon, max(late, default=0),
+                      len(m.tasks)))
+    table.sort(key=lambda r: (-r[2], -r[1], r[0]))
+
+    blocks: list[Block] = [Block(
+        "table",
+        columns=("Person", "Open", "Overdue", "Due in 14 days",
+                 "Oldest overdue (days)", "Share of all tasks"),
+        rows=tuple(
+            (name, str(o), str(late), str(soon), str(oldest) if late else "-",
+             f"{round(100 * n / total)}%" if total else "-")
+            for name, o, late, soon, oldest, n in table[:MAX_TEAM_ROWS]
+        ),
+    )]
+
+    points = []
+    if underwater:
+        points.append(f"Underwater - every open task past its date: "
+                      f"{', '.join(underwater)}.")
+    heaviest = max(table, key=lambda r: r[5]) if table else None
+    if heaviest and total and heaviest[5] / total >= 0.6 and len(table) >= 2:
+        points.append(f"{heaviest[0]} holds {round(100 * heaviest[5] / total)}% of "
+                      f"all tasks - a single point of failure for this project.")
+    if not team.has_effort_data:
+        points.append("Load is counted in tasks, not hours: no time is logged "
+                      "against this project's work.")
+    if points:
+        blocks.append(Block("bullets", items=tuple(points)))
+    return tuple(blocks)
+
+
 def build_document(
     bundle: InsightBundle,
     *,
@@ -903,6 +1110,7 @@ def build_document(
     risks=None,
     drafts=None,
     traceability=None,
+    team=None,
     sections: Sequence[str] | None = None,
     project_name: str = "",
     generated_at: datetime | None = None,
@@ -942,6 +1150,10 @@ def build_document(
             continue
         if spec.id == "summary":
             blocks = _summary_blocks(bundle)
+        elif spec.id == "late_work":
+            blocks = _late_work_blocks(team, bundle.as_of) if team is not None else ()
+        elif spec.id == "people":
+            blocks = _people_blocks(team, bundle.as_of) if team is not None else ()
         elif spec.id == "findings":
             blocks = _findings_blocks(bundle, with_evidence="evidence" in chosen)
         elif spec.id == "evidence":

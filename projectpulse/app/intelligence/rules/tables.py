@@ -289,6 +289,245 @@ DEFAULT_TABLE = RuleTable(
             ),
         ),
         Rule(
+            id="dates_backwards",
+            when=(Condition("tasks_dated_backwards", ">=", 1),),
+            category="data_quality",
+            severity="medium",
+            headline=(
+                "{{tasks_dated_backwards}} task(s) start after their own due "
+                "date, by up to {{worst_dated_backwards_days}} days."
+            ),
+            recommendation=(
+                "Correct the start or the due date on these rows. Every date "
+                "worked out from them is wrong until then."
+            ),
+            rationale=(
+                "Inconsistent with itself, not with a dependency - usually a "
+                "typo. Kept apart from the dependency rules because the fix is "
+                "an edit to one row, not a re-plan."
+            ),
+        ),
+        Rule(
+            id="overdue_by_weeks",
+            when=(
+                Condition("tasks_overdue", ">=", 3),
+                Condition("worst_overdue_days", ">=", 14),
+            ),
+            category="schedule_risk",
+            severity="high",
+            headline=(
+                "Open work is running well behind: {{tasks_overdue}} task(s) are "
+                "past their due date, the oldest by {{worst_overdue_days}} days."
+            ),
+            recommendation=(
+                "Re-plan them with their owners this week and decide, one by "
+                "one, whether each lands in the next iteration, moves to a new "
+                "date, or is cut."
+            ),
+            rationale=(
+                "A fortnight past due is no longer a task running late - it is "
+                "a task with no date. `tasks_overdue` alone cannot tell a day "
+                "late from a month late, and those are different conversations."
+            ),
+        ),
+        Rule(
+            id="due_soon_open",
+            # The companion of `due_soon_none_finished`, for a project that has
+            # finished things: that rule stays silent once anything is done,
+            # which left every live project with no look-ahead at all.
+            when=(
+                Condition("tasks_due_soon", ">=", 1),
+                Condition("tasks_done", ">=", 1),
+            ),
+            category="schedule_risk",
+            severity="medium",
+            headline=(
+                "{{tasks_due_soon}} open task(s) fall due within a fortnight."
+            ),
+            recommendation=(
+                "Confirm with each owner that it will land, and move any that "
+                "will not now, while there is still time to change the plan."
+            ),
+            rationale=(
+                "These are the next delays if nothing changes. A fortnight is "
+                "the horizon a PM can still act inside."
+            ),
+        ),
+        Rule(
+            id="due_soon_not_started",
+            when=(
+                Condition("tasks_due_soon_not_started", ">=", 1),
+                Condition("tasks_done", ">=", 1),
+            ),
+            category="schedule_risk",
+            severity="medium",
+            headline=(
+                "{{tasks_due_soon_not_started}} of the {{tasks_due_soon}} task(s) "
+                "due within a fortnight have not been started."
+            ),
+            recommendation=(
+                "Start them this week or move their dates now - work nobody has "
+                "picked up this close to its date is the likeliest next slip."
+            ),
+            rationale=(
+                "Separate from the due-soon count so it is only said when it is "
+                "true: work already underway has someone on it."
+            ),
+        ),
+        Rule(
+            id="owner_underwater",
+            when=(Condition("top_owner_overdue", ">=", 5),),
+            category="resource_risk",
+            severity="high",
+            headline=(
+                "{{top_owner}} holds {{top_owner_open}} open task(s), "
+                "{{top_owner_overdue}} of them overdue."
+            ),
+            recommendation=(
+                "Talk to them before re-dating anything: find what is blocking "
+                "the work, move some of it to someone with room, or cut scope. "
+                "The dates will not recover while one person carries the "
+                "late backlog."
+            ),
+            rationale=(
+                "Counted per assignee over open work. Five overdue on one person "
+                "is past what a re-prioritisation absorbs - it is a capacity "
+                "problem, and it shows first in whoever holds the most."
+            ),
+        ),
+        Rule(
+            id="owners_underwater",
+            when=(Condition("owners_underwater", ">=", 2),),
+            category="resource_risk",
+            severity="medium",
+            headline=(
+                "{{owners_underwater}} people have every one of their open "
+                "tasks past its due date."
+            ),
+            recommendation=(
+                "Check these people are not waiting on the same thing. Several "
+                "people with nothing on time is usually one shared blocker."
+            ),
+            rationale=(
+                "Needs at least three open tasks per person, so one late task "
+                "does not make someone look underwater."
+            ),
+        ),
+        Rule(
+            id="owner_concentration",
+            when=(
+                Condition("busiest_owner_share", ">=", 0.6),
+                Condition("task_count", ">=", 10),
+                Condition("distinct_owners", ">=", 2),
+            ),
+            category="resource_risk",
+            severity="medium",
+            headline=(
+                "{{busiest_owner}} is assigned {{busiest_owner_tasks}} of the "
+                "project's {{task_count}} tasks."
+            ),
+            recommendation=(
+                "Pair someone with them on the open work. This much of the "
+                "project in one person is a single point of failure - one "
+                "absence stops delivery and takes the knowledge with it."
+            ),
+            rationale=(
+                "Over the whole project, open and closed, because the risk is "
+                "who knows the work, not only who is late on it. Six in ten is "
+                "well past a lead's fair share on a team of two or more."
+            ),
+        ),
+        Rule(
+            id="area_behind",
+            when=(
+                Condition("trace_available", "==", True),
+                Condition("worst_area_overdue", ">=", 3),
+            ),
+            category="schedule_risk",
+            severity="high",
+            headline=(
+                "Late work is concentrated in {{worst_area}}: "
+                "{{worst_area_overdue}} overdue ticket(s) sit in that part of "
+                "the code."
+            ),
+            recommendation=(
+                "Review this area first - one owner, one blocker or one piece "
+                "of design debt is the usual reason delays cluster in a place."
+            ),
+            rationale=(
+                "The area comes from the traceability run - where the code for "
+                "each overdue ticket lives - because the tracker's own grouping "
+                "is often empty."
+            ),
+        ),
+        Rule(
+            id="done_but_contradicted",
+            when=(
+                Condition("trace_available", "==", True),
+                Condition("trace_done_contradicted", ">=", 1),
+            ),
+            category="quality_risk",
+            severity="high",
+            headline=(
+                "{{trace_done_contradicted}} ticket(s) closed in the tracker are "
+                "contradicted by the code."
+            ),
+            recommendation=(
+                "Reopen them or get the owner to show where the work is. A "
+                "closed ticket the code disagrees with is a delivery claim "
+                "nobody can back."
+            ),
+            rationale=(
+                "A model read each ticket beside the code its retriever picked "
+                "and every file it cited was checked to exist. Contradicted is "
+                "the strong verdict: evidence against, not just missing evidence."
+            ),
+        ),
+        Rule(
+            id="done_but_unverified",
+            when=(
+                Condition("trace_available", "==", True),
+                Condition("trace_done_unverified", ">=", 5),
+            ),
+            category="evidence_quality",
+            severity="medium",
+            headline=(
+                "{{trace_done_unverified}} closed ticket(s) could not be matched "
+                "to code that implements them."
+            ),
+            recommendation=(
+                "Spot-check a few with their owners. Some will be planning or "
+                "process work that has no code; the rest are claims to confirm."
+            ),
+            rationale=(
+                "Unverified means no evidence either way, which is weaker than "
+                "contradicted - so it takes several before it is worth a PM's "
+                "time."
+            ),
+        ),
+        Rule(
+            id="open_but_built",
+            when=(
+                Condition("trace_available", "==", True),
+                Condition("trace_open_built", ">=", 1),
+            ),
+            category="evidence_quality",
+            severity="low",
+            headline=(
+                "{{trace_open_built}} open ticket(s) already have code that "
+                "implements them."
+            ),
+            recommendation=(
+                "Close the ones that are finished and ask what is left on the "
+                "rest - the board is reporting more outstanding work than there "
+                "is."
+            ),
+            rationale=(
+                "The tracker and the code disagree in the harmless direction, "
+                "but it still skews every progress figure computed from status."
+            ),
+        ),
+        Rule(
             id="effort_overrun",
             when=(
                 Condition("effort_ratio", ">=", 1.5),
@@ -380,13 +619,18 @@ DEFAULT_TABLE = RuleTable(
         ),
         Rule(
             id="schedule_inconsistent_major",
-            when=(Condition("max_propagated_days", ">=", 5),),
+            # Dependency-caused slip only. `max_propagated_days` also counts a
+            # task whose own start is after its own due date, and this headline
+            # said "dependencies" about a project that had none - one typo'd
+            # row, reported as a HIGH schedule risk. That case is
+            # `dates_backwards` now.
+            when=(Condition("max_dependency_slip_days", ">=", 5),),
             category="schedule_risk",
             severity="high",
             headline=(
-                "The plan cannot hold: {{tasks_inconsistent}} task(s) are dated "
-                "earlier than their own dependencies allow, by up to "
-                "{{max_propagated_days}} days."
+                "The plan cannot hold: {{tasks_dependency_inconsistent}} task(s) "
+                "are dated earlier than their own dependencies allow, by up to "
+                "{{max_dependency_slip_days}} days."
             ),
             recommendation=(
                 "Re-baseline the affected tasks or compress the driving path "
@@ -400,14 +644,15 @@ DEFAULT_TABLE = RuleTable(
         Rule(
             id="schedule_inconsistent_minor",
             when=(
-                Condition("max_propagated_days", ">=", 1),
-                Condition("max_propagated_days", "<", 5),
+                Condition("max_dependency_slip_days", ">=", 1),
+                Condition("max_dependency_slip_days", "<", 5),
             ),
             category="schedule_risk",
             severity="medium",
             headline=(
-                "{{tasks_inconsistent}} task(s) are dated slightly ahead of their "
-                "dependencies, by up to {{max_propagated_days}} days."
+                "{{tasks_dependency_inconsistent}} task(s) are dated slightly "
+                "ahead of their dependencies, by up to {{max_dependency_slip_days}} "
+                "days."
             ),
             recommendation="Confirm the dates with the owners before it compounds.",
             rationale=(

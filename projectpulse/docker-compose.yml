@@ -25,12 +25,25 @@ services:
   # internal address, overriding whatever `.env` has for local, non-Docker
   # runs - `environment:` wins over `env_file:` in Compose.
   app:
-    build: .
+    build:
+      context: .
+      args:
+        # CodeWiki's doc generator, for repositories registered without a
+        # docs/ tree. Local only - the Fly image leaves it out (Dockerfile).
+        PULSE_CODEWIKI_GENERATE: "1"
     container_name: projectpulse-app
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql+psycopg://pulse:pulse@db:5432/projectpulse
+      # Runs and clones on the `pulse-state` volume, as fly.toml does with
+      # `/data`. In the container's own filesystem they died with every
+      # `--build`: a finished trace, its paid verdict cache, and any docs
+      # generated into a clone. `scripts.serve` seeds the baked demo run here.
+      TRACELINK_RUNS: /data/runs
+      PULSE_REPO_CACHE: /data/repos
+    volumes:
+      - pulse-state:/data
     ports:
       - "8080:8080"
     depends_on:
@@ -40,3 +53,4 @@ services:
 
 volumes:
   pulse-pgdata:
+  pulse-state:

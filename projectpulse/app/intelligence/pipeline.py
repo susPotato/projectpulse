@@ -125,6 +125,22 @@ def load_owners(session, project_ids: Sequence[str]) -> dict[str, str | None]:
     }
 
 
+def _trace_facts(project_id: str, tasks, as_of) -> dict:
+    """The traceability run's counts, or `{"available": False}`.
+
+    Never raises: a run that cannot be read must cost the tracker-against-code
+    findings, not the whole insight screen.
+    """
+    from app.intelligence.tracefacts import trace_facts
+
+    day = as_of.date() if isinstance(as_of, datetime) else as_of
+    try:
+        return trace_facts(project_id, tasks, day)
+    except Exception as exc:  # noqa: BLE001 - see the docstring
+        log.warning("traceability facts unavailable for %s: %s", project_id, exc)
+        return {"available": False}
+
+
 def load_tasks(session, project_ids: Sequence[str]) -> list[TaskNode]:
     rows = session.scalars(
         select(Task).where(Task.project_id.in_(list(project_ids)))
@@ -308,6 +324,7 @@ def analyze_project(
         program=program,
         source_ids=project_ids,
         owners=load_owners(session, project_ids),
+        trace=_trace_facts(project_id, tasks, as_of),
     )
 
     engine = engine or RulesEngine(table, known_fields=_known_fields())
@@ -384,14 +401,31 @@ def explain_project(
         select(QaItem).where(QaItem.project_id.in_(project_ids))
     ).all()
 
+    # The same "as of" `analyze_project` uses - the latest change observed -
+    # so the overdue count here is the report's, not one measured against the
+    # projected end date. That used to put this page's figure a task above the
+    # report's for the same project.
+    entity_ids = [t.entity_id for t in tasks] + [q.id for q in qa_items]
+    latest = (
+        session.scalar(
+            select(func.max(StateChange.occurred_at)).where(
+                StateChange.entity_id.in_(entity_ids)
+            )
+        )
+        if entity_ids
+        else None
+    )
     context = build_context(
         project_id=project_id,
-        as_of=impact.project_end_projected or datetime.now(timezone.utc),
+        as_of=latest or datetime.now(timezone.utc),
         schedule=schedule,
         impact=impact,
         qa_items=qa_items,
         edges=edges,
         stated_only_impact=stated,
+        # Without owners every task read as unowned here - 36 of 36 overdue
+        # "unassigned" on a project where all 190 carry a name.
+        owners=load_owners(session, project_ids),
     )
 
     return ExplainBundle(

@@ -140,7 +140,17 @@ def cmd_diagnose(args) -> int:
     from tracelink import diagnose as DG
     from tracelink.adapters.tickets_tabular import read_raw
 
-    keyed = None if args.rows == "all" else (args.rows == "keyed")
+    from tracelink.adapters.tickets_tabular import find_shape
+
+    rows_mode = args.rows
+    if rows_mode == "auto":
+        # The layout `tickets` detects, not an assumed one: the unkeyed
+        # feature rows only when the sheet nests them under keyed PM tickets.
+        # A flat export - a Jira backlog, where every issue has a key - would
+        # otherwise match nothing and fail the stage.
+        nested = find_shape(Path(args.export)).convention == "unkeyed-subrows"
+        rows_mode = "unkeyed" if nested else "all"
+    keyed = None if rows_mode == "all" else (rows_mode == "keyed")
     rows, headers, shape = read_raw(args.export, project=args.project, keyed=keyed)
     if not rows:
         print("no rows matched. Check --project and --rows.", file=sys.stderr)
@@ -190,14 +200,14 @@ def cmd_translate(args) -> int:
         print("  dry run - no API calls made")
         return 0
 
-    if not AD.api_key_present():
+    if not AD.api_key_present(args.model):
         # A warning, not a refusal. Every response is cached by content, so a
         # re-run after a config change can be entirely cache hits and needs
         # no credentials at all — refusing up front made the cheapest and
         # commonest way to work impossible. Uncached calls fail individually
         # and are counted and reported.
-        print("no credentials set: only already-cached results are available. "
-              "Set ANTHROPIC_API_KEY, or run `ant auth login`, to make new calls.",
+        print("no credentials set: only already-cached results are available. " +
+              AD.credential_hint(args.model),
               file=sys.stderr)
 
     caller = AD.StructuredCaller(model=args.model, cache_dir=paths["cache"],
@@ -975,14 +985,14 @@ def cmd_adjudicate(args) -> int:
         print("  dry run — no API calls made")
         return 0
 
-    if not AD.api_key_present():
+    if not AD.api_key_present(args.model):
         # A warning, not a refusal. Every response is cached by content, so a
         # re-run after a config change can be entirely cache hits and needs
         # no credentials at all — refusing up front made the cheapest and
         # commonest way to work impossible. Uncached calls fail individually
         # and are counted and reported.
-        print("no credentials set: only already-cached results are available. "
-              "Set ANTHROPIC_API_KEY, or run `ant auth login`, to make new calls.",
+        print("no credentials set: only already-cached results are available. " +
+              AD.credential_hint(args.model),
               file=sys.stderr)
 
     adj = AD.Adjudicator(model=args.model, cache_dir=paths["cache"],
@@ -1078,8 +1088,8 @@ def cmd_shadow(args) -> int:
                 print(f"  mean prompt ~{avg:,.0f} input tokens")
                 print(f"  rough estimate: ${est:.2f}")
             print("  dry run — no API calls made\n")
-        elif not AD.api_key_present():
-            print("no credentials. Set ANTHROPIC_API_KEY, or run `ant auth login`.",
+        elif not AD.api_key_present(args.model):
+            print("no credentials. " + AD.credential_hint(args.model),
                   file=sys.stderr)
             return 1
         else:
@@ -1132,14 +1142,14 @@ def cmd_explain(args) -> int:
         print("  dry run - no API calls made")
         return 0
 
-    if not AD.api_key_present():
+    if not AD.api_key_present(args.model):
         # A warning, not a refusal. Every response is cached by content, so a
         # re-run after a config change can be entirely cache hits and needs
         # no credentials at all — refusing up front made the cheapest and
         # commonest way to work impossible. Uncached calls fail individually
         # and are counted and reported.
-        print("no credentials set: only already-cached results are available. "
-              "Set ANTHROPIC_API_KEY, or run `ant auth login`, to make new calls.",
+        print("no credentials set: only already-cached results are available. " +
+              AD.credential_hint(args.model),
               file=sys.stderr)
 
     caller = AD.StructuredCaller(model=args.model, cache_dir=paths["cache"],
@@ -1206,8 +1216,18 @@ def cmd_verify(args) -> int:
         return 1
     verdicts = A.rebuild_verdicts(A.load_payload(paths["verdicts"], "verdicts"))
     root = A.load_payload(paths["corpus"], "corpus")["root"]
+    # The documentation tree this run read, as `features` recorded it - the
+    # one adjudicate cites documents inside. Absent on a run with no docs.
+    docs_roots = []
+    if paths["features"].exists():
+        try:
+            meta = json.loads(paths["features"].read_text(encoding="utf-8"))["meta"]
+            if meta.get("docs_dir"):
+                docs_roots.append(meta["docs_dir"])
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
 
-    groundings, stats = VF.verify(verdicts, root)
+    groundings, stats = VF.verify(verdicts, root, docs_roots)
     A.save(paths["grounding"], "grounding",
            [g.as_dict() for g in groundings], **stats)
     print(VF.render(groundings, stats))
@@ -1440,12 +1460,14 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("diagnose", help="what structure does this export contain?")
     p.add_argument("export")
     p.add_argument("--project", default=None)
-    p.add_argument("--rows", choices=("all", "keyed", "unkeyed"), default="unkeyed",
-                   help="which rows to profile (default: the unkeyed feature rows)")
+    p.add_argument("--rows", choices=("auto", "all", "keyed", "unkeyed"), default="auto",
+                   help="which rows to profile (default: auto - the unkeyed feature "
+                        "rows when the sheet nests them under keyed tickets, else all)")
     p.set_defaults(fn=cmd_diagnose)
 
     p = sub.add_parser("translate", help="put non-English tickets into English")
-    p.add_argument("--model", default="claude-opus-5")
+    p.add_argument("--model", default=None,
+                   help="default: $TRACELINK_MODEL, else claude-opus-5; fpt:<name> for FPT")
     p.add_argument("--effort", default="low",
                    choices=("low", "medium", "high", "xhigh", "max"))
     p.add_argument("--dry-run", action="store_true")
@@ -1558,7 +1580,8 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(fn=cmd_label)
 
     p = sub.add_parser("adjudicate", help="ask the model for a verdict per ticket")
-    p.add_argument("--model", default="claude-opus-5")
+    p.add_argument("--model", default=None,
+                   help="default: $TRACELINK_MODEL, else claude-opus-5; fpt:<name> for FPT")
     p.add_argument("--effort", default="medium",
                    choices=("low", "medium", "high", "xhigh", "max"))
     p.add_argument("--limit", type=int, default=12)
@@ -1577,7 +1600,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("shadow", help="find code no ticket accounts for")
     p.add_argument("--describe", action="store_true",
                    help="ask the model to name each untracked capability (costs money)")
-    p.add_argument("--model", default="claude-opus-5")
+    p.add_argument("--model", default=None,
+                   help="default: $TRACELINK_MODEL, else claude-opus-5; fpt:<name> for FPT")
     p.add_argument("--effort", default="medium",
                    choices=("low", "medium", "high", "xhigh", "max"))
     p.add_argument("--limit", type=int, default=15)
@@ -1588,7 +1612,8 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(fn=cmd_shadow)
 
     p = sub.add_parser("explain", help="translate each feature area into plain language")
-    p.add_argument("--model", default="claude-opus-5")
+    p.add_argument("--model", default=None,
+                   help="default: $TRACELINK_MODEL, else claude-opus-5; fpt:<name> for FPT")
     p.add_argument("--effort", default="medium",
                    choices=("low", "medium", "high", "xhigh", "max"))
     p.add_argument("--dry-run", action="store_true")
@@ -1647,4 +1672,9 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(fn=cmd_score)
 
     args = ap.parse_args(argv)
+    if getattr(args, "model", "") is None:
+        # Resolved here, not as the argparse default, so the environment is
+        # read when the command runs rather than when the module is imported.
+        from tracelink.adjudicate import default_model
+        args.model = default_model()
     return args.fn(args)

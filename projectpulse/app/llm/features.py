@@ -30,7 +30,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +63,11 @@ class Feature:
     #: Which vendor this feature prefers when nothing else is configured.
     #: Empty means "follow the global default", which is what most should do.
     default_provider: str = ""
+    #: Per-vendor default model and dropdown entries, where this feature's
+    #: best model differs from the narration-measured `DEFAULT_MODELS` /
+    #: `MODEL_OPTIONS`. Empty means "use those".
+    default_models: dict = field(default_factory=dict)
+    model_options: dict = field(default_factory=dict)
 
 
 #: Every model call this app makes. Adding one here is what puts it on the
@@ -131,6 +136,69 @@ FEATURES: dict[str, Feature] = {
         ),
         providers=("anthropic", "gemini"),
         max_tokens=4000,
+    ),
+    "traceability": Feature(
+        key="traceability",
+        label="Traceability verdicts",
+        description=(
+            "Reads each ticket beside the code a retriever picked and decides "
+            "whether the code supports it. Runs only when "
+            "PULSE_TRACELINK_VERDICTS is on; answers are cached per model, so "
+            "switching model re-runs every ticket once."
+        ),
+        providers=("anthropic", "fpt"),
+        # Claude unless somebody chooses otherwise here - not the narration
+        # default, which may be a vendor tracelink has no backend for.
+        default_provider="anthropic",
+        default_models={"anthropic": "claude-opus-5", "fpt": "DeepSeek-V4-Flash"},
+        # Measured on 56 prompts byte-identical to cached Opus verdicts
+        # (2026-09-24): agreement with Opus, and seconds per ticket. The
+        # narration ranking does not carry over - gemma, fastest there, hit
+        # the gateway's rate limit on a quarter of the tickets here.
+        model_options={
+            "anthropic": (
+                {"id": "claude-opus-5", "label": "claude-opus-5 (recommended)"},
+            ),
+            "fpt": (
+                {"id": "DeepSeek-V4-Flash",
+                 "label": "DeepSeek-V4-Flash (recommended - 53/56 vs Opus, ~21s)"},
+                {"id": "GLM-5.2", "label": "GLM-5.2 (52/56, ~8s)"},
+                {"id": "Qwen3.6-27B", "label": "Qwen3.6-27B (51/56, ~11s)"},
+                {"id": "Llama-3.3-70B-Instruct",
+                 "label": "Llama-3.3-70B-Instruct (49/56, ~11s)"},
+            ),
+        },
+    ),
+    "codewiki": Feature(
+        key="codewiki",
+        label="CodeWiki docs",
+        description=(
+            "Writes a documentation tree from the code when a registered "
+            "repository has no docs/ of its own, so the trace still has "
+            "documents to read. Runs CodeWiki's agents - tens of minutes and "
+            "many calls on the first run, resumed rather than repeated after."
+        ),
+        # CodeWiki speaks the OpenAI API, and these are the two vendors here
+        # whose endpoint does. Tool calling on the gateway was checked for
+        # all three FPT models below (2026-09-24) - the agents depend on it.
+        providers=("fpt", "openai"),
+        max_tokens=32768,
+        timeout_seconds=300.0,
+        default_provider="fpt",
+        # Not the traceability pick, and measured rather than carried over
+        # (2026-09-24, a 3-file repository): GLM-5.2 wrote all four pages in
+        # 111s. DeepSeek-V4-Flash took 17 minutes for the first page - the
+        # gateway queues it at 1-90s per request, and CodeWiki's agents make
+        # many requests. Fine for a verdict per ticket; not for an agent loop.
+        default_models={"fpt": "GLM-5.2"},
+        model_options={
+            "fpt": (
+                {"id": "GLM-5.2", "label": "GLM-5.2 (recommended - 3 files in ~2 min)"},
+                {"id": "DeepSeek-V4-Flash",
+                 "label": "DeepSeek-V4-Flash (slow on the gateway - 17 min for 1 page)"},
+                {"id": "Qwen3.6-27B", "label": "Qwen3.6-27B"},
+            ),
+        },
     ),
 }
 
@@ -324,7 +392,7 @@ def resolve(feature: str) -> Resolution:
     elif source == "global" and global_settings.model:
         model = str(global_settings.model)
     if not model:
-        model = DEFAULT_MODELS.get(provider, "")
+        model = spec.default_models.get(provider) or DEFAULT_MODELS.get(provider, "")
 
     # The environment flag first, then an explicit per-feature choice on top -
     # so a deployment that has never opened the page behaves exactly as its
@@ -412,11 +480,13 @@ def public_view() -> dict:
                 "has_credential": bool(resolution.api_key) or _env_key(resolution.provider),
                 "override": saved.get(key, {}),
                 "model_options": {
-                    p: [dict(o) for o in MODEL_OPTIONS.get(p, ())]
+                    p: [dict(o) for o in
+                        spec.model_options.get(p) or MODEL_OPTIONS.get(p, ())]
                     for p in spec.providers
                 },
                 "default_models": {
-                    p: DEFAULT_MODELS.get(p, "") for p in spec.providers
+                    p: spec.default_models.get(p) or DEFAULT_MODELS.get(p, "")
+                    for p in spec.providers
                 },
             }
         )

@@ -164,7 +164,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Ticket Exports
+         * @description Every stored backlog export, or one project's. Never the bytes.
+         *
+         *     The size, never the blob - the same rule `app/imports.py` states for
+         *     uploaded sheets. This runs on a page load, and selecting the entity would
+         *     pull every workbook into memory to render a table showing how big they are.
+         */
+        get: operations["list_ticket_exports_api_traceability_export_get"];
         put?: never;
         /**
          * Save Ticket Export
@@ -984,8 +992,41 @@ export interface paths {
          *     repository that cannot be reached, or has no documents, leaves nothing
          *     behind. That is the fifth defect in CLAUDE.md section 0a, which was a
          *     refused import still leaving a project on the portfolio.
+         *
+         *     A repository with no documents is answered with `docs_missing` rather
+         *     than a bare 400, carrying what the page needs to *offer* generating them
+         *     (`POST /api/repos/generate-docs`). Still nothing is written until the
+         *     documents exist.
          */
         post: operations["save_project_repo_api_repos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repos/generate-docs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Generate Repo Docs State
+         * @description The documentation generation in flight or last finished.
+         */
+        get: operations["generate_repo_docs_state_api_repos_generate_docs_get"];
+        put?: never;
+        /**
+         * Generate Repo Docs
+         * @description Write the missing documents into the clone with CodeWiki, then register.
+         *
+         *     Asked for from the dialog `POST /api/repos` leads to, never on its own.
+         *     Returns at once; the generation runs in the background and registers
+         *     the repository when it finishes. Poll `GET /api/repos/generate-docs`.
+         */
+        post: operations["generate_repo_docs_api_repos_generate_docs_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1149,6 +1190,44 @@ export interface paths {
          *     becomes unnecessary rather than becoming load-bearing.
          */
         post: operations["ingest_jira_issues_api_jira_ingest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jira/watermark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Jira Watermark
+         * @description The newest `updated` this server already holds for one project.
+         *
+         *     What the sync tool needs to stop re-downloading a project it has
+         *     already sent. `live.collect` has had this since it was written - it
+         *     reads its own watermark from the raw table - and the PowerShell tool
+         *     never did, so every run fetched every issue with its full changelog
+         *     and a project large enough to trip Jira's rate limiter could not be
+         *     collected at all: each attempt re-read everything and banked none of
+         *     it.
+         *
+         *     Read from `updated_at_src` - the timestamp *Jira* put on the issue -
+         *     and not from `fetched_at`, because the JQL this feeds is
+         *     `updated >= …`. Those two answer different questions, and using the
+         *     collection time would skip anything edited while a slow collection
+         *     was running.
+         *
+         *     Ungated on purpose: it is one timestamp about a project the caller
+         *     has to name, it decloses nothing an issue list would not, and the tool
+         *     asks for it before it has any reason to hold a credential.
+         */
+        get: operations["jira_watermark_api_jira_watermark_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1534,6 +1613,86 @@ export interface paths {
          * @description Trim the usage log. Retention is a decision, so nothing does this itself.
          */
         post: operations["purge_llm_usage_api_llm_usage_purge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Demo Reset Preview
+         * @description What Settings › Demo reset would clear, before anybody presses it.
+         */
+        get: operations["demo_reset_preview_api_demo_reset_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/clear-jira": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Demo Clear Jira
+         * @description Delete every row the Jira collector produced. Seed and Excel data stay.
+         */
+        post: operations["demo_clear_jira_api_demo_clear_jira_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/archive-traces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Demo Archive Traces
+         * @description Hide every traceability run from the page by moving it to `_archived/`.
+         */
+        post: operations["demo_archive_traces_api_demo_archive_traces_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/restore-traces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Demo Restore Traces
+         * @description Undo the newest archive.
+         */
+        post: operations["demo_restore_traces_api_demo_restore_traces_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2381,6 +2540,14 @@ export interface components {
             status: string | null;
             /** Text */
             text: string | null;
+        };
+        /** ClearJiraIn */
+        ClearJiraIn: {
+            /**
+             * Forget Connections
+             * @default false
+             */
+            forget_connections: boolean;
         };
         /** CreatedProgram */
         CreatedProgram: {
@@ -3460,6 +3627,48 @@ export interface components {
             name: string;
         };
         /**
+         * ProjectRepoDocsIn
+         * @description A registration whose repository has no documents, plus the model to
+         *     write them with. Blank takes the one chosen on /llm (CodeWiki docs).
+         */
+        ProjectRepoDocsIn: {
+            /**
+             * Project Id
+             * @default
+             */
+            project_id: string;
+            /**
+             * Repo Url
+             * @default
+             */
+            repo_url: string;
+            /**
+             * Ref
+             * @default
+             */
+            ref: string;
+            /**
+             * Docs Path
+             * @default docs
+             */
+            docs_path: string;
+            /**
+             * Token
+             * @default
+             */
+            token: string;
+            /**
+             * Clear Token
+             * @default false
+             */
+            clear_token: boolean;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+        };
+        /**
          * ProjectRepoIn
          * @description Where one delivery project's code and documents come from.
          */
@@ -4358,6 +4567,11 @@ export interface components {
              * @default
              */
             project_id: string;
+            /**
+             * Mode
+             * @default
+             */
+            mode: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -4547,6 +4761,39 @@ export interface operations {
         };
     };
     api_traceability_rows_api_traceability_rows_get: {
+        parameters: {
+            query?: {
+                project?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ticket_exports_api_traceability_export_get: {
         parameters: {
             query?: {
                 project?: string | null;
@@ -5654,6 +5901,74 @@ export interface operations {
             };
         };
     };
+    generate_repo_docs_state_api_repos_generate_docs_get: {
+        parameters: {
+            query?: {
+                project_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_repo_docs_api_repos_generate_docs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRepoDocsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     refresh_project_repo_api_repos__project_id__refresh_post: {
         parameters: {
             query?: never;
@@ -5819,6 +6134,39 @@ export interface operations {
                 "application/json": components["schemas"]["JiraIngestIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    jira_watermark_api_jira_watermark_get: {
+        parameters: {
+            query: {
+                project_key: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -6384,6 +6732,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_reset_preview_api_demo_reset_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    demo_clear_jira_api_demo_clear_jira_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClearJiraIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_archive_traces_api_demo_archive_traces_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    demo_restore_traces_api_demo_restore_traces_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

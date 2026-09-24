@@ -686,19 +686,32 @@ def start_traceability_run(request: Request, body: TraceabilityRunIn) -> dict:
             raise HTTPException(status_code=503, detail=str(exc)) from None
 
         export = session.get(TicketExport, project_id)
-        if export is None:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"no backlog export is stored for {project_id!r}. The "
-                    f"`tickets` and `governance` stages read the tracker "
-                    f"export as a workbook - upload it first."
-                ),
-            )
-        export_bytes = export.content
-        export_name = export.original_filename
-        project_filter = export.project_filter
-        done_status = export.done_status
+        if export is not None:
+            # An uploaded export wins: somebody chose that file on purpose.
+            export_bytes = export.content
+            export_name = export.original_filename
+            project_filter = export.project_filter
+            done_status = export.done_status
+        else:
+            # Otherwise the issues the project's Jira link has synced - the
+            # same backlog, without exporting and uploading it by hand.
+            from app.ingest.sources.jira.backlog import backlog_for_project
+
+            jira = backlog_for_project(session, project_id)
+            if jira is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"{project_id!r} has no backlog to trace: no export "
+                        f"is uploaded and no Jira issues are synced for it. "
+                        f"Link its Jira project and sync, or upload the "
+                        f"tracker export, on Settings > Sources."
+                    ),
+                )
+            export_bytes = jira["content"]
+            export_name = jira["name"]
+            project_filter = ""
+            done_status = jira["done_status"]
 
     # Resolved here, after the registration and the export have been checked.
     # Ordering rather than taste: "you asked to sync a project that has never
@@ -910,6 +923,13 @@ def _report_doc(
             from app.risks.service import list_risks
 
             risks = list_risks(session, project_ids=[project, *also])
+        # Who holds what - the Team page's own bundle, so the report's people
+        # and late-work tables can never disagree with that page.
+        team = (
+            team_project(session, project_id=project, also=list(also))
+            if {"late_work", "people"} & set(chosen)
+            else None
+        )
         drafts = None
         if "model_read" in chosen:
             #: A read, never a generation. Exporting a report must not call a
@@ -944,6 +964,7 @@ def _report_doc(
         risks=risks,
         drafts=drafts,
         traceability=traceability,
+        team=team,
         sections=chosen,
         project_name=found.name if found else "",
     )
@@ -1731,22 +1752,24 @@ def list_project_repos(project: str | None = None) -> dict:
         }
 
 
-@app.post("/api/repos")
-def save_project_repo(request: Request, body: ProjectRepoIn) -> dict:
-    """Register a repository against a project, after actually reading it.
+class ProjectRepoDocsIn(ProjectRepoIn):
+    """A registration whose repository has no documents, plus the model to
+    write them with. Blank takes the one chosen on /llm (CodeWiki docs)."""
 
-    The order is the whole point: clone, enforce the documentation tree,
-    and only then write the row. A registration therefore always names a
-    commit this server read and a documentation tree it walked - and a
-    repository that cannot be reached, or has no documents, leaves nothing
-    behind. That is the fifth defect in CLAUDE.md section 0a, which was a
-    refused import still leaving a project on the portfolio.
+    model: str = ""
+
+
+def _read_repo_for_registration(body: ProjectRepoIn) -> dict:
+    """Validate a registration form and clone what it names.
+
+    Shared by registering and by generating the documents a registration was
+    missing, so both read the repository with the same checks and the same
+    credential rules. A missing documentation tree is returned rather than
+    raised (`fetched["docs_dir"] is None`); every other problem is an
+    `HTTPException` naming it.
     """
-    from app import admin
     from app.ingest.sources.git import source, store
     from app.llm.keys import KeyStoreUnavailable
-
-    actor = admin.require(request)
 
     problem = check_connection()
     if problem is not None:
@@ -1789,27 +1812,33 @@ def save_project_repo(request: Request, body: ProjectRepoIn) -> dict:
     try:
         fetched = source.fetch(
             repo_url=body.repo_url.strip(), ref=body.ref.strip(),
-            docs_path=docs_path, token=secret,
+            docs_path=docs_path, token=secret, generate_missing_docs=True,
         )
     except source.PipelineMissing as exc:
         # A deployment that cannot do this at all, not a bad request.
         raise HTTPException(status_code=503, detail=str(exc)) from None
-    except source.DocsMissing as exc:
-        # The lock. Names what it looked for and what is there.
+    except (source.DocsMissing, source.RepoUnavailable) as exc:
+        # DocsMissing here is only the path-escapes-the-repository refusal.
         raise HTTPException(status_code=400, detail=str(exc)) from None
-    except source.RepoUnavailable as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from None
+    return {"project_id": project_id, "docs_path": docs_path, "token": token,
+            "fetched": fetched}
+
+
+def _save_repo_registration(body: ProjectRepoIn, read: dict, actor: str) -> dict:
+    """Write the row for a repository whose documents are in place."""
+    from app.ingest.sources.git import store
+    from app.llm.keys import KeyStoreUnavailable
 
     try:
         with session_scope() as session:
             row = store.save(
-                session, project_id=project_id,
+                session, project_id=read["project_id"],
                 repo_url=body.repo_url.strip(), ref=body.ref.strip(),
-                docs_path=docs_path, token=token, actor=actor,
-                fetched=fetched,
+                docs_path=read["docs_path"], token=read["token"], actor=actor,
+                fetched=read["fetched"],
             )
             session.flush()
-            saved = {
+            return {
                 "project_id": row.project_id,
                 "repo_url": row.repo_url,
                 "ref": row.ref,
@@ -1825,7 +1854,85 @@ def save_project_repo(request: Request, body: ProjectRepoIn) -> dict:
         raise HTTPException(status_code=503, detail=str(exc)) from None
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from None
-    return {"ok": True, **saved}
+
+
+@app.post("/api/repos")
+def save_project_repo(request: Request, body: ProjectRepoIn) -> dict:
+    """Register a repository against a project, after actually reading it.
+
+    The order is the whole point: clone, enforce the documentation tree,
+    and only then write the row. A registration therefore always names a
+    commit this server read and a documentation tree it walked - and a
+    repository that cannot be reached, or has no documents, leaves nothing
+    behind. That is the fifth defect in CLAUDE.md section 0a, which was a
+    refused import still leaving a project on the portfolio.
+
+    A repository with no documents is answered with `docs_missing` rather
+    than a bare 400, carrying what the page needs to *offer* generating them
+    (`POST /api/repos/generate-docs`). Still nothing is written until the
+    documents exist.
+    """
+    from app import admin, codewiki_docs
+
+    actor = admin.require(request)
+    read = _read_repo_for_registration(body)
+    fetched = read["fetched"]
+    if fetched["docs_dir"] is None:
+        return {"ok": False, "docs_missing": True,
+                "message": fetched["docs_missing"],
+                "short_commit": (fetched["commit"] or "")[:12],
+                "generate": codewiki_docs.offer()}
+    return {"ok": True, **_save_repo_registration(body, read, actor)}
+
+
+@app.post("/api/repos/generate-docs")
+def generate_repo_docs(request: Request, body: ProjectRepoDocsIn) -> dict:
+    """Write the missing documents into the clone with CodeWiki, then register.
+
+    Asked for from the dialog `POST /api/repos` leads to, never on its own.
+    Returns at once; the generation runs in the background and registers
+    the repository when it finishes. Poll `GET /api/repos/generate-docs`.
+    """
+    from app import admin, codewiki_docs
+    from app.ingest.sources.git import source
+
+    actor = admin.require(request)
+    reason = codewiki_docs.unavailable()
+    if reason:
+        raise HTTPException(status_code=503, detail=reason)
+
+    read = _read_repo_for_registration(body)
+    fetched = read["fetched"]
+    if fetched["docs_dir"] is not None:
+        # Somebody added documents in the meantime; those win.
+        return {"ok": True, "generated": False,
+                **_save_repo_registration(body, read, actor)}
+
+    tree = Path(fetched["tree"])
+    target = source.docs_dir(tree, read["docs_path"])
+
+    def _register() -> dict:
+        directory, count = source.check_docs(tree, read["docs_path"])
+        fetched.update(docs_dir=directory, doc_count=count, docs_missing="")
+        return _save_repo_registration(body, read, actor)
+
+    try:
+        job = codewiki_docs.start(
+            project_id=read["project_id"], tree=tree, docs_dir=target,
+            commit=fetched["commit"] or "", model=body.model, actor=actor,
+            on_done=_register,
+        )
+    except codewiki_docs.GenerationBusy as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+    return {"ok": True, "generated": True, "job": job}
+
+
+@app.get("/api/repos/generate-docs")
+def generate_repo_docs_state(project_id: str = "") -> dict:
+    """The documentation generation in flight or last finished."""
+    from app import codewiki_docs
+
+    return {"job": codewiki_docs.state(project_id.strip())}
 
 
 @app.post("/api/repos/{project_id:path}/refresh")
@@ -3020,6 +3127,58 @@ def purge_llm_usage(request: Request, older_than_days: int = 90) -> dict:
 
     admin.require(request)
     return {"deleted": purge(max(0, older_than_days))}
+
+
+class ClearJiraIn(BaseModel):
+    #: Also delete the saved Jira connections, not only what they collected.
+    forget_connections: bool = False
+
+
+@app.get("/api/demo/reset")
+def demo_reset_preview() -> dict:
+    """What Settings › Demo reset would clear, before anybody presses it."""
+    from app.demo_reset import jira_preview, traces_preview
+
+    with session_scope() as session:
+        jira = jira_preview(session)
+    return {"jira": jira, "traces": traces_preview()}
+
+
+@app.post("/api/demo/clear-jira")
+def demo_clear_jira(request: Request, body: ClearJiraIn) -> dict:
+    """Delete every row the Jira collector produced. Seed and Excel data stay."""
+    from app import admin
+    from app.demo_reset import clear_jira
+
+    admin.require(request)
+    with session_scope() as session:
+        return clear_jira(session, forget_connections=body.forget_connections)
+
+
+@app.post("/api/demo/archive-traces")
+def demo_archive_traces(request: Request) -> dict:
+    """Hide every traceability run from the page by moving it to `_archived/`."""
+    from app import admin
+    from app.demo_reset import archive_traces
+
+    admin.require(request)
+    try:
+        return archive_traces()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.post("/api/demo/restore-traces")
+def demo_restore_traces(request: Request) -> dict:
+    """Undo the newest archive."""
+    from app import admin
+    from app.demo_reset import restore_traces
+
+    admin.require(request)
+    try:
+        return restore_traces()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @app.post("/api/settings/test")

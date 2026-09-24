@@ -22,6 +22,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from tracelink import fpt
 from tracelink.artifacts import (
     Corpus, Description, Ticket, TicketCandidates, Verdict, VerdictEvidence,
 )
@@ -41,6 +42,15 @@ PRICING: dict[str, tuple[float, float]] = {
 }
 
 DEFAULT_MODEL = "claude-opus-5"
+#: Overrides DEFAULT_MODEL for every model stage without editing a command
+#: line - which is how a caller that only spawns `-m tracelink` (the app's
+#: traceability run) is pointed at another model. `fpt:<name>` selects an open
+#: model on FPT's gateway; see `tracelink/fpt.py`.
+MODEL_ENV = "TRACELINK_MODEL"
+
+
+def default_model() -> str:
+    return os.environ.get(MODEL_ENV, "").strip() or DEFAULT_MODEL
 
 
 class EvidenceItem(BaseModel):
@@ -181,12 +191,12 @@ class StructuredCaller:
 
     def __init__(
         self,
-        model: str = DEFAULT_MODEL,
+        model: str = "",
         cache_dir: str | Path | None = None,
         effort: str = "medium",
         max_tokens: int = 4000,
     ):
-        self.model = model
+        self.model = model or default_model()
         self.effort = effort
         self.max_tokens = max_tokens
         self.cache_dir = Path(cache_dir) if cache_dir else None
@@ -227,6 +237,9 @@ class StructuredCaller:
             return hit, Usage(cached_calls=1,
                               prior_input_tokens=prior.get("input_tokens", 0),
                               prior_output_tokens=prior.get("output_tokens", 0))
+
+        if fpt.is_fpt(self.model):
+            return self._call_fpt(key, system, prompt, output_format)
 
         response = self.client.messages.parse(
             model=self.model,
@@ -273,6 +286,26 @@ class StructuredCaller:
             api_calls=1,
         )
         return payload, usage
+
+
+    def _call_fpt(self, key: str, system: str, prompt: str,
+                  output_format) -> tuple[dict, "Usage"]:
+        # Same SYSTEM as Claude gets, deliberately. A step-by-step "how to
+        # decide" procedure for open models was measured against SYSTEM alone
+        # (56 prompts byte-identical to cached Opus verdicts): it lifted
+        # corroborated recall to 22/22 but turned 3-4 of Opus's "unverified"
+        # into "corroborated" on every model - the worse error, a feature
+        # claimed that is not there - and lowered overall agreement.
+        payload, used = fpt.structured(self.model, system, prompt, output_format,
+                                       self.max_tokens)
+        self._store(key, {**payload, "_usage": {
+            "input_tokens": used["input_tokens"],
+            "output_tokens": used["output_tokens"],
+            "model": self.model,
+        }})
+        return payload, Usage(input_tokens=used["input_tokens"],
+                              output_tokens=used["output_tokens"],
+                              api_calls=used["calls"])
 
 
 class Adjudicator(StructuredCaller):
@@ -351,6 +384,15 @@ def run(
     return [v for v in results if v is not None], total
 
 
-def api_key_present() -> bool:
+def api_key_present(model: str = "") -> bool:
+    if fpt.is_fpt(model or default_model()):
+        return fpt.key_present()
     return bool(os.environ.get("ANTHROPIC_API_KEY")
                 or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
+
+
+def credential_hint(model: str = "") -> str:
+    """What to set to make new calls with this model."""
+    if fpt.is_fpt(model or default_model()):
+        return f"Set {fpt.KEY_ENV} to make new calls."
+    return "Set ANTHROPIC_API_KEY, or run `ant auth login`, to make new calls."

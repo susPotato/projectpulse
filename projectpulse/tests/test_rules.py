@@ -36,7 +36,7 @@ def ctx(**kw) -> dict:
 
 RECORDS = [
     ctx(),
-    ctx(max_propagated_days=11, tasks_inconsistent=2),
+    ctx(max_dependency_slip_days=11, tasks_dependency_inconsistent=2),
     ctx(max_propagated_days=3, tasks_inconsistent=1),
     ctx(qa_count=17, qa_blocked=14, qa_blocked_ratio=0.82),
     ctx(qa_count=10, qa_blocked=4, qa_blocked_ratio=0.4),
@@ -171,8 +171,8 @@ def test_several_problems_all_fire():
     """Collect, not first-match: a project can be in trouble several ways."""
     hits = RulesEngine(DEFAULT_TABLE, known_fields=KNOWN).evaluate(
         ctx(
-            max_propagated_days=11,
-            tasks_inconsistent=2,
+            max_dependency_slip_days=11,
+            tasks_dependency_inconsistent=2,
             milestones_at_risk=1,
             rows_rejected=3,
         )
@@ -189,8 +189,8 @@ def test_the_severity_bands_do_not_overlap():
     """A 3-day inconsistency is minor; an 11-day one is not both."""
     engine = RulesEngine(DEFAULT_TABLE, known_fields=KNOWN)
 
-    minor = {h.rule_id for h in engine.evaluate(ctx(max_propagated_days=3))}
-    major = {h.rule_id for h in engine.evaluate(ctx(max_propagated_days=11))}
+    minor = {h.rule_id for h in engine.evaluate(ctx(max_dependency_slip_days=3))}
+    major = {h.rule_id for h in engine.evaluate(ctx(max_dependency_slip_days=11))}
 
     assert "schedule_inconsistent_minor" in minor
     assert "schedule_inconsistent_major" not in minor
@@ -244,7 +244,21 @@ def test_a_banded_rule_joins_its_conditions_in_one_cell():
     table = next(n for n in jdm["nodes"] if n["type"] == "decisionTableNode")
     row = next(r for r in table["content"]["rules"] if r["_id"] == "schedule_inconsistent_minor")
 
-    assert " and " in row["i_max_propagated_days"]
+    assert " and " in row["i_max_dependency_slip_days"]
+
+
+def test_a_task_dated_backwards_is_not_called_a_dependency_problem():
+    """CoWorkLocal, 2026-09-24: one row started after its own due date, on a
+    project with no dependency links, and the report said "dated earlier than
+    their own dependencies allow" at HIGH. It is a data error on one row."""
+    engine = RulesEngine(DEFAULT_TABLE, known_fields=KNOWN)
+    hits = {h.rule_id for h in engine.evaluate(ctx(
+        max_propagated_days=20, tasks_inconsistent=1,
+        tasks_dated_backwards=1, worst_dated_backwards_days=20))}
+
+    assert "dates_backwards" in hits
+    assert "schedule_inconsistent_major" not in hits
+    assert "schedule_inconsistent_minor" not in hits
 
 
 # --------------------------------------------------------------------------

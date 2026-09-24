@@ -41,6 +41,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from collections import deque
 from datetime import datetime
 from pathlib import Path
@@ -238,6 +239,29 @@ def _commands(*, run_dir: Path, export: Path, repo: Path, docs: Path,
     return commands
 
 
+def _model_env(env: dict[str, str]) -> dict[str, str]:
+    """The model and credential the verdict stages should use.
+
+    The choice on `/llm` ("Traceability verdicts") wins; with none saved, an
+    explicit `TRACELINK_MODEL` in the environment is left alone, and otherwise
+    tracelink's own default (Claude) applies. The child reads credentials from
+    its environment only, so a key saved on `/llm` has to be handed over here.
+    """
+    from app.llm import features, keys
+
+    out: dict[str, str] = {}
+    chosen = features.resolve("traceability")
+    if chosen.source == "override" or not env.get("TRACELINK_MODEL"):
+        out["TRACELINK_MODEL"] = (f"fpt:{chosen.model}" if chosen.provider == "fpt"
+                                  else chosen.model)
+    for provider, var in (("anthropic", "ANTHROPIC_API_KEY"), ("fpt", "FPT_API_KEY")):
+        if not env.get(var):
+            stored = keys.get(provider)
+            if stored:
+                out[var] = stored
+    return out
+
+
 def _worker(commands: list[tuple[str, list[str]]], env: dict[str, str],
             record: dict[str, Any]) -> None:
     """Run each command in order, keeping the tail of the output. Never raises.
@@ -311,6 +335,113 @@ def _one(argv: list[str], env: dict[str, str], record: dict[str, Any]) -> bool:
     return False
 
 
+#: How long a `reuse` takes before it reports done.
+#:
+#: Nothing is computed in that time - the run is already on disk and this
+#: re-reads it. The pause is there so the board clears and comes back rather
+#: than flickering, which on a result this dense reads as a glitch rather than
+#: as a refresh.
+#:
+#: **It is not pretending to work, and the page must not say that it is.** The
+#: button is labelled Reuse and the progress line says "Reusing the previous
+#: run" - a spinner that claimed to be building a corpus would be a different
+#: thing entirely. Set `PULSE_TRACELINK_REUSE_SECONDS=0` to remove it.
+REUSE_ENV = "PULSE_TRACELINK_REUSE_SECONDS"
+REUSE_DEFAULT_SECONDS = 15.0
+
+
+def reuse_seconds() -> float:
+    raw = os.environ.get(REUSE_ENV, "").strip()
+    if not raw:
+        return REUSE_DEFAULT_SECONDS
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        # A typo should not stop the button working; the default is harmless.
+        log.warning("%s=%r is not a number, using %s", REUSE_ENV, raw,
+                    REUSE_DEFAULT_SECONDS)
+        return REUSE_DEFAULT_SECONDS
+
+
+def start_reuse(*, project_id: str, actor: str = "") -> dict[str, Any]:
+    """Re-read the run this project already has. Computes nothing.
+
+    Separate from `start` rather than a mode inside it, because it needs none
+    of what a real run needs - no clone, no backlog export, no subprocess -
+    and threading four unused arguments through `start` to reach a branch that
+    ignores them is how a function stops being readable.
+
+    It still goes through the same record and the same `state()`, so the page
+    polls one endpoint and the log tells you afterwards which of the two
+    happened.
+    """
+    global _current
+
+    with _LOCK:
+        if _current is not None and _current.get("status") == "running":
+            raise RunBusy(
+                f"a run is already in flight for "
+                f"{_current.get('project_id')!r}. Wait for it, or check its "
+                f"progress on this page."
+            )
+
+    run_dir = run_dir_for(project_id)
+    if not has_run(project_id):
+        raise RunUnavailable(
+            "this project has no run to reuse. Recalculate produces one."
+        )
+
+    delay = reuse_seconds()
+    record: dict[str, Any] = {
+        "project_id": project_id,
+        "run": str(run_dir),
+        "status": "running",
+        "stage": "Reusing the previous run",
+        "started_at": utcnow().isoformat(),
+        "finished_at": None,
+        "exit_code": None,
+        "error": "",
+        "export_name": "",
+        "started_by": actor,
+        "command": "reuse",
+        "mode": "reuse",
+        "cleared": 0,
+        # Nothing was computed, and the record says so rather than leaving the
+        # page to infer it from a mode string.
+        "computed": False,
+        "verdicts": verdict_stages_enabled(),
+        "cached_verdicts": len(list((run_dir / "cache").glob("*.json")))
+        if (run_dir / "cache").is_dir() else 0,
+        "log": deque(maxlen=LOG_LINES),
+        "pid": None,
+    }
+    record["log"].append(
+        f"reuse: serving the run already in {run_dir}. Nothing is recomputed; "
+        f"press Recalculate to rebuild it from the code and the backlog."
+    )
+
+    with _LOCK:
+        _current = record
+
+    def _settle() -> None:
+        if delay:
+            time.sleep(delay)
+        with _LOCK:
+            record["status"] = "done"
+            record["exit_code"] = 0
+            record["finished_at"] = utcnow().isoformat()
+            record["stage"] = ""
+            record["command"] = ""
+
+    threading.Thread(target=_settle, name=f"tracelink-reuse-{_slug(project_id)}",
+                     daemon=True).start()
+
+    log.info("traceability reuse for %s -> %s", project_id, run_dir)
+    out = dict(record)
+    out["log"] = []
+    return out
+
+
 def start(*, project_id: str, repo_tree: Path, docs_dir: Path,
           export_bytes: bytes, export_name: str = "",
           project_filter: str = "", done_status: str = "",
@@ -352,7 +483,12 @@ def start(*, project_id: str, repo_tree: Path, docs_dir: Path,
     # Kept for the life of the run rather than a `with` block: the subprocess
     # outlives this call, and deleting the export out from under the stage
     # that is reading it is a race that would look like a corrupt workbook.
-    handle, raw_path = tempfile.mkstemp(prefix="pulse-export-", suffix=".xlsx")
+    # The export's own suffix: the reader picks the format from it, and a
+    # backlog built from synced Jira issues is a CSV, not a workbook.
+    suffix = Path(export_name or "").suffix.lower()
+    if suffix not in {".xlsx", ".csv"}:
+        suffix = ".xlsx"
+    handle, raw_path = tempfile.mkstemp(prefix="pulse-export-", suffix=suffix)
     with os.fdopen(handle, "wb") as fh:
         fh.write(export_bytes)
     export_path = Path(raw_path)
@@ -365,12 +501,14 @@ def start(*, project_id: str, repo_tree: Path, docs_dir: Path,
     env["PYTHONPATH"] = os.pathsep.join(
         [home, env["PYTHONPATH"]] if env.get("PYTHONPATH") else [home]
     )
+    env.update(_model_env(env))
 
     verdicts = verdict_stages_enabled()
     commands = _commands(run_dir=run_dir, export=export_path, repo=repo_tree,
                          docs=docs_dir, project_id=project_id,
                          project_filter=project_filter, done_status=done_status,
                          verdicts=verdicts)
+
 
     record: dict[str, Any] = {
         "project_id": project_id,
@@ -383,6 +521,13 @@ def start(*, project_id: str, repo_tree: Path, docs_dir: Path,
         #: name in a log somebody is reading after the fact.
         "command": "",
         "mode": mode,
+        #: Which model the verdict stages call (`fpt:<name>` for the gateway),
+        #: empty when they are off. Set on `/llm`, "Traceability verdicts".
+        "model": env.get("TRACELINK_MODEL", "") if verdicts else "",
+        #: This one really does rebuild the artifacts. The page tells the two
+        #: apart by this rather than by parsing `mode`, so adding a third mode
+        #: later cannot silently make a reuse describe itself as a rebuild.
+        "computed": True,
         #: How many of the previous run's artifacts a `new` run removed. Zero
         #: on a sync, and zero on the first trace of a project - which is the
         #: honest way to say "there was nothing here before" without the page

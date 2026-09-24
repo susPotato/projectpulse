@@ -92,13 +92,138 @@ def test_the_registration_is_listed_without_a_credential(client, repo):
 
 
 def test_a_repository_without_documents_is_refused(client, tmp_path):
+    """Refused, but answered with the offer to generate rather than a 400:
+    the page opens its "generate docs?" dialog from `generate`."""
     root = tmp_path / "bare"
     (root / "src").mkdir(parents=True)
     response = client.post("/api/repos", json={
         "project_id": PROJECT, "repo_url": str(root), "docs_path": "docs",
     })
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["ok"] is False
+    assert body["docs_missing"] is True
+    assert "no 'docs' directory" in body["message"]
+    offer = body["generate"]
+    assert offer["provider"] == "fpt"
+    assert offer["model"] == "GLM-5.2"
+    assert "DeepSeek-V4-Flash" in [m["id"] for m in offer["models"]]
+    assert isinstance(offer["available"], bool)
+
+
+def test_a_docs_path_leaving_the_repository_is_still_a_400(client, tmp_path):
+    root = tmp_path / "bare"
+    (root / "src").mkdir(parents=True)
+    response = client.post("/api/repos", json={
+        "project_id": PROJECT, "repo_url": str(root), "docs_path": "../../etc",
+    })
     assert response.status_code == 400
-    assert "no 'docs' directory" in response.json()["detail"]
+    assert "outside the repository" in response.json()["detail"]
+
+
+# Generating the documents a repository was missing
+
+
+@pytest.fixture
+def fake_generator(monkeypatch, tmp_path):
+    """Stand in for CodeWiki: write two pages where it was told to, at once.
+
+    The real one is minutes of model calls; what these check is everything
+    around it - the order, the lock, the registration written after.
+    """
+    from app import codewiki_docs
+
+    script = tmp_path / "fake_codewiki.py"
+    script.write_text(
+        "import sys, pathlib\n"
+        "out = pathlib.Path(sys.argv[sys.argv.index('--out') + 1])\n"
+        "out.mkdir(parents=True, exist_ok=True)\n"
+        "(out / 'overview.md').write_text('# overview\\n')\n"
+        "(out / 'core.md').write_text('# core\\n')\n"
+        "print('=== codewiki (fake)')\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(codewiki_docs, "SCRIPT", script)
+    monkeypatch.setattr(codewiki_docs, "unavailable", lambda: "")
+    monkeypatch.setattr(codewiki_docs, "_current", None)
+    return codewiki_docs
+
+
+def _wait_for_job(client, project=PROJECT):
+    import time
+
+    for _ in range(200):
+        job = client.get("/api/repos/generate-docs",
+                         params={"project_id": project}).json()["job"]
+        if job and job["status"] != "running":
+            return job
+        time.sleep(0.05)
+    raise AssertionError("the generation never finished")
+
+
+def test_generating_writes_docs_into_the_clone_then_registers(client, tmp_path,
+                                                              fake_generator):
+    root = tmp_path / "bare"
+    (root / "src").mkdir(parents=True)
+    (root / "src" / "main.py").write_text("x = 1\n", encoding="utf-8")
+
+    response = client.post("/api/repos/generate-docs", json={
+        "project_id": PROJECT, "repo_url": str(root), "docs_path": "docs",
+        "model": "GLM-5.2",
+    })
+    assert response.status_code == 200, response.text
+    assert response.json()["generated"] is True
+
+    job = _wait_for_job(client)
+    assert job["status"] == "done", job
+    assert job["model"] == "GLM-5.2"
+    assert job["pages"] == 2
+    # Into the repository's own docs directory, not somewhere beside it.
+    assert (root / "docs" / "overview.md").is_file()
+    [row] = _rows(client)
+    assert row["doc_count"] == 2
+
+
+def test_nothing_is_registered_while_generation_runs_or_if_it_fails(
+        client, tmp_path, fake_generator):
+    fake_generator.SCRIPT.write_text("import sys; sys.exit(3)\n", encoding="utf-8")
+    root = tmp_path / "bare"
+    (root / "src").mkdir(parents=True)
+
+    client.post("/api/repos/generate-docs", json={
+        "project_id": PROJECT, "repo_url": str(root), "docs_path": "docs",
+    })
+    job = _wait_for_job(client)
+    assert job["status"] == "failed"
+    assert "exited 3" in job["error"]
+    assert _rows(client) == []
+
+
+def test_generating_is_refused_when_this_server_cannot(client, tmp_path,
+                                                       monkeypatch):
+    from app import codewiki_docs
+
+    monkeypatch.setattr(codewiki_docs, "unavailable",
+                        lambda: "no fpt key is saved for CodeWiki docs.")
+    root = tmp_path / "bare"
+    (root / "src").mkdir(parents=True)
+    response = client.post("/api/repos/generate-docs", json={
+        "project_id": PROJECT, "repo_url": str(root), "docs_path": "docs",
+    })
+    assert response.status_code == 503
+    assert "no fpt key" in response.json()["detail"]
+    assert _rows(client) == []
+
+
+def test_a_repository_that_gained_documents_registers_without_generating(
+        client, repo, fake_generator):
+    response = client.post("/api/repos/generate-docs", json={
+        "project_id": PROJECT, "repo_url": str(repo), "docs_path": "docs",
+    })
+    body = response.json()
+    assert body["generated"] is False
+    assert body["doc_count"] == 1
+    assert fake_generator.state(PROJECT) is None
 
 
 def test_a_refused_registration_leaves_no_row(client, tmp_path):

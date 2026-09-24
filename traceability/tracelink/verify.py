@@ -119,7 +119,18 @@ def find_definition(text: str, name: str) -> tuple[str, int | None]:
     return "absent", None
 
 
-def check_verdict(v: Verdict, root: Path, cache: dict[str, str | None]) -> Grounding:
+def _read_cited(rel: str, roots: list[Path]) -> str | None:
+    """The cited file's text from the first root that has it, or None."""
+    for base in roots:
+        try:
+            return (base / rel).read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+    return None
+
+
+def check_verdict(v: Verdict, root: Path, cache: dict[str, str | None],
+                  docs_roots: tuple[Path, ...] = ()) -> Grounding:
     if not v.evidence:
         # Not a failure. `unverified` is supposed to cite nothing, and saying
         # "ungrounded" about it would turn an honest refusal into a fault.
@@ -129,11 +140,13 @@ def check_verdict(v: Verdict, root: Path, cache: dict[str, str | None]) -> Groun
     for e in v.evidence:
         rel = e.file.replace("\\", "/")
         if rel not in cache:
-            p = root / rel
-            try:
-                cache[rel] = p.read_text(encoding="utf-8", errors="ignore")
-            except OSError:
-                cache[rel] = None
+            # The repository first, then the documentation tree: `adjudicate
+            # --docs` shows the model documents by their path *inside* that
+            # tree, so `refactor/Checklist.md` is `docs/refactor/...` here.
+            # Checking only the repository root reported every such citation
+            # as "file does not exist" and failed the run over files that
+            # were there.
+            cache[rel] = _read_cited(rel, [root, *docs_roots])
         text = cache[rel]
         if text is None:
             checks.append(CitationCheck(rel, e.symbol, "no-file"))
@@ -169,10 +182,12 @@ def check_verdict(v: Verdict, root: Path, cache: dict[str, str | None]) -> Groun
     return Grounding(uid=v.uid, verdict=v.verdict, status=status, checks=checks)
 
 
-def verify(verdicts: list[Verdict], root: str | Path) -> tuple[list[Grounding], dict]:
+def verify(verdicts: list[Verdict], root: str | Path,
+           docs_roots: tuple[str | Path, ...] = ()) -> tuple[list[Grounding], dict]:
     root = Path(root)
+    extra = tuple(Path(d) for d in docs_roots if d)
     cache: dict[str, str | None] = {}
-    out = [check_verdict(v, root, cache) for v in verdicts]
+    out = [check_verdict(v, root, cache, extra) for v in verdicts]
 
     citations = [c for g in out for c in g.checks]
     stats = {

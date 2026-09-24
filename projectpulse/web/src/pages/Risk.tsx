@@ -12,7 +12,7 @@ import {
   type RiskIn,
   type RiskOut,
 } from "../api";
-import { Board, Card, Note, Page, Panel, Problem, Section } from "../components/Shell";
+import { Board, Card, NoInput, Note, Page, Panel, Problem, Section } from "../components/Shell";
 
 /*
   The risk register: a PM's own judgement, entered and edited by hand - the one
@@ -578,11 +578,35 @@ function RiskTable({ bundle, risks, nameOf, onEdit, onChanged }: {
   onEdit: (risk: RiskOut) => void;
   onChanged: () => void;
 }) {
+  /* `Panel`, not a bare `Card`. This sits inside a `Board`, which is a
+     12-column grid, and only `Panel` carries a column span - so the empty
+     state rendered in a single column about 90px wide, wrapping "No risks
+     logged yet" one word per line beside a full-width matrix. The populated
+     branch below always said `span={12}`; these two never did.
+
+     `NoInput` rather than `AllClear` because the four states are not
+     interchangeable: an empty register is not "we looked and everything is
+     fine", it is "nobody has entered one yet", and the dashed edge is what
+     tells those apart at a glance. */
   if (bundle.risks.length === 0) {
-    return <Card>No risks logged yet. Add the first one.</Card>;
+    return (
+      <Panel span={12}>
+        <NoInput
+          what="No risks logged yet."
+          how={'Press "+ Add risk" above to enter the first one. This register is typed by a PM - nothing derives it from the tracker.'}
+        />
+      </Panel>
+    );
   }
   if (risks.length === 0) {
-    return <Card>No risks on this project yet. Add the first one.</Card>;
+    return (
+      <Panel span={12}>
+        <NoInput
+          what="No risks on this project yet."
+          how={'Other projects have risks logged - switch project above, or press "+ Add risk" to enter one here.'}
+        />
+      </Panel>
+    );
   }
 
   return (

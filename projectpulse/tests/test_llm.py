@@ -102,6 +102,38 @@ def test_features_can_use_different_models_at_the_same_time(clean):
     assert features.resolve("chat").provider == "gemini"
 
 
+def test_traceability_defaults_to_claude_and_offers_fpt(clean, secret, monkeypatch):
+    from app import traceability_run as TR
+
+    monkeypatch.delenv("TRACELINK_MODEL", raising=False)
+    # Claude unless chosen otherwise - not whatever narration is set to.
+    chosen = features.resolve("traceability")
+    assert (chosen.provider, chosen.model) == ("anthropic", "claude-opus-5")
+    assert TR._model_env({})["TRACELINK_MODEL"] == "claude-opus-5"
+
+    # Picking FPT with no model gets the tracing-measured model, not the
+    # narration one, and the run is handed the key saved on the page.
+    keys.save("fpt", "sk-test")
+    features.set_override("traceability", provider="fpt")
+    assert features.resolve("traceability").model == "DeepSeek-V4-Flash"
+    env = TR._model_env({})
+    assert env["TRACELINK_MODEL"] == "fpt:DeepSeek-V4-Flash"
+    assert env["FPT_API_KEY"] == "sk-test"
+    # An explicit key in the environment is not overridden by the stored one.
+    assert "FPT_API_KEY" not in TR._model_env({"FPT_API_KEY": "from-env"})
+
+    view = [f for f in features.public_view()["features"] if f["key"] == "traceability"][0]
+    assert view["model_options"]["fpt"][0]["id"] == "DeepSeek-V4-Flash"
+
+
+def test_traceability_leaves_an_explicit_env_model_alone_until_overridden(clean, monkeypatch):
+    from app import traceability_run as TR
+
+    assert "TRACELINK_MODEL" not in TR._model_env({"TRACELINK_MODEL": "fpt:GLM-5.2"})
+    features.set_override("traceability", provider="anthropic", model="claude-opus-5")
+    assert TR._model_env({"TRACELINK_MODEL": "fpt:GLM-5.2"})["TRACELINK_MODEL"] == "claude-opus-5"
+
+
 def test_a_feature_refuses_a_vendor_it_cannot_serve(clean):
     """`tile_agent` is an Anthropic tool loop; there is no OpenAI path."""
     with pytest.raises(ValueError, match="cannot run on"):

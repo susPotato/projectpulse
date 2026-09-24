@@ -190,3 +190,18 @@ def test_title_convention_counts_shared_heads():
     assert t["with_separator"] == 3
     assert t["shared_heads"] == 1
     assert t["rows_under_a_shared_head"] == 2
+
+
+def test_a_flat_keyed_backlog_is_profiled_rather_than_matching_nothing(tmp_path):
+    """A Jira backlog: every issue has a key. The old default profiled only the
+    unkeyed sub-rows of the nested demo export, matched nothing here, and the
+    stage exited 1 - failing the whole pipeline run over a report."""
+    from tracelink.cli import main
+
+    rows = ["Issue key,Summary,Description,Status,Issue Type,Project"]
+    rows += [f"CW-{n},Feature number {n},Does thing {n},Done,Task,CW" for n in range(1, 13)]
+    export = tmp_path / "jira.csv"
+    export.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+    assert main(["--run", str(tmp_path / "run"), "diagnose", str(export)]) == 0
+    assert (tmp_path / "run" / "diagnosis.json").is_file()

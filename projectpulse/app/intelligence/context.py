@@ -76,6 +76,10 @@ DUE_SOON_DAYS = 14
 #: long, not a measurement.
 STALE_AFTER_DAYS = 7
 
+#: Open tasks a person must hold before "all of them overdue" says something
+#: about the person rather than about one late task.
+OVERLOAD_MIN_OPEN = 3
+
 
 def _ratio(part: int, whole: int) -> float:
     """Ratios of an empty set are 0.0, not a division error and not None.
@@ -162,6 +166,53 @@ class DeliveryContext:
     #: else.
     tasks_on_busiest_due_date: int = 0
     busiest_due_date: str = ""
+    #: How far past its own date the latest open task is, in days against
+    #: `as_of`. The number `tasks_overdue` leaves out and a PM asks first:
+    #: thirty-five tasks a day late and thirty-five tasks a month late are not
+    #: the same conversation.
+    worst_overdue_days: int = 0
+    #: Due within `DUE_SOON_DAYS` and not even started - the at-risk-next list,
+    #: narrower than `tasks_due_soon` because started work at least has someone
+    #: on it.
+    tasks_due_soon_not_started: int = 0
+
+    # -- People -----------------------------------------------------------
+    #: The person with the most overdue open work (ties broken by open work),
+    #: and what they hold. A name is a field like `busiest_due_date` is: a rule
+    #: may only say it by substituting it, never by typing it.
+    top_owner: str = ""
+    top_owner_open: int = 0
+    top_owner_overdue: int = 0
+    #: The person holding the most tasks overall, open or not, and their share
+    #: of the project - the single-point-of-failure question, which is about
+    #: who knows the work rather than who is late on it.
+    busiest_owner: str = ""
+    busiest_owner_tasks: int = 0
+    busiest_owner_share: float = 0.0
+    #: People with at least `OVERLOAD_MIN_OPEN` open tasks, every one of them
+    #: overdue. Not "busy" - underwater: nothing they hold is on time.
+    owners_underwater: int = 0
+
+    # -- Tracker against code (the traceability run) ------------------------
+    #: Whether a traceability run with verdicts exists for this project. Every
+    #: rule below requires it: with no run, "no mismatch" would be absence of
+    #: evidence read as evidence of absence.
+    trace_available: bool = False
+    #: Closed in the tracker, and the model reading the code says it does not
+    #: do what the ticket claims.
+    trace_done_contradicted: int = 0
+    #: Closed in the tracker, and nothing in the code could be found to support
+    #: it. Weaker than contradicted: "could not confirm", not "refuted".
+    trace_done_unverified: int = 0
+    #: Still open in the tracker, and the code already implements it - either
+    #: finished work nobody closed, or a ticket nobody needs.
+    trace_open_built: int = 0
+    #: The code area (the leading directories of a ticket's strongest
+    #: candidate file) holding the most overdue open tickets, and how many.
+    #: The tracker's own grouping is often empty - CoWorkLocal has no
+    #: components on any issue - so the area comes from where the code is.
+    worst_area: str = ""
+    worst_area_overdue: int = 0
     #: Hours between `generated_at` and the most recent successful sync of any
     #: source, or -1 when nothing has ever synced. Not the age of the events
     #: the data describes - the demo timeline is fixed in the past by design -
@@ -173,6 +224,14 @@ class DeliveryContext:
     tasks_inconsistent: int = 0
     #: The worst single case of slip the sheet does not yet show.
     max_propagated_days: int = 0
+    #: The two causes `max_propagated_days` pools, apart. A task whose own
+    #: start is after its own due date is inconsistent with *itself* - a typo,
+    #: not a schedule problem - and reporting it as "dated earlier than its
+    #: dependencies allow" was false on a project with no dependencies at all.
+    tasks_dated_backwards: int = 0
+    worst_dated_backwards_days: int = 0
+    tasks_dependency_inconsistent: int = 0
+    max_dependency_slip_days: int = 0
     #: Slip already typed into the sheet by a human.
     max_recorded_slip_days: int = 0
     project_slip_days: int = 0
@@ -314,6 +373,7 @@ def build_context(
     program: "ProgramContext | None" = None,
     source_ids: Sequence[str] = (),
     owners: Mapping[str, str | None] | None = None,
+    trace: Mapping | None = None,
 ) -> DeliveryContext:
     """Aggregate one project into the scalars the rules compare.
 
@@ -327,6 +387,12 @@ def build_context(
     encoding: a project analysed alone has unknown contention, not none.
     `source_ids` is how this project's allocations are found - every id it may
     have been filed under, not just the canonical one.
+
+    `trace` is `trace_facts(...)` from `app.intelligence.tracefacts`: what the
+    project's traceability run says about closed and open tickets. Passed in,
+    already counted, because the run is files on disk and this module reads
+    nothing - omitted, `trace_available` stays false and every tracker-against-
+    code rule stays silent rather than reporting a clean match.
 
     `owners` maps a task's entity id to its assignee. Passed in rather than
     read off `schedule.tasks` because `TaskNode` is deliberately reduced to
@@ -400,6 +466,51 @@ def build_context(
             _by_due[_task.planned_end] = _by_due.get(_task.planned_end, 0) + 1
     _busiest = max(_by_due.items(), key=lambda kv: (kv[1], kv[0]), default=None)
 
+    _worst_overdue = max(
+        ((_today - t.planned_end).days for t in _overdue_tasks), default=0
+    )
+    _due_soon_not_started = sum(
+        1
+        for t in _open_tasks
+        if t.planned_end is not None
+        and _today <= t.planned_end <= _soon
+        and _status_of(t) not in IN_PROGRESS_STATES
+        and _status_of(t) not in BLOCKED_STATES
+    )
+
+    # People. Counted per assignee over the task rows, open work first.
+    _open_by: dict[str, int] = {}
+    _overdue_by: dict[str, int] = {}
+    _all_by: dict[str, int] = {}
+    _overdue_ids = {t.entity_id for t in _overdue_tasks}
+    for _task in tasks:
+        _who = (_by_owner.get(_task.entity_id) or "").strip()
+        if not _who:
+            continue
+        _all_by[_who] = _all_by.get(_who, 0) + 1
+        if _status_of(_task) not in CLOSED_STATES:
+            _open_by[_who] = _open_by.get(_who, 0) + 1
+            if _task.entity_id in _overdue_ids:
+                _overdue_by[_who] = _overdue_by.get(_who, 0) + 1
+    _top = max(
+        _open_by,
+        key=lambda w: (_overdue_by.get(w, 0), _open_by[w], w),
+        default="",
+    )
+    _busiest_owner = max(_all_by, key=lambda w: (_all_by[w], w), default="")
+    _underwater = sum(
+        1
+        for w, n in _open_by.items()
+        if n >= OVERLOAD_MIN_OPEN and _overdue_by.get(w, 0) == n
+    )
+
+    # The two causes of an inconsistent plan, apart: a task with no driving
+    # predecessor that is still inconsistent is inconsistent with itself.
+    _backwards = [p for p in impact.inconsistent() if p.driving_predecessor is None]
+    _dependency = [p for p in impact.inconsistent() if p.driving_predecessor is not None]
+
+    _trace = dict(trace or {})
+
     dependency_backed = sum(
         1
         for c in chains
@@ -445,6 +556,29 @@ def build_context(
         stalest_task_days=max(_ages, default=0),
         tasks_on_busiest_due_date=_busiest[1] if _busiest else 0,
         busiest_due_date=_busiest[0].isoformat() if _busiest else "",
+        worst_overdue_days=_worst_overdue,
+        tasks_due_soon_not_started=_due_soon_not_started,
+        top_owner=_top,
+        top_owner_open=_open_by.get(_top, 0),
+        top_owner_overdue=_overdue_by.get(_top, 0),
+        busiest_owner=_busiest_owner,
+        busiest_owner_tasks=_all_by.get(_busiest_owner, 0),
+        busiest_owner_share=_ratio(_all_by.get(_busiest_owner, 0), len(tasks)),
+        owners_underwater=_underwater,
+        tasks_dated_backwards=len(_backwards),
+        worst_dated_backwards_days=max(
+            (p.propagated_days or 0 for p in _backwards), default=0
+        ),
+        tasks_dependency_inconsistent=len(_dependency),
+        max_dependency_slip_days=max(
+            (p.propagated_days or 0 for p in _dependency), default=0
+        ),
+        trace_available=bool(_trace.get("available")),
+        trace_done_contradicted=int(_trace.get("done_contradicted", 0)),
+        trace_done_unverified=int(_trace.get("done_unverified", 0)),
+        trace_open_built=int(_trace.get("open_built", 0)),
+        worst_area=str(_trace.get("worst_area", "")),
+        worst_area_overdue=int(_trace.get("worst_area_overdue", 0)),
         tasks_done=sum(1 for t in tasks if _status_of(t) in DONE_STATES),
         tasks_not_started=sum(1 for t in tasks if _status_of(t) == "not started"),
         tasks_with_baseline=with_baseline,
