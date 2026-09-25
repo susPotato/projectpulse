@@ -32,6 +32,96 @@ from pathlib import Path
 from typing import Any
 
 from app.tracelabels import as_payload as finding_label_payload
+from app.intelligence.context import DONE_STATES, DROPPED_STATES
+
+#: Does the tracker's *status* survive contact with the code?
+#:
+#: A separate axis from `verdict`, and deliberately so. A verdict is about a
+#: ticket's **content** - does code exist that does what this says. This is
+#: about whether anyone should believe its **status**, which is the number a
+#: delivery manager actually reports upward. The two disagree often enough
+#: that folding them lost the case this exists for: a ticket marked Done that
+#: the code contradicts is counted as delivered by every completion figure in
+#: this product, and reads as progress.
+#:
+#: Kept apart from the verdict palette for a second reason. That palette
+#: leaves `unverified` uncoloured on purpose - absence of evidence is not a
+#: warning, and painting every unlooked-at row amber tells a PM they are in
+#: trouble when nobody has looked. Here the set is already narrowed to rows
+#: the tracker calls *finished*, and "claimed done, nothing found" is a real
+#: review item rather than an unexamined one, so it earns its red.
+DELIVERY_WORD = {
+    "confirmed": "Confirmed",
+    "conflict": "Conflict",
+    "review": "Need Review",
+}
+
+#: Tickets the tag says nothing about: still open and unremarkable, dropped,
+#: or never adjudicated. Counted nowhere rather than swept into a bucket.
+DELIVERY_NONE = ""
+
+
+#: The tracker's own claim, normalised. A row shows its raw status - "Release
+#: it", "Resolved", "Closed", "Ready for UAT" - and a reader cannot tell which
+#: of those this product counted as finished. Every count here and in
+#: `context.py` turns on that classification, so it is shown rather than left
+#: to be inferred from a word the tracker chose.
+STATUS_CLASS_WORD = {
+    "done": "Done",
+    "open": "Not done",
+    "dropped": "Dropped",
+}
+
+
+def status_class(status: str) -> str:
+    """Which of the three buckets a tracker status falls in.
+
+    The same vocabulary the counts use (`DONE_STATES` / `DROPPED_STATES`), so
+    a row labelled `Done` here is a row counted as done there. An unrecognised
+    status is `open`, which is the conservative direction: calling unknown
+    work finished is the error this product exists to catch.
+    """
+    state = (status or "").casefold().strip()
+    if state in DONE_STATES:
+        return "done"
+    if state in DROPPED_STATES:
+        return "dropped"
+    return "open"
+
+
+def delivery_tag(status: str, verdict: dict[str, Any] | None) -> str:
+    """One ticket's tracker-status-against-code tag.
+
+    ``status`` is the tracker's own word; ``verdict`` the adjudicator's row
+    for that ticket, or None where it was never looked at.
+
+    Both directions of disagreement are one `conflict`, because a reader
+    asking "how much of this can I believe" wants one number, and the row
+    itself says which way it fell. Cancelled work is neither delivered nor
+    outstanding - `context.py` excludes it from both counts for the same
+    reason - so it gets no tag.
+    """
+    state = (status or "").casefold().strip()
+    if state in DROPPED_STATES:
+        return DELIVERY_NONE
+    if not verdict:
+        return DELIVERY_NONE
+    call = verdict.get("verdict")
+    if state in DONE_STATES:
+        # Marked finished. The question is whether the code agrees.
+        if call == "corroborated":
+            return "confirmed"
+        if call == "contradicted":
+            return "conflict"
+        if call == "unverified":
+            return "review"
+        return DELIVERY_NONE
+    # Still open. Only the adjudicator saying so outright counts: code that
+    # merely exists for an open ticket is ordinary work in progress, and
+    # counting that as a conflict would bury the real ones under it.
+    if verdict.get("status_conflict"):
+        return "conflict"
+    return DELIVERY_NONE
 
 # Which stage writes each artifact, and the command that produces it. Used to
 # tell a reader what to run rather than just that a file was not there.
@@ -858,6 +948,12 @@ def collect(run: Path) -> dict[str, Any]:
             "verdict": verdict_by_uid.get(t["uid"]),
             "related": related.get(t["uid"], []),
             "grounding": grounding.get(t["uid"]),
+            # Tracker status against code. Stamped here so the page, the
+            # Insight card and the filter all read one answer.
+            "delivery_tag": delivery_tag(t.get("status", ""),
+                                         verdict_by_uid.get(t["uid"])),
+            # How this product read that status, beside the word itself.
+            "status_class": status_class(t.get("status", "")),
         })
 
     totals = {
@@ -868,6 +964,20 @@ def collect(run: Path) -> dict[str, Any]:
                          if r["verdict"] and r["verdict"].get("status_conflict")),
         "cost": round(sum((r["verdict"] or {}).get("cost_usd", 0) for r in rows), 4),
     }
+    # The tracker-against-code axis. `delivery_conflict` is the count a
+    # completion figure has to answer for: work reported as finished that the
+    # code does not support, plus work the code shows finished that the
+    # tracker still calls open.
+    for tag in ("confirmed", "conflict", "review"):
+        totals["delivery_" + tag] = sum(
+            1 for r in rows if r["delivery_tag"] == tag)
+    # Which way each conflict fell, so a reader never has to guess. These two
+    # sum to `delivery_conflict`.
+    totals["done_not_built"] = sum(
+        1 for r in rows if r["delivery_tag"] == "conflict"
+        and (r.get("status") or "").casefold().strip() in DONE_STATES)
+    totals["built_not_done"] = (totals["delivery_conflict"]
+                                - totals["done_not_built"])
     for kind in ("corroborated", "contradicted", "unverified"):
         totals[kind] = sum(1 for r in rows
                            if r["verdict"] and r["verdict"]["verdict"] == kind)

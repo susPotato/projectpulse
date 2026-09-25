@@ -4,6 +4,73 @@ Read this first. It is the handoff between sessions.
 
 ---
 
+## 🚦 A done ticket the code contradicts is no longer counted as delivered — 2026-09-25. **Local only, not deployed.**
+
+`tasks_done` came straight from tracker status, so a ticket marked Done that
+the trace run *contradicts* was drawn in the same green as work that is
+genuinely finished, and the completion percentage overstated the project by
+exactly that many items. `tracefacts` already computed the number
+(`done_contradicted`); nothing on a screen subtracted it.
+
+**A second axis over the same verdicts, not a recolouring of them.** A verdict
+is about a ticket's *content* (does code exist that does what this says); the
+new `delivery_tag` is about whether its *status* can be believed — the number
+that leaves the building in a status report. Kept apart deliberately: the
+verdict palette leaves `unverified` uncoloured on purpose (absence of evidence
+is not a warning), and this axis has to colour it, because here the set is
+already narrowed to rows the tracker calls finished.
+
+- `tracelink_view.delivery_tag(status, verdict)` → `confirmed` / `conflict` /
+  `review` / `""`, stamped on every row as `delivery_tag`, plus
+  `status_class()` → `done` / `open` / `dropped` shown beside the raw status.
+  Totals gain `delivery_confirmed|conflict|review` and, so the direction is
+  never guessed, `done_not_built` + `built_not_done` (they sum to the conflict
+  count). `_code_check` carries all five to the Insight card.
+- **Both directions are one Conflict count**: done-but-not-built, and
+  built-but-still-open. ⚠️ The second uses the adjudicator's own
+  `status_conflict` flag, **not** "corroborated on an open ticket" — the
+  latter sweeps in ordinary work in progress and buries the real ones.
+- ⚠️ **Insight reads `context.trace_done_contradicted`, not
+  `code_check.done_not_built`, and they are not interchangeable.** The first is
+  joined to the same task rows `tasks_done` counts, by tracker key; the second
+  counts rows in the trace export — a different population. Subtracting one
+  from the other is how a bar stops summing to its own total. The amber
+  segment is *carved out of* finished, so finished + disputed is the old
+  `done` and the bar still sums. Absent entirely with no run.
+- Colours, as asked for: **green Done / red Not done** on the status tag
+  (filled, because it is the tracker's claim), **green / amber / red** on the
+  Delivery Status row. The verdict mix bar above is untouched.
+- `/traceability` had **no `scripts.shots` entry at all**, so the one check
+  that looks at a rendered page had never seen it. Added, scoped to a project.
+
+⚠️ **`DROPPED_STATES` is only `{"dropped"}`** though `context.py` documents it
+as "cancelled, rejected, a duplicate" — so a Jira export saying `Cancelled`
+classifies as `open`. Safe direction (never counted delivered) but cancelled
+work reads as outstanding. Widening it moves `CLOSED_STATES` and with it
+overdue / due-soon / in-progress product-wide, so it is a decision, not a typo.
+`test_cancelled_is_not_in_this_products_dropped_vocabulary` pins the gap.
+
+⚠️ **`traceability_runs/hrms-demo/` is fabricated and deliberately NOT
+committed.** Real WBS keys from the demo database, invented verdicts, written
+by hand to exercise this feature — the committed `traceability_runs/demo/` is
+real paid model output (~$22, see its README). It is untracked and **not
+gitignored**, so `git add -A` would ship invented verdicts as measured ones.
+Delete it or keep it local; never commit it.
+
+**Two pre-existing breakages found, neither touched:**
+- ⚠️ **`npm run smoke` is dead on this branch.** `web/scripts/smoke.tsx:28`
+  imports `../src/pages/Calculation`, which commit `b1a9ae9` deleted. Committed
+  broken, so the third load-bearing check has not run since.
+- ⚠️ **`pytest` cannot collect `tests/test_narration.py`.**
+  `importlib.util.find_spec("google.genai")` *raises* when `google` is absent
+  rather than returning None (a dotted name imports its parent), so the whole
+  suite aborts — 0 tests — for anyone without the `llm-gemini` extra, including
+  the Dockerfile's own `.[llm,report]`. Line 751 does the same for `openai` and
+  is safe only because that name is top-level. Runs used `--ignore` of that one
+  file: **1336 passed, 18 skipped.**
+
+---
+
 ## 📋 Reports answer the PM's questions now — 2026-09-24. **Local only.**
 
 The report used to say only things about the dates. New context scalars

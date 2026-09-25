@@ -85,6 +85,64 @@
     .f-bad { background: var(--red); } .c-bad { color: var(--red); }
     .f-warn { background: var(--amber); } .c-warn { color: var(--amber); }
 
+    /* The delivery-agreement axis: does the tracker's *status* survive
+       contact with the code? A different question from the verdict above,
+       so it gets its own row rather than more segments in that bar.
+
+       It may colour "needs review" where the verdict bar must not, and the
+       difference is the set being described. Up there, unverified is every
+       row nobody has looked at - mostly absence of evidence. Here the set is
+       already narrowed to rows the tracker calls *finished*, so "reported
+       done, nothing found" is a claim that failed to check out, not an
+       unexamined one. Same three hues this product reserves, same meanings:
+       green agrees, amber disagrees, red wants a person. */
+    .agree { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+    .agree a { display: flex; align-items: baseline; gap: 8px;
+               flex: 1 1 180px; padding: 11px 13px; text-decoration: none;
+               border: 1px solid var(--rule); border-left-width: 3px;
+               border-radius: 8px; background: var(--surface); color: inherit; }
+    .agree a:hover { border-color: currentColor; }
+    .agree b { font-size: var(--text-kpi); font-weight: 700; line-height: 1;
+               font-variant-numeric: tabular-nums; }
+    .agree em { font-style: normal; color: var(--ink-2);
+                font-size: var(--text-body); }
+    .agree .d-confirmed { border-left-color: var(--green); }
+    .agree .d-confirmed b { color: var(--green); }
+    .agree .d-conflict { border-left-color: var(--amber); }
+    .agree .d-conflict b { color: var(--amber); }
+    .agree .d-review { border-left-color: var(--red); }
+    .agree .d-review b { color: var(--red); }
+    .agree .sub { display: block; color: var(--ink-3);
+                  font-size: var(--text-small); }
+    /* The tracker's own claim, coloured.
+
+       Filled rather than outlined, and that is what keeps it readable next
+       to the chips either side of it: the verdict and agreement chips are
+       outlined and carry judgement, this is a tinted label carrying what the
+       sheet says. So a row can read "Done" in green beside "Conflict" in
+       amber without the two looking like they are arguing at the same
+       volume - the green is the claim, the amber is the finding about it.
+
+       Green done / red not-done is the scale this page was asked for, and it
+       is the tracker's claim being coloured, not a judgement about it: red
+       here means "the tracker does not claim this is finished", which is
+       why it can sit on a row whose verdict chip is green. */
+    .tag.s-done { border-color: transparent; color: var(--green);
+                  background: color-mix(in oklab, var(--green) 16%, transparent);
+                  font-weight: 600; }
+    .tag.s-open { border-color: transparent; color: var(--red);
+                  background: color-mix(in oklab, var(--red) 16%, transparent);
+                  font-weight: 600; }
+    .tag.s-dropped { border-color: transparent; color: var(--ink-3);
+                     background: color-mix(in oklab, var(--ink-3) 14%, transparent);
+                     text-decoration: line-through; }
+
+    /* The same three on a ticket row. */
+    .t-d-confirmed { color: var(--green); border-color: currentColor; }
+    .t-d-conflict { color: var(--amber); border-color: currentColor;
+                    font-weight: 600; }
+    .t-d-review { color: var(--red); border-color: currentColor; }
+
     /* Why this list is shorter than the last one. Shown whenever a filter
        is set, whether the reader set it or a link from the Insight page
        did - arriving at a pre-filtered list with nothing saying so is how
@@ -300,6 +358,7 @@
 
   <div id="gaps"></div>
   <div id="mix"></div>
+  <div id="agree"></div>
   <div class="tiles" id="tiles"></div>
 
   <nav class="subtabs" id="subtabs">
@@ -323,6 +382,7 @@
   "use strict";
 
   var D = null, view = "findings", q = "", fVerdict = "", fStatus = "",
+      fAgree = "",
       fSort = "", focusKind = "";
 
   /* The filter state lives in the URL.
@@ -339,7 +399,7 @@
      already kept there. The search box deliberately stays out of it: it
      changes on every keystroke, and a history entry per character is not
      navigation. */
-  var STATE_KEYS = ["view", "verdict", "status", "focus"];
+  var STATE_KEYS = ["view", "verdict", "status", "focus", "agree"];
   var VIEWS = ["findings", "tickets", "code", "shadow", "delivery", "backlog"];
 
   function readUrl() {
@@ -348,6 +408,7 @@
     if (wanted && VIEWS.indexOf(wanted) !== -1) view = wanted;
     fVerdict = params.get("verdict") || "";
     fStatus = params.get("status") || "";
+    fAgree = params.get("agree") || "";
     focusKind = params.get("focus") || "";
   }
 
@@ -357,7 +418,7 @@
   function writeUrl(push) {
     var params = new URLSearchParams(location.search);
     var values = { view: view, verdict: fVerdict, status: fStatus,
-                   focus: focusKind };
+                   focus: focusKind, agree: fAgree };
     STATE_KEYS.forEach(function (k) {
       if (values[k]) params.set(k, values[k]);
       else params.delete(k);
@@ -393,6 +454,29 @@
     conflict: "Status Concerns",
     none: "Not Analysed"
   };
+  /* The delivery-agreement axis. `DELIVERY_WORD` in `tracelink_view.py` is
+     the server's copy of these three keys; the words are the product's and
+     live here, the same split the verdict labels above use. */
+  var AGREE_WORD = {
+    confirmed: "Confirmed", conflict: "Conflict", review: "Need Review"
+  };
+  /* The tracker's own claim, normalised - `status_class` in
+     `tracelink_view.py`. Shown next to the raw status because the raw word
+     is the tracker's and the classification is ours, and a reader checking
+     a count needs to see which bucket a row landed in. */
+  var STATUS_WORD = { done: "Done", open: "Not done", dropped: "Dropped" };
+  var STATUS_BLURB = {
+    done: "Counted as finished by this product",
+    open: "Counted as still outstanding",
+    dropped: "Cancelled or rejected - counted as neither"
+  };
+
+  var AGREE_BLURB = {
+    confirmed: "Marked finished, and the code backs it up",
+    conflict: "The tracker and the code disagree",
+    review: "Marked finished, nothing found either way"
+  };
+
   var VERDICT_TONE = {
     corroborated: "good", unverified: "unknown",
     contradicted: "bad", conflict: "warn", none: "unknown"
@@ -469,6 +553,48 @@
       legend + "</div></div>";
   }
 
+  /* Delivery agreement: the tracker's status against the code.
+
+     Its own row rather than four more segments in the verdict bar, because
+     it answers a different question. A verdict is about a ticket's content
+     - does code exist that does what this says. This is about whether the
+     *status* can be believed, which is the number that leaves this building
+     in a status report.
+
+     Zero is printed, not hidden. "0 conflicts" is the answer a reader came
+     for; an absent tile reads as "not measured", which is the one thing it
+     must not be confused with. The whole row is dropped only when no
+     verdict exists at all, because then it genuinely is not measured. */
+  function agreement() {
+    var t = D.totals, host = document.getElementById("agree");
+    if (!t.adjudicated) { host.innerHTML = ""; return; }
+    var parts = ["confirmed", "conflict", "review"].map(function (k) {
+      var n = t["delivery_" + k] || 0;
+      var sub = "";
+      if (k === "conflict" && n) {
+        // Which way it fell. A reader should never have to open the list
+        // to learn whether "conflict" means over- or under-reporting.
+        var a = t.done_not_built || 0, b = t.built_not_done || 0;
+        sub = (a ? a + " reported done, not in the code" : "") +
+              (a && b ? " · " : "") +
+              (b ? b + " built, still open" : "");
+      }
+      return '<a class="d-' + k + '" href="' +
+        esc(filterHref({ view: "tickets", agree: k })) +
+        '" title="' + esc(AGREE_BLURB[k]) + '">' +
+        '<b data-count="' + n + '">0</b><em>' + esc(AGREE_WORD[k]) +
+        (sub ? '<span class="sub">' + esc(sub) + "</span>" : "") +
+        "</em></a>";
+    }).join("");
+    host.innerHTML = '<div class="mix-head"><h2>Delivery Status</h2>' +
+      '<span class="muted">Whether each work item’s tracker status ' +
+      'survives contact with the code.</span></div>' +
+      '<div class="agree' + (reducedMotion() ? "" : " stagger") + '">' +
+      parts + "</div>";
+    Array.prototype.forEach.call(host.querySelectorAll("b[data-count]"),
+      function (b) { countTo(b, Number(b.dataset.count)); });
+  }
+
   function tiles() {
     var t = D.totals, c = D.corpus;
     /* Renamed, not recomputed. "SYMBOLS/FILES" and "RUN COST" described the
@@ -506,6 +632,7 @@
         countTo(b, Number(b.dataset.count));
       });
 
+    agreement();
     document.getElementById("runinfo").title = D.run;
     document.getElementById("gaps").innerHTML =
       (D.gaps.length
@@ -752,6 +879,21 @@
         (r.key ? "Tracker key" : "No tracker key — row position in the export") +
         '">' + esc(r.key || ("row " + (r.source_row || "?"))) + "</span>" +
       '<span class="tag">' + esc(r.status || "—") + "</span>" +
+      // How this product classified that word. Every done/open count turns
+      // on it, and "Release it" or "Resolved" gives a reader no way to know
+      // which way it went.
+      (r.status_class
+        ? '<span class="tag s-' + r.status_class + '" title="' +
+          esc(STATUS_BLURB[r.status_class] || "") + '">' +
+          esc(STATUS_WORD[r.status_class] || r.status_class) + "</span>"
+        : "") +
+      // The tracker's status beside what the code says about it, so a row
+      // reading "Done" never sits on the page unqualified.
+      (r.delivery_tag
+        ? '<span class="tag t-d-' + r.delivery_tag + '" title="' +
+          esc(AGREE_BLURB[r.delivery_tag] || "") + '">' +
+          esc(AGREE_WORD[r.delivery_tag] || r.delivery_tag) + "</span>"
+        : "") +
       '<span class="sum">' + esc(r.summary) + "</span>" +
       (r.head_collision ? '<span class="tag">shared head</span>' : "") +
       groundTag(r) +
@@ -1430,6 +1572,7 @@
       active.push(VERDICT_WORD[fVerdict] || fVerdict);
     }
     if (fStatus) active.push(fStatus);
+    if (fAgree) active.push(AGREE_WORD[fAgree] || fAgree);
     if (!active.length || (view !== "tickets" && view !== "code")) {
       host.innerHTML = "";
       return;
@@ -1441,6 +1584,7 @@
     document.getElementById("clearf").addEventListener("click", function () {
       fVerdict = "";
       fStatus = "";
+      fAgree = "";
       var fv = document.getElementById("fv"), fs = document.getElementById("fs");
       if (fv) fv.value = "";
       if (fs) fs.value = "";
@@ -1494,6 +1638,7 @@
     var needle = q.toLowerCase();
     rows = rows.filter(function (r) {
       if (fStatus && r.status !== fStatus) return false;
+      if (fAgree && r.delivery_tag !== fAgree) return false;
       if (fVerdict === "none" && r.verdict) return false;
       // The status-conflict set had no filter of its own - it was a sort
       // key only - so the "Status Concerns" count on Insight had nothing

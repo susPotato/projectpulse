@@ -342,6 +342,20 @@ function AtAGlance({ bundle }: { bundle: InsightBundle }) {
   const total = n("task_count");
   const done = n("tasks_done");
   const inFlight = n("tasks_in_progress");
+  /* Work the tracker calls finished that a traceability run contradicts.
+     Deducted from `done` rather than drawn on top of it: this figure is the
+     reason the panel exists in this shape. A ticket marked Done that the
+     code does not support was counted here as delivered, in the same green
+     as work that genuinely is, and a completion percentage built from it
+     overstates the project by exactly this many items.
+
+     Read from the context rather than from `code_check`, and that is not
+     interchangeable: `trace_done_contradicted` is joined to the same task
+     rows `tasks_done` counts, by tracker key, while `code_check` counts
+     rows in the trace export - a different population. Subtracting one
+     from the other is how a bar stops summing to its own total. */
+  const disputed = Math.min(done, n("trace_done_contradicted"));
+  const confirmedDone = Math.max(0, done - disputed);
   const overdue = n("tasks_overdue");
   const owners = n("distinct_owners");
 
@@ -361,23 +375,45 @@ function AtAGlance({ bundle }: { bundle: InsightBundle }) {
           for "nothing has happened here". Past due is deliberately *not* a
           segment - an overdue item is also in one of these three, and
           double-counting it in a bar whose whole point is that it sums
-          would be the one thing this panel must not do. It is a tile. */}
+          would be the one thing this panel must not do. It is a tile.
+
+          The amber "reported done, not in the code" segment is the one
+          addition, and it obeys that same rule by being *carved out of*
+          finished rather than laid over it: finished + disputed is the old
+          `done`, so the bar still sums to `total`. It earns a segment where
+          overdue does not because it is not a second fact about an item
+          already counted - it is the claim that the item is finished at
+          all, failing. Absent entirely when no traceability run has looked,
+          because then the honest answer is that nobody has checked. */}
       <Card className="mb-3 flex flex-wrap items-center gap-x-8 gap-y-4">
         <div className="min-w-[150px]">
           <div className={MICRO_LABEL}>Complete</div>
           <b className="mt-1 block text-kpi font-bold text-ink">
-            <CountUp value={total > 0 ? Math.round((done / total) * 100) : 0} suffix="%" />
+            <CountUp
+              value={total > 0 ? Math.round((confirmedDone / total) * 100) : 0}
+              suffix="%"
+            />
           </b>
         </div>
         <div className="min-w-[260px] flex-1">
           <Split
             total={total}
             ariaLabel={
-              `Of ${total} work items: ${done} finished, ${inFlight} in progress, ` +
+              `Of ${total} work items: ${confirmedDone} finished` +
+              (disputed ? `, ${disputed} reported done but not found in the code` : "") +
+              `, ${inFlight} in progress, ` +
               `${Math.max(0, total - done - inFlight)} not started`
             }
             parts={[
-              { key: "done", label: "finished", value: done, tone: "good" },
+              { key: "done", label: "finished", value: confirmedDone, tone: "good" },
+              ...(disputed
+                ? [{
+                    key: "disputed",
+                    label: "reported done, not in the code",
+                    value: disputed,
+                    tone: "warn" as const,
+                  }]
+                : []),
               { key: "wip", label: "in progress", value: inFlight, tone: "info" },
               {
                 key: "todo",

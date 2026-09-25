@@ -75,6 +75,12 @@ PAGES = (
     #: grid rows, and the previous 1400 cut the board off mid-Gantt.
     ("/project/dashboard?project=excel:Project:1:HRMS", "project-dashboard", 2600),
     ("/gantt", "schedule", 1100),
+    #: The Trace page had no entry at all, so the one check that looks at a
+    #: rendered page had never seen it - the same silent hole the notes above
+    #: describe. Scoped to a project on purpose: the page is per delivery
+    #: project, and an unscoped shot photographs "no run for this project"
+    #: and reports success.
+    ("/traceability?project=excel:Project:1:HRMS", "traceability", 2200),
     ("/insight", "insight", 2500),
     ("/risk", "risk", 1600),
     ("/team", "team", 1500),

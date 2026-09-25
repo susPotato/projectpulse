@@ -347,6 +347,15 @@ def _code_check(project: str | None) -> dict | None:
         "contradicted": totals.get("contradicted", 0),
         "unverified": totals.get("unverified", 0),
         "conflicts": totals.get("conflicts", 0),
+        # The tracker-against-code axis. Carried onto this screen because the
+        # completion figure at the top of it is built from tracker status
+        # alone: without these, work reported finished that the code does not
+        # support is drawn in the same green as work that is genuinely done.
+        "delivery_confirmed": totals.get("delivery_confirmed", 0),
+        "delivery_conflict": totals.get("delivery_conflict", 0),
+        "delivery_review": totals.get("delivery_review", 0),
+        "done_not_built": totals.get("done_not_built", 0),
+        "built_not_done": totals.get("built_not_done", 0),
         "ownership_gaps": gaps,
         "files": (payload.get("corpus") or {}).get("files", 0),
     }
